@@ -58,6 +58,11 @@
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
+			<groupId>io.github.oneteme.traceapi</groupId>
+			<artifactId>traceapi-core</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
 			<groupId>io.github.oneteme</groupId>
 			<artifactId>jquery</artifactId>
 			<version>1.0.1-SNAPSHOT</version>
