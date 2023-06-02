@@ -19,35 +19,44 @@ public class RequestJDBCRepository {
 
     @Transactional(rollbackFor = Exception.class)
     public IncomingRequest  addIncomingRequest(IncomingRequest req){
-        jdbcTemplate.update("INSERT INTO E_IN_REQ VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        jdbcTemplate.update("INSERT INTO E_IN_REQ VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 req.getId(),
-                req.getUrl(),
+                req.getProtocol(),
+                req.getHost(),
+                req.getPort(),
+                req.getPath(),
+                req.getQuery(),
                 req.getMethod(),
                 req.getStatus(),
                 req.getSize(),
                 req.getStart(),
                 req.getEnd(),
+                req.getThread(),
                 req.getContentType(),
-                req.getApplication(),
                 req.getEndpoint(),
                 req.getResource(),
                 req.getClient(),
-                req.getQuery());
+                req.getGroup());
         addOucomingRequest(req.getRequests(),req.getId());
         addOutcomingQueries(req.getQueries(), req.getId());
         return req;
     }
 
     private void addOucomingRequest(Collection<OutcomingRequest> reqList, String incomingRequestId){
-        this.jdbcTemplate.batchUpdate("INSERT INTO E_OUT_REQ  VALUES (?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o)-> {
+        this.jdbcTemplate.batchUpdate("INSERT INTO E_OUT_REQ  VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o)-> {
             ps.setString(1, o.getId());
-            ps.setString(2, o.getUrl());
-            ps.setString(3, o.getMethod());
-            ps.setInt   (4, o.getStatus());
-            ps.setLong(5,o.getSize());
-            ps.setTimestamp(6,Timestamp.from( o.getStart()));
-            ps.setTimestamp(7, Timestamp.from(o.getEnd()));
-            ps.setString(8, incomingRequestId);
+            ps.setString(2,o.getProtocol());
+            ps.setString(3,o.getHost());
+            ps.setInt(4,o.getPort());
+            ps.setString(5,o.getPath());
+            ps.setString(6,o.getQuery());
+            ps.setString(7, o.getMethod());
+            ps.setInt   (8, o.getStatus());
+            ps.setLong(9,o.getSize());
+            ps.setTimestamp(10,Timestamp.from( o.getStart()));
+            ps.setTimestamp(11, Timestamp.from(o.getEnd()));
+            ps.setString(12, o.getThread());
+            ps.setString(13, incomingRequestId);
         });
     }
 
