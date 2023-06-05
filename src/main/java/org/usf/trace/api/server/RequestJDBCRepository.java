@@ -18,7 +18,7 @@ public class RequestJDBCRepository {
 
     @Transactional(rollbackFor = Exception.class)
     public IncomingRequest  addIncomingRequest(IncomingRequest req){
-        jdbcTemplate.update("INSERT INTO E_IN_REQ VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        jdbcTemplate.update("INSERT INTO E_IN_REQ (ID_IN_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_SZE,DH_DBT,DH_FIN,VA_THRED,VA_CNT_TYP,VA_ACT,VA_RSC,VA_CLI,VA_GRP) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 req.getId(),
                 req.getProtocol(),
                 req.getHost(),
@@ -42,7 +42,7 @@ public class RequestJDBCRepository {
     }
 
     private void addOucomingRequest(Collection<OutcomingRequest> reqList, String incomingRequestId){
-        this.jdbcTemplate.batchUpdate("INSERT INTO E_OUT_REQ  VALUES (?,?,?,?,?,?,?,?,?,?,?,?,"+incomingRequestId+")", reqList, reqList.size(), (ps, o)-> {
+        this.jdbcTemplate.batchUpdate("INSERT INTO E_OUT_REQ (ID_OUT_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_SZE,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,'"+incomingRequestId+"')", reqList, reqList.size(), (ps, o)-> {
             ps.setString(1, o.getId());
             ps.setString(2,o.getProtocol());
             ps.setString(3,o.getHost());
@@ -62,7 +62,7 @@ public class RequestJDBCRepository {
         final Integer maxId = jdbcTemplate.queryForObject("SELECT COALESCE(MAX(ID_OUT_QRY), 0) FROM E_OUT_QRY", Integer.class);
         var map = new LinkedHashMap<OutcomingQuery, Integer>();
         AtomicInteger inc = new AtomicInteger(maxId);
-        jdbcTemplate.batchUpdate("INSERT INTO E_OUT_QRY VALUES (?,?,?,?,"+incomingRequestId+")", qryList, qryList.size(), (ps, o)-> {
+        jdbcTemplate.batchUpdate("INSERT INTO E_OUT_QRY (ID_OUT_QRY,VA_URL,DH_DBT,DH_FIN,CD_IN_REQ) VALUES  (?,?,?,?,'"+incomingRequestId+"')", qryList, qryList.size(), (ps, o)-> {
             ps.setInt(1, inc.incrementAndGet());
             ps.setString(2,o.getUrl());
             ps.setTimestamp(3, Timestamp.from(o.getStart()));
@@ -73,15 +73,15 @@ public class RequestJDBCRepository {
     }
 
     private void addDatabaseAction(Map<OutcomingQuery, Integer> map){
-        jdbcTemplate.batchUpdate("INSERT INTO E_DB_ACT VALUES (?,?,?,?,?)", map.entrySet().stream().flatMap(e ->
+        jdbcTemplate.batchUpdate("INSERT INTO E_DB_ACT (VA_TYP,DH_DBT,DH_FIN,VA_FAIL,CD_OUT_QRY) VALUES (?,?,?,?,?)", map.entrySet().stream().flatMap(e ->
                 e.getKey().getActions().stream().map(da ->
-                        new Object[]{da.getType(), Timestamp.from(da.getStart()), Timestamp.from(da.getEnd()), da.isFailed(), e.getValue()})
+                        new Object[]{da.getType().toString(), Timestamp.from(da.getStart()), Timestamp.from(da.getEnd()), da.isFailed(), e.getValue()})
         ).collect(Collectors.toList()));
     }
 
     public List<IncomingRequest> getIncomingRequestById(String[] idArr){
         String whereCLause = "";
-        if(idArr !=null){
+        if(idArr != null){
              whereCLause = "where ID_IN_REQ IN (?)";
         }
         return jdbcTemplate.query("SELECT ID_IN_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_SZE,DH_DBT,DH_FIN,VA_THRED,VA_CNT_TYP,VA_ACT,VA_RSC,VA_CLI,VA_GRP FROM E_IN_REQ "+whereCLause,
