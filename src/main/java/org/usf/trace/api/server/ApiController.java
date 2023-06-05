@@ -2,7 +2,6 @@
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 import org.usf.jquery.core.DynamicModel;
@@ -21,12 +20,9 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RequiredArgsConstructor
 public class ApiController {
 
+    private final JdbcTemplate template;
 
-
-    JdbcTemplate template;
-
-    @Autowired
-    RequestJDBCRepository requestJDBCRepository;
+    private final RequestDao requestJDBCRepository;
 
     /*@GetMapping("incoming/request")
     public List<DynamicModel> stats( 
