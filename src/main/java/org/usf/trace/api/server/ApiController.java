@@ -13,6 +13,7 @@ import java.util.List;
 
 import static java.util.Collections.emptyList;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.usf.trace.api.server.Utils.requireSingle;
 
 @CrossOrigin
 @RestController
@@ -22,7 +23,7 @@ public class ApiController {
 
     private final JdbcTemplate template;
 
-    private final RequestDao requestJDBCRepository;
+    private final RequestDao dao;
 
     /*@GetMapping("incoming/request")
     public List<DynamicModel> stats( 
@@ -38,21 +39,22 @@ public class ApiController {
 
     @PutMapping("incoming/request")
     public IncomingRequest saveRequest(@RequestBody IncomingRequest req) {
-        return requestJDBCRepository.addIncomingRequest(req);
+        return dao.addIncomingRequest(req);
     }
 
     @GetMapping("incoming/request")
     public List<IncomingRequest> getIncomingRequestByIds(@RequestParam(required = false) String[] id){ // without tree
-        return  requestJDBCRepository.getIncomingRequestById(id);
+        return  dao.getIncomingRequestById(id);
     }
+    
     @GetMapping("incoming/request/{id}")
     public IncomingRequest getIncomingRequestById(@PathVariable String id){ // without tree
-        return  requestJDBCRepository.getIncomingRequestById(new String[]{id}).get(0); //to be changed
+        return requireSingle(dao.getIncomingRequestById(id));
     }
 
     @GetMapping("incoming/request/{id}/tree") //LATER
-    public IncomingRequest getIncomingRequestTreeById(@PathVariable String id){ // without tree
-        return  requestJDBCRepository.getIncomingRequestById(new String[]{id}).get(0);// to be changed
+    public IncomingRequest getIncomingRequestTreeById(@PathVariable String id){
+        return requireSingle(dao.getIncomingRequestById(id)); //new query
     }
-
+    
 }

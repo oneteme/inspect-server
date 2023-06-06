@@ -2,6 +2,7 @@ package org.usf.trace.api.server;
 
 import static java.sql.Timestamp.from;
 import static java.util.stream.Collectors.toList;
+import static org.usf.trace.api.server.Utils.isEmpty;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -90,9 +91,9 @@ public class RequestDao {
         ).collect(toList()));
     }
 
-    public List<IncomingRequest> getIncomingRequestById(String[] idArr){
+    public List<IncomingRequest> getIncomingRequestById(String... idArr){
         var query = "SELECT ID_IN_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_SZE,DH_DBT,DH_FIN,VA_THRED,VA_CNT_TYP,VA_ACT,VA_RSC,VA_CLI,VA_GRP FROM E_IN_REQ ";
-        if(idArr != null && idArr.length > 0){
+        if(isEmpty(idArr)){
         	query += "WHERE ID_IN_REQ IN (?)";
         }
         return template.query(query, idArr, rs -> {
