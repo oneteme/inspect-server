@@ -54,7 +54,7 @@ public class ApiController {
 
     @GetMapping("incoming/request/{id}/tree") //LATER
     public IncomingRequest getIncomingRequestTreeById(@PathVariable String id){
-        return requireSingle(dao.getIncomingRequestById(id)); //new query
+        return requireSingle(dao.getIncomingRequestById(id)); //change query
     }
     
 }
