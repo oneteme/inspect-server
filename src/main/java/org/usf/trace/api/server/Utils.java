@@ -15,7 +15,7 @@ public final class Utils {
     		return null;
     	}
     	if(c.size() > 1) {
-    		throw new RuntimeException("too many result"); //custom exception
+    		throw new RuntimeException("too many results"); //custom exception
     	}
     	return c.iterator().next();
     }
