@@ -93,7 +93,7 @@ public class RequestDao {
 
     public List<IncomingRequest> getIncomingRequestById(String... idArr){
         var query = "SELECT ID_IN_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_SZE,DH_DBT,DH_FIN,VA_THRED,VA_CNT_TYP,VA_ACT,VA_RSC,VA_CLI,VA_GRP FROM E_IN_REQ ";
-        if(isEmpty(idArr)){
+        if(!isEmpty(idArr)){
         	query += "WHERE ID_IN_REQ IN (?)";
         }
         return template.query(query, idArr, rs -> {
