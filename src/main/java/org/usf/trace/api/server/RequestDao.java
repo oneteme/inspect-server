@@ -9,11 +9,10 @@ import static org.usf.trace.api.server.Utils.isEmpty;
 import static org.usf.trace.api.server.Utils.nArg;
 import static org.usf.trace.api.server.Utils.newArray;
 
-import java.sql.Types;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
+
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
@@ -98,35 +97,35 @@ public class RequestDao {
         ).collect(toList()));
     }
 
-    public List<IncomingRequest> getIncomingRequestById(String... idArr) {
+    public List<IncomingRequest> getIncomingRequestById(boolean lazy, String... idArr) {
         var query = "SELECT ID_IN_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_SZE,DH_DBT,DH_FIN,VA_THRED,VA_CNT_TYP,VA_ACT,VA_RSC,VA_CLI,VA_GRP FROM E_IN_REQ ";
+        int[] argTypes = null;
         if (!isEmpty(idArr)) {
             query += "WHERE ID_IN_REQ IN (" + nArg(idArr.length) + ")";
+             argTypes = newArray(idArr.length, VARCHAR);
         }
-        return template.query(query, idArr, rs -> {
-            List<IncomingRequest> res = new LinkedList<>();
-            while (rs.next()) {
-                IncomingRequest in = new IncomingRequest(rs.getString("ID_IN_REQ"));
-                in.setProtocol(rs.getString("VA_PRTCL"));
-                in.setHost(rs.getString("VA_HST"));
-                in.setPort(rs.getInt("CD_PRT"));
-                in.setPath(rs.getString("VA_PTH"));
-                in.setQuery(rs.getString("VA_QRY"));
-                in.setMethod(rs.getString("VA_MTH"));
-                in.setStatus(rs.getInt("CD_STT"));
-                in.setSize(rs.getLong("VA_SZE"));
-                in.setStart(rs.getTimestamp("DH_DBT").toInstant());
-                in.setEnd(rs.getTimestamp("DH_FIN").toInstant());
-                in.setThread(rs.getString("VA_THRED"));
-                in.setContentType(rs.getString("VA_CNT_TYP"));
-                in.setEndpoint(rs.getString("VA_ACT"));
-                in.setResource(rs.getString("VA_RSC"));
-                in.setClient(rs.getString("VA_CLI"));
-                in.setGroup(rs.getString("VA_GRP"));
-                res.add(in);
-            }
-            
-            //TODO out of RessultSetExtractor
+        List<IncomingRequest> res = template.query(query, idArr, argTypes, (rs, i) -> {
+            IncomingRequest in = new IncomingRequest(rs.getString("ID_IN_REQ"));
+            in.setProtocol(rs.getString("VA_PRTCL"));
+            in.setHost(rs.getString("VA_HST"));
+            in.setPort(rs.getInt("CD_PRT"));
+            in.setPath(rs.getString("VA_PTH"));
+            in.setQuery(rs.getString("VA_QRY"));
+            in.setMethod(rs.getString("VA_MTH"));
+            in.setStatus(rs.getInt("CD_STT"));
+            in.setSize(rs.getLong("VA_SZE"));
+            in.setStart(rs.getTimestamp("DH_DBT").toInstant());
+            in.setEnd(rs.getTimestamp("DH_FIN").toInstant());
+            in.setThread(rs.getString("VA_THRED"));
+            in.setContentType(rs.getString("VA_CNT_TYP"));
+            in.setEndpoint(rs.getString("VA_ACT"));
+            in.setResource(rs.getString("VA_RSC"));
+            in.setClient(rs.getString("VA_CLI"));
+            in.setGroup(rs.getString("VA_GRP"));
+            return in;
+        });
+
+        if(lazy){
             var outReqMap = getOutcomingRequestListForInReq(idArr).stream().collect(groupingBy(ServerOutcomingRequest::getIdIncoming));
             var outQryMap = getOutcomingQueryListForInReq(idArr).stream().collect(groupingBy(ServerOutcomingQuery::getIdIncoming));
 
@@ -136,16 +135,21 @@ public class RequestDao {
                 if (outReqMap.containsKey(in.getId()))
                     in.getRequests().addAll(outReqMap.get(in.getId()));
             }
-            return res;
-        });
+        }
+        return res;
+
     }
 
     public List<ServerOutcomingRequest> getOutcomingRequestListForInReq(String... idArr) {
+
         var query = "SELECT ID_OUT_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_SZE,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ FROM E_OUT_REQ ";
+        int[] argTypes = null;
         if (!isEmpty(idArr)) {
             query += "WHERE CD_IN_REQ IN (" + nArg(idArr.length) + ")";
+            argTypes = newArray(idArr.length, VARCHAR);
         }
-        return template.query(query, idArr, newArray(idArr.length, VARCHAR), (rs, i)-> {
+
+        return template.query(query, idArr, argTypes, (rs, i) -> {
             ServerOutcomingRequest out = new ServerOutcomingRequest(rs.getString("ID_OUT_REQ"), rs.getString("CD_IN_REQ"));
             out.setProtocol(rs.getString("VA_PRTCL"));
             out.setHost(rs.getString("VA_HST"));
@@ -164,21 +168,20 @@ public class RequestDao {
 
     public List<ServerOutcomingQuery> getOutcomingQueryListForInReq(String... idArr) {
         var query = "SELECT ID_OUT_QRY,VA_URL,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ FROM E_OUT_QRY ";
+        int[] argTypes = null;
         if (!isEmpty(idArr)) {
             query += "WHERE CD_IN_REQ IN (" + nArg(idArr.length) + ")";
+            argTypes = newArray(idArr.length, VARCHAR);
         }
-        List<ServerOutcomingQuery> outList = new LinkedList<>();
         List<Long> idQryArr = new LinkedList<>();
-        template.query(query, idArr, rs -> { //compile pas ambigue !!
-            do {
-                ServerOutcomingQuery out = new ServerOutcomingQuery(rs.getString("CD_IN_REQ"), rs.getLong("ID_OUT_QRY"));
-                out.setUrl(rs.getString("VA_URL"));
-                out.setStart(rs.getTimestamp("DH_DBT").toInstant());
-                out.setEnd(rs.getTimestamp("DH_FIN").toInstant());
-                out.setThread(rs.getString("VA_THRED"));
-                outList.add(out);
-                idQryArr.add(rs.getLong("ID_OUT_QRY"));
-            } while (rs.next());
+        List<ServerOutcomingQuery> outList = template.query(query, idArr, argTypes, (rs, i) -> { //compile pas ambigue !!
+            ServerOutcomingQuery out = new ServerOutcomingQuery(rs.getString("CD_IN_REQ"), rs.getLong("ID_OUT_QRY"));
+            out.setUrl(rs.getString("VA_URL"));
+            out.setStart(rs.getTimestamp("DH_DBT").toInstant());
+            out.setEnd(rs.getTimestamp("DH_FIN").toInstant());
+            out.setThread(rs.getString("VA_THRED"));
+            idQryArr.add(rs.getLong("ID_OUT_QRY"));
+            return out;
         });
 
         var dataMap = getDatabaseActionListForOutReq1(idQryArr).stream().collect(groupingBy(ServerDatabaAction::getId));
@@ -192,16 +195,18 @@ public class RequestDao {
     public List<ServerDatabaAction> getDatabaseActionListForOutReq1(List<Long> queries) {
 
         var query = "SELECT VA_TYP,DH_DBT,DH_FIN,VA_FAIL,CD_OUT_QRY FROM E_DB_ACT ";
+        int[] argTypes = null;
         if (!isEmpty(queries)) {
             query += "WHERE CD_OUT_QRY IN (" + nArg(queries.size()) + ")";
+            argTypes = newArray(queries.size(), BIGINT);
         }
-        return template.query(query, queries.toArray(), newArray(queries.size(), BIGINT), (rs,i) ->
-        	new ServerDatabaAction(
-        			rs.getLong("CD_OUT_QRY"),
-                    Action.valueOf(rs.getString("VA_TYP")),
-                    rs.getTimestamp("DH_DBT").toInstant(),
-                    rs.getTimestamp("DH_FIN").toInstant(),
-                    rs.getBoolean("VA_FAIL")));
+        return template.query(query, queries.toArray(), argTypes, (rs, i) ->
+                new ServerDatabaAction(
+                        rs.getLong("CD_OUT_QRY"),
+                        Action.valueOf(rs.getString("VA_TYP")),
+                        rs.getTimestamp("DH_DBT").toInstant(),
+                        rs.getTimestamp("DH_FIN").toInstant(),
+                        rs.getBoolean("VA_FAIL")));
     }
 
 
