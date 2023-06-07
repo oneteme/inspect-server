@@ -180,8 +180,6 @@ public class RequestDao {
             } while (rs.next());
         });
 
-        System.out.println(outList);
-
         var dataMap = getDatabaseActionListForOutReq1(idQryArr).stream().collect(Collectors.groupingBy(ServerDatabaAction::getId));
         for (ServerOutcomingQuery in : outList) {
             if (dataMap.containsKey(in.getIdOutQry()))
