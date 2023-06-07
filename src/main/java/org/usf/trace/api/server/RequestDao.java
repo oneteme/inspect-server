@@ -1,10 +1,13 @@
 package org.usf.trace.api.server;
 
 import static java.sql.Timestamp.from;
+import static java.sql.Types.VARCHAR;
 import static java.util.stream.Collectors.toList;
 import static org.usf.trace.api.server.Utils.isEmpty;
 import static org.usf.trace.api.server.Utils.nArg;
+import static org.usf.trace.api.server.Utils.newArray;
 
+import java.sql.Types;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -138,25 +141,20 @@ public class RequestDao {
         if (!isEmpty(idArr)) {
             query += "WHERE CD_IN_REQ IN (" + nArg(idArr.length) + ")";
         }
-        return template.query(query, idArr, rs -> {
-            List<ServerOutcomingRequest> res = new LinkedList<>();
-            while (rs.next()) {
-                ServerOutcomingRequest out = new ServerOutcomingRequest(rs.getString("ID_OUT_REQ"), rs.getString("CD_IN_REQ"));
-                out.setProtocol(rs.getString("VA_PRTCL"));
-                out.setHost(rs.getString("VA_HST"));
-                out.setPort(rs.getInt("CD_PRT"));
-                out.setPath(rs.getString("VA_PTH"));
-                out.setQuery(rs.getString("VA_QRY"));
-                out.setMethod(rs.getString("VA_MTH"));
-                out.setStatus(rs.getInt("CD_STT"));
-                out.setSize(rs.getLong("VA_SZE"));
-                out.setStart(rs.getTimestamp("DH_DBT").toInstant());
-                out.setEnd(rs.getTimestamp("DH_FIN").toInstant());
-                out.setThread(rs.getString("VA_THRED"));
-                res.add(out);
-            }
-
-            return res;
+        return template.query(query, idArr, newArray(idArr.length, VARCHAR), (rs, i)-> {
+            ServerOutcomingRequest out = new ServerOutcomingRequest(rs.getString("ID_OUT_REQ"), rs.getString("CD_IN_REQ"));
+            out.setProtocol(rs.getString("VA_PRTCL"));
+            out.setHost(rs.getString("VA_HST"));
+            out.setPort(rs.getInt("CD_PRT"));
+            out.setPath(rs.getString("VA_PTH"));
+            out.setQuery(rs.getString("VA_QRY"));
+            out.setMethod(rs.getString("VA_MTH"));
+            out.setStatus(rs.getInt("CD_STT"));
+            out.setSize(rs.getLong("VA_SZE"));
+            out.setStart(rs.getTimestamp("DH_DBT").toInstant());
+            out.setEnd(rs.getTimestamp("DH_FIN").toInstant());
+            out.setThread(rs.getString("VA_THRED"));
+            return out;
         });
     }
 
@@ -170,7 +168,7 @@ public class RequestDao {
         List<Long> idQryArr = new LinkedList<>(); // to be changed
         System.out.println(query);
         System.out.println(Arrays.toString(idArr));
-        template.query(query, idArr, rs -> {
+        template.query(query, idArr, rs -> { //compile pas ambigue !!
             do {
                 ServerOutcomingQuery out = new ServerOutcomingQuery(rs.getString("CD_IN_REQ"), rs.getLong("ID_OUT_QRY"));
                 out.setUrl(rs.getString("VA_URL"));

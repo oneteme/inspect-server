@@ -1,5 +1,6 @@
 package org.usf.trace.api.server;
 
+import static java.util.Arrays.fill;
 import static java.util.Objects.isNull;
 
 import java.util.Collection;
@@ -35,4 +36,9 @@ public final class Utils {
 		return n == 1 ? "?" : "?" + ", ?".repeat(n - 1);
 	}
 	
+	public static int[] newArray(int size, int defaultValue) {
+		var arr = new int[size];
+		fill(arr, defaultValue);
+		return arr;
+	}
 }
