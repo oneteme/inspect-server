@@ -1,7 +1,9 @@
 package org.usf.trace.api.server;
 
 import static java.sql.Timestamp.from;
+import static java.sql.Types.BIGINT;
 import static java.sql.Types.VARCHAR;
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static org.usf.trace.api.server.Utils.isEmpty;
 import static org.usf.trace.api.server.Utils.nArg;
@@ -123,8 +125,10 @@ public class RequestDao {
                 in.setGroup(rs.getString("VA_GRP"));
                 res.add(in);
             }
-            var outReqMap = getOutcomingRequestListForInReq(idArr).stream().collect(Collectors.groupingBy(ServerOutcomingRequest::getIdIncoming));
-            var outQryMap = getOutcomingQueryListForInReq(idArr).stream().collect(Collectors.groupingBy(ServerOutcomingQuery::getIdIncoming));
+            
+            //TODO out of RessultSetExtractor
+            var outReqMap = getOutcomingRequestListForInReq(idArr).stream().collect(groupingBy(ServerOutcomingRequest::getIdIncoming));
+            var outQryMap = getOutcomingQueryListForInReq(idArr).stream().collect(groupingBy(ServerOutcomingQuery::getIdIncoming));
 
             for (IncomingRequest in : res) {
                 if (outQryMap.containsKey(in.getId()))
@@ -158,7 +162,6 @@ public class RequestDao {
         });
     }
 
-
     public List<ServerOutcomingQuery> getOutcomingQueryListForInReq(String... idArr) {
         var query = "SELECT ID_OUT_QRY,VA_URL,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ FROM E_OUT_QRY ";
         if (!isEmpty(idArr)) {
@@ -178,7 +181,7 @@ public class RequestDao {
             } while (rs.next());
         });
 
-        var dataMap = getDatabaseActionListForOutReq1(idQryArr).stream().collect(Collectors.groupingBy(ServerDatabaAction::getId));
+        var dataMap = getDatabaseActionListForOutReq1(idQryArr).stream().collect(groupingBy(ServerDatabaAction::getId));
         for (ServerOutcomingQuery in : outList) {
             if (dataMap.containsKey(in.getIdOutQry()))
                 in.getActions().addAll(dataMap.get(in.getIdOutQry()));
@@ -186,30 +189,20 @@ public class RequestDao {
         return outList;
     }
 
-
-    public List<ServerDatabaAction> getDatabaseActionListForOutReq1(List<Long> idQryArr) {
+    public List<ServerDatabaAction> getDatabaseActionListForOutReq1(List<Long> queries) {
 
         var query = "SELECT VA_TYP,DH_DBT,DH_FIN,VA_FAIL,CD_OUT_QRY FROM E_DB_ACT ";
-        if (!isEmpty(idQryArr)) {
-            query += "WHERE CD_OUT_QRY IN (" + nArg(idQryArr.size()) + ")";
+        if (!isEmpty(queries)) {
+            query += "WHERE CD_OUT_QRY IN (" + nArg(queries.size()) + ")";
         }
-        List<ServerDatabaAction> databaseActionList = new LinkedList<>();
-        return template.query(query, idQryArr.toArray(), rs -> {
-            while (rs.next()) {
-                ServerDatabaAction dbAction = new ServerDatabaAction(
-                        rs.getLong("CD_OUT_QRY"),
-                        Action.valueOf(rs.getString("VA_TYP")),
-                        rs.getTimestamp("DH_DBT").toInstant(),
-                        rs.getTimestamp("DH_FIN").toInstant(),
-                        rs.getBoolean("VA_FAIL"));
-                databaseActionList.add(dbAction);
-            }
-            return databaseActionList;
-        });
-
+        return template.query(query, queries.toArray(), newArray(queries.size(), BIGINT), (rs,i) ->
+        	new ServerDatabaAction(
+        			rs.getLong("CD_OUT_QRY"),
+                    Action.valueOf(rs.getString("VA_TYP")),
+                    rs.getTimestamp("DH_DBT").toInstant(),
+                    rs.getTimestamp("DH_FIN").toInstant(),
+                    rs.getBoolean("VA_FAIL")));
     }
-
-
 
 
     @Getter
