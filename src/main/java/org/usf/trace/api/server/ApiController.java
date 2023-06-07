@@ -27,13 +27,13 @@ public class ApiController {
     }
 
     @GetMapping("incoming/request/{id}")
-    public IncomingRequest getIncomingRequestById(@RequestParam(defaultValue = "true",name = "lazy") boolean lazy,@PathVariable String id) { // without tree
-        return requireSingle(dao.getIncomingRequestById(lazy,id));
+    public IncomingRequest getIncomingRequestById(@PathVariable String id) { // without tree
+        return requireSingle(dao.getIncomingRequestById(true, id));
     }
 
     @GetMapping("incoming/request/{id}/tree") //LATER
     public IncomingRequest getIncomingRequestTreeById(@PathVariable String id) {
-        return requireSingle(dao.getIncomingRequestById(false,id)); //change query
+        return requireSingle(dao.getIncomingRequestById(true,id)); //change query
     }
 
 }
