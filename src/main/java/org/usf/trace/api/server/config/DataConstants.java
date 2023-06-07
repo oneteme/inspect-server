@@ -19,123 +19,149 @@ import static org.usf.trace.api.server.config.TraceApiColumn.STATUS;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class DataConstants {
-	
-    public static String agrColumns(TraceApiColumn agreementsApiColumn) {
-        switch(agreementsApiColumn) {
-            case STATUS: 		return "CD_STT";
-            case MTH: 		return "VA_MTH";
-            case URI: 			return "VA_URI";
-            case START_DATETIME: 		return "DT_DBT";
-            case FINISH_DATETIME: 			return "DT_FIN";
-            case RESOURCE:     return "VA_RCS";
-            case CLIENT: 		return "VA_CLN";
-            case ACTION: 		return "VA_ACT";
-            case DMN: 		return "VA_DMN";
-            case API: 			return "VA_APP";
-            default : throw undeclaredColumn(agreementsApiColumn);
+
+    public static String incReqColumns(TraceApiColumn incomingRequest) {
+        switch (incomingRequest) {
+            case ID_INCOMING_REQ:
+                return "ID_IN_REQ";
+            case PROTOCOL:
+                return "VA_PRTCL";
+            case HOST:
+                return "VA_HST";
+            case PORT:
+                return "CD_PRT";
+            case PATH:
+                return "VA_PTH";
+            case QUERY:
+                return "VA_QRY";
+            case MTH:
+                return "VA_MTH";
+            case STATUS:
+                return "CD_STT";
+            case SIZE:
+                return "VA_SZE";
+            case START_DATETIME:
+                return "DH_DBT";
+            case FINISH_DATETIME:
+                return "DH_FIN";
+            case THREAD:
+                return "VA_THRED";
+            case CONTENT_TYPE:
+                return "VA_CNT_TYP";
+            case ACTION:
+                return "VA_ACT";
+            case RESOURCE:
+                return "VA_RSC";
+            case CLIENT:
+                return "VA_CLN";
+            case GROUPE:
+                return "VA_GRP";
+            default:
+                throw undeclaredColumn(incomingRequest);
         }
-    } 
-    
-    public static String agrColumns1(TraceApiColumn agreementsApiColumn) {
-        switch(agreementsApiColumn) {
-            case STATUS: 		return "CD_STT";
-            case MTH: 		return "VA_MTH";
-            case URI: 			return "VA_URI";
-            case START_DATETIME: 		return "DT_DBT";
-            case FINISH_DATETIME: 			return "DT_FIN";
-            case RESOURCE:     return "VA_RCS";
-            case CLIENT: 		return "VA_CLN";
-            case ACTION: 		return "VA_ACT";
-            case DMN: 		return "VA_DMN";
-            case API: 			return "VA_APP";
-            default : throw undeclaredColumn(agreementsApiColumn);
-        }
+    }
+
+    public static DBColumn elapsedtime_Tera(TableDecorator table) {
+        return c -> "(CAST (((DT_FIN - DT_DBT)  second(4)) as DECIMAL(15,2)))";
+    }
+
+    public static DBColumn asDate_Tera(TableDecorator table) {
+        return c -> "(CAST(DH_DBT AS DATE))";
     }
 
     public static ComparisonExpression greaterOrEqualsExpressions(String timestamp) {
         return greaterOrEqual(Timestamp.from(Instant.parse(timestamp)));
     }
+
     public static ComparisonExpression lessThanExpressions(String timestamp) {
         return lessThan(Timestamp.from(Instant.parse(timestamp)));
     }
 
-    public static DBColumn elapsedtime(TableDecorator table){
-        return c -> "(CAST (((DT_FIN - DT_DBT)  second(4)) as DECIMAL(15,2)))";
+
+    public static DBColumn elapsedtime(TableDecorator table) {
+        return c -> "CAST(TIMESTAMPDIFF(MILLISECOND, DH_DBT, DH_FIN) /1000.0 AS DECIMAL(10,2))";
     }
 
-    public static DBColumn asDate(TableDecorator table){
-        return c->"(CAST(DT_DBT AS DATE))";
+    public static DBColumn asDate(TableDecorator table) {
+        return c -> "FORMATDATETIME (DH_DBT, 'yyyy-MM-dd' )";
     }
 
-    public static DBColumn byDay(TableDecorator table){
-        return c->"(EXTRACT (DAY FROM DT_DBT))";
+    public static DBColumn byDay(TableDecorator table) {
+        return c -> "(EXTRACT (DAY FROM DH_DBT))";
     }
-    public static DBColumn byMonth(TableDecorator table){
-        return c->"(EXTRACT (MONTH FROM DT_DBT))";
+
+    public static DBColumn byMonth(TableDecorator table) {
+        return c -> "(EXTRACT (MONTH FROM DH_DBT))";
     }
-    public static DBColumn byYear(TableDecorator table){
-        return c->"(EXTRACT (YEAR FROM DT_DBT))";
+
+    public static DBColumn byYear(TableDecorator table) {
+        return c -> "(EXTRACT (YEAR FROM DH_DBT))";
     }
 
 
-    public static final OperationColumn  avgElapsedTime (TableDecorator  table){
+    public static OperationColumn avgElapsedTime(TableDecorator table) {
         var elapsed = elapsedtime(table);
         return avg(elapsed);
     }
-    public static final OperationColumn minElapsedTime(TableDecorator  table){
+
+    public static OperationColumn minElapsedTime(TableDecorator table) {
         var elapsed = elapsedtime(table);
         return min(elapsed);
     }
 
-    public static final OperationColumn maxElapsedTime(TableDecorator  table){
+    public static OperationColumn maxElapsedTime(TableDecorator table) {
         var elapsed = elapsedtime(table);
         return max(elapsed);
     }
-    public static final OperationColumn getActionPerimeter(TableDecorator  table ){
+
+    public static OperationColumn getActionPerimeter(TableDecorator table) {
         var action = ACTION.column(table);
         return count(action.when(equal("perimeter")).then(action).end());
     }
 
-    private static final OperationColumn countStatusByType (TableDecorator  table, ComparisonExpression op){
+    private static OperationColumn countStatusByType(TableDecorator table, ComparisonExpression op) {
         var status = STATUS.column(table);
         return count((status).when(op).then(status).end());
     }
 
 
-    public static final OperationColumn countStatus200 (TableDecorator table ){
+    public static OperationColumn countStatus200(TableDecorator table) {
         return countStatusByType(table, equal(200));
     }
-    public static final OperationColumn countStatus400 (TableDecorator table){
+
+    public static OperationColumn countStatus400(TableDecorator table) {
         return countStatusByType(table, equal(400));
     }
 
-    public static final OperationColumn countStatus401 (TableDecorator table){
+    public static OperationColumn countStatus401(TableDecorator table) {
         return countStatusByType(table, equal(401));
     }
 
-    public static final OperationColumn countStatus403 (TableDecorator table){
+    public static OperationColumn countStatus403(TableDecorator table) {
         return countStatusByType(table, equal(403));
     }
 
-    public static final OperationColumn countStatus404 (TableDecorator table){
+    public static OperationColumn countStatus404(TableDecorator table) {
         return countStatusByType(table, equal(404));
     }
 
-    public static final OperationColumn countStatus500 (TableDecorator table){
+    public static OperationColumn countStatus500(TableDecorator table) {
         return countStatusByType(table, equal(500));
     }
-    public static final OperationColumn countErrorStatus (TableDecorator  table ){
+
+    public static OperationColumn countErrorStatus(TableDecorator table) {
         return countStatusByType(table, greaterOrEqual(400));
     }
 
-    public static final OperationColumn countClientErrorStatus (TableDecorator  table ){
+    public static OperationColumn countClientErrorStatus(TableDecorator table) {
         return countStatusByType(table, greaterOrEqual(400).and(lessThan(500)));
     }
-    public static final OperationColumn countServerErrorStatus (TableDecorator  table ){
+
+    public static OperationColumn countServerErrorStatus(TableDecorator table) {
         return countStatusByType(table, greaterOrEqual(500));
     }
 
-    public static final OperationColumn countSuccesStatus (TableDecorator  table ){
+    public static OperationColumn countSuccesStatus(TableDecorator table) {
         return countStatusByType(table, greaterOrEqual(200).and(lessOrEqual(226)));
     }
 
@@ -143,34 +169,45 @@ public final class DataConstants {
         return new IllegalArgumentException("unknown column " + column);
     }
 
-    public static final ComparisonExpression elapsedTimeExpressions(String name){
-        switch(name) {
-            case "fastest":     return lessThan(1);
-            case "fast":     	return greaterOrEqual(1).and(lessThan(3));
-            case "medium":  	return greaterOrEqual(3).and(lessThan(5));
-            case "slow":  		return greaterOrEqual(5).and(lessThan(10));
-            case "slowest": 	return greaterOrEqual(10);
-            default: return null;
+    public static ComparisonExpression elapsedTimeExpressions(String name) {
+        switch (name) {
+            case "fastest":
+                return lessThan(1);
+            case "fast":
+                return greaterOrEqual(1).and(lessThan(3));
+            case "medium":
+                return greaterOrEqual(3).and(lessThan(5));
+            case "slow":
+                return greaterOrEqual(5).and(lessThan(10));
+            case "slowest":
+                return greaterOrEqual(10);
+            default:
+                return null;
         }
     }
 
-    private static final OperationColumn elapsedTimeBySpeed (ComparisonExpression op,TableDecorator table){
+    private static OperationColumn elapsedTimeBySpeed(ComparisonExpression op, TableDecorator table) {
         var elapsed = elapsedtime(table);
         return count(elapsed.when(op).then(elapsed).end());
     }
-    public static final OperationColumn elapsedTimeVerySlow(TableDecorator table){
-        return elapsedTimeBySpeed(elapsedTimeExpressions("slowest"),table);
+
+    public static OperationColumn elapsedTimeVerySlow(TableDecorator table) {
+        return elapsedTimeBySpeed(elapsedTimeExpressions("slowest"), table);
     }
-    public static final OperationColumn elapsedTimeSlow(TableDecorator table){
-        return elapsedTimeBySpeed(elapsedTimeExpressions("slow"),table);
+
+    public static OperationColumn elapsedTimeSlow(TableDecorator table) {
+        return elapsedTimeBySpeed(elapsedTimeExpressions("slow"), table);
     }
-    public static final OperationColumn elapsedTimeMedium(TableDecorator table){
-        return elapsedTimeBySpeed(elapsedTimeExpressions("medium"),table);
+
+    public static OperationColumn elapsedTimeMedium(TableDecorator table) {
+        return elapsedTimeBySpeed(elapsedTimeExpressions("medium"), table);
     }
-    public static final OperationColumn elapsedTimeFast(TableDecorator table){
-        return elapsedTimeBySpeed(elapsedTimeExpressions("fast"),table);
+
+    public static OperationColumn elapsedTimeFast(TableDecorator table) {
+        return elapsedTimeBySpeed(elapsedTimeExpressions("fast"), table);
     }
-    public static final OperationColumn elapsedTimeFastest(TableDecorator table){
-        return elapsedTimeBySpeed(elapsedTimeExpressions("fastest"),table);
+
+    public static OperationColumn elapsedTimeFastest(TableDecorator table) {
+        return elapsedTimeBySpeed(elapsedTimeExpressions("fastest"), table);
     }
 }
