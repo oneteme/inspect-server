@@ -14,10 +14,7 @@ import static org.usf.trace.api.server.Utils.requireSingle;
 @RequestMapping(value = "trace", produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 public class ApiController {
-
-
     private final RequestDao dao;
-
 
     @PutMapping("incoming/request")
     public IncomingRequest saveRequest(@RequestBody IncomingRequest req) {
@@ -25,18 +22,18 @@ public class ApiController {
     }
 
     @GetMapping("incoming/request")
-    public List<IncomingRequest> getIncomingRequestByIds(@RequestParam(required = false) String[] id) { // without tree
-        return dao.getIncomingRequestById(id);
+    public List<IncomingRequest> getIncomingRequestByIds(@RequestParam(defaultValue = "true",name = "lazy") boolean lazy,@RequestParam(required = false) String[] id) { // without tree
+        return dao.getIncomingRequestById(lazy,id);
     }
 
     @GetMapping("incoming/request/{id}")
-    public IncomingRequest getIncomingRequestById(@PathVariable String id) { // without tree
-        return requireSingle(dao.getIncomingRequestById(id));
+    public IncomingRequest getIncomingRequestById(@RequestParam(defaultValue = "true",name = "lazy") boolean lazy,@PathVariable String id) { // without tree
+        return requireSingle(dao.getIncomingRequestById(lazy,id));
     }
 
     @GetMapping("incoming/request/{id}/tree") //LATER
     public IncomingRequest getIncomingRequestTreeById(@PathVariable String id) {
-        return requireSingle(dao.getIncomingRequestById(id)); //change query
+        return requireSingle(dao.getIncomingRequestById(false,id)); //change query
     }
 
 }

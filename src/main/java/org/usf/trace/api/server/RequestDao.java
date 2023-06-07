@@ -97,14 +97,14 @@ public class RequestDao {
         ).collect(toList()));
     }
 
-    public List<IncomingRequest> getIncomingRequestById(boolean getSubList, String... idArr) {
+    public List<IncomingRequest> getIncomingRequestById(boolean lazy, String... idArr) {
         var query = "SELECT ID_IN_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_SZE,DH_DBT,DH_FIN,VA_THRED,VA_CNT_TYP,VA_ACT,VA_RSC,VA_CLI,VA_GRP FROM E_IN_REQ ";
-        var idArrOb = new Object[]{};
+        int[] argTypes = null;
         if (!isEmpty(idArr)) {
             query += "WHERE ID_IN_REQ IN (" + nArg(idArr.length) + ")";
-            idArrOb = idArr;
+             argTypes = newArray(idArr.length, VARCHAR);
         }
-        List<IncomingRequest> res = template.query(query, idArrOb, newArray(idArrOb.length, VARCHAR), (rs, i) -> {
+        List<IncomingRequest> res = template.query(query, idArr, argTypes, (rs, i) -> {
             IncomingRequest in = new IncomingRequest(rs.getString("ID_IN_REQ"));
             in.setProtocol(rs.getString("VA_PRTCL"));
             in.setHost(rs.getString("VA_HST"));
@@ -125,14 +125,16 @@ public class RequestDao {
             return in;
         });
 
-        var outReqMap = getOutcomingRequestListForInReq(idArr).stream().collect(groupingBy(ServerOutcomingRequest::getIdIncoming));
-        var outQryMap = getOutcomingQueryListForInReq(idArr).stream().collect(groupingBy(ServerOutcomingQuery::getIdIncoming));
+        if(lazy){
+            var outReqMap = getOutcomingRequestListForInReq(idArr).stream().collect(groupingBy(ServerOutcomingRequest::getIdIncoming));
+            var outQryMap = getOutcomingQueryListForInReq(idArr).stream().collect(groupingBy(ServerOutcomingQuery::getIdIncoming));
 
-        for (IncomingRequest in : res) {
-            if (outQryMap.containsKey(in.getId()))
-                in.getQueries().addAll(outQryMap.get(in.getId()));
-            if (outReqMap.containsKey(in.getId()))
-                in.getRequests().addAll(outReqMap.get(in.getId()));
+            for (IncomingRequest in : res) {
+                if (outQryMap.containsKey(in.getId()))
+                    in.getQueries().addAll(outQryMap.get(in.getId()));
+                if (outReqMap.containsKey(in.getId()))
+                    in.getRequests().addAll(outReqMap.get(in.getId()));
+            }
         }
         return res;
 
@@ -141,13 +143,13 @@ public class RequestDao {
     public List<ServerOutcomingRequest> getOutcomingRequestListForInReq(String... idArr) {
 
         var query = "SELECT ID_OUT_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_SZE,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ FROM E_OUT_REQ ";
-        var idArrOb = new Object[]{};
+        int[] argTypes = null;
         if (!isEmpty(idArr)) {
             query += "WHERE CD_IN_REQ IN (" + nArg(idArr.length) + ")";
-            idArrOb = idArr;
+            argTypes = newArray(idArr.length, VARCHAR);
         }
 
-        return template.query(query, idArrOb, newArray(idArrOb.length, VARCHAR), (rs, i) -> {
+        return template.query(query, idArr, argTypes, (rs, i) -> {
             ServerOutcomingRequest out = new ServerOutcomingRequest(rs.getString("ID_OUT_REQ"), rs.getString("CD_IN_REQ"));
             out.setProtocol(rs.getString("VA_PRTCL"));
             out.setHost(rs.getString("VA_HST"));
@@ -166,13 +168,13 @@ public class RequestDao {
 
     public List<ServerOutcomingQuery> getOutcomingQueryListForInReq(String... idArr) {
         var query = "SELECT ID_OUT_QRY,VA_URL,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ FROM E_OUT_QRY ";
-        var idArrOb = new Object[]{};
+        int[] argTypes = null;
         if (!isEmpty(idArr)) {
-            idArrOb = idArr;
             query += "WHERE CD_IN_REQ IN (" + nArg(idArr.length) + ")";
+            argTypes = newArray(idArr.length, VARCHAR);
         }
         List<Long> idQryArr = new LinkedList<>();
-        List<ServerOutcomingQuery> outList = template.query(query, idArrOb, newArray(idArrOb.length, VARCHAR), (rs, i) -> { //compile pas ambigue !!
+        List<ServerOutcomingQuery> outList = template.query(query, idArr, argTypes, (rs, i) -> { //compile pas ambigue !!
             ServerOutcomingQuery out = new ServerOutcomingQuery(rs.getString("CD_IN_REQ"), rs.getLong("ID_OUT_QRY"));
             out.setUrl(rs.getString("VA_URL"));
             out.setStart(rs.getTimestamp("DH_DBT").toInstant());
@@ -193,10 +195,12 @@ public class RequestDao {
     public List<ServerDatabaAction> getDatabaseActionListForOutReq1(List<Long> queries) {
 
         var query = "SELECT VA_TYP,DH_DBT,DH_FIN,VA_FAIL,CD_OUT_QRY FROM E_DB_ACT ";
+        int[] argTypes = null;
         if (!isEmpty(queries)) {
             query += "WHERE CD_OUT_QRY IN (" + nArg(queries.size()) + ")";
+            argTypes = newArray(queries.size(), BIGINT);
         }
-        return template.query(query, queries.toArray(), newArray(queries.size(), BIGINT), (rs, i) ->
+        return template.query(query, queries.toArray(), argTypes, (rs, i) ->
                 new ServerDatabaAction(
                         rs.getLong("CD_OUT_QRY"),
                         Action.valueOf(rs.getString("VA_TYP")),
