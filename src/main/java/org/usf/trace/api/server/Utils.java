@@ -27,5 +27,12 @@ public final class Utils {
     public static <T> boolean isEmpty(T[] arr){
     	return isNull(arr) || arr.length == 0;
     }
+
+	public static String nArg(int n) {
+		if (n < 1) {
+			return ""; // throw
+		}
+		return n == 1 ? "?" : "?" + ", ?".repeat(n - 1);
+	}
 	
 }

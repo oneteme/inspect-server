@@ -10,20 +10,23 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public enum TraceApiTable implements TableDecorator {
 
-    AGREEMENTS("E_API_TRC", DataConstants::agrColumns),
 
-    AGREEMENTS1("E_API_TRC",DataConstants::agrColumns1);
-	
+    INCOMING_REQUEST_TABLE("TEST", DataConstants::incReqColumns);
+
     @NonNull
     private final String tableName;
     @NonNull
     private final Function<TraceApiColumn, String> columnMap;
 
     @Override
-    public String identity() {return name();}
+    public String identity() {
+        return name();
+    }
 
     @Override
-    public String reference() {return tableName;}
+    public String reference() {
+        return tableName;
+    }
 
     @Override
     public String columnName(ColumnDecorator desc) {
@@ -32,6 +35,6 @@ public enum TraceApiTable implements TableDecorator {
 
     @Override
     public String sql() {
-        return  tableName;
+        return tableName;
     }
 }
