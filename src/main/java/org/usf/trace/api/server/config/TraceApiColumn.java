@@ -20,46 +20,53 @@ import static org.usf.jquery.core.DBFunction.count;
 @RequiredArgsConstructor
 public enum TraceApiColumn implements ColumnDecorator {
 
-    STATUS("status"),
+    ID_INCOMING_REQ("idIncomingRequest"),
+    PROTOCOL("protocol"),
+    HOST("host"),
+    PORT("port"),
+    PATH("path"),
+    QUERY("query"),
     MTH("mth"),
-    URI("uri"),
-    START_DATETIME("startDatetime",null,DataConstants::greaterOrEqualsExpressions),
-    FINISH_DATETIME("finishDatetime",null,DataConstants::lessThanExpressions),
+    STATUS("status"),
+    SIZE("size"),
+    START_DATETIME("startDatetime", null, DataConstants::greaterOrEqualsExpressions),
+    FINISH_DATETIME("finishDatetime", null, DataConstants::lessThanExpressions),
+    THREAD("thread"),
+    CONTENT_TYPE("contentType"),
+    ACTION("action"),
     RESOURCE("resource"),
     CLIENT("client"),
-    ACTION("action"),
-    DMN("dmn"),
-    API("api"),
+    GROUPE("groupe"),
 
-    AS_DATE("asDate",DataConstants::asDate),
-    BY_DAY("byDay",DataConstants::byDay),
 
-    BY_MONTH("byMonth",DataConstants::byMonth),
-    BY_YEAR("byYear",DataConstants::byYear),
-    ELAPSEDTIME("elapsedtime", DataConstants::elapsedtime,DataConstants::elapsedTimeExpressions),
-    AVG_ELAPSEDTIME("avgElapsedTime",DataConstants::avgElapsedTime),
-    MAX_ELAPSEDTIME("maxElapsedTime",DataConstants::maxElapsedTime),
-    MIN_ELAPSEDTIME("minElapsedTime",DataConstants::minElapsedTime),
+    //---
+    AS_DATE("asDate", DataConstants::asDate),
+    BY_DAY("byDay", DataConstants::byDay),
 
-    COUNT_ELAPSEDTIME_SLOWEST("elapsedTimeSlowest",DataConstants::elapsedTimeVerySlow ),
-    COUNT_ELAPSEDTIME_SLOW("elapsedTimeSlow",DataConstants::elapsedTimeSlow ),
-    COUNT_ELAPSEDTIME_MEDIUM("elapsedTimeMedium",DataConstants::elapsedTimeMedium ),
-    COUNT_ELAPSEDTIME_FAST("elapsedTimeFast",DataConstants::elapsedTimeFast ),
-    COUNT_ELAPSEDTIME_FASTEST("elapsedTimeFastest",DataConstants::elapsedTimeFastest ),
-    COUNT("countRows", t -> count(),DataConstants::elapsedTimeExpressions),
-    COUNT_STATUS_ERROR("countErrorRows",DataConstants::countErrorStatus),
+    BY_MONTH("byMonth", DataConstants::byMonth),
+    BY_YEAR("byYear", DataConstants::byYear),
+    ELAPSEDTIME("elapsedtime", DataConstants::elapsedtime, DataConstants::elapsedTimeExpressions),
+    AVG_ELAPSEDTIME("avgElapsedTime", DataConstants::avgElapsedTime),
+    MAX_ELAPSEDTIME("maxElapsedTime", DataConstants::maxElapsedTime),
+    MIN_ELAPSEDTIME("minElapsedTime", DataConstants::minElapsedTime),
 
-    COUNT_STATUS_ERROR_CLIENT("countClientErrorRows",DataConstants::countClientErrorStatus),
-    COUNT_STATUS_ERROR_SERVER("countServerErrorRows",DataConstants::countServerErrorStatus),
-    COUNT_STATUS_SUCCES("countSuccesRows",DataConstants::countSuccesStatus),
-    COUNT_200("count200",DataConstants::countStatus200),
-    COUNT_400("count400",DataConstants::countStatus400),
-    COUNT_401("count401",DataConstants::countStatus401),
-    COUNT_403("count403",DataConstants::countStatus403),
+    COUNT_ELAPSEDTIME_SLOWEST("elapsedTimeSlowest", DataConstants::elapsedTimeVerySlow),
+    COUNT_ELAPSEDTIME_SLOW("elapsedTimeSlow", DataConstants::elapsedTimeSlow),
+    COUNT_ELAPSEDTIME_MEDIUM("elapsedTimeMedium", DataConstants::elapsedTimeMedium),
+    COUNT_ELAPSEDTIME_FAST("elapsedTimeFast", DataConstants::elapsedTimeFast),
+    COUNT_ELAPSEDTIME_FASTEST("elapsedTimeFastest", DataConstants::elapsedTimeFastest),
+    COUNT("countRows", t -> count(), DataConstants::elapsedTimeExpressions),
+    COUNT_STATUS_ERROR("countErrorRows", DataConstants::countErrorStatus),
 
-    COUNT_404("count404",DataConstants::countStatus404),
-    COUNT_500("count500",DataConstants::countStatus500),
-    ACTION_PERIMETER("actionPerimeter",DataConstants::getActionPerimeter);
+    COUNT_STATUS_ERROR_CLIENT("countClientErrorRows", DataConstants::countClientErrorStatus),
+    COUNT_STATUS_ERROR_SERVER("countServerErrorRows", DataConstants::countServerErrorStatus),
+    COUNT_STATUS_SUCCES("countSuccesRows", DataConstants::countSuccesStatus),
+    COUNT_200("count200", DataConstants::countStatus200),
+    COUNT_400("count400", DataConstants::countStatus400),
+    COUNT_401("count401", DataConstants::countStatus401),
+    COUNT_403("count403", DataConstants::countStatus403),
+    COUNT_404("count404", DataConstants::countStatus404),
+    COUNT_500("count500", DataConstants::countStatus500);
 
 
     private final String out; //nullable
@@ -131,14 +138,14 @@ public enum TraceApiColumn implements ColumnDecorator {
 
     @Override
     public ArgumentParser parser(TableMetadata metadata) {
-        if(this == COUNT) {
+        if (this == COUNT) {
             return Integer::parseInt;
         }
-        if(this == BY_DAY || this == BY_YEAR || this == BY_MONTH){
+        if (this == BY_DAY || this == BY_YEAR || this == BY_MONTH) {
             return Integer::parseInt;
         }
-        if(this == AS_DATE) {
-            return v-> Date.valueOf(LocalDate.parse(v));
+        if (this == AS_DATE) {
+            return v -> Date.valueOf(LocalDate.parse(v));
         }
         return ColumnDecorator.super.parser(metadata);
     }
