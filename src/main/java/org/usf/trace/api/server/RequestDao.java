@@ -165,9 +165,7 @@ public class RequestDao {
             query += "WHERE CD_IN_REQ IN (" + nArg(idArr.length) + ")";
         }
         List<ServerOutcomingQuery> outList = new LinkedList<>();
-        List<Long> idQryArr = new LinkedList<>(); // to be changed
-        System.out.println(query);
-        System.out.println(Arrays.toString(idArr));
+        List<Long> idQryArr = new LinkedList<>();
         template.query(query, idArr, rs -> { //compile pas ambigue !!
             do {
                 ServerOutcomingQuery out = new ServerOutcomingQuery(rs.getString("CD_IN_REQ"), rs.getLong("ID_OUT_QRY"));
@@ -179,8 +177,6 @@ public class RequestDao {
                 idQryArr.add(rs.getLong("ID_OUT_QRY"));
             } while (rs.next());
         });
-
-        System.out.println(outList);
 
         var dataMap = getDatabaseActionListForOutReq1(idQryArr).stream().collect(Collectors.groupingBy(ServerDatabaAction::getId));
         for (ServerOutcomingQuery in : outList) {
@@ -214,16 +210,7 @@ public class RequestDao {
     }
 
 
-    @Getter
-    static class ServerDatabaAction extends DatabaseAction {
-        @JsonIgnore
-        private final long id;
 
-        public ServerDatabaAction(long id, Action type, Instant start, Instant end, boolean failed) {
-            super(type, start, end, failed);
-            this.id = id;
-        }
-    }
 
     @Getter
     static class ServerOutcomingRequest extends OutcomingRequest {
@@ -247,6 +234,17 @@ public class RequestDao {
         public ServerOutcomingQuery(String idIncoming, Long idOutQry) {
             this.idIncoming = idIncoming;
             this.idOutQry = idOutQry;
+        }
+    }
+
+    @Getter
+    static class ServerDatabaAction extends DatabaseAction {
+        @JsonIgnore
+        private final long id;
+
+        public ServerDatabaAction(long id, Action type, Instant start, Instant end, boolean failed) {
+            super(type, start, end, failed);
+            this.id = id;
         }
     }
 
