@@ -31,7 +31,7 @@ public final class Utils {
 
 	public static String nArg(int n) {
 		if (n < 1) {
-			return ""; // throw
+			throw new IllegalArgumentException("n < 1");
 		}
 		return n == 1 ? "?" : "?" + ", ?".repeat(n - 1);
 	}
