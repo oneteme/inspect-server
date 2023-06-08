@@ -35,7 +35,9 @@ public class RequestDao {
 
     @Transactional(rollbackFor = Exception.class)
     public IncomingRequest addIncomingRequest(IncomingRequest req) {
-        template.update("INSERT INTO E_IN_REQ (ID_IN_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_SZE,DH_DBT,DH_FIN,VA_THRED,VA_CNT_TYP,VA_ACT,VA_RSC,VA_CLI,VA_GRP) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    	var query = "INSERT INTO E_IN_REQ(ID_IN_REQ, VA_PRTCL, VA_HST, CD_PRT, VA_PTH, VA_QRY, VA_MTH, CD_STT, VA_SZE, DH_DBT, DH_FIN, VA_THRED, VA_CNT_TYP, VA_ACT, VA_RSC, VA_CLI, VA_GRP)"
+    			+ " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        template.update(query,
                 req.getId(),
                 req.getProtocol(),
                 req.getHost(),
@@ -59,7 +61,9 @@ public class RequestDao {
     }
 
     private void addOucomingRequest(Collection<OutcomingRequest> reqList, String incomingRequestId) {
-        template.batchUpdate("INSERT INTO E_OUT_REQ (ID_OUT_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_SZE,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,'" + incomingRequestId + "')", reqList, reqList.size(), (ps, o) -> {
+    	var query = "INSERT INTO E_OUT_REQ(ID_OUT_REQ, VA_PRTCL, VA_HST, CD_PRT, VA_PTH, VA_QRY, VA_MTH, CD_STT, VA_SZE, DH_DBT, DH_FIN, VA_THRED, CD_IN_REQ)"
+    			+ " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,'"+ incomingRequestId + "')";
+        template.batchUpdate(query, reqList, reqList.size(), (ps, o) -> {
             ps.setString(1, o.getId());
             ps.setString(2, o.getProtocol());
             ps.setString(3, o.getHost());
@@ -79,7 +83,9 @@ public class RequestDao {
         final Integer maxId = template.queryForObject("SELECT COALESCE(MAX(ID_OUT_QRY), 0) FROM E_OUT_QRY", Integer.class);
         var map = new LinkedHashMap<OutcomingQuery, Integer>();
         AtomicInteger inc = new AtomicInteger(maxId);
-        template.batchUpdate("INSERT INTO E_OUT_QRY (ID_OUT_QRY,VA_URL,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ) VALUES  (?,?,?,?,?,'" + incomingRequestId + "')", qryList, qryList.size(), (ps, o) -> {
+        var query = "INSERT INTO E_OUT_QRY(ID_OUT_QRY,VA_URL,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ)"
+        		+ " VALUES(?,?,?,?,?,'" + incomingRequestId + "')";
+        template.batchUpdate(query, qryList, qryList.size(), (ps, o) -> {
             ps.setInt(1, inc.incrementAndGet());
             ps.setString(2, o.getUrl());
             ps.setTimestamp(3, from(o.getStart()));
@@ -98,10 +104,10 @@ public class RequestDao {
     }
 
     public List<IncomingRequest> getIncomingRequestById(boolean lazy, String... idArr) {
-        var query = "SELECT ID_IN_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_SZE,DH_DBT,DH_FIN,VA_THRED,VA_CNT_TYP,VA_ACT,VA_RSC,VA_CLI,VA_GRP FROM E_IN_REQ ";
+        var query = "SELECT ID_IN_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_SZE,DH_DBT,DH_FIN,VA_THRED,VA_CNT_TYP,VA_ACT,VA_RSC,VA_CLI,VA_GRP FROM E_IN_REQ";
         int[] argTypes = null;
         if (!isEmpty(idArr)) {
-            query += "WHERE ID_IN_REQ IN (" + nArg(idArr.length) + ")";
+            query += " WHERE ID_IN_REQ IN(" + nArg(idArr.length) + ")";
              argTypes = newArray(idArr.length, VARCHAR);
         }
         List<IncomingRequest> res = template.query(query, idArr, argTypes, (rs, i) -> {
@@ -124,31 +130,28 @@ public class RequestDao {
             in.setGroup(rs.getString("VA_GRP"));
             return in;
         });
-
         if(lazy){
             var outReqMap = getOutcomingRequestListForInReq(idArr).stream().collect(groupingBy(ServerOutcomingRequest::getIdIncoming));
             var outQryMap = getOutcomingQueryListForInReq(idArr).stream().collect(groupingBy(ServerOutcomingQuery::getIdIncoming));
-
             for (IncomingRequest in : res) {
-                if (outQryMap.containsKey(in.getId()))
-                    in.getQueries().addAll(outQryMap.get(in.getId()));
-                if (outReqMap.containsKey(in.getId()))
-                    in.getRequests().addAll(outReqMap.get(in.getId()));
+                if(outQryMap.containsKey(in.getId())) {
+                	in.getQueries().addAll(outQryMap.get(in.getId())); 
+                }
+                if(outReqMap.containsKey(in.getId())) {
+                	in.getRequests().addAll(outReqMap.get(in.getId()));
+                }
             }
         }
         return res;
-
     }
 
     public List<ServerOutcomingRequest> getOutcomingRequestListForInReq(String... idArr) {
-
-        var query = "SELECT ID_OUT_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_SZE,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ FROM E_OUT_REQ ";
+        var query = "SELECT ID_OUT_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_SZE,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ FROM E_OUT_REQ";
         int[] argTypes = null;
         if (!isEmpty(idArr)) {
-            query += "WHERE CD_IN_REQ IN (" + nArg(idArr.length) + ")";
+            query += " WHERE CD_IN_REQ IN(" + nArg(idArr.length) + ")";
             argTypes = newArray(idArr.length, VARCHAR);
         }
-
         return template.query(query, idArr, argTypes, (rs, i) -> {
             ServerOutcomingRequest out = new ServerOutcomingRequest(rs.getString("ID_OUT_REQ"), rs.getString("CD_IN_REQ"));
             out.setProtocol(rs.getString("VA_PRTCL"));
@@ -167,14 +170,14 @@ public class RequestDao {
     }
 
     public List<ServerOutcomingQuery> getOutcomingQueryListForInReq(String... idArr) {
-        var query = "SELECT ID_OUT_QRY,VA_URL,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ FROM E_OUT_QRY ";
+        var query = "SELECT ID_OUT_QRY,VA_URL,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ FROM E_OUT_QRY";
         int[] argTypes = null;
         if (!isEmpty(idArr)) {
-            query += "WHERE CD_IN_REQ IN (" + nArg(idArr.length) + ")";
+            query += " WHERE CD_IN_REQ IN(" + nArg(idArr.length) + ")";
             argTypes = newArray(idArr.length, VARCHAR);
         }
         List<Long> idQryArr = new LinkedList<>();
-        List<ServerOutcomingQuery> outList = template.query(query, idArr, argTypes, (rs, i) -> { //compile pas ambigue !!
+        List<ServerOutcomingQuery> outList = template.query(query, idArr, argTypes, (rs, i) -> {
             ServerOutcomingQuery out = new ServerOutcomingQuery(rs.getString("CD_IN_REQ"), rs.getLong("ID_OUT_QRY"));
             out.setUrl(rs.getString("VA_URL"));
             out.setStart(rs.getTimestamp("DH_DBT").toInstant());
@@ -183,21 +186,21 @@ public class RequestDao {
             idQryArr.add(rs.getLong("ID_OUT_QRY"));
             return out;
         });
-
         var dataMap = getDatabaseActionListForOutReq1(idQryArr).stream().collect(groupingBy(ServerDatabaAction::getId));
         for (ServerOutcomingQuery in : outList) {
-            if (dataMap.containsKey(in.getIdOutQry()))
+            if (dataMap.containsKey(in.getIdOutQry())) {
                 in.getActions().addAll(dataMap.get(in.getIdOutQry()));
+            }
         }
         return outList;
     }
 
     public List<ServerDatabaAction> getDatabaseActionListForOutReq1(List<Long> queries) {
 
-        var query = "SELECT VA_TYP,DH_DBT,DH_FIN,VA_FAIL,CD_OUT_QRY FROM E_DB_ACT ";
+        var query = "SELECT VA_TYP,DH_DBT,DH_FIN,VA_FAIL,CD_OUT_QRY FROM E_DB_ACT";
         int[] argTypes = null;
         if (!isEmpty(queries)) {
-            query += "WHERE CD_OUT_QRY IN (" + nArg(queries.size()) + ")";
+            query += " WHERE CD_OUT_QRY IN(" + nArg(queries.size()) + ")";
             argTypes = newArray(queries.size(), BIGINT);
         }
         return template.query(query, queries.toArray(), argTypes, (rs, i) ->
@@ -211,7 +214,7 @@ public class RequestDao {
 
 
     @Getter
-    static class ServerOutcomingRequest extends OutcomingRequest {
+    static final class ServerOutcomingRequest extends OutcomingRequest {
         @JsonIgnore
         private final String idIncoming;
 
@@ -222,7 +225,7 @@ public class RequestDao {
     }
 
     @Getter
-    static class ServerOutcomingQuery extends OutcomingQuery {
+    static final class ServerOutcomingQuery extends OutcomingQuery {
         @JsonIgnore
         private final String idIncoming;
 
@@ -236,7 +239,7 @@ public class RequestDao {
     }
 
     @Getter
-    static class ServerDatabaAction extends DatabaseAction {
+    static final class ServerDatabaAction extends DatabaseAction {
         @JsonIgnore
         private final long id;
 
