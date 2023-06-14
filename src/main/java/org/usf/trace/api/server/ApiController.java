@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.web.bind.annotation.*;
 import org.usf.traceapi.core.IncomingRequest;
+import org.usf.traceapi.core.OutcomingRequest;
+
 import java.util.List;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.usf.trace.api.server.Utils.requireSingle;
@@ -22,13 +24,19 @@ public class ApiController {
     }
 
     @GetMapping("incoming/request")
-    public List<IncomingRequest> getIncomingRequestByIds(@RequestParam(defaultValue = "true",name = "lazy") boolean lazy,@RequestParam(required = false) String[] id) { // without tree
+    public List<IncomingRequest> getIncomingRequestByIds(@RequestParam(defaultValue = "true",name = "lazy") boolean lazy,@RequestParam(required = false,name="id") String[] id) { // without tree
         return dao.getIncomingRequestById(lazy,id);
     }
 
     @GetMapping("incoming/request/{id}")
     public IncomingRequest getIncomingRequestById(@PathVariable String id) { // without tree
         return requireSingle(dao.getIncomingRequestById(true, id));
+    }
+
+
+    @GetMapping("incoming/request/{id}/out")
+    public OutcomingRequest getOutcomingRequestById(@PathVariable String id){
+        return dao.getOutcomingRequestById(id);
     }
 
     @GetMapping("incoming/request/{id}/tree") //LATER
