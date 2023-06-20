@@ -12,3 +12,11 @@ spring:
     console:
       enabled: true
       path: /h2
+
+trace:
+  period: 1
+  time-unit: MINUTES
+
+logging:
+  level:
+    org.springframework.jdbc.core: DEBUG
