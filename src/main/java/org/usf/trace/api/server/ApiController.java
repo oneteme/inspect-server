@@ -40,13 +40,7 @@ public class ApiController {
 
     public ApiController(RequestDao dao, TraceConfigProperties prop) {
         this.dao = dao;
-        this.future = executor.scheduleWithFixedDelay(()-> {
-        	if(!queue.isEmpty()) {
-                var list = new LinkedList<IncomingRequest>();
-                log.info("scheduled data queue backup : {} requests", queue.drainTo(list));
-                dao.addIncomingRequest(list);
-            }
-        }, 0, prop.getPeriod(), TimeUnit.valueOf(prop.getTimeUnit()));  // conf
+        this.future = executor.scheduleWithFixedDelay(this::safeBackup, 0, prop.getPeriod(), TimeUnit.valueOf(prop.getTimeUnit()));  // conf
     }
 
     @PutMapping("incoming/request")
@@ -76,6 +70,19 @@ public class ApiController {
     @GetMapping("incoming/request/{id}/tree") //LATER
     public IncomingRequest getIncomingRequestTreeById(@PathVariable String id) {
         return requireSingle(dao.getIncomingRequestById(true, id)); //change query
+    }
+    
+    private void safeBackup() {
+    	if(!queue.isEmpty()) {
+	    	try {
+		        var list = new LinkedList<IncomingRequest>();
+		        log.info("scheduled data queue backup : {} requests", queue.drainTo(list));
+		        dao.addIncomingRequest(list);
+	    	}
+	    	catch (Exception e) {
+	    		log.error("bachup failed", e);
+			}
+    	}
     }
 
 }
