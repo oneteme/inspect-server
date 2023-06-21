@@ -33,8 +33,7 @@ public class RequestDao {
     private final JdbcTemplate template;
 
     @Transactional(rollbackFor = Exception.class)
-    public void addIncomingRequest(LinkedList<IncomingRequest> reqList) {
-
+    public void addIncomingRequest(List<IncomingRequest> reqList) {
         List<ServerOutcomingRequest> outreq = new LinkedList<>();
         List<ServerOutcomingQuery> outqry = new LinkedList<>();
         template.batchUpdate("INSERT INTO E_IN_REQ (ID_IN_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_CNT_TYP,VA_ACT,VA_RSC,VA_CLI,VA_GRP) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
@@ -65,7 +64,6 @@ public class RequestDao {
             }
 
         });
-
         addOucomingRequest(outreq);
         addOutcomingQueries(outqry);
     }
