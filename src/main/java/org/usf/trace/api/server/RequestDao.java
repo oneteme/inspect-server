@@ -42,7 +42,7 @@ public class RequestDao {
     public void addIncomingRequest(List<IncomingRequest> reqList) {
         List<OutcomingRequestWrapper> outreq = new LinkedList<>();
         List<OutcomingQueryWrapper> outqry = new LinkedList<>();
-        template.batchUpdate("INSERT INTO E_IN_REQ (ID_IN_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_CNT_TYP,VA_ACT,VA_RSC,VA_CLI,VA_GRP) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
+        template.batchUpdate("INSERT INTO E_IN_REQ(ID_IN_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_CNT_TYP,VA_ACT,VA_RSC,VA_CLI,VA_GRP) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             ps.setString(1, o.getId());
             ps.setString(2, o.getProtocol());
             ps.setString(3, o.getHost());
@@ -117,7 +117,7 @@ public class RequestDao {
     public OutcomingRequest getOutcomingRequestById(String id) {
         return template.query("SELECT ID_OUT_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ FROM E_OUT_REQ WHERE ID_OUT_REQ = ? ", new Object[]{id}, newArray(1, VARCHAR), rs -> {
 
-            if (rs.next()) {
+            if(rs.next()) {
                 OutcomingRequest out = new OutcomingRequest(rs.getString("ID_OUT_REQ"));
                 out.setProtocol(rs.getString("VA_PRTCL"));
                 out.setHost(rs.getString("VA_HST"));
@@ -140,8 +140,8 @@ public class RequestDao {
     public List<IncomingRequest> getIncomingRequestById(boolean lazy, String... idArr) {
         var query = "SELECT ID_IN_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_CNT_TYP,VA_ACT,VA_RSC,VA_CLI,VA_GRP FROM E_IN_REQ";
         int[] argTypes = null;
-        if (!isEmpty(idArr)) {
-            query += " WHERE ID_IN_REQ IN (" + nArg(idArr.length) + ")";
+        if(!isEmpty(idArr)) {
+            query += " WHERE ID_IN_REQ IN(" + nArg(idArr.length) + ")";
             argTypes = newArray(idArr.length, VARCHAR);
         }
         List<IncomingRequest> res = template.query(query, idArr, argTypes, (rs, i) -> {
@@ -175,7 +175,7 @@ public class RequestDao {
 
     public List<OutcomingRequestWrapper> outcomingRequests(Set<String> incomingId) { //use criteria 
         var query = "SELECT ID_OUT_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ FROM E_OUT_REQ"
-        		+ " WHERE CD_IN_REQ IN (" + nArg(incomingId.size()) + ")";
+        		+ " WHERE CD_IN_REQ IN(" + nArg(incomingId.size()) + ")";
         return template.query(query, incomingId.toArray(), newArray(incomingId.size(), VARCHAR), (rs, i) -> {
             OutcomingRequestWrapper out = new OutcomingRequestWrapper(rs.getString("ID_OUT_REQ"), rs.getString("CD_IN_REQ"));
             out.setProtocol(rs.getString("VA_PRTCL"));
@@ -196,7 +196,7 @@ public class RequestDao {
 
     public List<OutcomingQueryWrapper> outcomingQueries(Set<String> incomingId) { // non empty
         var query = "SELECT ID_OUT_QRY,VA_HST,VA_SCHMA,DH_DBT,DH_FIN,VA_THRED,VA_FAIL,CD_IN_REQ FROM E_OUT_QRY" 
-        		+ " WHERE CD_IN_REQ IN (" + nArg(incomingId.size()) + ")";
+        		+ " WHERE CD_IN_REQ IN(" + nArg(incomingId.size()) + ")";
         var queries = template.query(query, incomingId.toArray(), newArray(incomingId.size(), VARCHAR), (rs, i) -> {
             var out = new OutcomingQueryWrapper(rs.getLong("ID_OUT_QRY"), rs.getString("CD_IN_REQ"));
             out.setHost(rs.getString("VA_HST"));
@@ -216,7 +216,7 @@ public class RequestDao {
 
     public List<DatabaseActionWrapper> databaseActions(Set<Long> queries) { // non empty
         var query = "SELECT VA_TYP,DH_DBT,DH_FIN,VA_FAIL,CD_OUT_QRY FROM E_DB_ACT"
-        		+ " WHERE CD_OUT_QRY IN (" + nArg(queries.size()) + ")";
+        		+ " WHERE CD_OUT_QRY IN(" + nArg(queries.size()) + ")";
         return template.query(query, queries.toArray(), newArray(queries.size(), BIGINT), (rs, i)->
                 new DatabaseActionWrapper(
                         rs.getLong("CD_OUT_QRY"),
