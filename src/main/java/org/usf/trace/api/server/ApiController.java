@@ -40,13 +40,11 @@ public class ApiController {
 
     public ApiController(RequestDao dao, TraceConfigProperties prop) {
         this.dao = dao;
-        this.future = executor.scheduleWithFixedDelay(() -> {
+        this.future = executor.scheduleWithFixedDelay(()-> {
         	if(!queue.isEmpty()) {
                 var list = new LinkedList<IncomingRequest>();
-                var size = queue.drainTo(list);
-                log.info("inserting {} incoming requests to database", size);
+                log.info("scheduled data queue backup : {} requests", queue.drainTo(list));
                 dao.addIncomingRequest(list);
-                log.info("Queue cleared");
             }
         }, 0, prop.getPeriod(), TimeUnit.valueOf(prop.getTimeUnit()));  // conf
     }
@@ -54,7 +52,7 @@ public class ApiController {
     @PutMapping("incoming/request")
     public ResponseEntity<Void> saveRequest(@RequestBody IncomingRequest req) {
         queue.add(req);
-        log.info("added incoming request to queue. (queue size: {})", queue.size());
+        log.info("new request added to the queue : {} requests", queue.size());
         return new ResponseEntity<>(CREATED);
     }
 
