@@ -80,7 +80,7 @@ public class ApiController {
 		        dao.addIncomingRequest(list);
 	    	}
 	    	catch (Exception e) {
-	    		log.error("bachup failed", e);
+	    		log.error("error while saving requests", e);
 			}
     	}
     }
