@@ -1,64 +1,67 @@
 package org.usf.trace.api.server;
 
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
-
-
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.usf.traceapi.core.IncomingRequest;
-import org.usf.traceapi.core.OutcomingRequest;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.*;
-import java.util.logging.Logger;
-
-import static java.util.Collections.synchronizedCollection;
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
+import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.usf.trace.api.server.Utils.requireSingle;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.usf.traceapi.core.IncomingRequest;
+import org.usf.traceapi.core.OutcomingRequest;
+
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @CrossOrigin
 @RestController
 @RequestMapping(value = "trace", produces = APPLICATION_JSON_VALUE)
 public class ApiController {
+	
     private final RequestDao dao;
     private final ScheduledExecutorService executor = newSingleThreadScheduledExecutor();
-    private final BlockingQueue<IncomingRequest> incomingRequestList = new LinkedBlockingQueue<>(); //FIL
-    private final TraceConfigProperties traceConfigProperties;
+    private final BlockingQueue<IncomingRequest> queue = new LinkedBlockingQueue<>();
     private final ScheduledFuture<?> future;
 
-    private static final Logger LOGGER = Logger.getLogger(ApiController.class.getName());
-
-    public ApiController(RequestDao dao, TraceConfigProperties traceConfigProperties) {
+    public ApiController(RequestDao dao, TraceConfigProperties prop) {
         this.dao = dao;
-        this.traceConfigProperties = traceConfigProperties;
-        this.future = this.executor.scheduleAtFixedRate(() -> {
-                    if (!incomingRequestList.isEmpty()) {
-                        var list = new LinkedList<IncomingRequest>();
-                        LOGGER.info("inserting " + incomingRequestList.size() + " incoming requests to database");
-                        incomingRequestList.drainTo(list);
-                        dao.addIncomingRequest(list);
-                        LOGGER.info("Queue cleared");
-                    }
-                },
-                0, traceConfigProperties.getPeriod(), TimeUnit.valueOf(traceConfigProperties.getTimeUnit()));  // conf
+        this.future = executor.scheduleWithFixedDelay(() -> {
+        	if(!queue.isEmpty()) {
+                var list = new LinkedList<IncomingRequest>();
+                var size = queue.drainTo(list);
+                log.info("inserting {} incoming requests to database", size);
+                dao.addIncomingRequest(list);
+                log.info("Queue cleared");
+            }
+        }, 0, prop.getPeriod(), TimeUnit.valueOf(prop.getTimeUnit()));  // conf
     }
 
     @PutMapping("incoming/request")
     public ResponseEntity<Void> saveRequest(@RequestBody IncomingRequest req) {
-        incomingRequestList.add(req);//201 syncthread
-        LOGGER.info("added incoming request to queue. (queue size: " + incomingRequestList.size() + ")");
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        queue.add(req);
+        log.info("added incoming request to queue. (queue size: {})", queue.size());
+        return new ResponseEntity<>(CREATED);
     }
 
     @GetMapping("incoming/request")
-    public List<IncomingRequest> getIncomingRequestByIds(@RequestParam(defaultValue = "true", name = "lazy") boolean lazy, @RequestParam(required = false, name = "id") String[] id) { // without tree
+    public List<IncomingRequest> getIncomingRequestByIds(
+    		@RequestParam(defaultValue = "true", name = "lazy") boolean lazy, 
+    		@RequestParam(required = false, name = "id") String[] id) { // without tree
         return dao.getIncomingRequestById(lazy, id);
     }
 
@@ -66,7 +69,6 @@ public class ApiController {
     public IncomingRequest getIncomingRequestById(@PathVariable String id) { // without tree
         return requireSingle(dao.getIncomingRequestById(true, id));
     }
-
 
     @GetMapping("incoming/request/{id}/out")
     public OutcomingRequest getOutcomingRequestById(@PathVariable String id) {
