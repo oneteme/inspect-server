@@ -166,18 +166,16 @@ public class RequestDao {
             in.setGroup(rs.getString("VA_GRP"));
             return in;
         });
-
-        if (res.size() == 0)
-            return res;
-        if (lazy) {
+        if (lazy && !res.isEmpty()) {
             var outReqMap = getOutcomingRequestListForInReq(idArr).stream().collect(groupingBy(ServerOutcomingRequest::getIdIncoming));
             var outQryMap = getOutcomingQueryListForInReq(idArr).stream().collect(groupingBy(ServerOutcomingQuery::getIdIncoming));
-
             for (IncomingRequest in : res) {
-                if (outQryMap.containsKey(in.getId()))
-                    in.getQueries().addAll(outQryMap.get(in.getId()));
-                if (outReqMap.containsKey(in.getId()))
-                    in.getRequests().addAll(outReqMap.get(in.getId()));
+                if (outQryMap.containsKey(in.getId())) {
+                	in.getQueries().addAll(outQryMap.get(in.getId()));
+                }
+                if (outReqMap.containsKey(in.getId())) {
+                	in.getRequests().addAll(outReqMap.get(in.getId()));
+                }
             }
         }
         return res;
@@ -192,7 +190,6 @@ public class RequestDao {
             query += "WHERE CD_IN_REQ IN (" + nArg(idArr.length) + ")";
             argTypes = newArray(idArr.length, VARCHAR);
         }
-
         return template.query(query, idArr, argTypes, (rs, i) -> {
             ServerOutcomingRequest out = new ServerOutcomingRequest(rs.getString("ID_OUT_REQ"), rs.getString("CD_IN_REQ"));
             out.setProtocol(rs.getString("VA_PRTCL"));
