@@ -9,7 +9,9 @@ import org.springframework.context.annotation.Configuration;
 @Setter
 @Configuration
 @ConfigurationProperties(prefix = "trace")
-public class TraceConfigProperties {
+public class ScheduleProperties {
+	
     private int period;
-    private String timeUnit;
+    private String unit;
+
 }

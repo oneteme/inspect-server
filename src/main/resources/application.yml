@@ -15,7 +15,7 @@ spring:
 
 trace:
   period: 1
-  time-unit: MINUTES
+  unit: MINUTES
 
 logging:
   level:
