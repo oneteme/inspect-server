@@ -49,6 +49,14 @@ public class ApiController {
         log.info("new request added to the queue : {} requests", queue.size());
         return new ResponseEntity<>(CREATED);
     }
+    
+    //TODO save 
+    @PutMapping("outcoming/request") //main request
+    public ResponseEntity<Void> saveRequest(@RequestBody OutcomingRequest req) {
+//        queue.add(req);
+        log.info("new request added to the queue : {} requests", queue.size());
+        return new ResponseEntity<>(CREATED);
+    }
 
     @GetMapping("incoming/request")
     public List<IncomingRequest> getIncomingRequestByIds(
