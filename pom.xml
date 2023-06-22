@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	
 	<groupId>io.github.oneteme.traceapi</groupId>
-	<artifactId>assertapi-server</artifactId>
+	<artifactId>traceapi-server</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>traceapi-server</name>
