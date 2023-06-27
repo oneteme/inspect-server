@@ -42,7 +42,7 @@ public class RequestDao {
     public void addIncomingRequest(List<IncomingRequest> reqList) {
         List<OutcomingRequestWrapper> outreq = new LinkedList<>();
         List<OutcomingQueryWrapper> outqry = new LinkedList<>();
-        template.batchUpdate("INSERT INTO E_IN_REQ(ID_IN_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_CNT_TYP,VA_ACT,VA_RSC,VA_CLI,VA_GRP) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
+        template.batchUpdate("INSERT INTO E_IN_REQ(ID_IN_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_CNT_TYP,VA_CLI) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             ps.setString(1, o.getId());
             ps.setString(2, o.getProtocol());
             ps.setString(3, o.getHost());
@@ -57,10 +57,7 @@ public class RequestDao {
             ps.setTimestamp(12, from(o.getEnd()));
             ps.setString(13, o.getThread());
             ps.setString(14, o.getContentType());
-            ps.setString(15, o.getEndpoint());
-            ps.setString(16, o.getResource());
-            ps.setString(17, o.getClient());
-            ps.setString(18, o.getGroup());
+            ps.setString(15, o.getClient());
         	o.getRequests().forEach(or-> outreq.add(new OutcomingRequestWrapper(or, o.getId())));
         	o.getQueries().forEach(oq-> outqry.add(new OutcomingQueryWrapper(oq, o.getId())));
         });
@@ -138,7 +135,7 @@ public class RequestDao {
     }
 
     public List<IncomingRequest> getIncomingRequestById(boolean lazy, String... idArr) {
-        var query = "SELECT ID_IN_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_CNT_TYP,VA_ACT,VA_RSC,VA_CLI,VA_GRP FROM E_IN_REQ";
+        var query = "SELECT ID_IN_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_CNT_TYP,VA_RSC FROM E_IN_REQ";
         int[] argTypes = null;
         if(!isEmpty(idArr)) {
             query += " WHERE ID_IN_REQ IN(" + nArg(idArr.length) + ")";
@@ -159,10 +156,7 @@ public class RequestDao {
             in.setEnd(rs.getTimestamp("DH_FIN").toInstant());
             in.setThread(rs.getString("VA_THRED"));
             in.setContentType(rs.getString("VA_CNT_TYP"));
-            in.setEndpoint(rs.getString("VA_ACT"));
-            in.setResource(rs.getString("VA_RSC"));
             in.setClient(rs.getString("VA_CLI"));
-            in.setGroup(rs.getString("VA_GRP"));
             return in;
         });
         if(lazy && !res.isEmpty()) {
