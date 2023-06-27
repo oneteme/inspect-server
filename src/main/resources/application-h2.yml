@@ -1,0 +1,15 @@
+server:
+  port: 9006
+spring:
+  application:
+    name: traceapi
+  datasource:
+    url: jdbc:h2:mem:testdb;
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+    #data: classpath:data-h2.sql
+  h2:
+    console:
+      enabled: true
+      path: /h2
