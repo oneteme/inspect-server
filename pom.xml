@@ -72,13 +72,6 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-    <dependency>
-      <groupId>org.springframework.cloud</groupId>
-      <artifactId>spring-cloud-starter-config</artifactId>
-      <scope>compile</scope>
-			<version>2.2.4.RELEASE</version>
-    </dependency>
-
 	</dependencies>
 
 	<build>
