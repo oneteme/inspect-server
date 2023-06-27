@@ -2,8 +2,8 @@ package org.usf.trace.api.server;
 
 import static java.sql.Timestamp.from;
 import static java.sql.Types.BIGINT;
+import static java.sql.Types.CHAR;
 import static java.sql.Types.TIMESTAMP;
-import static java.sql.Types.TINYINT;
 import static java.sql.Types.VARCHAR;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
@@ -97,7 +97,7 @@ public class RequestDao {
             ps.setTimestamp(4, from(o.getStart()));
             ps.setTimestamp(5, from(o.getEnd()));
             ps.setString(6, o.getThread());
-            ps.setInt(7, Boolean.compare(o.isFailed(), false));
+            ps.setString(7, o.isFailed() ? "T" : "F");
             ps.setString(8, o.getParentId());
             o.setId(inc.get());
         });
@@ -108,9 +108,9 @@ public class RequestDao {
         template.batchUpdate("INSERT INTO E_DB_ACT(VA_TYP,DH_DBT,DH_FIN,VA_FAIL,CD_OUT_QRY) VALUES(?,?,?,?,?)", 
         		queries.stream()
     			.flatMap(e -> e.getActions().stream().map(da ->
-    				new Object[]{da.getType().toString(), from(da.getStart()), from(da.getEnd()), Boolean.compare(da.isFailed(), false), e.getId()}))
+    				new Object[]{da.getType().toString(), from(da.getStart()), from(da.getEnd()), da.isFailed() ? "T" : "F", e.getId()}))
     			.collect(toList()), 
-        		new int[] {VARCHAR, TIMESTAMP, TIMESTAMP, TINYINT, BIGINT});
+        		new int[] {VARCHAR, TIMESTAMP, TIMESTAMP, CHAR, BIGINT});
     }
 
     @Deprecated // reuse  RequestDao::outcomingRequests using criteria 
@@ -204,7 +204,7 @@ public class RequestDao {
             out.setStart(rs.getTimestamp("DH_DBT").toInstant());
             out.setEnd(rs.getTimestamp("DH_FIN").toInstant());
             out.setThread(rs.getString("VA_THRED"));
-            out.setFailed((rs.getInt("VA_FAIL") > 0));
+            out.setFailed("T".equals(rs.getString("VA_FAIL")));
             return out;
         });
         if(!queries.isEmpty()) {
@@ -223,7 +223,7 @@ public class RequestDao {
                         Action.valueOf(rs.getString("VA_TYP")),
                         rs.getTimestamp("DH_DBT").toInstant(),
                         rs.getTimestamp("DH_FIN").toInstant(),
-                        (rs.getInt("VA_FAIL") > 0)));
+                        "T".equals(rs.getString("VA_FAIL"))));
     }
 
     @Getter
