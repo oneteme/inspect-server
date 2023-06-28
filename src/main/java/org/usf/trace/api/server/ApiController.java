@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.usf.traceapi.core.IncomingRequest;
 import org.usf.traceapi.core.MainRequest;
 import org.usf.traceapi.core.OutcomingRequest;
+import org.usf.traceapi.core.Session;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,7 +40,7 @@ public class ApiController {
 	
     private final RequestDao dao;
     private final ScheduledExecutorService executor = newSingleThreadScheduledExecutor();
-    private final BlockingQueue<IncomingRequest> queue = new LinkedBlockingQueue<>();
+    private final BlockingQueue<Session> queue = new LinkedBlockingQueue<>();
     private final ScheduledFuture<?> future;
 
     public ApiController(RequestDao dao, ScheduleProperties prop) {
@@ -57,7 +58,7 @@ public class ApiController {
     //TODO save 
     @PutMapping(MAIN_ENDPOINT) //main request
     public ResponseEntity<Void> saveRequest(@RequestBody MainRequest req) {
-//        queue.add(req);
+        queue.add(req);
         log.info("new request added to the queue : {} requests", queue.size());
         return accepted().build();
     }
@@ -87,9 +88,9 @@ public class ApiController {
     private void safeBackup() {
     	if(!queue.isEmpty()) {
 	    	try {
-		        var list = new LinkedList<IncomingRequest>();
+		        var list = new LinkedList<Session>();
 		        log.info("scheduled data queue backup : {} requests", queue.drainTo(list));
-		        dao.addIncomingRequest(list);
+		        dao.saveSessions(list);
 	    	}
 	    	catch (Exception e) {
 	    		log.error("error while saving requests", e);
