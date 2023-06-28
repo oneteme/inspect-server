@@ -26,6 +26,7 @@ import org.usf.traceapi.core.DatabaseAction;
 import org.usf.traceapi.core.IncomingRequest;
 import org.usf.traceapi.core.OutcomingQuery;
 import org.usf.traceapi.core.OutcomingRequest;
+import org.usf.traceapi.core.Session;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,13 @@ public class RequestDao {
     private final JdbcTemplate template;
 
     @Transactional(rollbackFor = Exception.class)
+    public void saveSessions(List<Session> reqList) {
+    	addIncomingRequest(reqList.stream()
+    			.filter(IncomingRequest.class::isInstance)
+    			.map(IncomingRequest.class::cast).collect(toList()));
+    	
+    }
+
     public void addIncomingRequest(List<IncomingRequest> reqList) {
         List<OutcomingRequestWrapper> outreq = new LinkedList<>();
         List<OutcomingQueryWrapper> outqry = new LinkedList<>();
