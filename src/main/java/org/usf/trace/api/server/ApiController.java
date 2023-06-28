@@ -5,7 +5,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.ResponseEntity.accepted;
 import static org.usf.trace.api.server.Utils.requireSingle;
 import static org.usf.traceapi.core.RemoteTraceSender.INCOMING_ENDPOINT;
-import static org.usf.traceapi.core.RemoteTraceSender.OUTCOMING_ENDPOINT;
+import static org.usf.traceapi.core.RemoteTraceSender.MAIN_ENDPOINT;
 import static org.usf.traceapi.core.RemoteTraceSender.TRACE_ENDPOINT;
 
 import java.util.LinkedList;
@@ -55,7 +55,7 @@ public class ApiController {
     }
     
     //TODO save 
-    @PutMapping(OUTCOMING_ENDPOINT) //main request
+    @PutMapping(MAIN_ENDPOINT) //main request
     public ResponseEntity<Void> saveRequest(@RequestBody MainRequest req) {
 //        queue.add(req);
         log.info("new request added to the queue : {} requests", queue.size());
