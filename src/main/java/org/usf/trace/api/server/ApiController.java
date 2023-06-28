@@ -50,15 +50,16 @@ public class ApiController {
 
     @PutMapping(INCOMING_ENDPOINT)
     public ResponseEntity<Void> saveRequest(@RequestBody IncomingRequest req) {
-        queue.add(req);
-        log.info("new request added to the queue : {} requests", queue.size());
-        return accepted().build();
+        return appendRequest(req);
     }
     
-    //TODO save 
-    @PutMapping(MAIN_ENDPOINT) //main request
+    @PutMapping(MAIN_ENDPOINT)
     public ResponseEntity<Void> saveRequest(@RequestBody MainRequest req) {
-        queue.add(req);
+        return appendRequest(req);
+    }
+    
+    private ResponseEntity<Void> appendRequest(Session session){
+        queue.add(session);
         log.info("new request added to the queue : {} requests", queue.size());
         return accepted().build();
     }
