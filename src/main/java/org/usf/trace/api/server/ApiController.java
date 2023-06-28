@@ -1,8 +1,8 @@
 package org.usf.trace.api.server;
 
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
-import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.springframework.http.ResponseEntity.accepted;
 import static org.usf.trace.api.server.Utils.requireSingle;
 import static org.usf.traceapi.core.RemoteTraceSender.INCOMING_ENDPOINT;
 import static org.usf.traceapi.core.RemoteTraceSender.OUTCOMING_ENDPOINT;
@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.usf.traceapi.core.IncomingRequest;
+import org.usf.traceapi.core.MainRequest;
 import org.usf.traceapi.core.OutcomingRequest;
 
 import lombok.extern.slf4j.Slf4j;
@@ -50,15 +51,15 @@ public class ApiController {
     public ResponseEntity<Void> saveRequest(@RequestBody IncomingRequest req) {
         queue.add(req);
         log.info("new request added to the queue : {} requests", queue.size());
-        return new ResponseEntity<>(CREATED);
+        return accepted().build();
     }
     
     //TODO save 
     @PutMapping(OUTCOMING_ENDPOINT) //main request
-    public ResponseEntity<Void> saveRequest(@RequestBody OutcomingRequest req) {
+    public ResponseEntity<Void> saveRequest(@RequestBody MainRequest req) {
 //        queue.add(req);
         log.info("new request added to the queue : {} requests", queue.size());
-        return new ResponseEntity<>(CREATED);
+        return accepted().build();
     }
 
     @GetMapping("incoming/request")
