@@ -43,8 +43,8 @@ public class RequestDao {
     public void saveSessions(List<Session> reqList) {
     	addIncomingRequest(reqList.stream()
     			.filter(IncomingRequest.class::isInstance)
-    			.map(IncomingRequest.class::cast).collect(toList()));
-    	
+    			.map(IncomingRequest.class::cast)
+    			.collect(toList()));
     }
 
     public void addIncomingRequest(List<IncomingRequest> reqList) {
