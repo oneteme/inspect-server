@@ -50,22 +50,26 @@ public class RequestDao {
     public void addIncomingRequest(List<IncomingRequest> reqList) {
         List<OutcomingRequestWrapper> outreq = new LinkedList<>();
         List<OutcomingQueryWrapper> outqry = new LinkedList<>();
-        template.batchUpdate("INSERT INTO E_IN_REQ(ID_IN_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_CNT_TYP,VA_CLI) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
+        template.batchUpdate("INSERT INTO E_IN_REQ(ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_NME,VA_CLI,VA_OS,VA_RE) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             ps.setString(1, o.getId());
-            ps.setString(2, o.getProtocol());
-            ps.setString(3, o.getHost());
-            ps.setInt(4, o.getPort());
-            ps.setString(5, o.getPath());
-            ps.setString(6, o.getQuery());
-            ps.setString(7, o.getMethod());
-            ps.setInt(8, o.getStatus());
-            ps.setLong(9, o.getInDataSize());
-            ps.setLong(10, o.getOutDataSize());
-            ps.setTimestamp(11, from(o.getStart()));
-            ps.setTimestamp(12, from(o.getEnd()));
-            ps.setString(13, o.getThread());
-            ps.setString(14, o.getContentType());
-            ps.setString(15, o.getClient());
+            ps.setString(2, o.getMethod());
+            ps.setString(3, o.getProtocol());
+            ps.setString(4, o.getHost());
+            ps.setInt(5, o.getPort());
+            ps.setString(6, o.getPath());
+            ps.setString(7, o.getQuery());
+            ps.setString(8, o.getContentType());
+            ps.setString(9, o.getAuthScheme());
+            ps.setInt(10, o.getStatus());
+            ps.setLong(11, o.getInDataSize());
+            ps.setLong(12, o.getOutDataSize());
+            ps.setTimestamp(13, from(o.getStart()));
+            ps.setTimestamp(14, from(o.getEnd()));
+            ps.setString(15, o.getThread());
+            ps.setString(16, o.getName());
+            ps.setString(17, o.getClient());
+            ps.setString(18, o.getOs());
+            ps.setString(19, o.getRe());
         	o.getRequests().forEach(or-> outreq.add(new OutcomingRequestWrapper(or, o.getId())));
         	o.getQueries().forEach(oq-> outqry.add(new OutcomingQueryWrapper(oq, o.getId())));
         });
@@ -74,36 +78,41 @@ public class RequestDao {
     }
 
     private void addOutcomingRequest(List<OutcomingRequestWrapper> reqList) {
-        template.batchUpdate("INSERT INTO E_OUT_REQ(ID_OUT_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
+        template.batchUpdate("INSERT INTO E_OUT_REQ(ID_OUT_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             ps.setString(1, o.getId());
-            ps.setString(2, o.getProtocol());
-            ps.setString(3, o.getHost());
-            ps.setInt(4, o.getPort());
-            ps.setString(5, o.getPath());
-            ps.setString(6, o.getQuery());
-            ps.setString(7, o.getMethod());
-            ps.setInt(8, o.getStatus() == null ? -1 : o.getStatus());
-            ps.setLong(9, o.getInDataSize());
-            ps.setLong(10, o.getOutDataSize());
-            ps.setTimestamp(11, from(o.getStart()));
-            ps.setTimestamp(12, from(o.getEnd()));
-            ps.setString(13, o.getThread());
-            ps.setString(14, o.getParentId());
+            ps.setString(2, o.getMethod());
+            ps.setString(3, o.getProtocol());
+            ps.setString(4, o.getHost());
+            ps.setInt(5, o.getPort());
+            ps.setString(6, o.getPath());
+            ps.setString(7, o.getQuery());
+            ps.setString(8, o.getContentType());
+            ps.setString(9, o.getAuthScheme());
+            ps.setInt(10, o.getStatus());
+            ps.setLong(11, o.getInDataSize());
+            ps.setLong(12, o.getOutDataSize());
+            ps.setTimestamp(13, from(o.getStart()));
+            ps.setTimestamp(14, from(o.getEnd()));
+            ps.setString(15, o.getThread());
+            ps.setString(16, o.getParentId());
         });
     }
 
     private void addOutcomingQueries(List<OutcomingQueryWrapper> qryList) {
         var maxId = template.queryForObject("SELECT COALESCE(MAX(ID_OUT_QRY), 0) FROM E_OUT_QRY", Long.class);
         var inc = new AtomicLong(maxId);
-        template.batchUpdate("INSERT INTO E_OUT_QRY(ID_OUT_QRY,VA_HST,VA_SCHMA,DH_DBT,DH_FIN,VA_THRED,VA_FAIL,CD_IN_REQ) VALUES(?,?,?,?,?,?,?,?)", qryList, qryList.size(), (ps, o) -> {
+        template.batchUpdate("INSERT INTO E_OUT_QRY(ID_OUT_QRY,VA_HST,VA_SCHMA,DH_DBT,DH_FIN,VA_DB_NME,VA_DB_VRS,VA_DRV,VA_THRED,VA_FAIL,CD_IN_REQ) VALUES(?,?,?,?,?,?,?,?,?,?,?)", qryList, qryList.size(), (ps, o) -> {
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getHost());
             ps.setString(3, o.getSchema());
             ps.setTimestamp(4, from(o.getStart()));
             ps.setTimestamp(5, from(o.getEnd()));
-            ps.setString(6, o.getThread());
-            ps.setString(7, o.isFailed() ? "T" : "F");
-            ps.setString(8, o.getParentId());
+            ps.setString(6, o.getDatabaseName());
+            ps.setString(7, o.getDatabaseVersion());
+            ps.setString(8, o.getDriverVersion());
+            ps.setString(9, o.getThread());
+            ps.setString(10, o.isFailed() ? "T" : "F");
+            ps.setString(11, o.getParentId());
             o.setId(inc.get());
         });
         addDatabaseActions(qryList);
@@ -118,7 +127,7 @@ public class RequestDao {
         		new int[] {VARCHAR, TIMESTAMP, TIMESTAMP, CHAR, BIGINT});
     }
 
-    @Deprecated // reuse  RequestDao::outcomingRequests using criteria 
+    @Deprecated // reuse RequestDao::outcomingRequests using criteria
     public OutcomingRequest getOutcomingRequestById(String id) {
         return template.query("SELECT ID_OUT_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ FROM E_OUT_REQ WHERE ID_OUT_REQ = ? ", new Object[]{id}, newArray(1, VARCHAR), rs -> {
 
@@ -143,7 +152,7 @@ public class RequestDao {
     }
 
     public List<IncomingRequest> getIncomingRequestById(boolean lazy, String... idArr) {
-        var query = "SELECT ID_IN_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_CNT_TYP,VA_RSC FROM E_IN_REQ";
+        var query = "SELECT ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_NME,VA_CLI,VA_OS,VA_RE FROM E_IN_REQ";
         int[] argTypes = null;
         if(!isEmpty(idArr)) {
             query += " WHERE ID_IN_REQ IN(" + nArg(idArr.length) + ")";
@@ -151,20 +160,24 @@ public class RequestDao {
         }
         List<IncomingRequest> res = template.query(query, idArr, argTypes, (rs, i) -> {
             IncomingRequest in = new IncomingRequest(rs.getString("ID_IN_REQ"));
+            in.setMethod(rs.getString("VA_MTH"));
             in.setProtocol(rs.getString("VA_PRTCL"));
             in.setHost(rs.getString("VA_HST"));
             in.setPort(rs.getInt("CD_PRT"));
             in.setPath(rs.getString("VA_PTH"));
             in.setQuery(rs.getString("VA_QRY"));
-            in.setMethod(rs.getString("VA_MTH"));
+            in.setContentType((rs.getString("VA_CNT_TYP")));
+            in.setAuthScheme((rs.getString("VA_AUTH")));
             in.setStatus(rs.getInt("CD_STT"));
             in.setInDataSize(rs.getLong("VA_I_SZE"));
             in.setOutDataSize(rs.getLong("VA_I_SZE"));
             in.setStart(rs.getTimestamp("DH_DBT").toInstant());
             in.setEnd(rs.getTimestamp("DH_FIN").toInstant());
             in.setThread(rs.getString("VA_THRED"));
-            in.setContentType(rs.getString("VA_CNT_TYP"));
+            in.setName(rs.getString("VA_NME"));
             in.setClient(rs.getString("VA_CLI"));
+            in.setOs(rs.getString("VA_OS"));
+            in.setRe(rs.getString("VA_RE"));
             return in;
         });
         if(lazy && !res.isEmpty()) {
