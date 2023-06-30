@@ -22,6 +22,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.usf.traceapi.core.Action;
+import org.usf.traceapi.core.ApplicationInfo;
 import org.usf.traceapi.core.DatabaseAction;
 import org.usf.traceapi.core.IncomingRequest;
 import org.usf.traceapi.core.OutcomingQuery;
@@ -68,8 +69,8 @@ public class RequestDao {
             ps.setString(15, o.getThreadName());
             ps.setString(16, o.getName());
             ps.setString(17, o.getUser());
-            ps.setString(18, o.getOperatingSystem());
-            ps.setString(19, o.getRuntimeEnvironment());
+            ps.setString(18, o.getApplication().getOs());
+            ps.setString(19, o.getApplication().getRe());
         	o.getRequests().forEach(or-> outreq.add(new OutcomingRequestWrapper(or, o.getId())));
         	o.getQueries().forEach(oq-> outqry.add(new OutcomingQueryWrapper(oq, o.getId())));
         });
@@ -176,8 +177,12 @@ public class RequestDao {
             in.setThreadName(rs.getString("VA_THRED"));
             in.setName(rs.getString("VA_NME"));
             in.setUser(rs.getString("VA_CLI"));
-            in.setOperatingSystem(rs.getString("VA_OS"));
-            in.setRuntimeEnvironment(rs.getString("VA_RE"));
+            in.setApplication(new ApplicationInfo(
+            		null, 
+            		null, 
+            		null, 
+            		rs.getString("VA_OS"), 
+            		rs.getString("VA_RE")));
             return in;
         });
         if(lazy && !res.isEmpty()) {
