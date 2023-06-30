@@ -65,11 +65,11 @@ public class RequestDao {
             ps.setLong(12, o.getOutDataSize());
             ps.setTimestamp(13, from(o.getStart()));
             ps.setTimestamp(14, from(o.getEnd()));
-            ps.setString(15, o.getThread());
+            ps.setString(15, o.getThreadName());
             ps.setString(16, o.getName());
-            ps.setString(17, o.getClient());
-            ps.setString(18, o.getOs());
-            ps.setString(19, o.getRe());
+            ps.setString(17, o.getUser());
+            ps.setString(18, o.getOperatingSystem());
+            ps.setString(19, o.getRuntimeEnvironment());
         	o.getRequests().forEach(or-> outreq.add(new OutcomingRequestWrapper(or, o.getId())));
         	o.getQueries().forEach(oq-> outqry.add(new OutcomingQueryWrapper(oq, o.getId())));
         });
@@ -93,7 +93,7 @@ public class RequestDao {
             ps.setLong(12, o.getOutDataSize());
             ps.setTimestamp(13, from(o.getStart()));
             ps.setTimestamp(14, from(o.getEnd()));
-            ps.setString(15, o.getThread());
+            ps.setString(15, o.getThreadName());
             ps.setString(16, o.getParentId());
         });
     }
@@ -110,7 +110,7 @@ public class RequestDao {
             ps.setString(6, o.getDatabaseName());
             ps.setString(7, o.getDatabaseVersion());
             ps.setString(8, o.getDriverVersion());
-            ps.setString(9, o.getThread());
+            ps.setString(9, o.getThreadName());
             ps.setString(10, o.isFailed() ? "T" : "F");
             ps.setString(11, o.getParentId());
             o.setId(inc.get());
@@ -144,7 +144,7 @@ public class RequestDao {
                 out.setOutDataSize(rs.getLong("VA_O_SZE"));
                 out.setStart(rs.getTimestamp("DH_DBT").toInstant());
                 out.setEnd(rs.getTimestamp("DH_FIN").toInstant());
-                out.setThread(rs.getString("VA_THRED"));
+                out.setThreadName(rs.getString("VA_THRED"));
                 return out;
             }
             return null;
@@ -173,11 +173,11 @@ public class RequestDao {
             in.setOutDataSize(rs.getLong("VA_I_SZE"));
             in.setStart(rs.getTimestamp("DH_DBT").toInstant());
             in.setEnd(rs.getTimestamp("DH_FIN").toInstant());
-            in.setThread(rs.getString("VA_THRED"));
+            in.setThreadName(rs.getString("VA_THRED"));
             in.setName(rs.getString("VA_NME"));
-            in.setClient(rs.getString("VA_CLI"));
-            in.setOs(rs.getString("VA_OS"));
-            in.setRe(rs.getString("VA_RE"));
+            in.setUser(rs.getString("VA_CLI"));
+            in.setOperatingSystem(rs.getString("VA_OS"));
+            in.setRuntimeEnvironment(rs.getString("VA_RE"));
             return in;
         });
         if(lazy && !res.isEmpty()) {
@@ -204,7 +204,7 @@ public class RequestDao {
             out.setOutDataSize(rs.getLong("VA_I_SZE"));
             out.setStart(rs.getTimestamp("DH_DBT").toInstant());
             out.setEnd(rs.getTimestamp("DH_FIN").toInstant());
-            out.setThread(rs.getString("VA_THRED"));
+            out.setThreadName(rs.getString("VA_THRED"));
             return out;
         });
     }
@@ -218,7 +218,7 @@ public class RequestDao {
             out.setSchema(rs.getString("VA_SCHMA"));
             out.setStart(rs.getTimestamp("DH_DBT").toInstant());
             out.setEnd(rs.getTimestamp("DH_FIN").toInstant());
-            out.setThread(rs.getString("VA_THRED"));
+            out.setThreadName(rs.getString("VA_THRED"));
             out.setFailed("T".equals(rs.getString("VA_FAIL")));
             return out;
         });
