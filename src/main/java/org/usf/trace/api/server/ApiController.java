@@ -60,7 +60,7 @@ public class ApiController {
     
     private ResponseEntity<Void> appendRequest(Session session){
         queue.add(session);
-        log.info("new request added to the queue : {} requests", queue.size());
+        log.info("new request added to the queue : {} request(s)", queue.size());
         return accepted().build();
     }
 
@@ -90,7 +90,7 @@ public class ApiController {
     	if(!queue.isEmpty()) {
 	    	try {
 		        var list = new LinkedList<Session>();
-		        log.info("scheduled data queue backup : {} requests", queue.drainTo(list));
+		        log.info("scheduled data queue backup : {} request(s)", queue.drainTo(list));
 		        dao.saveSessions(list);
 	    	}
 	    	catch (Exception e) {
