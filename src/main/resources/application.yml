@@ -19,5 +19,5 @@ logging:
     org.springframework.jdbc.core: DEBUG
 
 trace:
-  period: 1
-  unit: MINUTES
+  period: 20
+  unit: SECONDS
