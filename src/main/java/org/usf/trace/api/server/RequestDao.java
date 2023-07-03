@@ -13,11 +13,10 @@ import static org.usf.trace.api.server.Utils.nArg;
 import static org.usf.trace.api.server.Utils.newArray;
 
 import java.time.Instant;
-import java.util.LinkedList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -37,32 +36,35 @@ public class RequestDao {
 
     @Transactional(rollbackFor = Exception.class)
     public void saveSessions(List<Session> reqList) {
-        List<OutcomingRequestWrapper> outreq = new LinkedList<>();
-        List<OutcomingQueryWrapper> outqry = new LinkedList<>();
-        var in = reqList.stream()
-    			.filter(IncomingRequest.class::isInstance)
-    			.map(IncomingRequest.class::cast)
-    			.collect(toList());
+        var in = filter(reqList, IncomingRequest.class);
         if(!in.isEmpty()) {
-            addIncomingRequest(in, outreq::add, outqry::add);
+            addIncomingRequest(in);
         }
-        var main = reqList.stream()
-    			.filter(MainRequest.class::isInstance)
-    			.map(MainRequest.class::cast)
-    			.collect(toList());
+        var main = filter(reqList, MainRequest.class);
         if(!main.isEmpty()) {
-        	addMainRequest(main, outreq::add, outqry::add);
+        	addMainRequest(main);
         }
+        var outreq = reqList.stream()
+        		.flatMap(s-> s.getRequests().stream().map(o-> new OutcomingRequestWrapper(o, s.getId())))
+        		.collect(toList());
         if(!outreq.isEmpty()) {
         	addOutcomingRequest(outreq);
         }
+        var outqry = reqList.stream()
+        		.flatMap(s-> s.getQueries().stream().map(o-> new OutcomingQueryWrapper(o, s.getId())))
+        		.collect(toList());
         if(!outqry.isEmpty()) {
         	addOutcomingQueries(outqry);
         }
     }
     
-    private void addMainRequest(List<MainRequest> reqList, Consumer<OutcomingRequestWrapper> requests, Consumer<OutcomingQueryWrapper> queries) {
-        template.batchUpdate("INSERT INTO E_MAIN_REQ(ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_FAIL,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
+    private static <T, U extends T> List<U> filter(Collection<T> c, Class<U> classe){
+    	return c.stream().filter(classe::isInstance).map(classe::cast).collect(toList());
+    }
+    
+    private void addMainRequest(List<MainRequest> reqList) {
+        template.batchUpdate("INSERT INTO E_MAIN_REQ(ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_FAIL,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE)"
+        		+ " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             ps.setString(1, o.getId());
             ps.setString(2, o.getName());
             ps.setString(3, o.getUser());
@@ -78,13 +80,12 @@ public class RequestDao {
             ps.setString(13, o.getApplication().getEnv());
             ps.setString(14, o.getApplication().getOs());
             ps.setString(15, o.getApplication().getRe());
-            o.getRequests().forEach(or-> requests.accept(new OutcomingRequestWrapper(or, o.getId())));
-            o.getQueries().forEach(oq-> queries.accept(new OutcomingQueryWrapper(oq, o.getId())));
         });
     }
 
-    private void addIncomingRequest(List<IncomingRequest> reqList, Consumer<OutcomingRequestWrapper> requests, Consumer<OutcomingQueryWrapper> queries) {
-        template.batchUpdate("INSERT INTO E_IN_REQ(ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
+    private void addIncomingRequest(List<IncomingRequest> reqList) {
+        template.batchUpdate("INSERT INTO E_IN_REQ(ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE)"
+        		+ " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             ps.setString(1, o.getId());
             ps.setString(2, o.getMethod());
             ps.setString(3, o.getProtocol());
@@ -108,13 +109,12 @@ public class RequestDao {
             ps.setString(21, o.getApplication().getEnv());
             ps.setString(22, o.getApplication().getOs());
             ps.setString(23, o.getApplication().getRe());
-        	o.getRequests().forEach(or-> requests.accept(new OutcomingRequestWrapper(or, o.getId())));
-        	o.getQueries().forEach(oq-> queries.accept(new OutcomingQueryWrapper(oq, o.getId())));
         });
     }
 
     private void addOutcomingRequest(List<OutcomingRequestWrapper> reqList) {
-        template.batchUpdate("INSERT INTO E_OUT_REQ(ID_OUT_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
+        template.batchUpdate("INSERT INTO E_OUT_REQ(ID_OUT_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ)"
+        		+ " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             ps.setString(1, o.getId());
             ps.setString(2, o.getMethod());
             ps.setString(3, o.getProtocol());
@@ -137,7 +137,8 @@ public class RequestDao {
     private void addOutcomingQueries(List<OutcomingQueryWrapper> qryList) {
         var maxId = template.queryForObject("SELECT COALESCE(MAX(ID_OUT_QRY), 0) FROM E_OUT_QRY", Long.class);
         var inc = new AtomicLong(maxId);
-        template.batchUpdate("INSERT INTO E_OUT_QRY(ID_OUT_QRY,VA_HST,VA_SCHMA,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_DRV,VA_DB_NME,VA_DB_VRS,VA_FAIL,CD_IN_REQ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", qryList, qryList.size(), (ps, o) -> {
+        template.batchUpdate("INSERT INTO E_OUT_QRY(ID_OUT_QRY,VA_HST,VA_SCHMA,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_DRV,VA_DB_NME,VA_DB_VRS,VA_FAIL,CD_IN_REQ)"
+        		+ " VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", qryList, qryList.size(), (ps, o) -> {
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getHost());
             ps.setString(3, o.getSchema());
