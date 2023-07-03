@@ -178,11 +178,12 @@ public class RequestDao {
             in.setName(rs.getString("VA_NME"));
             in.setUser(rs.getString("VA_CLI"));
             in.setApplication(new ApplicationInfo(
-            		null, 
+            		null,
             		null, 
             		null, 
             		rs.getString("VA_OS"), 
-            		rs.getString("VA_RE")));
+            		rs.getString("VA_RE"),
+            		null));
             return in;
         });
         if(lazy && !res.isEmpty()) {
