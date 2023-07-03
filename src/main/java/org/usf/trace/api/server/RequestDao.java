@@ -22,14 +22,7 @@ import java.util.function.Consumer;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import org.usf.traceapi.core.Action;
-import org.usf.traceapi.core.ApplicationInfo;
-import org.usf.traceapi.core.DatabaseAction;
-import org.usf.traceapi.core.IncomingRequest;
-import org.usf.traceapi.core.MainRequest;
-import org.usf.traceapi.core.OutcomingQuery;
-import org.usf.traceapi.core.OutcomingRequest;
-import org.usf.traceapi.core.Session;
+import org.usf.traceapi.core.*;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -69,11 +62,29 @@ public class RequestDao {
     }
     
     private void addMainRequest(List<MainRequest> reqList, Consumer<OutcomingRequestWrapper> requests, Consumer<OutcomingQueryWrapper> queries) {
-    	
+        template.batchUpdate("INSERT INTO E_MAIN_REQ(ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_FAIL,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
+            ps.setString(1, o.getId());
+            ps.setString(2, o.getName());
+            ps.setString(3, o.getUser());
+            ps.setTimestamp(4, from(o.getStart()));
+            ps.setTimestamp(5, from(o.getEnd()));
+            ps.setString(6, o.getLaunchMode().toString());
+            ps.setString(7, o.getLocation());
+            ps.setString(8, o.isFailed() ? "T" : "F");
+            ps.setString(9, o.getThreadName());
+            ps.setString(10, o.getApplication().getName());
+            ps.setString(11, o.getApplication().getVersion());
+            ps.setString(12, o.getApplication().getAddress());
+            ps.setString(13, o.getApplication().getEnv());
+            ps.setString(14, o.getApplication().getOs());
+            ps.setString(15, o.getApplication().getRe());
+            o.getRequests().forEach(or-> requests.accept(new OutcomingRequestWrapper(or, o.getId())));
+            o.getQueries().forEach(oq-> queries.accept(new OutcomingQueryWrapper(oq, o.getId())));
+        });
     }
 
     private void addIncomingRequest(List<IncomingRequest> reqList, Consumer<OutcomingRequestWrapper> requests, Consumer<OutcomingQueryWrapper> queries) {
-        template.batchUpdate("INSERT INTO E_IN_REQ(ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_NME,VA_CLI,VA_OS,VA_RE) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
+        template.batchUpdate("INSERT INTO E_IN_REQ(ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             ps.setString(1, o.getId());
             ps.setString(2, o.getMethod());
             ps.setString(3, o.getProtocol());
@@ -91,8 +102,12 @@ public class RequestDao {
             ps.setString(15, o.getThreadName());
             ps.setString(16, o.getName());
             ps.setString(17, o.getUser());
-            ps.setString(18, o.getApplication().getOs());
-            ps.setString(19, o.getApplication().getRe());
+            ps.setString(18, o.getApplication().getName());
+            ps.setString(19, o.getApplication().getVersion());
+            ps.setString(20, o.getApplication().getAddress());
+            ps.setString(21, o.getApplication().getEnv());
+            ps.setString(22, o.getApplication().getOs());
+            ps.setString(23, o.getApplication().getRe());
         	o.getRequests().forEach(or-> requests.accept(new OutcomingRequestWrapper(or, o.getId())));
         	o.getQueries().forEach(oq-> queries.accept(new OutcomingQueryWrapper(oq, o.getId())));
         });
@@ -122,18 +137,19 @@ public class RequestDao {
     private void addOutcomingQueries(List<OutcomingQueryWrapper> qryList) {
         var maxId = template.queryForObject("SELECT COALESCE(MAX(ID_OUT_QRY), 0) FROM E_OUT_QRY", Long.class);
         var inc = new AtomicLong(maxId);
-        template.batchUpdate("INSERT INTO E_OUT_QRY(ID_OUT_QRY,VA_HST,VA_SCHMA,DH_DBT,DH_FIN,VA_DB_NME,VA_DB_VRS,VA_DRV,VA_THRED,VA_FAIL,CD_IN_REQ) VALUES(?,?,?,?,?,?,?,?,?,?,?)", qryList, qryList.size(), (ps, o) -> {
+        template.batchUpdate("INSERT INTO E_OUT_QRY(ID_OUT_QRY,VA_HST,VA_SCHMA,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_DRV,VA_DB_NME,VA_DB_VRS,VA_FAIL,CD_IN_REQ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", qryList, qryList.size(), (ps, o) -> {
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getHost());
             ps.setString(3, o.getSchema());
             ps.setTimestamp(4, from(o.getStart()));
             ps.setTimestamp(5, from(o.getEnd()));
-            ps.setString(6, o.getDatabaseName());
-            ps.setString(7, o.getDatabaseVersion());
+            ps.setString(6, o.getUser());
+            ps.setString(7, o.getThreadName());
             ps.setString(8, o.getDriverVersion());
-            ps.setString(9, o.getThreadName());
-            ps.setString(10, o.isFailed() ? "T" : "F");
-            ps.setString(11, o.getParentId());
+            ps.setString(9, o.getDatabaseName());
+            ps.setString(10, o.getDatabaseVersion());
+            ps.setString(11, o.isFailed() ? "T" : "F");
+            ps.setString(12, o.getParentId());
             o.setId(inc.get());
         });
         addDatabaseActions(qryList);
@@ -172,8 +188,42 @@ public class RequestDao {
         });
     }
 
+    public List<MainRequest> getMainRequestById(boolean lazy, String... idArr) {
+        var query = "SELECT ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_FAIL,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE FROM E_MAIN_REQ";
+        int[] argTypes = null;
+        if(!isEmpty(idArr)) {
+            query += " WHERE ID_MAIN_REQ IN(" + nArg(idArr.length) + ")";
+            argTypes = newArray(idArr.length, VARCHAR);
+        }
+        List<MainRequest> res = template.query(query, idArr, argTypes, (rs, i) -> {
+            MainRequest main = new MainRequest(rs.getString("ID_MAIN_REQ"));
+            main.setName(rs.getString("VA_NAME"));
+            main.setUser(rs.getString("VA_USR"));
+            main.setStart(rs.getTimestamp("DH_DBT").toInstant());
+            main.setEnd(rs.getTimestamp("DH_FIN").toInstant());
+            main.setLaunchMode(LaunchMode.valueOf(rs.getString("LNCH")));
+            main.setLocation(rs.getString("LOC"));
+            main.setFailed("T".equals(rs.getString("VA_FAIL")));
+            main.setThreadName(rs.getString("VA_THRED"));
+            main.setApplication(new ApplicationInfo(
+                    rs.getString("VA_APP_NME"),
+                    rs.getString("VA_VRS"),
+                    rs.getString("VA_ADRS"),
+                    rs.getString("VA_ENV"),
+                    rs.getString("VA_OS"),
+                    rs.getString("VA_RE")
+            ));
+            return main;
+        });
+        if(lazy && !res.isEmpty()) {
+            var reqMap = res.stream().collect(toMap(MainRequest::getId, identity()));
+            outcomingRequests(reqMap.keySet()).forEach(r-> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
+            outcomingQueries(reqMap.keySet()).forEach(q-> reqMap.get(q.getParentId()).getQueries().add(q.getQuery()));
+        }
+        return res;
+    }
     public List<IncomingRequest> getIncomingRequestById(boolean lazy, String... idArr) {
-        var query = "SELECT ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_NME,VA_CLI,VA_OS,VA_RE FROM E_IN_REQ";
+        var query = "SELECT ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE FROM E_IN_REQ";
         int[] argTypes = null;
         if(!isEmpty(idArr)) {
             query += " WHERE ID_IN_REQ IN(" + nArg(idArr.length) + ")";
@@ -195,15 +245,16 @@ public class RequestDao {
             in.setStart(rs.getTimestamp("DH_DBT").toInstant());
             in.setEnd(rs.getTimestamp("DH_FIN").toInstant());
             in.setThreadName(rs.getString("VA_THRED"));
-            in.setName(rs.getString("VA_NME"));
-            in.setUser(rs.getString("VA_CLI"));
+            in.setName(rs.getString("VA_API_NME"));
+            in.setUser(rs.getString("VA_USR"));
             in.setApplication(new ApplicationInfo(
-            		null,
-            		null, 
-            		null, 
-            		rs.getString("VA_OS"), 
-            		rs.getString("VA_RE"),
-            		null));
+            		rs.getString("VA_APP_NME"),
+                    rs.getString("VA_VRS"),
+                    rs.getString("VA_ADRS"),
+                    rs.getString("VA_ENV"),
+            		rs.getString("VA_OS"),
+            		rs.getString("VA_RE")
+            ));
             return in;
         });
         if(lazy && !res.isEmpty()) {
@@ -236,15 +287,20 @@ public class RequestDao {
     }
 
     public List<OutcomingQueryWrapper> outcomingQueries(Set<String> incomingId) { // non empty
-        var query = "SELECT ID_OUT_QRY,VA_HST,VA_SCHMA,DH_DBT,DH_FIN,VA_THRED,VA_FAIL,CD_IN_REQ FROM E_OUT_QRY" 
+        var query = "SELECT ID_OUT_QRY,VA_HST,CD_PRT,VA_SCHMA,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_DRV,VA_DB_NME,VA_DB_VRS,VA_FAIL,CD_IN_REQ FROM E_OUT_QRY"
         		+ " WHERE CD_IN_REQ IN(" + nArg(incomingId.size()) + ")";
         var queries = template.query(query, incomingId.toArray(), newArray(incomingId.size(), VARCHAR), (rs, i) -> {
             var out = new OutcomingQueryWrapper(rs.getLong("ID_OUT_QRY"), rs.getString("CD_IN_REQ"));
             out.setHost(rs.getString("VA_HST"));
+            out.setPort(rs.getInt("CD_PRT"));
             out.setSchema(rs.getString("VA_SCHMA"));
             out.setStart(rs.getTimestamp("DH_DBT").toInstant());
             out.setEnd(rs.getTimestamp("DH_FIN").toInstant());
+            out.setUser(rs.getString("VA_USR"));
             out.setThreadName(rs.getString("VA_THRED"));
+            out.setDriverVersion(rs.getString("VA_DRV"));
+            out.setDatabaseName(rs.getString("VA_DB_NME"));
+            out.setDatabaseVersion(rs.getString("VA_DB_VRS"));
             out.setFailed("T".equals(rs.getString("VA_FAIL")));
             return out;
         });
