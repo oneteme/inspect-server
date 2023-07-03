@@ -17,6 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -25,6 +26,7 @@ import org.usf.traceapi.core.Action;
 import org.usf.traceapi.core.ApplicationInfo;
 import org.usf.traceapi.core.DatabaseAction;
 import org.usf.traceapi.core.IncomingRequest;
+import org.usf.traceapi.core.MainRequest;
 import org.usf.traceapi.core.OutcomingQuery;
 import org.usf.traceapi.core.OutcomingRequest;
 import org.usf.traceapi.core.Session;
@@ -42,15 +44,35 @@ public class RequestDao {
 
     @Transactional(rollbackFor = Exception.class)
     public void saveSessions(List<Session> reqList) {
-    	addIncomingRequest(reqList.stream()
-    			.filter(IncomingRequest.class::isInstance)
-    			.map(IncomingRequest.class::cast)
-    			.collect(toList()));
-    }
-
-    public void addIncomingRequest(List<IncomingRequest> reqList) {
         List<OutcomingRequestWrapper> outreq = new LinkedList<>();
         List<OutcomingQueryWrapper> outqry = new LinkedList<>();
+        var in = reqList.stream()
+    			.filter(IncomingRequest.class::isInstance)
+    			.map(IncomingRequest.class::cast)
+    			.collect(toList());
+        if(!in.isEmpty()) {
+            addIncomingRequest(in, outreq::add, outqry::add);
+        }
+        var main = reqList.stream()
+    			.filter(MainRequest.class::isInstance)
+    			.map(MainRequest.class::cast)
+    			.collect(toList());
+        if(!main.isEmpty()) {
+        	addMainRequest(main, outreq::add, outqry::add);
+        }
+        if(!outreq.isEmpty()) {
+        	addOutcomingRequest(outreq);
+        }
+        if(!outqry.isEmpty()) {
+        	addOutcomingQueries(outqry);
+        }
+    }
+    
+    private void addMainRequest(List<MainRequest> reqList, Consumer<OutcomingRequestWrapper> requests, Consumer<OutcomingQueryWrapper> queries) {
+    	
+    }
+
+    private void addIncomingRequest(List<IncomingRequest> reqList, Consumer<OutcomingRequestWrapper> requests, Consumer<OutcomingQueryWrapper> queries) {
         template.batchUpdate("INSERT INTO E_IN_REQ(ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_NME,VA_CLI,VA_OS,VA_RE) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             ps.setString(1, o.getId());
             ps.setString(2, o.getMethod());
@@ -71,11 +93,9 @@ public class RequestDao {
             ps.setString(17, o.getUser());
             ps.setString(18, o.getApplication().getOs());
             ps.setString(19, o.getApplication().getRe());
-        	o.getRequests().forEach(or-> outreq.add(new OutcomingRequestWrapper(or, o.getId())));
-        	o.getQueries().forEach(oq-> outqry.add(new OutcomingQueryWrapper(oq, o.getId())));
+        	o.getRequests().forEach(or-> requests.accept(new OutcomingRequestWrapper(or, o.getId())));
+        	o.getQueries().forEach(oq-> queries.accept(new OutcomingQueryWrapper(oq, o.getId())));
         });
-        addOutcomingRequest(outreq);
-        addOutcomingQueries(outqry);
     }
 
     private void addOutcomingRequest(List<OutcomingRequestWrapper> reqList) {
