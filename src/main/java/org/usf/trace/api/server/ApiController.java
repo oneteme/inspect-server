@@ -64,7 +64,7 @@ public class ApiController {
         return accepted().build();
     }
 
-    @GetMapping("incoming/request")
+    @GetMapping(INCOMING_ENDPOINT)
     public List<IncomingRequest> getIncomingRequestByIds(
     		@RequestParam(defaultValue = "true", name = "lazy") boolean lazy, 
     		@RequestParam(required = false, name = "id") String[] id) { // without tree
@@ -74,6 +74,18 @@ public class ApiController {
     @GetMapping("incoming/request/{id}")
     public IncomingRequest getIncomingRequestById(@PathVariable String id) { // without tree
         return requireSingle(dao.getIncomingRequestById(true, id));
+    }
+
+    @GetMapping(MAIN_ENDPOINT)
+    public List<MainRequest> getMainRequestByIds(
+            @RequestParam(defaultValue = "true", name = "lazy") boolean lazy,
+            @RequestParam(required = false, name = "id") String[] id) { // without tree
+        return dao.getMainRequestById(lazy, id);
+    }
+
+    @GetMapping("main/request/{id}")
+    public MainRequest getMainRequestById(@PathVariable String id) { // without tree
+        return requireSingle(dao.getMainRequestById(true, id));
     }
 
     @GetMapping("incoming/request/{id}/out")
