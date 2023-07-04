@@ -14,7 +14,6 @@ import java.time.Instant;
 
 import static org.usf.jquery.core.DBComparator.*;
 import static org.usf.jquery.core.DBFunction.*;
-import static org.usf.trace.api.server.config.TraceApiColumn.ACTION;
 import static org.usf.trace.api.server.config.TraceApiColumn.STATUS;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -24,6 +23,8 @@ public final class DataConstants {
         switch (incomingRequest) {
             case ID_INCOMING_REQ:
                 return "ID_IN_REQ";
+            case MTH:
+                return "VA_MTH";
             case PROTOCOL:
                 return "VA_PRTCL";
             case HOST:
@@ -34,28 +35,39 @@ public final class DataConstants {
                 return "VA_PTH";
             case QUERY:
                 return "VA_QRY";
-            case MTH:
-                return "VA_MTH";
+            case CONTENT_TYPE:
+                return "VA_CNT_TYP";
+            case AUTH:
+                return "VA_AUTH";
             case STATUS:
                 return "CD_STT";
-            case SIZE:
-                return "VA_SZE";
+            case SIZE_IN:
+                return "VA_I_SZE";
+            case SIZE_OUT:
+                return "VA_O_SZE";
             case START_DATETIME:
                 return "DH_DBT";
             case FINISH_DATETIME:
                 return "DH_FIN";
             case THREAD:
                 return "VA_THRED";
-            case CONTENT_TYPE:
-                return "VA_CNT_TYP";
-            case ACTION:
-                return "VA_ACT";
-            case RESOURCE:
-                return "VA_RSC";
-            case CLIENT:
-                return "VA_CLN";
-            case GROUPE:
-                return "VA_GRP";
+            case NAME_API:
+                return "VA_API_NME";
+            case USER:
+                return "VA_USR";
+            case NAME_APP:
+                return "VA_APP_NME";
+            case VERSION:
+                return "VA_VRS";
+            case ADDRESS:
+                return "VA_ADRS";
+            case ENVIRONEMENT:
+                return "VA_ENV";
+            case OS:
+                return "VA_OS";
+            case RE:
+                return "VA_RE";
+
             default:
                 throw undeclaredColumn(incomingRequest);
         }
@@ -112,11 +124,6 @@ public final class DataConstants {
     public static OperationColumn maxElapsedTime(TableDecorator table) {
         var elapsed = elapsedtime(table);
         return max(elapsed);
-    }
-
-    public static OperationColumn getActionPerimeter(TableDecorator table) {
-        var action = ACTION.column(table);
-        return count(action.when(equal("perimeter")).then(action).end());
     }
 
     private static OperationColumn countStatusByType(TableDecorator table, ComparisonExpression op) {
