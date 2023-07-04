@@ -72,7 +72,7 @@ public class RequestDao {
             ps.setTimestamp(5, from(o.getEnd()));
             ps.setString(6, o.getLaunchMode().toString());
             ps.setString(7, o.getLocation());
-            ps.setString(8, o.isFailed() ? "T" : "F");
+            ps.setString(8, o.isCompleted() ? "T" : "F");
             ps.setString(9, o.getThreadName());
             ps.setString(10, o.getApplication().getName());
             ps.setString(11, o.getApplication().getVersion());
@@ -149,7 +149,7 @@ public class RequestDao {
             ps.setString(8, o.getDriverVersion());
             ps.setString(9, o.getDatabaseName());
             ps.setString(10, o.getDatabaseVersion());
-            ps.setString(11, o.isFailed() ? "T" : "F");
+            ps.setString(11, o.isCompleted() ? "T" : "F");
             ps.setString(12, o.getParentId());
             o.setId(inc.get());
         });
@@ -205,7 +205,7 @@ public class RequestDao {
             main.setEnd(rs.getTimestamp("DH_FIN").toInstant());
             main.setLaunchMode(LaunchMode.valueOf(rs.getString("LNCH")));
             main.setLocation(rs.getString("LOC"));
-            main.setFailed("T".equals(rs.getString("VA_FAIL")));
+            main.setCompleted("T".equals(rs.getString("VA_FAIL")));
             main.setThreadName(rs.getString("VA_THRED"));
             main.setApplication(new ApplicationInfo(
                     rs.getString("VA_APP_NME"),
@@ -303,7 +303,7 @@ public class RequestDao {
             out.setDriverVersion(rs.getString("VA_DRV"));
             out.setDatabaseName(rs.getString("VA_DB_NME"));
             out.setDatabaseVersion(rs.getString("VA_DB_VRS"));
-            out.setFailed("T".equals(rs.getString("VA_FAIL")));
+            out.setCompleted("T".equals(rs.getString("VA_FAIL")));
             return out;
         });
         if(!queries.isEmpty()) {
