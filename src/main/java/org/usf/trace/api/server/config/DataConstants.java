@@ -51,11 +51,11 @@ public final class DataConstants {
                 return "DH_FIN";
             case THREAD:
                 return "VA_THRED";
-            case NAME_API:
+            case API_NAME:
                 return "VA_API_NME";
             case USER:
                 return "VA_USR";
-            case NAME_APP:
+            case APP_NAME:
                 return "VA_APP_NME";
             case VERSION:
                 return "VA_VRS";
