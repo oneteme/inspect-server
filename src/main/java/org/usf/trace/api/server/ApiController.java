@@ -100,13 +100,14 @@ public class ApiController {
     
     private void safeBackup() {
     	if(!queue.isEmpty()) {
+	        var list = new LinkedList<Session>();
+	        log.info("scheduled data queue backup : {} request(s)", queue.drainTo(list));
 	    	try {
-		        var list = new LinkedList<Session>();
-		        log.info("scheduled data queue backup : {} request(s)", queue.drainTo(list));
 		        dao.saveSessions(list);
 	    	}
 	    	catch (Exception e) {
 	    		log.error("error while saving requests", e);
+	    		queue.addAll(list); // retry later
 			}
     	}
     }
