@@ -21,22 +21,31 @@ import static org.usf.jquery.core.DBFunction.count;
 public enum TraceApiColumn implements ColumnDecorator {
 
     ID_INCOMING_REQ("idIncomingRequest"),
+    MTH("mth"),
     PROTOCOL("protocol"),
     HOST("host"),
     PORT("port"),
     PATH("path"),
     QUERY("query"),
-    MTH("mth"),
+    CONTENT_TYPE("contentType"),
+    AUTH("auth"),
     STATUS("status"),
-    SIZE("size"),
+    SIZE_IN("sizeIn"),
+    SIZE_OUT("sizeOut"),
     START_DATETIME("startDatetime", null, DataConstants::greaterOrEqualsExpressions),
     FINISH_DATETIME("finishDatetime", null, DataConstants::lessThanExpressions),
     THREAD("thread"),
-    CONTENT_TYPE("contentType"),
-    ACTION("action"),
-    RESOURCE("resource"),
-    CLIENT("client"),
-    GROUPE("groupe"),
+    NAME_API("nameApi"),
+    USER("user"),
+    NAME_APP("nameApp"),
+    VERSION("version"),
+    ADDRESS("address"),
+    ENVIRONEMENT("environement"),
+    OS("os"),
+    RE("re"),
+
+
+
 
 
     //---

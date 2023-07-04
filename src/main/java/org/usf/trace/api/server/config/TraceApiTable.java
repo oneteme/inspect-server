@@ -11,7 +11,7 @@ import java.util.function.Function;
 public enum TraceApiTable implements TableDecorator {
 
 
-    INCOMING_REQUEST_TABLE("TEST", DataConstants::incReqColumns);
+    INCOMING_REQUEST_TABLE("E_IN_REQ", DataConstants::incReqColumns);
 
     @NonNull
     private final String tableName;
