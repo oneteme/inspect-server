@@ -1,6 +1,5 @@
 package org.usf.trace.api.server;
 
-import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.ResponseEntity.accepted;
 import static org.usf.trace.api.server.Utils.requireSingle;
@@ -8,13 +7,7 @@ import static org.usf.traceapi.core.RemoteTraceSender.INCOMING_ENDPOINT;
 import static org.usf.traceapi.core.RemoteTraceSender.MAIN_ENDPOINT;
 import static org.usf.traceapi.core.RemoteTraceSender.TRACE_ENDPOINT;
 
-import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -30,23 +23,16 @@ import org.usf.traceapi.core.MainRequest;
 import org.usf.traceapi.core.OutcomingRequest;
 import org.usf.traceapi.core.Session;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 
-@Slf4j
 @CrossOrigin
 @RestController
 @RequestMapping(value = TRACE_ENDPOINT, produces = APPLICATION_JSON_VALUE)
+@RequiredArgsConstructor
 public class ApiController {
 	
     private final RequestDao dao;
-    private final ScheduledExecutorService executor = newSingleThreadScheduledExecutor();
-    private final BlockingQueue<Session> queue = new LinkedBlockingQueue<>();
-    private final ScheduledFuture<?> future;
-
-    public ApiController(RequestDao dao, ScheduleProperties prop) {
-        this.dao = dao;
-        this.future = executor.scheduleWithFixedDelay(this::safeBackup, 0, prop.getPeriod(), TimeUnit.valueOf(prop.getUnit()));
-    }
+    private final SessionQueueService queueService;
 
     @PutMapping(INCOMING_ENDPOINT)
     public ResponseEntity<Void> saveRequest(@RequestBody IncomingRequest req) {
@@ -59,8 +45,7 @@ public class ApiController {
     }
     
     private ResponseEntity<Void> appendRequest(Session session){
-        queue.add(session);
-        log.info("new request added to the queue : {} request(s)", queue.size());
+        queueService.add(session);
         return accepted().build();
     }
 
@@ -98,20 +83,6 @@ public class ApiController {
         return requireSingle(dao.getIncomingRequestById(true, id)); //change query
     }
     
-    private void safeBackup() {
-    	if(!queue.isEmpty()) {
-	        var list = new LinkedList<Session>();
-	        log.info("scheduled data queue backup : {} request(s)", queue.drainTo(list));
-	    	try {
-		        dao.saveSessions(list);
-	    	}
-	    	catch (Exception e) {
-	    		log.error("error while saving requests", e);
-	    		queue.addAll(list); // retry later
-			}
-    	}
-    }
-
 }
 
 
