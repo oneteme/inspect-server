@@ -63,7 +63,7 @@ public class RequestDao {
     }
     
     private void addMainRequest(List<MainRequest> reqList) {
-        template.batchUpdate("INSERT INTO E_MAIN_REQ(ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_FAIL,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE)"
+        template.batchUpdate("INSERT INTO E_MAIN_REQ(ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_CMPLT,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE)"
         		+ " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             ps.setString(1, o.getId());
             ps.setString(2, o.getName());
@@ -137,7 +137,7 @@ public class RequestDao {
     private void addOutcomingQueries(List<OutcomingQueryWrapper> qryList) {
         var maxId = template.queryForObject("SELECT COALESCE(MAX(ID_OUT_QRY), 0) FROM E_OUT_QRY", Long.class);
         var inc = new AtomicLong(maxId);
-        template.batchUpdate("INSERT INTO E_OUT_QRY(ID_OUT_QRY,VA_HST,VA_SCHMA,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_DRV,VA_DB_NME,VA_DB_VRS,VA_FAIL,CD_IN_REQ)"
+        template.batchUpdate("INSERT INTO E_OUT_QRY(ID_OUT_QRY,VA_HST,VA_SCHMA,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_DRV,VA_DB_NME,VA_DB_VRS,VA_CMPLT,CD_IN_REQ)"
         		+ " VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", qryList, qryList.size(), (ps, o) -> {
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getHost());
@@ -157,10 +157,10 @@ public class RequestDao {
     }
 
     private void addDatabaseActions(List<OutcomingQueryWrapper> queries) {
-        template.batchUpdate("INSERT INTO E_DB_ACT(VA_TYP,DH_DBT,DH_FIN,VA_FAIL,CD_OUT_QRY) VALUES(?,?,?,?,?)", 
+        template.batchUpdate("INSERT INTO E_DB_ACT(VA_TYP,DH_DBT,DH_FIN,VA_CMPLT,CD_OUT_QRY) VALUES(?,?,?,?,?)",
         		queries.stream()
     			.flatMap(e -> e.getActions().stream().map(da ->
-    				new Object[]{da.getType().toString(), from(da.getStart()), from(da.getEnd()), da.isFailed() ? "T" : "F", e.getId()}))
+    				new Object[]{da.getType().toString(), from(da.getStart()), from(da.getEnd()), da.isCompleted() ? "T" : "F", e.getId()}))
     			.collect(toList()), 
         		new int[] {VARCHAR, TIMESTAMP, TIMESTAMP, CHAR, BIGINT});
     }
@@ -191,7 +191,7 @@ public class RequestDao {
     }
 
     public List<MainRequest> getMainRequestById(boolean lazy, String... idArr) {
-        var query = "SELECT ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_FAIL,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE FROM E_MAIN_REQ";
+        var query = "SELECT ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_CMPLT,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE FROM E_MAIN_REQ";
         int[] argTypes = null;
         if(!isEmpty(idArr)) {
             query += " WHERE ID_MAIN_REQ IN(" + nArg(idArr.length) + ")";
@@ -205,7 +205,7 @@ public class RequestDao {
             main.setEnd(rs.getTimestamp("DH_FIN").toInstant());
             main.setLaunchMode(LaunchMode.valueOf(rs.getString("LNCH")));
             main.setLocation(rs.getString("LOC"));
-            main.setCompleted("T".equals(rs.getString("VA_FAIL")));
+            main.setCompleted("T".equals(rs.getString("VA_CMPLT")));
             main.setThreadName(rs.getString("VA_THRED"));
             main.setApplication(new ApplicationInfo(
                     rs.getString("VA_APP_NME"),
@@ -289,7 +289,7 @@ public class RequestDao {
     }
 
     public List<OutcomingQueryWrapper> outcomingQueries(Set<String> incomingId) { // non empty
-        var query = "SELECT ID_OUT_QRY,VA_HST,CD_PRT,VA_SCHMA,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_DRV,VA_DB_NME,VA_DB_VRS,VA_FAIL,CD_IN_REQ FROM E_OUT_QRY"
+        var query = "SELECT ID_OUT_QRY,VA_HST,CD_PRT,VA_SCHMA,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_DRV,VA_DB_NME,VA_DB_VRS,VA_CMPLT,CD_IN_REQ FROM E_OUT_QRY"
         		+ " WHERE CD_IN_REQ IN(" + nArg(incomingId.size()) + ")";
         var queries = template.query(query, incomingId.toArray(), newArray(incomingId.size(), VARCHAR), (rs, i) -> {
             var out = new OutcomingQueryWrapper(rs.getLong("ID_OUT_QRY"), rs.getString("CD_IN_REQ"));
@@ -303,7 +303,7 @@ public class RequestDao {
             out.setDriverVersion(rs.getString("VA_DRV"));
             out.setDatabaseName(rs.getString("VA_DB_NME"));
             out.setDatabaseVersion(rs.getString("VA_DB_VRS"));
-            out.setCompleted("T".equals(rs.getString("VA_FAIL")));
+            out.setCompleted("T".equals(rs.getString("VA_CMPLT")));
             return out;
         });
         if(!queries.isEmpty()) {
@@ -314,7 +314,7 @@ public class RequestDao {
     }
 
     public List<DatabaseActionWrapper> databaseActions(Set<Long> queries) { // non empty
-        var query = "SELECT VA_TYP,DH_DBT,DH_FIN,VA_FAIL,CD_OUT_QRY FROM E_DB_ACT"
+        var query = "SELECT VA_TYP,DH_DBT,DH_FIN,VA_CMPLT,CD_OUT_QRY FROM E_DB_ACT"
         		+ " WHERE CD_OUT_QRY IN(" + nArg(queries.size()) + ")";
         return template.query(query, queries.toArray(), newArray(queries.size(), BIGINT), (rs, i)->
                 new DatabaseActionWrapper(
@@ -322,7 +322,7 @@ public class RequestDao {
                         Action.valueOf(rs.getString("VA_TYP")),
                         rs.getTimestamp("DH_DBT").toInstant(),
                         rs.getTimestamp("DH_FIN").toInstant(),
-                        "T".equals(rs.getString("VA_FAIL"))));
+                        "T".equals(rs.getString("VA_CMPLT"))));
     }
 
     @Getter
