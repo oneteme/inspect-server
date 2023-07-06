@@ -127,7 +127,7 @@ public class RequestDao {
             ps.setString(7, o.getQuery());
             ps.setString(8, o.getContentType());
             ps.setString(9, o.getAuthScheme());
-            ps.setInt(10, o.getStatus());
+            ps.setInt(10, ofNullable(o.getStatus()).orElse(-1));
             ps.setLong(11, o.getInDataSize());
             ps.setLong(12, o.getOutDataSize());
             ps.setTimestamp(13, from(o.getStart()));
@@ -281,7 +281,7 @@ public class RequestDao {
             out.setPath(rs.getString("VA_PTH"));
             out.setQuery(rs.getString("VA_QRY"));
             out.setMethod(rs.getString("VA_MTH"));
-            out.setStatus(rs.getInt("CD_STT"));
+            out.setStatus( rs.getInt("CD_STT"));
             out.setInDataSize(rs.getLong("VA_I_SZE"));
             out.setOutDataSize(rs.getLong("VA_I_SZE"));
             out.setStart(rs.getTimestamp("DH_DBT").toInstant());
