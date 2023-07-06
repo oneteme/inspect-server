@@ -297,7 +297,7 @@ public class RequestDao {
             out.setPort(rs.getInt("CD_PRT"));
             out.setSchema(rs.getString("VA_SCHMA"));
             out.setStart(rs.getTimestamp("DH_DBT").toInstant());
-            out.setEnd(rs.getTimestamp("DH_FIN").toInstant());
+            out.setEnd(rs.getTimestamp("DH_FIN") != null ? rs.getTimestamp("DH_FIN").toInstant() : null);
             out.setUser(rs.getString("VA_USR"));
             out.setThreadName(rs.getString("VA_THRED"));
             out.setDriverVersion(rs.getString("VA_DRV"));
@@ -321,7 +321,7 @@ public class RequestDao {
                         rs.getLong("CD_OUT_QRY"),
                         Action.valueOf(rs.getString("VA_TYP")),
                         rs.getTimestamp("DH_DBT").toInstant(),
-                        rs.getTimestamp("DH_FIN").toInstant(),
+                        (rs.getTimestamp("DH_FIN") != null ? rs.getTimestamp("DH_FIN").toInstant() : null),
                         "T".equals(rs.getString("VA_CMPLT"))));
     }
 
