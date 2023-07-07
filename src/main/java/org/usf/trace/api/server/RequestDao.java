@@ -1,8 +1,6 @@
 package org.usf.trace.api.server;
 
-import static java.sql.Timestamp.from;
 import static java.sql.Types.BIGINT;
-import static java.sql.Types.CHAR;
 import static java.sql.Types.TIMESTAMP;
 import static java.sql.Types.VARCHAR;
 import static java.util.Optional.ofNullable;
@@ -17,9 +15,9 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -39,11 +37,11 @@ public class RequestDao {
 
     @Transactional(rollbackFor = Exception.class)
     public void saveSessions(List<Session> reqList) {
-        var in = filter(reqList, IncomingRequest.class);
+        var in = filterInstance(reqList, IncomingRequest.class);
         if(!in.isEmpty()) {
             addIncomingRequest(in);
         }
-        var main = filter(reqList, MainRequest.class);
+        var main = filterInstance(reqList, MainRequest.class);
         if(!main.isEmpty()) {
         	addMainRequest(main);
         }
@@ -61,57 +59,54 @@ public class RequestDao {
         }
     }
     
-    private static <T, U extends T> List<U> filter(Collection<T> c, Class<U> classe){
-    	return c.stream().filter(classe::isInstance).map(classe::cast).collect(toList());
-    }
-    
     private void addMainRequest(List<MainRequest> reqList) {
-        template.batchUpdate("INSERT INTO E_MAIN_REQ(ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_CMPLT,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE)"
-        		+ " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
+        template.batchUpdate("INSERT INTO E_MAIN_REQ(ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE)"
+        		+ " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
+            var app = nullableApplication(o.getApplication());
             ps.setString(1, o.getId());
             ps.setString(2, o.getName());
             ps.setString(3, o.getUser());
-            ps.setTimestamp(4, from(o.getStart()));
-            ps.setTimestamp(5, from(o.getEnd()));
-            ps.setString(6, o.getLaunchMode().toString());
+            ps.setTimestamp(4, fromNullableInstant(o.getStart()));
+            ps.setTimestamp(5, fromNullableInstant(o.getEnd()));
+            ps.setString(6, valueOfNullable(o.getLaunchMode()));
             ps.setString(7, o.getLocation());
-            ps.setString(8, o.isCompleted() ? "T" : "F");
-            ps.setString(9, o.getThreadName());
-            ps.setString(10, o.getApplication().getName());
-            ps.setString(11, o.getApplication().getVersion());
-            ps.setString(12, o.getApplication().getAddress());
-            ps.setString(13, o.getApplication().getEnv());
-            ps.setString(14, o.getApplication().getOs());
-            ps.setString(15, o.getApplication().getRe());
+            ps.setString(8, o.getThreadName());
+            ps.setString(9, app.getName());
+            ps.setString(10, app.getVersion());
+            ps.setString(11, app.getAddress());
+            ps.setString(12, app.getEnv());
+            ps.setString(13, app.getOs());
+            ps.setString(14, app.getRe());
         });
     }
 
     private void addIncomingRequest(List<IncomingRequest> reqList) {
         template.batchUpdate("INSERT INTO E_IN_REQ(ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE)"
         		+ " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
+            var app = nullableApplication(o.getApplication());
             ps.setString(1, o.getId());
             ps.setString(2, o.getMethod());
             ps.setString(3, o.getProtocol());
             ps.setString(4, o.getHost());
             ps.setInt(5, o.getPort());
             ps.setString(6, o.getPath());
-            ps.setString(7, o.getQuery());
+            ps.setString(7, o.getQuery());	
             ps.setString(8, o.getContentType());
             ps.setString(9, o.getAuthScheme());
             ps.setInt(10, o.getStatus());
             ps.setLong(11, o.getInDataSize());
             ps.setLong(12, o.getOutDataSize());
-            ps.setTimestamp(13, from(o.getStart()));
-            ps.setTimestamp(14, from(o.getEnd()));
+            ps.setTimestamp(13, fromNullableInstant(o.getStart()));
+            ps.setTimestamp(14, fromNullableInstant(o.getEnd()));
             ps.setString(15, o.getThreadName());
             ps.setString(16, o.getName());
             ps.setString(17, o.getUser());
-            ps.setString(18, o.getApplication().getName());
-            ps.setString(19, o.getApplication().getVersion());
-            ps.setString(20, o.getApplication().getAddress());
-            ps.setString(21, o.getApplication().getEnv());
-            ps.setString(22, o.getApplication().getOs());
-            ps.setString(23, o.getApplication().getRe());
+            ps.setString(18, app.getName());
+            ps.setString(19, app.getVersion());
+            ps.setString(20, app.getAddress());
+            ps.setString(21, app.getEnv());
+            ps.setString(22, app.getOs());
+            ps.setString(23, app.getRe());
         });
     }
 
@@ -127,11 +122,11 @@ public class RequestDao {
             ps.setString(7, o.getQuery());
             ps.setString(8, o.getContentType());
             ps.setString(9, o.getAuthScheme());
-            ps.setInt(10, ofNullable(o.getStatus()).orElse(-1));
+            ps.setInt(10, o.getStatus());
             ps.setLong(11, o.getInDataSize());
             ps.setLong(12, o.getOutDataSize());
-            ps.setTimestamp(13, from(o.getStart()));
-            ps.setTimestamp(14, from(o.getEnd()));
+            ps.setTimestamp(13, fromNullableInstant(o.getStart()));
+            ps.setTimestamp(14, fromNullableInstant(o.getEnd()));
             ps.setString(15, o.getThreadName());
             ps.setString(16, o.getParentId());
         });
@@ -145,8 +140,8 @@ public class RequestDao {
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getHost());
             ps.setString(3, o.getSchema());
-            ps.setTimestamp(4, from(o.getStart()));
-            ps.setTimestamp(5, ofNullable(o.getEnd()).map(Timestamp::from).orElse(null)); 
+            ps.setTimestamp(4, fromNullableInstant(o.getStart()));
+            ps.setTimestamp(5, fromNullableInstant(o.getEnd())); 
             ps.setString(6, o.getUser());
             ps.setString(7, o.getThreadName());
             ps.setString(8, o.getDriverVersion());
@@ -160,12 +155,12 @@ public class RequestDao {
     }
 
     private void addDatabaseActions(List<OutcomingQueryWrapper> queries) {
-        template.batchUpdate("INSERT INTO E_DB_ACT(VA_TYP,DH_DBT,DH_FIN,VA_CMPLT,CD_OUT_QRY) VALUES(?,?,?,?,?)",
+        template.batchUpdate("INSERT INTO E_DB_ACT(VA_TYP,DH_DBT,DH_FIN,CD_OUT_QRY) VALUES(?,?,?,?)",
         		queries.stream()
     			.flatMap(e -> e.getActions().stream().map(da ->
-    				new Object[]{da.getType().toString(), from(da.getStart()), ofNullable(da.getEnd()).map(Timestamp::from).orElse(null), da.isCompleted() ? "T" : "F", e.getId()}))
+    				new Object[]{da.getType().toString(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()), e.getId()}))
     			.collect(toList()), 
-        		new int[] {VARCHAR, TIMESTAMP, TIMESTAMP, CHAR, BIGINT});
+        		new int[] {VARCHAR, TIMESTAMP, TIMESTAMP, BIGINT});
     }
 
     @Deprecated // reuse RequestDao::outcomingRequests using criteria
@@ -184,8 +179,8 @@ public class RequestDao {
                 out.setStatus(rs.getInt("CD_STT"));
                 out.setInDataSize(rs.getLong("VA_I_SZE"));
                 out.setOutDataSize(rs.getLong("VA_O_SZE"));
-                out.setStart(rs.getTimestamp("DH_DBT").toInstant());
-                out.setEnd(rs.getTimestamp("DH_FIN").toInstant());
+                out.setStart(fromNullableTimestamp(rs.getTimestamp("DH_DBT")));
+                out.setEnd(fromNullableTimestamp(rs.getTimestamp("DH_FIN")));
                 out.setThreadName(rs.getString("VA_THRED"));
                 return out;
             }
@@ -194,7 +189,7 @@ public class RequestDao {
     }
 
     public List<MainRequest> getMainRequestById(boolean lazy, String... idArr) {
-        var query = "SELECT ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_CMPLT,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE FROM E_MAIN_REQ";
+        var query = "SELECT ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE FROM E_MAIN_REQ";
         int[] argTypes = null;
         if(!isEmpty(idArr)) {
             query += " WHERE ID_MAIN_REQ IN(" + nArg(idArr.length) + ")";
@@ -204,14 +199,13 @@ public class RequestDao {
             MainRequest main = new MainRequest(rs.getString("ID_MAIN_REQ"));
             main.setName(rs.getString("VA_NAME"));
             main.setUser(rs.getString("VA_USR"));
-            main.setStart(rs.getTimestamp("DH_DBT").toInstant());
-            main.setEnd(rs.getTimestamp("DH_FIN").toInstant());
-            main.setLaunchMode(LaunchMode.valueOf(rs.getString("LNCH")));
+            main.setStart(fromNullableTimestamp(rs.getTimestamp("DH_DBT")));
+            main.setEnd(fromNullableTimestamp(rs.getTimestamp("DH_FIN")));
+            main.setLaunchMode(valueOfNullable(LaunchMode.class, rs.getString("LNCH")));
             main.setLocation(rs.getString("LOC"));
-            main.setCompleted("T".equals(rs.getString("VA_CMPLT")));
             main.setThreadName(rs.getString("VA_THRED"));
             main.setApplication(new ApplicationInfo(
-                    rs.getString("VA_APP_NME"),
+            		rs.getString("VA_APP_NME"),
                     rs.getString("VA_VRS"),
                     rs.getString("VA_ADRS"),
                     rs.getString("VA_ENV"),
@@ -247,8 +241,8 @@ public class RequestDao {
             in.setStatus(rs.getInt("CD_STT"));
             in.setInDataSize(rs.getLong("VA_I_SZE"));
             in.setOutDataSize(rs.getLong("VA_I_SZE"));
-            in.setStart(rs.getTimestamp("DH_DBT").toInstant());
-            in.setEnd(rs.getTimestamp("DH_FIN").toInstant());
+            in.setStart(fromNullableTimestamp(rs.getTimestamp("DH_DBT")));
+            in.setEnd(fromNullableTimestamp(rs.getTimestamp("DH_FIN")));
             in.setThreadName(rs.getString("VA_THRED"));
             in.setName(rs.getString("VA_API_NME"));
             in.setUser(rs.getString("VA_USR"));
@@ -284,8 +278,8 @@ public class RequestDao {
             out.setStatus( rs.getInt("CD_STT"));
             out.setInDataSize(rs.getLong("VA_I_SZE"));
             out.setOutDataSize(rs.getLong("VA_I_SZE"));
-            out.setStart(rs.getTimestamp("DH_DBT").toInstant());
-            out.setEnd(rs.getTimestamp("DH_FIN").toInstant());
+            out.setStart(fromNullableTimestamp(rs.getTimestamp("DH_DBT")));
+            out.setEnd(fromNullableTimestamp(rs.getTimestamp("DH_FIN")));
             out.setThreadName(rs.getString("VA_THRED"));
             return out;
         });
@@ -299,8 +293,8 @@ public class RequestDao {
             out.setHost(rs.getString("VA_HST"));
             out.setPort(rs.getInt("CD_PRT"));
             out.setSchema(rs.getString("VA_SCHMA"));
-            out.setStart(rs.getTimestamp("DH_DBT").toInstant());
-            out.setEnd(ofNullable(rs.getTimestamp("DH_FIN")).map(Timestamp::toInstant).orElse(null));
+            out.setStart(fromNullableTimestamp(rs.getTimestamp("DH_DBT")));
+            out.setEnd(fromNullableTimestamp(rs.getTimestamp("DH_FIN")));
             out.setUser(rs.getString("VA_USR"));
             out.setThreadName(rs.getString("VA_THRED"));
             out.setDriverVersion(rs.getString("VA_DRV"));
@@ -317,7 +311,7 @@ public class RequestDao {
     }
 
     public List<DatabaseActionWrapper> databaseActions(Set<Long> queries) { // non empty
-        var query = "SELECT VA_TYP,DH_DBT,DH_FIN,VA_CMPLT,CD_OUT_QRY FROM E_DB_ACT"
+        var query = "SELECT VA_TYP,DH_DBT,DH_FIN,CD_OUT_QRY FROM E_DB_ACT"
         		+ " WHERE CD_OUT_QRY IN(" + nArg(queries.size()) + ")";
         return template.query(query, queries.toArray(), newArray(queries.size(), BIGINT), (rs, i)->
                 new DatabaseActionWrapper(
@@ -325,7 +319,7 @@ public class RequestDao {
                         Action.valueOf(rs.getString("VA_TYP")),
                         rs.getTimestamp("DH_DBT").toInstant(),
                         ofNullable(rs.getTimestamp("DH_FIN")).map(Timestamp::toInstant).orElse(null),
-                        "T".equals(rs.getString("VA_CMPLT"))));
+                        null));
     }
 
     @Getter
@@ -374,9 +368,35 @@ public class RequestDao {
     	private final DatabaseAction action;
     	private final long parentId;
 
-        public DatabaseActionWrapper(long parentId, Action type, Instant start, Instant end, boolean failed) {
+        public DatabaseActionWrapper(long parentId, Action type, Instant start, Instant end, ExceptionInfo exception) {
             this.parentId = parentId;
-            this.action = new DatabaseAction(type, start, end, failed);
+            this.action = new DatabaseAction(type, start, end, exception);
         }
+    }
+
+    private static <T, U extends T> List<U> filterInstance(Collection<T> c, Class<U> classe){
+    	return c.stream().filter(classe::isInstance).map(classe::cast).collect(toList());
+    }
+    
+    private static Timestamp fromNullableInstant(Instant instant) {
+    	return ofNullable(instant).map(Timestamp::from).orElse(null);
+    }
+    
+    private static Instant fromNullableTimestamp(Timestamp timestamp) {
+    	return ofNullable(timestamp).map(Timestamp::toInstant).orElse(null);
+    }
+    
+    private static ApplicationInfo nullableApplication(ApplicationInfo app) {
+    	return ofNullable(app).orElseGet(()-> new ApplicationInfo(null, null, null, null, null, null));
+    }
+
+    private static String valueOfNullable(Object o) {
+    	return ofNullable(o).map(Object::toString).orElse(null);
+    }
+
+    private static <T extends Enum<T>> T valueOfNullable(Class<T> classe, String value) {
+    	return ofNullable(value)
+    			.flatMap(v-> Stream.of(classe.getEnumConstants()).filter(e-> e.name().equals(v)).findAny())
+    			.orElse(null);
     }
 }
