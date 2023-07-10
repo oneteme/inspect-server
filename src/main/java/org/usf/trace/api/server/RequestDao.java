@@ -3,6 +3,7 @@ package org.usf.trace.api.server;
 import static java.sql.Types.BIGINT;
 import static java.sql.Types.TIMESTAMP;
 import static java.sql.Types.VARCHAR;
+import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
@@ -46,12 +47,14 @@ public class RequestDao {
         	addMainRequest(main);
         }
         var outreq = reqList.stream()
+        		.filter(s-> nonNull(s.getRequests())) //safe
         		.flatMap(s-> s.getRequests().stream().map(o-> new OutcomingRequestWrapper(o, s.getId())))
         		.collect(toList());
         if(!outreq.isEmpty()) {
         	addOutcomingRequest(outreq);
         }
         var outqry = reqList.stream()
+        		.filter(s-> nonNull(s.getQueries())) //safe
         		.flatMap(s-> s.getQueries().stream().map(o-> new OutcomingQueryWrapper(o, s.getId())))
         		.collect(toList());
         if(!outqry.isEmpty()) {

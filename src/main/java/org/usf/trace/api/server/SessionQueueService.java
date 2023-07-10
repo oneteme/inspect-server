@@ -1,6 +1,7 @@
 package org.usf.trace.api.server;
 
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -10,6 +11,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+
+import javax.annotation.PreDestroy;
 
 import org.springframework.stereotype.Service;
 import org.usf.traceapi.core.Session;
@@ -27,7 +30,8 @@ public class SessionQueueService {
     
     public SessionQueueService(RequestDao dao, ScheduleProperties prop) {
     	this.dao = dao;
-    	this.future = executor.scheduleWithFixedDelay(this::safeBackup, 0, prop.getPeriod(), TimeUnit.valueOf(prop.getUnit()));
+    	this.future = executor.scheduleWithFixedDelay(this::safeBackup, 
+    			prop.getPeriod()*2, prop.getPeriod(), TimeUnit.valueOf(prop.getUnit())); //x2 wait for previous POD backup
     }
     
     public void add(Session session) {
@@ -52,4 +56,17 @@ public class SessionQueueService {
 			}
     	}
     }
+    
+    @PreDestroy
+    void destroy() throws InterruptedException {
+		log.info("backup before shutdown" + future.isDone());
+    	try {
+    		future.cancel(false);
+    		executor.awaitTermination(30, SECONDS); //wait for last save
+    	}
+    	finally {
+    		safeBackup(); //last backup
+		}
+	}
+    
 }
