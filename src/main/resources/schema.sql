@@ -1,3 +1,4 @@
+--https://www.postgresql.org/docs/current/datatype-character.html
 CREATE TABLE IF NOT EXISTS E_MAIN_REQ(
     ID_MAIN_REQ VARCHAR PRIMARY KEY,
     VA_NAME VARCHAR,
