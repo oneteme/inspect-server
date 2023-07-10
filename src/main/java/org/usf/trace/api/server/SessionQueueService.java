@@ -9,8 +9,6 @@ import java.util.LinkedList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PreDestroy;
 
@@ -26,12 +24,11 @@ public class SessionQueueService {
     private final RequestDao dao;
 	private final ScheduledExecutorService executor = newSingleThreadScheduledExecutor();
     private final BlockingQueue<Session> queue = new LinkedBlockingQueue<>();
-    private final ScheduledFuture<?> future;
     
     public SessionQueueService(RequestDao dao, ScheduleProperties prop) {
     	this.dao = dao;
-    	this.future = executor.scheduleWithFixedDelay(this::safeBackup, 
-    			prop.getPeriod()*2, prop.getPeriod(), TimeUnit.valueOf(prop.getUnit())); //x2 wait for previous POD backup
+    	executor.scheduleWithFixedDelay(this::safeBackup, 
+    			prop.getDelay()*2, prop.getDelay(), prop.getUnit()); //x2 wait for previous POD backup
     }
     
     public void add(Session session) {
@@ -61,11 +58,11 @@ public class SessionQueueService {
     void destroy() throws InterruptedException {
 		log.info("backup before shutdown");
     	try {
-    		future.cancel(false);
-    		executor.awaitTermination(30, SECONDS); //wait for last save
+    		executor.shutdown(); //cancel future
+    		while(!executor.awaitTermination(5, SECONDS)); //wait for last save complete
     	}
     	finally {
-    		safeBackup(); //last backup
+    		safeBackup(); //earlier shutdown
 		}
 	}
     
