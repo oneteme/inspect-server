@@ -12,6 +12,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import javax.annotation.PreDestroy;
 
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Service;
 import org.usf.traceapi.core.Session;
 
@@ -19,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
+@EnableConfigurationProperties(ScheduleProperties.class)
 public class SessionQueueService {
 
     private final RequestDao dao;
