@@ -59,7 +59,7 @@ public class SessionQueueService {
     
     @PreDestroy
     void destroy() throws InterruptedException {
-		log.info("backup before shutdown" + future.isDone());
+		log.info("backup before shutdown");
     	try {
     		future.cancel(false);
     		executor.awaitTermination(30, SECONDS); //wait for last save
