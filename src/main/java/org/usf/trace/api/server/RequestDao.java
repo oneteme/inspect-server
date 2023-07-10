@@ -63,9 +63,10 @@ public class RequestDao {
     }
     
     private void addMainRequest(List<MainRequest> reqList) {
-        template.batchUpdate("INSERT INTO E_MAIN_REQ(ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE)"
-        		+ " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
+        template.batchUpdate("INSERT INTO E_MAIN_REQ(ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE,VA_ERR_CLS,VA_ERR_MSG)"
+        		+ " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             var app = nullableApplication(o.getApplication());
+            var exp = nullableException(o.getException());
             ps.setString(1, o.getId());
             ps.setString(2, o.getName());
             ps.setString(3, o.getUser());
@@ -80,13 +81,16 @@ public class RequestDao {
             ps.setString(12, app.getEnv());
             ps.setString(13, app.getOs());
             ps.setString(14, app.getRe());
+            ps.setString(15,exp.getClassname());
+            ps.setString(16,exp.getMessage());
         });
     }
 
     private void addIncomingRequest(List<IncomingRequest> reqList) {
-        template.batchUpdate("INSERT INTO E_IN_REQ(ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE)"
-        		+ " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
+        template.batchUpdate("INSERT INTO E_IN_REQ(ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE)"
+        		+ " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             var app = nullableApplication(o.getApplication());
+            var exp = nullableException(o.getException());
             ps.setString(1, o.getId());
             ps.setString(2, o.getMethod());
             ps.setString(3, o.getProtocol());
@@ -102,20 +106,23 @@ public class RequestDao {
             ps.setTimestamp(13, fromNullableInstant(o.getStart()));
             ps.setTimestamp(14, fromNullableInstant(o.getEnd()));
             ps.setString(15, o.getThreadName());
-            ps.setString(16, o.getName());
-            ps.setString(17, o.getUser());
-            ps.setString(18, app.getName());
-            ps.setString(19, app.getVersion());
-            ps.setString(20, app.getAddress());
-            ps.setString(21, app.getEnv());
-            ps.setString(22, app.getOs());
-            ps.setString(23, app.getRe());
+            ps.setString(16,exp.getClassname());
+            ps.setString(17,exp.getMessage());
+            ps.setString(18, o.getName());
+            ps.setString(19, o.getUser());
+            ps.setString(20, app.getName());
+            ps.setString(21, app.getVersion());
+            ps.setString(22, app.getAddress());
+            ps.setString(23, app.getEnv());
+            ps.setString(24, app.getOs());
+            ps.setString(25, app.getRe());
         });
     }
 
     private void addOutcomingRequest(List<OutcomingRequestWrapper> reqList) {
-        template.batchUpdate("INSERT INTO E_OUT_REQ(ID_OUT_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ)"
-        		+ " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
+        template.batchUpdate("INSERT INTO E_OUT_REQ(ID_OUT_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,CD_IN_REQ)"
+        		+ " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
+            var exp = nullableException(o.getException());
             ps.setString(1, o.getId());
             ps.setString(2, o.getMethod());
             ps.setString(3, o.getProtocol());
@@ -131,7 +138,9 @@ public class RequestDao {
             ps.setTimestamp(13, fromNullableInstant(o.getStart()));
             ps.setTimestamp(14, fromNullableInstant(o.getEnd()));
             ps.setString(15, o.getThreadName());
-            ps.setString(16, o.getParentId());
+            ps.setString(16,exp.getClassname());
+            ps.setString(17,exp.getMessage());
+            ps.setString(18, o.getParentId());
         });
     }
 
@@ -158,12 +167,16 @@ public class RequestDao {
     }
 
     private void addDatabaseActions(List<OutcomingQueryWrapper> queries) {
-        template.batchUpdate("INSERT INTO E_DB_ACT(VA_TYP,DH_DBT,DH_FIN,CD_OUT_QRY) VALUES(?,?,?,?)",
-        		queries.stream()
-    			.flatMap(e -> e.getActions().stream().map(da ->
-    				new Object[]{da.getType().toString(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()), e.getId()}))
-    			.collect(toList()), 
-        		new int[] {VARCHAR, TIMESTAMP, TIMESTAMP, BIGINT});
+        template.batchUpdate("INSERT INTO E_DB_ACT(VA_TYP,DH_DBT,DH_FIN,VA_ERR_CLS,VA_ERR_MSG,CD_OUT_QRY) VALUES(?,?,?,?,?,?)",
+                queries.stream()
+                        .flatMap(e -> e.getActions().stream().map(da -> {
+                                    var exp = nullableException(da.getException());
+                                    return new Object[]{da.getType().toString(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()), exp.getClassname(), exp.getMessage(), e.getId()
+                                    };
+                                }
+                        ))
+                        .collect(toList()),
+                new int[]{VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, VARCHAR, BIGINT});
     }
 
     @Deprecated // reuse RequestDao::outcomingRequests using criteria
@@ -192,7 +205,7 @@ public class RequestDao {
     }
 
     public List<MainRequest> getMainRequestById(boolean lazy, String... idArr) {
-        var query = "SELECT ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE FROM E_MAIN_REQ";
+        var query = "SELECT ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE,VA_ERR_CLS,VA_ERR_MSG FROM E_MAIN_REQ";
         int[] argTypes = null;
         if(!isEmpty(idArr)) {
             query += " WHERE ID_MAIN_REQ IN(" + nArg(idArr.length) + ")";
@@ -215,6 +228,10 @@ public class RequestDao {
                     rs.getString("VA_OS"),
                     rs.getString("VA_RE")
             ));
+            main.setException(new ExceptionInfo(
+                    rs.getString("VA_ERR_CLS"),
+                    rs.getString("VA_ERR_MSG")
+            ));
             return main;
         });
         if(lazy && !res.isEmpty()) {
@@ -225,7 +242,7 @@ public class RequestDao {
         return res;
     }
     public List<IncomingRequest> getIncomingRequestById(boolean lazy, String... idArr) {
-        var query = "SELECT ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE FROM E_IN_REQ";
+        var query = "SELECT ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE FROM E_IN_REQ";
         int[] argTypes = null;
         if(!isEmpty(idArr)) {
             query += " WHERE ID_IN_REQ IN(" + nArg(idArr.length) + ")";
@@ -247,6 +264,10 @@ public class RequestDao {
             in.setStart(fromNullableTimestamp(rs.getTimestamp("DH_DBT")));
             in.setEnd(fromNullableTimestamp(rs.getTimestamp("DH_FIN")));
             in.setThreadName(rs.getString("VA_THRED"));
+            in.setException(new ExceptionInfo(
+                    rs.getString("VA_ERR_CLS"),
+                    rs.getString("VA_ERR_MSG")
+            ));
             in.setName(rs.getString("VA_API_NME"));
             in.setUser(rs.getString("VA_USR"));
             in.setApplication(new ApplicationInfo(
@@ -268,7 +289,7 @@ public class RequestDao {
     }
 
     public List<OutcomingRequestWrapper> outcomingRequests(Set<String> incomingId) { //use criteria 
-        var query = "SELECT ID_OUT_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ FROM E_OUT_REQ"
+        var query = "SELECT ID_OUT_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,CD_IN_REQ FROM E_OUT_REQ"
         		+ " WHERE CD_IN_REQ IN(" + nArg(incomingId.size()) + ")";
         return template.query(query, incomingId.toArray(), newArray(incomingId.size(), VARCHAR), (rs, i) -> {
             OutcomingRequestWrapper out = new OutcomingRequestWrapper(rs.getString("ID_OUT_REQ"), rs.getString("CD_IN_REQ"));
@@ -284,6 +305,11 @@ public class RequestDao {
             out.setStart(fromNullableTimestamp(rs.getTimestamp("DH_DBT")));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp("DH_FIN")));
             out.setThreadName(rs.getString("VA_THRED"));
+            out.setException(new ExceptionInfo(
+                    rs.getString("VA_ERR_CLS"),
+                    rs.getString("VA_ERR_MSG")
+            ));
+
             return out;
         });
     }
@@ -314,7 +340,7 @@ public class RequestDao {
     }
 
     public List<DatabaseActionWrapper> databaseActions(Set<Long> queries) { // non empty
-        var query = "SELECT VA_TYP,DH_DBT,DH_FIN,CD_OUT_QRY FROM E_DB_ACT"
+        var query = "SELECT VA_TYP,DH_DBT,DH_FIN,VA_ERR_CLS,VA_ERR_MSG,CD_OUT_QRY, FROM E_DB_ACT"
         		+ " WHERE CD_OUT_QRY IN(" + nArg(queries.size()) + ")";
         return template.query(query, queries.toArray(), newArray(queries.size(), BIGINT), (rs, i)->
                 new DatabaseActionWrapper(
@@ -322,7 +348,10 @@ public class RequestDao {
                         Action.valueOf(rs.getString("VA_TYP")),
                         rs.getTimestamp("DH_DBT").toInstant(),
                         ofNullable(rs.getTimestamp("DH_FIN")).map(Timestamp::toInstant).orElse(null),
-                        null));
+                        new ExceptionInfo(
+                                rs.getString("VA_ERR_CLS"),
+                                rs.getString("VA_ERR_MSG")
+                        )));
     }
 
     @Getter
@@ -391,6 +420,10 @@ public class RequestDao {
     
     private static ApplicationInfo nullableApplication(ApplicationInfo app) {
     	return ofNullable(app).orElseGet(()-> new ApplicationInfo(null, null, null, null, null, null));
+    }
+
+    private static ExceptionInfo nullableException(ExceptionInfo exp){
+        return ofNullable(exp).orElseGet(()-> new ExceptionInfo(null,null));
     }
 
     private static String valueOfNullable(Object o) {
