@@ -20,7 +20,7 @@ public class ScheduleProperties {
 	private TimeUnit unit = SECONDS;
 
 	public void setUnit(String unit){
-		this.unit = TimeUnit.valueOf(unit.toLowerCase());
+		this.unit = TimeUnit.valueOf(unit);
 	}
 
 }
