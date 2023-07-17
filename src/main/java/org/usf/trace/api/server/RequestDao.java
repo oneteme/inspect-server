@@ -18,6 +18,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -37,29 +40,11 @@ public class RequestDao {
     private final JdbcTemplate template;
 
     @Transactional(rollbackFor = Exception.class)
-    public void saveSessions(List<Session> reqList) {
-        var in = filterInstance(reqList, IncomingRequest.class);
-        if(!in.isEmpty()) {
-            addIncomingRequest(in);
-        }
-        var main = filterInstance(reqList, MainRequest.class);
-        if(!main.isEmpty()) {
-        	addMainRequest(main);
-        }
-        var outreq = reqList.stream()
-        		.filter(s-> nonNull(s.getRequests())) //safe
-        		.flatMap(s-> s.getRequests().stream().map(o-> new OutcomingRequestWrapper(o, s.getId())))
-        		.collect(toList());
-        if(!outreq.isEmpty()) {
-        	addOutcomingRequest(outreq);
-        }
-        var outqry = reqList.stream()
-        		.filter(s-> nonNull(s.getQueries())) //safe
-        		.flatMap(s-> s.getQueries().stream().map(o-> new OutcomingQueryWrapper(o, s.getId())))
-        		.collect(toList());
-        if(!outqry.isEmpty()) {
-        	addOutcomingQueries(outqry);
-        }
+    public void saveSessions(List<Session> sessions) {
+        filterAndSave(sessions, IncomingRequest.class, this::addIncomingRequest);
+        filterAndSave(sessions, MainRequest.class, this::addMainRequest);        
+        filterSubAndSave(sessions, Session::getRequests, (s, r)-> new OutcomingRequestWrapper(r, s.getId()), this::addOutcomingRequest);
+        filterSubAndSave(sessions, Session::getQueries, (s, q)-> new OutcomingQueryWrapper(q, s.getId()), this::addOutcomingQueries);
     }
     
     private void addMainRequest(List<MainRequest> reqList) {
@@ -340,7 +325,7 @@ public class RequestDao {
     }
 
     public List<DatabaseActionWrapper> databaseActions(Set<Long> queries) { // non empty
-        var query = "SELECT VA_TYP,DH_DBT,DH_FIN,VA_ERR_CLS,VA_ERR_MSG,CD_OUT_QRY, FROM E_DB_ACT"
+        var query = "SELECT VA_TYP,DH_DBT,DH_FIN,VA_ERR_CLS,VA_ERR_MSG,CD_OUT_QRY FROM E_DB_ACT"
         		+ " WHERE CD_OUT_QRY IN(" + nArg(queries.size()) + ")";
         return template.query(query, queries.toArray(), newArray(queries.size(), BIGINT), (rs, i)->
                 new DatabaseActionWrapper(
@@ -406,8 +391,24 @@ public class RequestDao {
         }
     }
 
-    private static <T, U extends T> List<U> filterInstance(Collection<T> c, Class<U> classe){
-    	return c.stream().filter(classe::isInstance).map(classe::cast).collect(toList());
+    private static <T, U extends T> void filterAndSave(Collection<T> c, Class<U> classe, Consumer<List<U>> saveFn){
+    	var list = c.stream()
+    			.filter(classe::isInstance)
+    			.map(classe::cast)
+    			.collect(toList());
+    	if(!list.isEmpty()) {
+    		saveFn.accept(list);
+    	}
+    }
+    
+    private static <T, U, R> void filterSubAndSave(Collection<T> c, Function<T, Collection<U>> accessor, BiFunction<T, U, R> mapper, Consumer<List<R>> saveFn){
+    	var list = c.stream()
+    			.filter(o-> nonNull(accessor.apply(o)))
+    			.flatMap(o-> accessor.apply(o).stream().map(s-> mapper.apply(o, s)))
+    			.collect(toList());
+    	if(!list.isEmpty()) {
+    		saveFn.accept(list);
+    	}
     }
     
     private static Timestamp fromNullableInstant(Instant instant) {
@@ -423,7 +424,7 @@ public class RequestDao {
     }
 
     private static ExceptionInfo nullableException(ExceptionInfo exp){
-        return ofNullable(exp).orElseGet(()-> new ExceptionInfo(null,null));
+        return ofNullable(exp).orElseGet(()-> new ExceptionInfo(null, null));
     }
 
     private static String valueOfNullable(Object o) {
