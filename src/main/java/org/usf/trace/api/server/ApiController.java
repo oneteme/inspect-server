@@ -45,10 +45,10 @@ public class ApiController {
     
     @PutMapping(MAIN_ENDPOINT)
     public ResponseEntity<Void> saveRequest(HttpServletRequest hsr,  @RequestBody MainRequest req) {
-    	if(isNull(req.getApplication())) {
+    	if(isNull(req.getApplication())) { //set IP address for WABAPP trace
     		req.setApplication(new ApplicationInfo(null, null, hsr.getRemoteAddr(), null, null, null));
     	}
-    	else if(isNull(req.getApplication().getAddress())) { //set IP address for WABAPP trace
+    	else if(isNull(req.getApplication().getAddress())) {
     		req.setApplication(req.getApplication().withAddress(hsr.getRemoteAddr()));
     	}
         return appendRequest(req);
