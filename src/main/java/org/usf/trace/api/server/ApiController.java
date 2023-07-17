@@ -1,5 +1,6 @@
 package org.usf.trace.api.server;
 
+import static java.util.Objects.isNull;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.ResponseEntity.accepted;
 import static org.usf.trace.api.server.Utils.requireSingle;
@@ -8,6 +9,8 @@ import static org.usf.traceapi.core.RemoteTraceSender.MAIN_ENDPOINT;
 import static org.usf.traceapi.core.RemoteTraceSender.TRACE_ENDPOINT;
 
 import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.usf.traceapi.core.ApplicationInfo;
 import org.usf.traceapi.core.IncomingRequest;
 import org.usf.traceapi.core.MainRequest;
 import org.usf.traceapi.core.OutcomingRequest;
@@ -40,7 +44,13 @@ public class ApiController {
     }
     
     @PutMapping(MAIN_ENDPOINT)
-    public ResponseEntity<Void> saveRequest(@RequestBody MainRequest req) {
+    public ResponseEntity<Void> saveRequest(HttpServletRequest hsr,  @RequestBody MainRequest req) {
+    	if(isNull(req.getApplication())) { //set IP address for WABAPP trace
+    		req.setApplication(new ApplicationInfo(null, null, hsr.getRemoteAddr(), null, null, null));
+    	}
+    	else if(isNull(req.getApplication().getAddress())) {
+    		req.setApplication(req.getApplication().withAddress(hsr.getRemoteAddr()));
+    	}
         return appendRequest(req);
     }
     
