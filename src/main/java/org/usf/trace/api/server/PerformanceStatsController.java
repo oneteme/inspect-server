@@ -20,7 +20,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RestController
 @RequestMapping(value = "stat", produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
-public class PerformanecStatsController {
+public class PerformanceStatsController {
 
 
     private final JdbcTemplate template;
