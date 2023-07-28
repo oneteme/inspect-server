@@ -33,7 +33,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping(value = TRACE_ENDPOINT, produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
-public class ApiController {
+public class    ApiController {
 	
     private final RequestDao dao;
     private final SessionQueueService queueService;
@@ -60,10 +60,17 @@ public class ApiController {
     }
 
     @GetMapping(INCOMING_ENDPOINT)
-    public List<IncomingRequest> getIncomingRequestByIds(
+    public List<IncomingRequest> getIncomingRequestByCriteria(
     		@RequestParam(defaultValue = "true", name = "lazy") boolean lazy, 
-    		@RequestParam(required = false, name = "id") String[] id) { // without tree
-        return dao.getIncomingRequestById(lazy, id);
+    		@RequestParam(required = false, name = "id") String[] id,
+    		@RequestParam(required = false, name = "name") String[] name,
+    		@RequestParam(required = false, name = "env") String[] env,
+    		@RequestParam(required = false, name = "port") String[] port,
+    		@RequestParam(required = false, name = "start") String start,
+    		@RequestParam(required = false, name = "end") String end ){ // without tree
+        FilterCriteria fc = new FilterCriteria(id,null,name,env,port,null,start,end);
+        System.out.println(fc.toString());
+        return dao.getIncomingRequestByCriteria(lazy,fc);
     }
 
     @GetMapping("incoming/request/{id}")
@@ -72,10 +79,16 @@ public class ApiController {
     }
 
     @GetMapping(MAIN_ENDPOINT)
-    public List<MainRequest> getMainRequestByIds(
+    public List<MainRequest> getMainRequestByCriteria(
             @RequestParam(defaultValue = "true", name = "lazy") boolean lazy,
-            @RequestParam(required = false, name = "id") String[] id) { // without tree
-        return dao.getMainRequestById(lazy, id);
+            @RequestParam(required = false, name = "id") String[] id,
+            @RequestParam(required = false, name = "env") String[] env,
+            @RequestParam(required = false, name = "launchmode") String[] launchMode,
+            @RequestParam(required = false, name = "start") String start,
+            @RequestParam(required = false, name = "end") String end ) {
+
+        FilterCriteria fc = new FilterCriteria(null,id,null,env,null,launchMode,start,end);
+        return dao.getMainRequestByCriteria(lazy,fc);
     }
 
     @GetMapping("main/request/{id}")
