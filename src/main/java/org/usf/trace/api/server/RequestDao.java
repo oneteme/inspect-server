@@ -67,8 +67,8 @@ public class RequestDao {
             ps.setString(12, app.getEnv());
             ps.setString(13, app.getOs());
             ps.setString(14, app.getRe());
-            ps.setString(15,exp.getClassname());
-            ps.setString(16,exp.getMessage());
+            ps.setString(15, exp.getClassname());
+            ps.setString(16, exp.getMessage());
         });
     }
 
@@ -92,8 +92,8 @@ public class RequestDao {
             ps.setTimestamp(13, fromNullableInstant(o.getStart()));
             ps.setTimestamp(14, fromNullableInstant(o.getEnd()));
             ps.setString(15, o.getThreadName());
-            ps.setString(16,exp.getClassname());
-            ps.setString(17,exp.getMessage());
+            ps.setString(16, exp.getClassname());
+            ps.setString(17, exp.getMessage());
             ps.setString(18, o.getName());
             ps.setString(19, o.getUser());
             ps.setString(20, app.getName());
