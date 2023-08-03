@@ -1,21 +1,18 @@
 package org.usf.trace.api.server.config;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import static org.usf.jquery.core.DBColumn.count;
+import static org.usf.jquery.core.DBFunction.count;
+
+import java.util.function.Function;
+
 import org.usf.jquery.core.ComparisonExpression;
 import org.usf.jquery.core.DBColumn;
 import org.usf.jquery.core.TaggableColumn;
-import org.usf.jquery.web.ArgumentParser;
 import org.usf.jquery.web.ColumnDecorator;
 import org.usf.jquery.web.TableDecorator;
-import org.usf.jquery.web.TableMetadata;
 
-import java.sql.Date;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.function.Function;
-
-import static org.usf.jquery.core.DBFunction.count;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public enum TraceApiColumn implements ColumnDecorator {
@@ -64,7 +61,7 @@ public enum TraceApiColumn implements ColumnDecorator {
     COUNT_ELAPSEDTIME_MEDIUM("elapsedTimeMedium", DataConstants::elapsedTimeMedium),
     COUNT_ELAPSEDTIME_FAST("elapsedTimeFast", DataConstants::elapsedTimeFast),
     COUNT_ELAPSEDTIME_FASTEST("elapsedTimeFastest", DataConstants::elapsedTimeFastest),
-    COUNT("countRows", t -> count(), DataConstants::elapsedTimeExpressions),
+    COUNT("countRows", t-> DBColumn.count(), DataConstants::elapsedTimeExpressions),
     COUNT_STATUS_ERROR("countErrorRows", DataConstants::countErrorStatus),
 
     COUNT_STATUS_ERROR_CLIENT("countClientErrorRows", DataConstants::countClientErrorStatus),
@@ -92,7 +89,7 @@ public enum TraceApiColumn implements ColumnDecorator {
 
     @Override
     public String identity() {
-        return this.name();
+        return this.name().toLowerCase();
     }
 
     @Override
@@ -126,36 +123,36 @@ public enum TraceApiColumn implements ColumnDecorator {
     }*/
 
 
-    @Override
-    public ComparisonExpression expression(TableMetadata cm, String... values) {
-        if (expressionFn != null) {
-            var list = new ArrayList<ComparisonExpression>(values.length);
-            for (var v : values) {
-                var exp = expressionFn.apply(v);
-                if (exp == null) {
-                    break;
-                }
-                list.add(exp);
-            }
-            if (list.size() == values.length) { // all values or not
-                return list.stream().reduce(ComparisonExpression::or).orElseThrow();
-            }
-        }
-        return ColumnDecorator.super.expression(cm, values);
-    }
+//    @Override
+//    public ComparisonExpression expression(TableMetadata cm, String... values) {
+//        if (expressionFn != null) {
+//            var list = new ArrayList<ComparisonExpression>(values.length);
+//            for (var v : values) {
+//                var exp = expressionFn.apply(v);
+//                if (exp == null) {
+//                    break;
+//                }
+//                list.add(exp);
+//            }
+//            if (list.size() == values.length) { // all values or not
+//                return list.stream().reduce(ComparisonExpression::or).orElseThrow();
+//            }
+//        }
+//        return ColumnDecorator.super.expression(cm, values);
+//    }
 
 
-    @Override
-    public ArgumentParser parser(TableMetadata metadata) {
-        if (this == COUNT) {
-            return Integer::parseInt;
-        }
-        if (this == BY_DAY || this == BY_YEAR || this == BY_MONTH) {
-            return Integer::parseInt;
-        }
-        if (this == AS_DATE) {
-            return v -> Date.valueOf(LocalDate.parse(v));
-        }
-        return ColumnDecorator.super.parser(metadata);
-    }
+//    @Override
+//    public ArgumentParser parser(TableMetadata metadata) {
+//        if (this == COUNT) {
+//            return Integer::parseInt;
+//        }
+//        if (this == BY_DAY || this == BY_YEAR || this == BY_MONTH) {
+//            return Integer::parseInt;
+//        }
+//        if (this == AS_DATE) {
+//            return v -> Date.valueOf(LocalDate.parse(v));
+//        }
+//        return ColumnDecorator.super.parser(metadata);
+//    }
 }

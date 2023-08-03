@@ -34,6 +34,6 @@ public class PerformanceStatsController {
     private List<DynamicModel> usingSpringJdbc(ParametredQuery query) {
         return query.hasNoResult()
                 ? emptyList()
-                : template.query(query.getQuery(), query::mapRows, query.getParams());
+                : template.query(query.getQuery(), query.defaultMapper()::map, query.getParams());
     }
 }
