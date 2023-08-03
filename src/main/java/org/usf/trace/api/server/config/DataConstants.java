@@ -22,51 +22,51 @@ public final class DataConstants {
     public static String incReqColumns(TraceApiColumn incomingRequest) {
         switch (incomingRequest) {
             case ID_INCOMING_REQ:
-                return "ID_IN_REQ";
+                return "id_in_req";
             case MTH:
-                return "VA_MTH";
+                return "va_mth";
             case PROTOCOL:
-                return "VA_PRTCL";
+                return "va_prtcl";
             case HOST:
-                return "VA_HST";
+                return "va_hst";
             case PORT:
-                return "CD_PRT";
+                return "cd_prt";
             case PATH:
-                return "VA_PTH";
+                return "va_pth";
             case QUERY:
-                return "VA_QRY";
+                return "va_qry";
             case CONTENT_TYPE:
-                return "VA_CNT_TYP";
+                return "va_cnt_typ";
             case AUTH:
-                return "VA_AUTH";
+                return "va_auth";
             case STATUS:
-                return "CD_STT";
+                return "cd_stt";
             case SIZE_IN:
-                return "VA_I_SZE";
+                return "va_i_sze";
             case SIZE_OUT:
-                return "VA_O_SZE";
+                return "va_o_sze";
             case START_DATETIME:
-                return "DH_DBT";
+                return "dh_dbt";
             case FINISH_DATETIME:
-                return "DH_FIN";
+                return "dh_fin";
             case THREAD:
-                return "VA_THRED";
+                return "va_thred";
             case API_NAME:
-                return "VA_API_NME";
+                return "va_api_nme";
             case USER:
-                return "VA_USR";
+                return "va_usr";
             case APP_NAME:
-                return "VA_APP_NME";
+                return "va_app_nme";
             case VERSION:
-                return "VA_VRS";
+                return "va_vrs";
             case ADDRESS:
-                return "VA_ADRS";
+                return "va_adrs";
             case ENVIRONEMENT:
-                return "VA_ENV";
+                return "va_env";
             case OS:
-                return "VA_OS";
+                return "va_os";
             case RE:
-                return "VA_RE";
+                return "va_re";
 
             default: return null;
         }
@@ -80,10 +80,12 @@ public final class DataConstants {
         return c -> "(CAST(DH_DBT AS DATE))";
     }
 
+    @Deprecated(forRemoval = true)
     public static ComparisonExpression greaterOrEqualsExpressions(String timestamp) {
         return greaterOrEqual(Timestamp.from(Instant.parse(timestamp)));
     }
 
+    @Deprecated(forRemoval = true)
     public static ComparisonExpression lessThanExpressions(String timestamp) {
         return lessThan(Timestamp.from(Instant.parse(timestamp)));
     }

@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 public enum TraceApiTable implements TableDecorator {
 
 
-    INCOMING_REQUEST_TABLE("E_IN_REQ", DataConstants::incReqColumns);
+    INCOMING_REQUEST_TABLE("e_in_req", DataConstants::incReqColumns);
 
     @NonNull
     private final String tableName;
