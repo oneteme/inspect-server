@@ -1,11 +1,13 @@
 package org.usf.trace.api.server.config;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import java.util.Optional;
+import java.util.function.Function;
+
 import org.usf.jquery.web.ColumnDecorator;
 import org.usf.jquery.web.TableDecorator;
 
-import java.util.function.Function;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public enum TraceApiTable implements TableDecorator {
@@ -24,17 +26,12 @@ public enum TraceApiTable implements TableDecorator {
     }
 
     @Override
-    public String reference() {
-        return tableName;
+    public Optional<String> columnName(ColumnDecorator desc) {
+        return Optional.ofNullable(columnMap.apply((TraceApiColumn) desc));
     }
 
-    @Override
-    public String columnName(ColumnDecorator desc) {
-        return columnMap.apply((TraceApiColumn) desc);
-    }
-
-    @Override
-    public String sql() {
-        return tableName;
-    }
+	@Override
+	public String tableName() {
+		return tableName;
+	}
 }
