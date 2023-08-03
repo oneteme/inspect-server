@@ -1,14 +1,20 @@
 package org.usf.trace.api.server.config;
 
+import static java.util.Objects.nonNull;
+import static java.util.Objects.requireNonNullElseGet;
 import static org.usf.jquery.core.DBColumn.count;
 import static org.usf.jquery.core.DBFunction.count;
 
+import java.util.Objects;
 import java.util.function.Function;
 
+import org.usf.jquery.core.CaseSingleColumnBuilder;
 import org.usf.jquery.core.ComparisonExpression;
 import org.usf.jquery.core.DBColumn;
 import org.usf.jquery.core.TaggableColumn;
+import org.usf.jquery.web.ColumnBuilder;
 import org.usf.jquery.web.ColumnDecorator;
+import org.usf.jquery.web.CriteriaBuilder;
 import org.usf.jquery.web.TableDecorator;
 
 import lombok.NonNull;
@@ -76,14 +82,14 @@ public enum TraceApiColumn implements ColumnDecorator {
 
 
     private final String out; //nullable
-    private final Function<TableDecorator, DBColumn> columnTemplate;
-    private final Function<String, ComparisonExpression> expressionFn;
+    private final ColumnBuilder columnTemplate;
+    private final CriteriaBuilder<String> expressionFn;
 
     private TraceApiColumn(@NonNull String tagname) {
         this(tagname, null, null);
     }
 
-    private TraceApiColumn(@NonNull String tagname, @NonNull Function<TableDecorator, DBColumn> columnTemplate) {
+    private TraceApiColumn(@NonNull String tagname, @NonNull ColumnBuilder columnTemplate) {
         this(tagname, columnTemplate, null);
     }
 
@@ -98,11 +104,18 @@ public enum TraceApiColumn implements ColumnDecorator {
     }
 
     @Override
-    public TaggableColumn column(TableDecorator table) {
-        return columnTemplate == null
-                ? ColumnDecorator.super.column(table)
-                : columnTemplate.apply(table).as(out);
+    public ColumnBuilder builder() {
+    	return requireNonNullElseGet(columnTemplate, ColumnDecorator.super::builder);
     }
+    
+    @Override
+    public CriteriaBuilder<String> criteria(String name) {
+    	
+    	return "group".equals(name) && nonNull(expressionFn) //TODO rename group
+    			? expressionFn
+    			: ColumnDecorator.super.criteria(name);
+    }
+    
     /*@Override
     public DBFilter filter(TableDecorator table, TableMetadata meta, String... values) {
         System.out.println("-------------"+values.toString());
