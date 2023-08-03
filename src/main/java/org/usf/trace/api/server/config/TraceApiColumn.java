@@ -35,7 +35,7 @@ public enum TraceApiColumn implements ColumnDecorator {
     STATUS("status"),
     SIZE_IN("sizeIn"),
     SIZE_OUT("sizeOut"),
-    START_DATETIME("startDatetime", null, DataConstants::greaterOrEqualsExpressions),
+    START_DATETIME("startDatetime", null, DataConstants::greaterOrEqualsExpressions),//@see gt, lt, ..
     FINISH_DATETIME("finishDatetime", null, DataConstants::lessThanExpressions),
     THREAD("thread"),
     API_NAME("apiName"),
