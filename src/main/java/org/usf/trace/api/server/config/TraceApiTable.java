@@ -1,5 +1,7 @@
 package org.usf.trace.api.server.config;
 
+import static java.util.Optional.ofNullable;
+
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -11,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public enum TraceApiTable implements TableDecorator {
-
 
     INCOMING_REQUEST_TABLE("e_in_req", DataConstants::incReqColumns);
 
@@ -27,7 +28,7 @@ public enum TraceApiTable implements TableDecorator {
 
     @Override
     public Optional<String> columnName(ColumnDecorator desc) {
-        return Optional.ofNullable(columnMap.apply((TraceApiColumn) desc));
+        return ofNullable(columnMap.apply((TraceApiColumn) desc));
     }
 
 	@Override

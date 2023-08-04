@@ -2,20 +2,11 @@ package org.usf.trace.api.server.config;
 
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNullElseGet;
-import static org.usf.jquery.core.DBColumn.count;
-import static org.usf.jquery.core.DBFunction.count;
 
-import java.util.Objects;
-import java.util.function.Function;
-
-import org.usf.jquery.core.CaseSingleColumnBuilder;
-import org.usf.jquery.core.ComparisonExpression;
 import org.usf.jquery.core.DBColumn;
-import org.usf.jquery.core.TaggableColumn;
 import org.usf.jquery.web.ColumnBuilder;
 import org.usf.jquery.web.ColumnDecorator;
 import org.usf.jquery.web.CriteriaBuilder;
-import org.usf.jquery.web.TableDecorator;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 public enum TraceApiColumn implements ColumnDecorator {
 
     ID_INCOMING_REQ("idIncomingRequest"),
-    MTH("mth"),
+    MTH("mth"), //METHOD
     PROTOCOL("protocol"),
     HOST("host"),
     PORT("port"),
@@ -35,15 +26,15 @@ public enum TraceApiColumn implements ColumnDecorator {
     STATUS("status"),
     SIZE_IN("sizeIn"),
     SIZE_OUT("sizeOut"),
-    START_DATETIME("startDatetime", null, DataConstants::greaterOrEqualsExpressions),//@see gt, lt, ..
-    FINISH_DATETIME("finishDatetime", null, DataConstants::lessThanExpressions),
+    START_DATETIME("startDatetime", null, DataConstants::greaterOrEqualsExpressions),//@see gt, lt, .. //start
+    FINISH_DATETIME("finishDatetime", null, DataConstants::lessThanExpressions), //end
     THREAD("thread"),
-    API_NAME("apiName"),
+    API_NAME("apiName"), //API
     USER("user"),
-    APP_NAME("appName"),
+    APP_NAME("appName"), //APP
     VERSION("version"),
     ADDRESS("address"),
-    ENVIRONEMENT("environement"),
+    ENVIRONEMENT("environement"), //ENV
     OS("os"),
     RE("re"),
 
@@ -52,22 +43,30 @@ public enum TraceApiColumn implements ColumnDecorator {
 
 
     //---
-    AS_DATE("asDate", DataConstants::asDate),
-    BY_DAY("byDay", DataConstants::byDay),
+    @Deprecated(forRemoval = true)
+    AS_DATE("asDate", DataConstants::asDate), //start.date
+    @Deprecated(forRemoval = true)
+    BY_DAY("byDay", DataConstants::byDay), //start.day
 
-    BY_MONTH("byMonth", DataConstants::byMonth),
-    BY_YEAR("byYear", DataConstants::byYear),
+    @Deprecated(forRemoval = true)
+    BY_MONTH("byMonth", DataConstants::byMonth), //start.month
+    @Deprecated(forRemoval = true)
+    BY_YEAR("byYear", DataConstants::byYear), //start.year
     ELAPSEDTIME("elapsedtime", DataConstants::elapsedtime, DataConstants::elapsedTimeExpressions),
-    AVG_ELAPSEDTIME("avgElapsedTime", DataConstants::avgElapsedTime),
-    MAX_ELAPSEDTIME("maxElapsedTime", DataConstants::maxElapsedTime),
-    MIN_ELAPSEDTIME("minElapsedTime", DataConstants::minElapsedTime),
+    @Deprecated(forRemoval = true)
+    AVG_ELAPSEDTIME("avgElapsedTime", DataConstants::avgElapsedTime), //elapsedtime.avg
+    @Deprecated(forRemoval = true)
+    MAX_ELAPSEDTIME("maxElapsedTime", DataConstants::maxElapsedTime), //elapsedtime.max
+    @Deprecated(forRemoval = true)
+    MIN_ELAPSEDTIME("minElapsedTime", DataConstants::minElapsedTime), //elapsedtime.min
 
     COUNT_ELAPSEDTIME_SLOWEST("elapsedTimeSlowest", DataConstants::elapsedTimeVerySlow),
     COUNT_ELAPSEDTIME_SLOW("elapsedTimeSlow", DataConstants::elapsedTimeSlow),
     COUNT_ELAPSEDTIME_MEDIUM("elapsedTimeMedium", DataConstants::elapsedTimeMedium),
     COUNT_ELAPSEDTIME_FAST("elapsedTimeFast", DataConstants::elapsedTimeFast),
     COUNT_ELAPSEDTIME_FASTEST("elapsedTimeFastest", DataConstants::elapsedTimeFastest),
-    COUNT("countRows", t-> DBColumn.count(), DataConstants::elapsedTimeExpressions),
+    @Deprecated(forRemoval = true)
+    COUNT("countRows", t-> DBColumn.count(), DataConstants::elapsedTimeExpressions), //count
     COUNT_STATUS_ERROR("countErrorRows", DataConstants::countErrorStatus),
 
     COUNT_STATUS_ERROR_CLIENT("countClientErrorRows", DataConstants::countClientErrorStatus),
