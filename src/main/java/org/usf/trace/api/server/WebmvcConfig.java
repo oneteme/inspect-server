@@ -1,7 +1,7 @@
 package org.usf.trace.api.server;
 
 import static java.util.Arrays.asList;
-import static org.usf.jquery.web.DatabaseScanner.configure;
+import static org.usf.jquery.web.JQueryContext.register;
 
 import java.util.List;
 
@@ -21,14 +21,12 @@ public class WebmvcConfig implements WebMvcConfigurer {
 
     private final DataSource ds;
 
-    private String schema = null;
-
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
-        configure(schema, ds)
-                .register(asList(TraceApiTable.values()),
-                        asList(TraceApiColumn.values()))
-                .fetch(); //refresh first ?
+        register(asList(TraceApiTable.values()),
+        		asList(TraceApiColumn.values()))
+        .bind(ds)
+        .fetch(); //refresh first ?
         resolvers.add(new CommonRequestQueryResolver());
     }
 }
