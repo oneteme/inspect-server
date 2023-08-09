@@ -23,7 +23,7 @@ public enum TraceApiTable implements TableDecorator {
 
     @Override
     public String identity() {
-        return name();
+        return name(); //TODO to lowercase
     }
 
     @Override
