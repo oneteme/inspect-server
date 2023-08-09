@@ -3,6 +3,8 @@ package org.usf.trace.api.server.config;
 import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNullElseGet;
 
+import java.util.Objects;
+
 import org.usf.jquery.core.DBColumn;
 import org.usf.jquery.web.ColumnBuilder;
 import org.usf.jquery.web.ColumnDecorator;
@@ -66,7 +68,7 @@ public enum TraceApiColumn implements ColumnDecorator {
     COUNT_ELAPSEDTIME_FAST("elapsedTimeFast", DataConstants::elapsedTimeFast),
     COUNT_ELAPSEDTIME_FASTEST("elapsedTimeFastest", DataConstants::elapsedTimeFastest),
     @Deprecated(forRemoval = true)
-    COUNT("countRows", t-> DBColumn.count(), DataConstants::elapsedTimeExpressions), //count
+    COUNT("countRows", t-> DBColumn.count(), DataConstants::elapsedTimeExpressions), //use count funct
     COUNT_STATUS_ERROR("countErrorRows", DataConstants::countErrorStatus),
 
     COUNT_STATUS_ERROR_CLIENT("countClientErrorRows", DataConstants::countClientErrorStatus),
@@ -104,7 +106,9 @@ public enum TraceApiColumn implements ColumnDecorator {
 
     @Override
     public ColumnBuilder builder() {
-    	return requireNonNullElseGet(columnTemplate, ColumnDecorator.super::builder);
+    	return nonNull(columnTemplate) 
+    			? columnTemplate 
+    			: ColumnDecorator.super.builder();
     }
     
     @Override

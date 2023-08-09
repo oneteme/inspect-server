@@ -6,6 +6,7 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 import org.usf.jquery.core.RequestQuery;
+import org.usf.jquery.core.RequestQueryBuilder;
 import org.usf.jquery.web.RequestQueryParam;
 import org.usf.jquery.web.RequestQueryParamResolver;
 
@@ -15,7 +16,7 @@ public class CommonRequestQueryResolver implements HandlerMethodArgumentResolver
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
-        return RequestQuery.class.isAssignableFrom(parameter.getNestedParameterType())
+        return RequestQueryBuilder.class.isAssignableFrom(parameter.getNestedParameterType())
                 && parameter.hasParameterAnnotation(RequestQueryParam.class);
     }
 

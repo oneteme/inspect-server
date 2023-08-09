@@ -3,7 +3,6 @@ package org.usf.trace.api.server.config;
 import org.usf.jquery.core.ComparisonExpression;
 import org.usf.jquery.core.DBColumn;
 import org.usf.jquery.core.OperationColumn;
-import org.usf.jquery.web.ColumnDecorator;
 import org.usf.jquery.web.TableDecorator;
 
 import lombok.AccessLevel;
@@ -128,7 +127,7 @@ public final class DataConstants {
     }
 
     private static OperationColumn countStatusByType(TableDecorator table, ComparisonExpression op) {
-        var status = STATUS.column(table);
+        var status = table.column(STATUS);
         return count((status).when(op).then(status).end());
     }
 
@@ -170,11 +169,7 @@ public final class DataConstants {
     }
 
     public static OperationColumn countSuccesStatus(TableDecorator table) {
-        return countStatusByType(table, greaterOrEqual(200).and(lessOrEqual(226)));
-    }
-
-    private static RuntimeException undeclaredColumn(ColumnDecorator column) {
-        return new IllegalArgumentException("unknown column " + column);
+        return countStatusByType(table, greaterOrEqual(200).and(lessThan(300)));
     }
 
     public static ComparisonExpression elapsedTimeExpressions(String name) {
