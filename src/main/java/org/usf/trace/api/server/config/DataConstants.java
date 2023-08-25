@@ -17,57 +17,55 @@ import static org.usf.trace.api.server.config.TraceApiColumn.STATUS;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class DataConstants {
+	
+    public static String sessionColumns(TraceApiColumn column) {
+        switch (column) {
+            case ID: 			return "id_main_req";
+            case NAME: 			return "va_name";
+            case START: 		return "dh_dbt";
+            case END: 			return "dh_fin";
+            case USER: 			return "va_usr";
+            case OS: 			return "va_os";
+            case RE: 			return "va_re";
+            case TYPE: 			return "lnch";
+            case LOCATION: 		return "loc";
+            case THREAD: 		return "va_thred";
+            case APP_NAME: 		return "va_app_nme";
+            case VERSION: 		return "va_vrs";
+            case ADDRESS: 		return "va_adrs";
+            case ENVIRONEMENT: 	return "va_env";
+            case ERR_TYPE: 		return "va_err_cls";
+            case ERR_MSG:		return "va_err_msg";
+            default: 			return null;
+        }
+    }
 
-    public static String incReqColumns(TraceApiColumn incomingRequest) {
-        switch (incomingRequest) {
-            case ID_INCOMING_REQ:
-                return "id_in_req";
-            case MTH:
-                return "va_mth";
-            case PROTOCOL:
-                return "va_prtcl";
-            case HOST:
-                return "va_hst";
-            case PORT:
-                return "cd_prt";
-            case PATH:
-                return "va_pth";
-            case QUERY:
-                return "va_qry";
-            case CONTENT_TYPE:
-                return "va_cnt_typ";
-            case AUTH:
-                return "va_auth";
-            case STATUS:
-                return "cd_stt";
-            case SIZE_IN:
-                return "va_i_sze";
-            case SIZE_OUT:
-                return "va_o_sze";
-            case START_DATETIME:
-                return "dh_dbt";
-            case FINISH_DATETIME:
-                return "dh_fin";
-            case THREAD:
-                return "va_thred";
-            case API_NAME:
-                return "va_api_nme";
-            case USER:
-                return "va_usr";
-            case APP_NAME:
-                return "va_app_nme";
-            case VERSION:
-                return "va_vrs";
-            case ADDRESS:
-                return "va_adrs";
-            case ENVIRONEMENT:
-                return "va_env";
-            case OS:
-                return "va_os";
-            case RE:
-                return "va_re";
-
-            default: return null;
+    public static String incReqColumns(TraceApiColumn column) {
+        switch (column) {
+            case ID: 			return "id_in_req";
+            case METHOD: 		return "va_mth";
+            case PROTOCOL: 		return "va_prtcl";
+            case HOST: 			return "va_hst";
+            case PORT: 			return "cd_prt";
+            case PATH: 			return "va_pth";
+            case QUERY: 		return "va_qry";
+            case MEDIA: 		return "va_cnt_typ";
+            case AUTH: 			return "va_auth";
+            case STATUS: 		return "cd_stt";
+            case SIZE_IN: 		return "va_i_sze";
+            case SIZE_OUT: 		return "va_o_sze";
+            case START: 		return "dh_dbt";
+            case END: 			return "dh_fin";
+            case THREAD: 		return "va_thred";
+            case API_NAME: 		return "va_api_nme";
+            case USER: 			return "va_usr";
+            case APP_NAME: 		return "va_app_nme";
+            case VERSION: 		return "va_vrs";
+            case ADDRESS: 		return "va_adrs";
+            case ENVIRONEMENT: 	return "va_env";
+            case OS: 			return "va_os";
+            case RE: 			return "va_re";
+            default: 			return null;
         }
     }
 
@@ -92,6 +90,10 @@ public final class DataConstants {
 
     public static DBColumn elapsedtime(TableDecorator table) {
         return c -> "CAST(TIMESTAMPDIFF(MILLISECOND, DH_DBT, DH_FIN) /1000.0 AS DECIMAL(10,2))";
+    }
+
+    public static DBColumn elapsedtime2(TableDecorator table) {
+        return c -> "extract(EPOCH from (dh_fin - dh_dbt))";
     }
 
     public static DBColumn asDate(TableDecorator table) {
@@ -155,6 +157,10 @@ public final class DataConstants {
     public static OperationColumn countStatus500(TableDecorator table) {
         return countStatusByType(table, equal(500));
     }
+    
+    public static OperationColumn countStatus503(TableDecorator table) {
+        return countStatusByType(table, equal(503));
+    }
 
     public static OperationColumn countErrorStatus(TableDecorator table) {
         return countStatusByType(table, greaterOrEqual(400));
@@ -190,7 +196,7 @@ public final class DataConstants {
     }
 
     private static OperationColumn elapsedTimeBySpeed(ComparisonExpression op, TableDecorator table) {
-        var elapsed = elapsedtime(table);
+        var elapsed = elapsedtime2(table);
         return count(elapsed.when(op).then(elapsed).end());
     }
 

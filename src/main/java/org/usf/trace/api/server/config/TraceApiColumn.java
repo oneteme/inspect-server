@@ -16,31 +16,35 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum TraceApiColumn implements ColumnDecorator {
 
-    ID_INCOMING_REQ("idIncomingRequest"),
-    MTH("mth"), //METHOD
+    ID("id"),
+    METHOD("method"), //METHOD
     PROTOCOL("protocol"),
     HOST("host"),
     PORT("port"),
     PATH("path"),
     QUERY("query"),
-    CONTENT_TYPE("contentType"),
+    MEDIA("contentType"), //mime | media type
     AUTH("auth"),
     STATUS("status"),
     SIZE_IN("sizeIn"),
     SIZE_OUT("sizeOut"),
-    START_DATETIME("startDatetime", null, DataConstants::greaterOrEqualsExpressions),//@see gt, lt, .. //start
-    FINISH_DATETIME("finishDatetime", null, DataConstants::lessThanExpressions), //end
+    START("start", null, DataConstants::greaterOrEqualsExpressions),//@see gt, lt, .. //start
+    END("end", null, DataConstants::lessThanExpressions), //end
     THREAD("thread"),
     API_NAME("apiName"), //API
-    USER("user"),
     APP_NAME("appName"), //APP
+    USER("user"),
     VERSION("version"),
     ADDRESS("address"),
     ENVIRONEMENT("environement"), //ENV
     OS("os"),
     RE("re"),
-
-
+    
+    NAME("name"),
+    TYPE("type"),
+    LOCATION("location"),
+    ERR_TYPE("errorType"),
+    ERR_MSG("errorMessage"),
 
 
 
@@ -54,7 +58,7 @@ public enum TraceApiColumn implements ColumnDecorator {
     BY_MONTH("byMonth", DataConstants::byMonth), //start.month
     @Deprecated(forRemoval = true)
     BY_YEAR("byYear", DataConstants::byYear), //start.year
-    ELAPSEDTIME("elapsedtime", DataConstants::elapsedtime, DataConstants::elapsedTimeExpressions),
+    ELAPSEDTIME("elapsedtime", DataConstants::elapsedtime2, DataConstants::elapsedTimeExpressions),
     @Deprecated(forRemoval = true)
     AVG_ELAPSEDTIME("avgElapsedTime", DataConstants::avgElapsedTime), //elapsedtime.avg
     @Deprecated(forRemoval = true)
@@ -62,24 +66,25 @@ public enum TraceApiColumn implements ColumnDecorator {
     @Deprecated(forRemoval = true)
     MIN_ELAPSEDTIME("minElapsedTime", DataConstants::minElapsedTime), //elapsedtime.min
 
-    COUNT_ELAPSEDTIME_SLOWEST("elapsedTimeSlowest", DataConstants::elapsedTimeVerySlow),
-    COUNT_ELAPSEDTIME_SLOW("elapsedTimeSlow", DataConstants::elapsedTimeSlow),
-    COUNT_ELAPSEDTIME_MEDIUM("elapsedTimeMedium", DataConstants::elapsedTimeMedium),
-    COUNT_ELAPSEDTIME_FAST("elapsedTimeFast", DataConstants::elapsedTimeFast),
-    COUNT_ELAPSEDTIME_FASTEST("elapsedTimeFastest", DataConstants::elapsedTimeFastest),
+    COUNT_SLOWEST("elapsedTimeSlowest", DataConstants::elapsedTimeVerySlow),
+    COUNT_SLOW("elapsedTimeSlow", DataConstants::elapsedTimeSlow),
+    COUNT_MEDIUM("elapsedTimeMedium", DataConstants::elapsedTimeMedium),
+    COUNT_FAST("elapsedTimeFast", DataConstants::elapsedTimeFast),
+    COUNT_FASTEST("elapsedTimeFastest", DataConstants::elapsedTimeFastest),
     @Deprecated(forRemoval = true)
     COUNT("countRows", t-> DBColumn.count(), DataConstants::elapsedTimeExpressions), //use count funct
-    COUNT_STATUS_ERROR("countErrorRows", DataConstants::countErrorStatus),
+    COUNT_ERROR("countErrorRows", DataConstants::countErrorStatus),
 
-    COUNT_STATUS_ERROR_CLIENT("countClientErrorRows", DataConstants::countClientErrorStatus),
-    COUNT_STATUS_ERROR_SERVER("countServerErrorRows", DataConstants::countServerErrorStatus),
-    COUNT_STATUS_SUCCES("countSuccesRows", DataConstants::countSuccesStatus),
+    COUNT_ERROR_CLIENT("countClientErrorRows", DataConstants::countClientErrorStatus),
+    COUNT_ERROR_SERVER("countServerErrorRows", DataConstants::countServerErrorStatus),
+    COUNT_SUCCES("countSuccesRows", DataConstants::countSuccesStatus),
     COUNT_200("count200", DataConstants::countStatus200), //set type improve perf
     COUNT_400("count400", DataConstants::countStatus400),
     COUNT_401("count401", DataConstants::countStatus401),
     COUNT_403("count403", DataConstants::countStatus403),
     COUNT_404("count404", DataConstants::countStatus404),
-    COUNT_500("count500", DataConstants::countStatus500);
+    COUNT_500("count500", DataConstants::countStatus500),
+    COUNT_503("count503", DataConstants::countStatus503);
 
 
     private final String out; //nullable
