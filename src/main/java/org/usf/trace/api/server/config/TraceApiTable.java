@@ -14,7 +14,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum TraceApiTable implements TableDecorator {
 
-    INCOMING_REQUEST_TABLE("e_in_req", DataConstants::incReqColumns);
+    REQUEST("e_in_req", DataConstants::incReqColumns),
+    SESSION("e_main_req", DataConstants::sessionColumns);
 
     @NonNull
     private final String tableName;
@@ -23,7 +24,7 @@ public enum TraceApiTable implements TableDecorator {
 
     @Override
     public String identity() {
-        return name(); //TODO to lowercase
+        return name().toLowerCase();
     }
 
     @Override

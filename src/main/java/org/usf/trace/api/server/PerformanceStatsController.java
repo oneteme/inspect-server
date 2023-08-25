@@ -32,51 +32,14 @@ public class PerformanceStatsController {
 
     @GetMapping(value="incoming/request", produces = APPLICATION_JSON_VALUE)
     public List<DynamicModel> stats(
-            @RequestQueryParam(name = "INCOMING_REQUEST_TABLE", defaultColumns = "STATUS") RequestQueryBuilder query) {
+            @RequestQueryParam(name = "request", defaultColumns = "count") RequestQueryBuilder query) {
         return usingSpringJdbc(query);
     }
     
-    @GetMapping(value="incoming/request/csv", produces = TEXT_PLAIN_VALUE)
-    public void csv(
-    		HttpServletResponse resp,
-            @RequestQueryParam(name = "INCOMING_REQUEST_TABLE", defaultColumns = "STATUS") RequestQueryBuilder query) {
-        try {
-			query.build().toCsv(template.getDataSource(), resp.getWriter());
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-    }
-
-    @GetMapping(value="incoming/request/ascii", produces = TEXT_PLAIN_VALUE)
-    public void ascii(
-    		HttpServletResponse resp,
-            @RequestQueryParam(name = "INCOMING_REQUEST_TABLE", defaultColumns = "STATUS") RequestQueryBuilder query) {
-        try {
-			query.build().toAscii(template.getDataSource(), resp.getWriter());
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-    }
-    
-    @GetMapping(value="incoming/request/debug", produces = TEXT_PLAIN_VALUE)
-    public void debug(
-    		HttpServletResponse resp,
-            @RequestQueryParam(name = "INCOMING_REQUEST_TABLE", defaultColumns = "STATUS") RequestQueryBuilder query) {
-
-    	query.build().logResult(template.getDataSource());
-    }
-    
-    @GetMapping(value="incoming/request/chart", produces = TEXT_HTML_VALUE)
-    public void table(
-    		HttpServletResponse resp,
-    		@RequestParam(value="chart.type", defaultValue = "table") String chart,
-            @RequestQueryParam(name = "INCOMING_REQUEST_TABLE", defaultColumns = "STATUS", ignoreParameters = "chart.type") RequestQueryBuilder query) {
-
-    	try {
-			query.build().toChart(template.getDataSource(), resp.getWriter(), chart);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+    @GetMapping(value="session", produces = APPLICATION_JSON_VALUE)
+    public List<DynamicModel> session(
+            @RequestQueryParam(name = "session", defaultColumns = "count") RequestQueryBuilder query) {
+        return usingSpringJdbc(query);
     }
 
     private List<DynamicModel> usingSpringJdbc(RequestQueryBuilder req) {
