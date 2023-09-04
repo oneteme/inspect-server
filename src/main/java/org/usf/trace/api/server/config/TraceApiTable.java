@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum TraceApiTable implements TableDecorator {
 
+    OUT("e_out_req", DataConstants::outReqColumns),
     REQUEST("e_in_req", DataConstants::incReqColumns),
     SESSION("e_main_req", DataConstants::sessionColumns);
 
