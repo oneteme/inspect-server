@@ -68,6 +68,28 @@ public final class DataConstants {
             default: 			return null;
         }
     }
+    
+    public static String outReqColumns(TraceApiColumn column) {
+        switch (column) {
+            case ID: 			return "id_out_req";
+            case METHOD: 		return "va_mth";
+            case PROTOCOL: 		return "va_prtcl";
+            case HOST: 			return "va_hst";
+            case PORT: 			return "cd_prt";
+            case PATH: 			return "va_pth";
+            case QUERY: 		return "va_qry";
+            case MEDIA: 		return "va_cnt_typ";
+            case AUTH: 			return "va_auth";
+            case STATUS: 		return "cd_stt";
+            case SIZE_IN: 		return "va_i_sze";
+            case SIZE_OUT: 		return "va_o_sze";
+            case START: 		return "dh_dbt";
+            case END: 			return "dh_fin";
+            case THREAD: 		return "va_thred";
+            case PARENT: 		return "cd_in_req";
+            default: 			return null;
+        }
+    }
 
     public static DBColumn elapsedtime_Tera(TableDecorator table) {
         return c -> "(CAST (((DT_FIN - DT_DBT)  second(4)) as DECIMAL(15,2)))";

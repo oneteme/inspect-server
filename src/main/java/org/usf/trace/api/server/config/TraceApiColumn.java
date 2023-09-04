@@ -46,7 +46,7 @@ public enum TraceApiColumn implements ColumnDecorator {
     ERR_TYPE("errorType"),
     ERR_MSG("errorMessage"),
 
-
+    PARENT("parent"),
 
     //---
     @Deprecated(forRemoval = true)
