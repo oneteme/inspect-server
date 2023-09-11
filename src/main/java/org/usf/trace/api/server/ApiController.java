@@ -8,6 +8,7 @@ import static org.usf.traceapi.core.RemoteTraceSender.INCOMING_ENDPOINT;
 import static org.usf.traceapi.core.RemoteTraceSender.MAIN_ENDPOINT;
 import static org.usf.traceapi.core.RemoteTraceSender.TRACE_ENDPOINT;
 
+import java.time.Instant;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -66,8 +67,8 @@ public class    ApiController {
     		@RequestParam(required = false, name = "name") String[] name,
     		@RequestParam(required = false, name = "env") String[] env,
     		@RequestParam(required = false, name = "port") String[] port,
-    		@RequestParam(required = false, name = "start") String start,
-    		@RequestParam(required = false, name = "end") String end ){ // without tree
+    		@RequestParam(required = false, name = "start") Instant start,
+    		@RequestParam(required = false, name = "end") Instant end ){ // without tree
         FilterCriteria fc = new FilterCriteria(id,null,name,env,port,null,start,end);
         System.out.println(fc.toString());
         return dao.getIncomingRequestByCriteria(lazy,fc);
@@ -84,8 +85,8 @@ public class    ApiController {
             @RequestParam(required = false, name = "id") String[] id,
             @RequestParam(required = false, name = "env") String[] env,
             @RequestParam(required = false, name = "launchmode") String[] launchMode,
-            @RequestParam(required = false, name = "start") String start,
-            @RequestParam(required = false, name = "end") String end ) {
+            @RequestParam(required = false, name = "start") Instant start,
+            @RequestParam(required = false, name = "end") Instant end ) {
 
         FilterCriteria fc = new FilterCriteria(null,id,null,env,null,launchMode,start,end);
         return dao.getMainRequestByCriteria(lazy,fc);

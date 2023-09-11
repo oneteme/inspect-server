@@ -22,6 +22,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import com.sun.tools.javac.Main;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -236,6 +237,7 @@ public class RequestDao {
             query += " WHERE ID_MAIN_REQ IN(" + nArg(idArr.length) + ")";
             argTypes = newArray(idArr.length, VARCHAR);
         }
+        query += " order by DH_DBT desc";
         List<MainRequest> res = template.query(query, idArr, argTypes, (rs, i) -> {
             MainRequest main = new MainRequest(rs.getString("ID_MAIN_REQ"));
             main.setName(rs.getString("VA_NAME"));
@@ -268,13 +270,12 @@ public class RequestDao {
     }
 
     public List<IncomingRequest> getIncomingRequestByCriteria(boolean lazy, FilterCriteria fs) {
-        var query = "SELECT ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE FROM E_IN_REQ";
+        var query = "SELECT ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE FROM E_IN_REQ ";
 
         Collection<Integer> argTypes = new ArrayList<>();
         Collection<Object> args =  new ArrayList<>();
         query += fs.toSql(ID_IN_REQ,ID_MAIN_REQ,VA_APP_NME,VA_ENV,CD_PRT,LNCH,DH_DBT,DH_FIN,args,argTypes);
-
-
+        query += " order by DH_DBT desc";
         List<IncomingRequest> res = template.query(query, args.toArray() , argTypes.stream().mapToInt(i -> i).toArray() , (rs, i) -> {
             IncomingRequest in = new IncomingRequest(rs.getString("ID_IN_REQ"));
             in.setMethod(rs.getString("VA_MTH"));
@@ -415,7 +416,7 @@ public class RequestDao {
 
     public List<DatabaseActionWrapper> databaseActions(Set<Long> queries) { // non empty
         var query = "SELECT VA_TYP,DH_DBT,DH_FIN,VA_ERR_CLS,VA_ERR_MSG,CD_OUT_QRY FROM E_DB_ACT"
-        		+ " WHERE CD_OUT_QRY IN(" + nArg(queries.size()) + ")";
+        		+ " WHERE CD_OUT_QRY IN(" + nArg(queries.size()) + ")  ORDER BY DH_DBT ASC";
         return template.query(query, queries.toArray(), newArray(queries.size(), BIGINT), (rs, i)->
                 new DatabaseActionWrapper(
                         rs.getLong("CD_OUT_QRY"),

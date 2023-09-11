@@ -4,12 +4,16 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import static java.sql.Types.TIMESTAMP;
 import static java.sql.Types.VARCHAR;
 
 @Getter
@@ -25,8 +29,8 @@ public class FilterCriteria {
     private final String[] port;
 
     private final String[] launchMode;
-    private final String  start;
-    private final String  end;
+    private final Instant start;
+    private final Instant  end;
 
 
     public String toSql(Filters idIncomingColname,
@@ -73,21 +77,21 @@ public class FilterCriteria {
         return " AND "+ colname + " IN(" + Utils.nArg(values.length) + ")";
     }
 
-    String startToSql(Filters start , Collection<Object> args, Collection<Integer> argTypes, String value){
+    String startToSql(Filters start , Collection<Object> args, Collection<Integer> argTypes, Instant value){
 
         if(value  != null ){
-            args.add(value);
-            argTypes.add(VARCHAR);
+            args.add(Timestamp.from(value));
+            argTypes.add(TIMESTAMP);
             return  " AND "+ start +" >= ?";
         }
         return "";
     }
 
-    String endToSql(Filters end , Collection<Object> args, Collection<Integer> argTypes, String value){
+    String endToSql(Filters end , Collection<Object> args, Collection<Integer> argTypes, Instant value){
 
         if(value != null ){
-            args.add(value);
-            argTypes.add( VARCHAR);
+            args.add(Timestamp.from(value));
+            argTypes.add(TIMESTAMP);
             return " AND "+ end +" <= ?";
         }
         return "";
