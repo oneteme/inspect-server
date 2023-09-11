@@ -60,12 +60,12 @@
 		<dependency>
 			<groupId>io.github.oneteme.traceapi</groupId>
 			<artifactId>traceapi-core</artifactId>
-			<version>0.0.12</version>
+			<version>0.0.15-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>io.github.oneteme</groupId>
 			<artifactId>jquery</artifactId>
-			<version>1.0.1-SNAPSHOT</version>
+			<version>3.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
