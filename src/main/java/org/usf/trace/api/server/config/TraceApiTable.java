@@ -1,17 +1,24 @@
 package org.usf.trace.api.server.config;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import static java.util.Optional.ofNullable;
+
+import java.util.Optional;
+import java.util.function.Function;
+
 import org.usf.jquery.web.ColumnDecorator;
 import org.usf.jquery.web.TableDecorator;
 
-import java.util.function.Function;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public enum TraceApiTable implements TableDecorator {
 
-
-    INCOMING_REQUEST_TABLE("E_IN_REQ", DataConstants::incReqColumns);
+    OUT("e_out_req", DataConstants::outReqColumns),
+    REQUEST("e_in_req", DataConstants::incReqColumns),
+    SESSION("e_main_req", DataConstants::sessionColumns),
+    QUERY("e_out_qry",DataConstants::outQryColumns),
+    DBACTION("e_db_act",DataConstants::dbActColumns);
 
     @NonNull
     private final String tableName;
@@ -20,21 +27,16 @@ public enum TraceApiTable implements TableDecorator {
 
     @Override
     public String identity() {
-        return name();
+        return name().toLowerCase();
     }
 
     @Override
-    public String reference() {
-        return tableName;
+    public Optional<String> columnName(ColumnDecorator desc) {
+        return ofNullable(columnMap.apply((TraceApiColumn) desc));
     }
 
-    @Override
-    public String columnName(ColumnDecorator desc) {
-        return columnMap.apply((TraceApiColumn) desc);
-    }
-
-    @Override
-    public String sql() {
-        return tableName;
-    }
+	@Override
+	public String tableName() {
+		return tableName;
+	}
 }
