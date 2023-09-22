@@ -90,6 +90,36 @@ public final class DataConstants {
             default: 			return null;
         }
     }
+    public static String outQryColumns(TraceApiColumn column) {
+        switch (column){
+            case ID:           return "id_out_qry";
+            case HOST:         return "va_hst";
+            case PORT:         return "cd_prt";
+            case SCHEMA:       return "va_schma";
+            case START: 	   return "dh_dbt";
+            case END: 		   return "dh_fin";
+            case USER: 		   return "va_usr";
+            case THREAD: 	   return "va_thred";
+            case DRIVER:       return "va_drv";
+            case DB_NAME:      return "va_db_nme";
+            case DB_VERSION:   return "va_db_vrs";
+            case COMPLETE:     return "va_cmplt";
+            case PARENT:       return "cd_in_req";
+            default:           return null;
+        }
+    }
+
+    public static String dbActColumns(TraceApiColumn column){
+        switch (column){
+            case TYPE:         return"va_typ";
+            case START: 		return "dh_dbt";
+            case END: 			return "dh_fin";
+            case ERR_TYPE: 		return "va_err_cls";
+            case ERR_MSG:		return "va_err_msg";
+            case PARENT: 		return "cd_out_qry";
+            default: 			return null;
+        }
+    }
 
     public static DBColumn elapsedtime_Tera(TableDecorator table) {
         return c -> "(CAST (((DT_FIN - DT_DBT)  second(4)) as DECIMAL(15,2)))";
