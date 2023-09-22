@@ -92,7 +92,7 @@ public class FilterCriteria {
         if(value != null ){
             args.add(Timestamp.from(value));
             argTypes.add(TIMESTAMP);
-            return " AND "+ end +" <= ?";
+            return " AND "+ end +" < ?";
         }
         return "";
     }
