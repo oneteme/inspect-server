@@ -365,7 +365,7 @@ public class RequestDao {
 
     public List<OutcomingRequestWrapper> outcomingRequests(Set<String> incomingId) { //use criteria 
         var query = "SELECT ID_OUT_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,CD_IN_REQ FROM E_OUT_REQ"
-        		+ " WHERE CD_IN_REQ IN(" + nArg(incomingId.size()) + ")";
+        		+ " WHERE CD_IN_REQ IN(" + nArg(incomingId.size()) + ") ORDER BY DH_DBT ASC";
         return template.query(query, incomingId.toArray(), newArray(incomingId.size(), VARCHAR), (rs, i) -> {
             OutcomingRequestWrapper out = new OutcomingRequestWrapper(rs.getString("ID_OUT_REQ"), rs.getString("CD_IN_REQ"));
             out.setProtocol(rs.getString("VA_PRTCL"));
