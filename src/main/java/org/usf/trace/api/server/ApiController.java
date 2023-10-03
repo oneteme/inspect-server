@@ -4,9 +4,6 @@ import static java.util.Objects.isNull;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.ResponseEntity.accepted;
 import static org.usf.trace.api.server.Utils.requireSingle;
-import static org.usf.traceapi.core.RemoteTraceSender.INCOMING_ENDPOINT;
-import static org.usf.traceapi.core.RemoteTraceSender.MAIN_ENDPOINT;
-import static org.usf.traceapi.core.RemoteTraceSender.TRACE_ENDPOINT;
 
 import java.time.Instant;
 import java.util.List;
@@ -22,29 +19,36 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.usf.traceapi.core.ApplicationInfo;
-import org.usf.traceapi.core.ApiSession;
-import org.usf.traceapi.core.MainSession;
 import org.usf.traceapi.core.ApiRequest;
+import org.usf.traceapi.core.ApiSession;
+import org.usf.traceapi.core.ApplicationInfo;
+import org.usf.traceapi.core.MainSession;
 import org.usf.traceapi.core.Session;
 
 import lombok.RequiredArgsConstructor;
 
 @CrossOrigin
 @RestController
-@RequestMapping(value = TRACE_ENDPOINT, produces = APPLICATION_JSON_VALUE)
+@RequestMapping(value = "trace", produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 public class    ApiController {
 	
     private final RequestDao dao;
     private final SessionQueueService queueService;
 
-    @PutMapping(INCOMING_ENDPOINT)
-    public ResponseEntity<Void> saveRequest(@RequestBody ApiSession req) {
+    @PutMapping("session")
+    public ResponseEntity<Void> saveSession(@RequestBody Session[] req) {
         return appendRequest(req);
     }
     
-    @PutMapping(MAIN_ENDPOINT)
+    @Deprecated(forRemoval = true)
+    @PutMapping("main/request")
+    public ResponseEntity<Void> saveRequest(@RequestBody ApiSession req) {
+        return appendRequest(req);
+    }
+
+    @Deprecated(forRemoval = true)
+    @PutMapping("incoming/request")
     public ResponseEntity<Void> saveRequest(HttpServletRequest hsr,  @RequestBody MainSession req) {
     	if(isNull(req.getApplication())) { //set IP address for WABAPP trace
     		req.setApplication(new ApplicationInfo(null, null, hsr.getRemoteAddr(), null, null, null));
@@ -55,12 +59,12 @@ public class    ApiController {
         return appendRequest(req);
     }
     
-    private ResponseEntity<Void> appendRequest(Session session){
+    private ResponseEntity<Void> appendRequest(Session... session){
         queueService.add(session);
         return accepted().build();
     }
 
-    @GetMapping(INCOMING_ENDPOINT)
+    @GetMapping("incoming/request")
     public List<ApiSession> getIncomingRequestByCriteria(
     		@RequestParam(defaultValue = "true", name = "lazy") boolean lazy, 
     		@RequestParam(required = false, name = "id") String[] id,
@@ -79,7 +83,7 @@ public class    ApiController {
         return requireSingle(dao.getIncomingRequestById(true, id));
     }
 
-    @GetMapping(MAIN_ENDPOINT)
+    @GetMapping("main/request")
     public List<MainSession> getMainRequestByCriteria(
             @RequestParam(defaultValue = "true", name = "lazy") boolean lazy,
             @RequestParam(required = false, name = "id") String[] id,

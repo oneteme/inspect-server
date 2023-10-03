@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -43,13 +44,13 @@ public class RequestDao {
 
     @Transactional(rollbackFor = Exception.class)
     public void saveSessions(List<Session> sessions) {
-        filterAndSave(sessions, IncomingRequest.class, this::addIncomingRequest);
-        filterAndSave(sessions, MainRequest.class, this::addMainRequest);
+        filterAndSave(sessions, ApiSession.class, this::addIncomingRequest);
+        filterAndSave(sessions, MainSession.class, this::addMainRequest);
         filterSubAndSave(sessions, Session::getRequests, (s, r) -> new OutcomingRequestWrapper(r, s.getId()), this::addOutcomingRequest);
         filterSubAndSave(sessions, Session::getQueries, (s, q) -> new OutcomingQueryWrapper(q, s.getId()), this::addOutcomingQueries);
     }
 
-    private void addMainRequest(List<MainRequest> reqList) {
+    private void addMainRequest(List<MainSession> reqList) {
         template.batchUpdate("INSERT INTO E_MAIN_REQ(ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE,VA_ERR_CLS,VA_ERR_MSG)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             var app = nullableApplication(o.getApplication());
@@ -73,7 +74,7 @@ public class RequestDao {
         });
     }
 
-    private void addIncomingRequest(List<IncomingRequest> reqList) {
+    private void addIncomingRequest(List<ApiSession> reqList) {
         template.batchUpdate("INSERT INTO E_IN_REQ(ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             var app = nullableApplication(o.getApplication());
@@ -167,12 +168,12 @@ public class RequestDao {
     }
 
     @Deprecated // reuse RequestDao::outcomingRequests using criteria
-    public OutcomingRequest getOutcomingRequestById(String id) {
+    public ApiRequest getOutcomingRequestById(String id) {
         return template.query("SELECT ID_OUT_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ FROM E_OUT_REQ"
                 + " WHERE ID_OUT_REQ = ? ", new Object[]{id}, newArray(1, VARCHAR), rs -> {
 
             if (rs.next()) {
-                OutcomingRequest out = new OutcomingRequest(rs.getString("ID_OUT_REQ"));
+                ApiRequest out = new ApiRequest(rs.getString("ID_OUT_REQ"));
                 out.setProtocol(rs.getString("VA_PRTCL"));
                 out.setHost(rs.getString("VA_HST"));
                 out.setPort(rs.getInt("CD_PRT"));
@@ -191,7 +192,7 @@ public class RequestDao {
         });
     }
 
-    public List<MainRequest> getMainRequestByCriteria(boolean lazy, FilterCriteria fc) {
+    public List<MainSession> getMainRequestByCriteria(boolean lazy, FilterCriteria fc) {
         var query = "SELECT ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE,VA_ERR_CLS,VA_ERR_MSG FROM E_MAIN_REQ";
 
         Collection<Integer> argTypes = new ArrayList<>();
@@ -199,8 +200,8 @@ public class RequestDao {
         query += fc.toSql(ID_IN_REQ, ID_MAIN_REQ, VA_APP_NME, VA_ENV, CD_PRT, LNCH, DH_DBT, DH_FIN, args, argTypes);
 
 
-        List<MainRequest> res = template.query(query, args.toArray(), argTypes.stream().mapToInt(i -> i).toArray(), (rs, i) -> {
-            MainRequest main = new MainRequest(rs.getString("ID_MAIN_REQ"));
+        List<MainSession> res = template.query(query, args.toArray(), argTypes.stream().mapToInt(i -> i).toArray(), (rs, i) -> {
+            MainSession main = new MainSession(rs.getString("ID_MAIN_REQ"));
             main.setName(rs.getString("VA_NAME"));
             main.setUser(rs.getString("VA_USR"));
             main.setStart(fromNullableTimestamp(rs.getTimestamp("DH_DBT")));
@@ -223,14 +224,14 @@ public class RequestDao {
             return main;
         });
         if (lazy && !res.isEmpty()) {
-            var reqMap = res.stream().collect(toMap(MainRequest::getId, identity()));
-            outcomingRequests(reqMap.keySet(),OutcomingRequest::new).forEach(r -> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
+            var reqMap = res.stream().collect(toMap(MainSession::getId, identity()));
+            outcomingRequests(reqMap.keySet(),ApiRequest::new).forEach(r -> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
             outcomingQueries(reqMap.keySet()).forEach(q -> reqMap.get(q.getParentId()).getQueries().add(q.getQuery()));
         }
         return res;
     }
 
-    public List<MainRequest> getMainRequestById(boolean lazy, String... idArr) {
+    public List<MainSession> getMainRequestById(boolean lazy, String... idArr) {
         var query = "SELECT ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE,VA_ERR_CLS,VA_ERR_MSG FROM E_MAIN_REQ";
         int[] argTypes = null;
         if (!isEmpty(idArr)) {
@@ -238,8 +239,8 @@ public class RequestDao {
             argTypes = newArray(idArr.length, VARCHAR);
         }
         query += " order by DH_DBT desc";
-        List<MainRequest> res = template.query(query, idArr, argTypes, (rs, i) -> {
-            MainRequest main = new MainRequest(rs.getString("ID_MAIN_REQ"));
+        List<MainSession> res = template.query(query, idArr, argTypes, (rs, i) -> {
+            MainSession main = new MainSession(rs.getString("ID_MAIN_REQ"));
             main.setName(rs.getString("VA_NAME"));
             main.setUser(rs.getString("VA_USR"));
             main.setStart(fromNullableTimestamp(rs.getTimestamp("DH_DBT")));
@@ -262,22 +263,22 @@ public class RequestDao {
             return main;
         });
         if (lazy && !res.isEmpty()) {
-            var reqMap = res.stream().collect(toMap(MainRequest::getId, identity()));
-            outcomingRequests(reqMap.keySet(),OutcomingRequest::new).forEach(r -> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
+            var reqMap = res.stream().collect(toMap(MainSession::getId, identity()));
+            outcomingRequests(reqMap.keySet(),ApiRequest::new).forEach(r -> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
             outcomingQueries(reqMap.keySet()).forEach(q -> reqMap.get(q.getParentId()).getQueries().add(q.getQuery()));
         }
         return res;
     }
 
-    public List<IncomingRequest> getIncomingRequestByCriteria(boolean lazy, FilterCriteria fs) {
+    public List<ApiSession> getIncomingRequestByCriteria(boolean lazy, FilterCriteria fs) {
         var query = "SELECT ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE FROM E_IN_REQ ";
 
         Collection<Integer> argTypes = new ArrayList<>();
         Collection<Object> args = new ArrayList<>();
         query += fs.toSql(ID_IN_REQ, ID_MAIN_REQ, VA_APP_NME, VA_ENV, CD_PRT, LNCH, DH_DBT, DH_FIN, args, argTypes);
         query += " order by DH_DBT desc";
-        List<IncomingRequest> res = template.query(query, args.toArray(), argTypes.stream().mapToInt(i -> i).toArray(), (rs, i) -> {
-            IncomingRequest in = new IncomingRequest(rs.getString("ID_IN_REQ"));
+        List<ApiSession> res = template.query(query, args.toArray(), argTypes.stream().mapToInt(i -> i).toArray(), (rs, i) -> {
+            ApiSession in = new ApiSession(rs.getString("ID_IN_REQ"));
             in.setMethod(rs.getString("VA_MTH"));
             in.setProtocol(rs.getString("VA_PRTCL"));
             in.setHost(rs.getString("VA_HST"));
@@ -309,14 +310,14 @@ public class RequestDao {
             return in;
         });
         if (lazy && !res.isEmpty()) {
-            var reqMap = res.stream().collect(toMap(IncomingRequest::getId, identity()));
-            outcomingRequests(reqMap.keySet(),OutcomingRequest::new).forEach(r -> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
+            var reqMap = res.stream().collect(toMap(ApiSession::getId, identity()));
+            outcomingRequests(reqMap.keySet(),ApiRequest::new).forEach(r -> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
             outcomingQueries(reqMap.keySet()).forEach(q -> reqMap.get(q.getParentId()).getQueries().add(q.getQuery()));
         }
         return res;
     }
 
-    public IncomingRequest getTreebyId(String id) {
+    public ApiSession getTreebyId(String id) {
         var query = " with recursive recusive(prnt,chld) as (" +
                 " select ''::varchar as prnt, ? as chld " +
                 " union all " +
@@ -326,12 +327,12 @@ public class RequestDao {
                 ") select distinct(chld) from recusive";
 
         List<String> prntIds = template.query(query, (ResultSet rs, int rowNum) -> (rs.getString("chld")), id);
-        List<IncomingRequest> prntIncList = getIncomingRequestById(true, Exchange::new,prntIds.toArray(String[]::new));
+        List<ApiSession> prntIncList = getIncomingRequestById(true, Exchange::new,prntIds.toArray(String[]::new));
 
         prntIncList.forEach((prntA) -> {
             prntIncList.forEach((prntB) -> {
                     if (!Objects.equals(prntA.getId(), prntB.getId())){
-                        Optional<OutcomingRequest> opt = prntB.getRequests().stream()
+                        Optional<ApiRequest> opt = prntB.getRequests().stream()
                                 .filter(k -> prntA.getId().equals(k.getId()))
                                 .findFirst();
                         if (opt.isPresent()) {
@@ -343,11 +344,11 @@ public class RequestDao {
         });
         return prntIncList.stream().filter(r ->  r.getId().equals(id)).findAny().orElseThrow();
     }
-    public List<IncomingRequest> getIncomingRequestById(boolean lazy, String... idArr){
-       return  getIncomingRequestById( lazy, OutcomingRequest::new,idArr);
+    public List<ApiSession> getIncomingRequestById(boolean lazy, String... idArr){
+       return  getIncomingRequestById( lazy, ApiRequest::new,idArr);
     }
 
-    public List<IncomingRequest> getIncomingRequestById(boolean lazy, Function<String, ? extends OutcomingRequest> fn, String... idArr) {
+    public List<ApiSession> getIncomingRequestById(boolean lazy, Supplier<? extends ApiRequest> fn, String... idArr) {
         var query = "SELECT ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE FROM E_IN_REQ";
         int[] argTypes = null;
         if (!isEmpty(idArr)) {
@@ -355,8 +356,8 @@ public class RequestDao {
             argTypes = newArray(idArr.length, VARCHAR);
         }
 
-        List<IncomingRequest> res = template.query(query, idArr, argTypes, (rs, i) -> {
-            IncomingRequest in = new IncomingRequest(rs.getString("ID_IN_REQ"));
+        List<ApiSession> res = template.query(query, idArr, argTypes, (rs, i) -> {
+            ApiSession in = new ApiSession(rs.getString("ID_IN_REQ"));
             in.setMethod(rs.getString("VA_MTH"));
             in.setProtocol(rs.getString("VA_PRTCL"));
             in.setHost(rs.getString("VA_HST"));
@@ -388,14 +389,14 @@ public class RequestDao {
             return in;
         });
         if (lazy && !res.isEmpty()) {
-            var reqMap = res.stream().collect(toMap(IncomingRequest::getId, identity()));
+            var reqMap = res.stream().collect(toMap(ApiSession::getId, identity()));
             outcomingRequests(reqMap.keySet(), fn).forEach(r -> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
             outcomingQueries(reqMap.keySet()).forEach(q -> reqMap.get(q.getParentId()).getQueries().add(q.getQuery()));
         }
         return res;
     }
 
-    public List<OutcomingRequestWrapper> outcomingRequests(Set<String> incomingId, Function<String, ? extends OutcomingRequest> fn) { //use criteria
+    public List<OutcomingRequestWrapper> outcomingRequests(Set<String> incomingId, Supplier<? extends ApiRequest> fn) { //use criteria
         var query = "SELECT ID_OUT_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,CD_IN_REQ FROM E_OUT_REQ"
                 + " WHERE CD_IN_REQ IN(" + nArg(incomingId.size()) + ") ORDER BY DH_DBT ASC";
         return template.query(query, incomingId.toArray(), newArray(incomingId.size(), VARCHAR), (rs, i) -> {
@@ -465,15 +466,15 @@ public class RequestDao {
     class OutcomingRequestWrapper {
 
         @Delegate
-        private final OutcomingRequest request;
+        private final ApiRequest request;
         private final String parentId;
 
-        public OutcomingRequestWrapper(String id, String parentId, Function<String, ? extends OutcomingRequest> fn) {
+        public OutcomingRequestWrapper(String parentId, Supplier<? extends ApiRequest> fn) {
             this.parentId = parentId;
-            this.request = fn.apply(id); //delegated setters
+            this.request = fn.get(); //delegated setters
         }
 
-        public OutcomingRequestWrapper(OutcomingRequest request, String parentId) {
+        public OutcomingRequestWrapper(ApiRequest request, String parentId) {
             this.parentId = parentId;
             this.request = request; //delegated getters
         }
@@ -484,17 +485,17 @@ public class RequestDao {
     class OutcomingQueryWrapper {
 
         @Delegate
-        private final OutcomingQuery query;
+        private final DatabaseRequest query;
         private final String parentId;
         private long id;
 
         public OutcomingQueryWrapper(Long id, String parentId) {
             this.parentId = parentId;
             this.id = id;
-            this.query = new OutcomingQuery(); //delegated setters
+            this.query = new DatabaseRequest(); //delegated setters
         }
 
-        public OutcomingQueryWrapper(OutcomingQuery query, String parentId) {
+        public OutcomingQueryWrapper(DatabaseRequest query, String parentId) {
             this.parentId = parentId;
             this.query = query; //delegated getters
         }
