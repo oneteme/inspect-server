@@ -1,8 +1,8 @@
 package org.usf.trace.api.server;
 
 import lombok.Setter;
-import org.usf.traceapi.core.IncomingRequest;
-import org.usf.traceapi.core.OutcomingRequest;
+import org.usf.traceapi.core.ApiSession;
+import org.usf.traceapi.core.ApiRequest;
 
 import lombok.Getter;
 
@@ -13,12 +13,8 @@ import lombok.Getter;
  */
 @Getter
 @Setter
-public final class Exchange extends OutcomingRequest {
+public final class Exchange extends ApiRequest {
 	
-	private IncomingRequest remoteTrace;
-
-	public Exchange(String id) {
-		super(id);
-	}
+	private ApiSession remoteTrace;
 	
 }
