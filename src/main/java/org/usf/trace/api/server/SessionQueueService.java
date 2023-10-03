@@ -1,5 +1,6 @@
 package org.usf.trace.api.server;
 
+import static java.util.Collections.addAll;
 import static java.util.concurrent.Executors.newSingleThreadScheduledExecutor;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -33,8 +34,8 @@ public class SessionQueueService {
     			prop.getDelay()*2, prop.getDelay(), prop.getUnit()); //x2 wait for previous POD backup
     }
     
-    public void add(Session session) {
-        queue.add(session);
+    public void add(Session... sessions) {
+        addAll(queue, sessions);
         log.info("new request added to the queue : {} session(s)", queue.size());
     }
     
