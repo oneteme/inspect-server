@@ -13,6 +13,7 @@ import static org.usf.trace.api.server.Utils.isEmpty;
 import static org.usf.trace.api.server.Utils.nArg;
 import static org.usf.trace.api.server.Utils.newArray;
 
+import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
@@ -22,7 +23,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import com.sun.tools.javac.Main;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,14 +44,14 @@ public class RequestDao {
     @Transactional(rollbackFor = Exception.class)
     public void saveSessions(List<Session> sessions) {
         filterAndSave(sessions, IncomingRequest.class, this::addIncomingRequest);
-        filterAndSave(sessions, MainRequest.class, this::addMainRequest);        
-        filterSubAndSave(sessions, Session::getRequests, (s, r)-> new OutcomingRequestWrapper(r, s.getId()), this::addOutcomingRequest);
-        filterSubAndSave(sessions, Session::getQueries, (s, q)-> new OutcomingQueryWrapper(q, s.getId()), this::addOutcomingQueries);
+        filterAndSave(sessions, MainRequest.class, this::addMainRequest);
+        filterSubAndSave(sessions, Session::getRequests, (s, r) -> new OutcomingRequestWrapper(r, s.getId()), this::addOutcomingRequest);
+        filterSubAndSave(sessions, Session::getQueries, (s, q) -> new OutcomingQueryWrapper(q, s.getId()), this::addOutcomingQueries);
     }
-    
+
     private void addMainRequest(List<MainRequest> reqList) {
         template.batchUpdate("INSERT INTO E_MAIN_REQ(ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE,VA_ERR_CLS,VA_ERR_MSG)"
-        		+ " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
+                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             var app = nullableApplication(o.getApplication());
             var exp = nullableException(o.getException());
             ps.setString(1, o.getId());
@@ -75,7 +75,7 @@ public class RequestDao {
 
     private void addIncomingRequest(List<IncomingRequest> reqList) {
         template.batchUpdate("INSERT INTO E_IN_REQ(ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE)"
-        		+ " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
+                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             var app = nullableApplication(o.getApplication());
             var exp = nullableException(o.getException());
             ps.setString(1, o.getId());
@@ -84,7 +84,7 @@ public class RequestDao {
             ps.setString(4, o.getHost());
             ps.setInt(5, o.getPort());
             ps.setString(6, o.getPath());
-            ps.setString(7, o.getQuery());	
+            ps.setString(7, o.getQuery());
             ps.setString(8, o.getContentType());
             ps.setString(9, o.getAuthScheme());
             ps.setInt(10, o.getStatus());
@@ -108,7 +108,7 @@ public class RequestDao {
 
     private void addOutcomingRequest(List<OutcomingRequestWrapper> reqList) {
         template.batchUpdate("INSERT INTO E_OUT_REQ(ID_OUT_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,CD_IN_REQ)"
-        		+ " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
+                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             var exp = nullableException(o.getException());
             ps.setString(1, o.getId());
             ps.setString(2, o.getMethod());
@@ -125,8 +125,8 @@ public class RequestDao {
             ps.setTimestamp(13, fromNullableInstant(o.getStart()));
             ps.setTimestamp(14, fromNullableInstant(o.getEnd()));
             ps.setString(15, o.getThreadName());
-            ps.setString(16,exp.getClassname());
-            ps.setString(17,exp.getMessage());
+            ps.setString(16, exp.getClassname());
+            ps.setString(17, exp.getMessage());
             ps.setString(18, o.getParentId());
         });
     }
@@ -135,12 +135,12 @@ public class RequestDao {
         var maxId = template.queryForObject("SELECT COALESCE(MAX(ID_OUT_QRY), 0) FROM E_OUT_QRY", Long.class);
         var inc = new AtomicLong(maxId);
         template.batchUpdate("INSERT INTO E_OUT_QRY(ID_OUT_QRY,VA_HST,VA_SCHMA,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_DRV,VA_DB_NME,VA_DB_VRS,VA_CMPLT,CD_IN_REQ)"
-        		+ " VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", qryList, qryList.size(), (ps, o) -> {
+                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", qryList, qryList.size(), (ps, o) -> {
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getHost());
             ps.setString(3, o.getSchema());
             ps.setTimestamp(4, fromNullableInstant(o.getStart()));
-            ps.setTimestamp(5, fromNullableInstant(o.getEnd())); 
+            ps.setTimestamp(5, fromNullableInstant(o.getEnd()));
             ps.setString(6, o.getUser());
             ps.setString(7, o.getThreadName());
             ps.setString(8, o.getDriverVersion());
@@ -169,9 +169,9 @@ public class RequestDao {
     @Deprecated // reuse RequestDao::outcomingRequests using criteria
     public OutcomingRequest getOutcomingRequestById(String id) {
         return template.query("SELECT ID_OUT_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ FROM E_OUT_REQ"
-        		+ " WHERE ID_OUT_REQ = ? ", new Object[]{id}, newArray(1, VARCHAR), rs -> {
+                + " WHERE ID_OUT_REQ = ? ", new Object[]{id}, newArray(1, VARCHAR), rs -> {
 
-            if(rs.next()) {
+            if (rs.next()) {
                 OutcomingRequest out = new OutcomingRequest(rs.getString("ID_OUT_REQ"));
                 out.setProtocol(rs.getString("VA_PRTCL"));
                 out.setHost(rs.getString("VA_HST"));
@@ -195,11 +195,11 @@ public class RequestDao {
         var query = "SELECT ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE,VA_ERR_CLS,VA_ERR_MSG FROM E_MAIN_REQ";
 
         Collection<Integer> argTypes = new ArrayList<>();
-        Collection<Object> args =  new ArrayList<>();
-        query += fc.toSql(ID_IN_REQ,ID_MAIN_REQ,VA_APP_NME,VA_ENV,CD_PRT,LNCH,DH_DBT,DH_FIN,args,argTypes);
+        Collection<Object> args = new ArrayList<>();
+        query += fc.toSql(ID_IN_REQ, ID_MAIN_REQ, VA_APP_NME, VA_ENV, CD_PRT, LNCH, DH_DBT, DH_FIN, args, argTypes);
 
 
-        List<MainRequest> res = template.query(query, args.toArray() , argTypes.stream().mapToInt(i -> i).toArray(),(rs, i) -> {
+        List<MainRequest> res = template.query(query, args.toArray(), argTypes.stream().mapToInt(i -> i).toArray(), (rs, i) -> {
             MainRequest main = new MainRequest(rs.getString("ID_MAIN_REQ"));
             main.setName(rs.getString("VA_NAME"));
             main.setUser(rs.getString("VA_USR"));
@@ -222,10 +222,10 @@ public class RequestDao {
             ));
             return main;
         });
-        if(lazy && !res.isEmpty()) {
+        if (lazy && !res.isEmpty()) {
             var reqMap = res.stream().collect(toMap(MainRequest::getId, identity()));
-            outcomingRequests(reqMap.keySet()).forEach(r-> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
-            outcomingQueries(reqMap.keySet()).forEach(q-> reqMap.get(q.getParentId()).getQueries().add(q.getQuery()));
+            outcomingRequests(reqMap.keySet(),OutcomingRequest::new).forEach(r -> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
+            outcomingQueries(reqMap.keySet()).forEach(q -> reqMap.get(q.getParentId()).getQueries().add(q.getQuery()));
         }
         return res;
     }
@@ -233,7 +233,7 @@ public class RequestDao {
     public List<MainRequest> getMainRequestById(boolean lazy, String... idArr) {
         var query = "SELECT ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE,VA_ERR_CLS,VA_ERR_MSG FROM E_MAIN_REQ";
         int[] argTypes = null;
-        if(!isEmpty(idArr)) {
+        if (!isEmpty(idArr)) {
             query += " WHERE ID_MAIN_REQ IN(" + nArg(idArr.length) + ")";
             argTypes = newArray(idArr.length, VARCHAR);
         }
@@ -248,7 +248,7 @@ public class RequestDao {
             main.setLocation(rs.getString("LOC"));
             main.setThreadName(rs.getString("VA_THRED"));
             main.setApplication(new ApplicationInfo(
-            		rs.getString("VA_APP_NME"),
+                    rs.getString("VA_APP_NME"),
                     rs.getString("VA_VRS"),
                     rs.getString("VA_ADRS"),
                     rs.getString("VA_ENV"),
@@ -261,10 +261,10 @@ public class RequestDao {
             ));
             return main;
         });
-        if(lazy && !res.isEmpty()) {
+        if (lazy && !res.isEmpty()) {
             var reqMap = res.stream().collect(toMap(MainRequest::getId, identity()));
-            outcomingRequests(reqMap.keySet()).forEach(r-> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
-            outcomingQueries(reqMap.keySet()).forEach(q-> reqMap.get(q.getParentId()).getQueries().add(q.getQuery()));
+            outcomingRequests(reqMap.keySet(),OutcomingRequest::new).forEach(r -> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
+            outcomingQueries(reqMap.keySet()).forEach(q -> reqMap.get(q.getParentId()).getQueries().add(q.getQuery()));
         }
         return res;
     }
@@ -273,10 +273,10 @@ public class RequestDao {
         var query = "SELECT ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE FROM E_IN_REQ ";
 
         Collection<Integer> argTypes = new ArrayList<>();
-        Collection<Object> args =  new ArrayList<>();
-        query += fs.toSql(ID_IN_REQ,ID_MAIN_REQ,VA_APP_NME,VA_ENV,CD_PRT,LNCH,DH_DBT,DH_FIN,args,argTypes);
+        Collection<Object> args = new ArrayList<>();
+        query += fs.toSql(ID_IN_REQ, ID_MAIN_REQ, VA_APP_NME, VA_ENV, CD_PRT, LNCH, DH_DBT, DH_FIN, args, argTypes);
         query += " order by DH_DBT desc";
-        List<IncomingRequest> res = template.query(query, args.toArray() , argTypes.stream().mapToInt(i -> i).toArray() , (rs, i) -> {
+        List<IncomingRequest> res = template.query(query, args.toArray(), argTypes.stream().mapToInt(i -> i).toArray(), (rs, i) -> {
             IncomingRequest in = new IncomingRequest(rs.getString("ID_IN_REQ"));
             in.setMethod(rs.getString("VA_MTH"));
             in.setProtocol(rs.getString("VA_PRTCL"));
@@ -308,17 +308,49 @@ public class RequestDao {
             ));
             return in;
         });
-        if(lazy && !res.isEmpty()) {
+        if (lazy && !res.isEmpty()) {
             var reqMap = res.stream().collect(toMap(IncomingRequest::getId, identity()));
-            outcomingRequests(reqMap.keySet()).forEach(r-> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
-            outcomingQueries(reqMap.keySet()).forEach(q-> reqMap.get(q.getParentId()).getQueries().add(q.getQuery()));
+            outcomingRequests(reqMap.keySet(),OutcomingRequest::new).forEach(r -> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
+            outcomingQueries(reqMap.keySet()).forEach(q -> reqMap.get(q.getParentId()).getQueries().add(q.getQuery()));
         }
         return res;
     }
-    public List<IncomingRequest> getIncomingRequestById(boolean lazy, String... idArr) {
+
+    public IncomingRequest getTreebyId(String id) {
+        var query = " with recursive recusive(prnt,chld) as (" +
+                " select ''::varchar as prnt, ? as chld " +
+                " union all " +
+                " select  recusive.chld, e_out_req.id_out_req " +
+                " from e_out_req , recusive " +
+                " where recusive.chld= e_out_req.cd_in_req " +
+                ") select distinct(chld) from recusive";
+
+        List<String> prntIds = template.query(query, (ResultSet rs, int rowNum) -> (rs.getString("chld")), id);
+        List<IncomingRequest> prntIncList = getIncomingRequestById(true, Exchange::new,prntIds.toArray(String[]::new));
+
+        prntIncList.forEach((prntA) -> {
+            prntIncList.forEach((prntB) -> {
+                    if (!Objects.equals(prntA.getId(), prntB.getId())){
+                        Optional<OutcomingRequest> opt = prntB.getRequests().stream()
+                                .filter(k -> prntA.getId().equals(k.getId()))
+                                .findFirst();
+                        if (opt.isPresent()) {
+                            var ex = (Exchange) opt.get();
+                            ex.setRemoteTrace(prntA);
+                        }
+                    }
+            });
+        });
+        return prntIncList.stream().filter(r ->  r.getId().equals(id)).findAny().orElseThrow();
+    }
+    public List<IncomingRequest> getIncomingRequestById(boolean lazy, String... idArr){
+       return  getIncomingRequestById( lazy, OutcomingRequest::new,idArr);
+    }
+
+    public List<IncomingRequest> getIncomingRequestById(boolean lazy, Function<String, ? extends OutcomingRequest> fn, String... idArr) {
         var query = "SELECT ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE FROM E_IN_REQ";
         int[] argTypes = null;
-        if(!isEmpty(idArr)) {
+        if (!isEmpty(idArr)) {
             query += " WHERE ID_IN_REQ IN(" + nArg(idArr.length) + ")";
             argTypes = newArray(idArr.length, VARCHAR);
         }
@@ -346,35 +378,35 @@ public class RequestDao {
             in.setName(rs.getString("VA_API_NME"));
             in.setUser(rs.getString("VA_USR"));
             in.setApplication(new ApplicationInfo(
-            		rs.getString("VA_APP_NME"),
+                    rs.getString("VA_APP_NME"),
                     rs.getString("VA_VRS"),
                     rs.getString("VA_ADRS"),
                     rs.getString("VA_ENV"),
-            		rs.getString("VA_OS"),
-            		rs.getString("VA_RE")
+                    rs.getString("VA_OS"),
+                    rs.getString("VA_RE")
             ));
             return in;
         });
-        if(lazy && !res.isEmpty()) {
-        	var reqMap = res.stream().collect(toMap(IncomingRequest::getId, identity()));
-            outcomingRequests(reqMap.keySet()).forEach(r-> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
-            outcomingQueries(reqMap.keySet()).forEach(q-> reqMap.get(q.getParentId()).getQueries().add(q.getQuery()));
+        if (lazy && !res.isEmpty()) {
+            var reqMap = res.stream().collect(toMap(IncomingRequest::getId, identity()));
+            outcomingRequests(reqMap.keySet(), fn).forEach(r -> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
+            outcomingQueries(reqMap.keySet()).forEach(q -> reqMap.get(q.getParentId()).getQueries().add(q.getQuery()));
         }
         return res;
     }
 
-    public List<OutcomingRequestWrapper> outcomingRequests(Set<String> incomingId) { //use criteria 
+    public List<OutcomingRequestWrapper> outcomingRequests(Set<String> incomingId, Function<String, ? extends OutcomingRequest> fn) { //use criteria
         var query = "SELECT ID_OUT_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,CD_IN_REQ FROM E_OUT_REQ"
-        		+ " WHERE CD_IN_REQ IN(" + nArg(incomingId.size()) + ") ORDER BY DH_DBT ASC";
+                + " WHERE CD_IN_REQ IN(" + nArg(incomingId.size()) + ") ORDER BY DH_DBT ASC";
         return template.query(query, incomingId.toArray(), newArray(incomingId.size(), VARCHAR), (rs, i) -> {
-            OutcomingRequestWrapper out = new OutcomingRequestWrapper(rs.getString("ID_OUT_REQ"), rs.getString("CD_IN_REQ"));
+            OutcomingRequestWrapper out = new OutcomingRequestWrapper(rs.getString("ID_OUT_REQ"), rs.getString("CD_IN_REQ"), fn);
             out.setProtocol(rs.getString("VA_PRTCL"));
             out.setHost(rs.getString("VA_HST"));
             out.setPort(rs.getInt("CD_PRT"));
             out.setPath(rs.getString("VA_PTH"));
             out.setQuery(rs.getString("VA_QRY"));
             out.setMethod(rs.getString("VA_MTH"));
-            out.setStatus( rs.getInt("CD_STT"));
+            out.setStatus(rs.getInt("CD_STT"));
             out.setInDataSize(rs.getLong("VA_I_SZE"));
             out.setOutDataSize(rs.getLong("VA_I_SZE"));
             out.setStart(fromNullableTimestamp(rs.getTimestamp("DH_DBT")));
@@ -391,7 +423,7 @@ public class RequestDao {
 
     public List<OutcomingQueryWrapper> outcomingQueries(Set<String> incomingId) { // non empty
         var query = "SELECT ID_OUT_QRY,VA_HST,CD_PRT,VA_SCHMA,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_DRV,VA_DB_NME,VA_DB_VRS,VA_CMPLT,CD_IN_REQ FROM E_OUT_QRY"
-        		+ " WHERE CD_IN_REQ IN(" + nArg(incomingId.size()) + ")";
+                + " WHERE CD_IN_REQ IN(" + nArg(incomingId.size()) + ")";
         var queries = template.query(query, incomingId.toArray(), newArray(incomingId.size(), VARCHAR), (rs, i) -> {
             var out = new OutcomingQueryWrapper(rs.getLong("ID_OUT_QRY"), rs.getString("CD_IN_REQ"));
             out.setHost(rs.getString("VA_HST"));
@@ -407,17 +439,17 @@ public class RequestDao {
             out.setCompleted("T".equals(rs.getString("VA_CMPLT")));
             return out;
         });
-        if(!queries.isEmpty()) {
-        	var qMap = queries.stream().collect(toMap(OutcomingQueryWrapper::getId, identity())); //unique 
-            databaseActions(qMap.keySet()).forEach(a-> qMap.get(a.getParentId()).getActions().add(a.getAction()));
+        if (!queries.isEmpty()) {
+            var qMap = queries.stream().collect(toMap(OutcomingQueryWrapper::getId, identity())); //unique
+            databaseActions(qMap.keySet()).forEach(a -> qMap.get(a.getParentId()).getActions().add(a.getAction()));
         }
         return queries;
     }
 
     public List<DatabaseActionWrapper> databaseActions(Set<Long> queries) { // non empty
         var query = "SELECT VA_TYP,DH_DBT,DH_FIN,VA_ERR_CLS,VA_ERR_MSG,CD_OUT_QRY FROM E_DB_ACT"
-        		+ " WHERE CD_OUT_QRY IN(" + nArg(queries.size()) + ")  ORDER BY DH_DBT ASC";
-        return template.query(query, queries.toArray(), newArray(queries.size(), BIGINT), (rs, i)->
+                + " WHERE CD_OUT_QRY IN(" + nArg(queries.size()) + ")  ORDER BY DH_DBT ASC";
+        return template.query(query, queries.toArray(), newArray(queries.size(), BIGINT), (rs, i) ->
                 new DatabaseActionWrapper(
                         rs.getLong("CD_OUT_QRY"),
                         Action.valueOf(rs.getString("VA_TYP")),
@@ -431,26 +463,26 @@ public class RequestDao {
 
     @Getter
     class OutcomingRequestWrapper {
-        
+
         @Delegate
-    	private final OutcomingRequest request;
+        private final OutcomingRequest request;
         private final String parentId;
 
-        public OutcomingRequestWrapper(String id, String parentId) {
+        public OutcomingRequestWrapper(String id, String parentId, Function<String, ? extends OutcomingRequest> fn) {
             this.parentId = parentId;
-            this.request  = new OutcomingRequest(id); //delegated setters
+            this.request = fn.apply(id); //delegated setters
         }
-        
+
         public OutcomingRequestWrapper(OutcomingRequest request, String parentId) {
             this.parentId = parentId;
-            this.request  = request; //delegated getters
+            this.request = request; //delegated getters
         }
     }
 
     @Setter
     @Getter
     class OutcomingQueryWrapper {
-        
+
         @Delegate
         private final OutcomingQuery query;
         private final String parentId;
@@ -461,7 +493,7 @@ public class RequestDao {
             this.id = id;
             this.query = new OutcomingQuery(); //delegated setters
         }
-        
+
         public OutcomingQueryWrapper(OutcomingQuery query, String parentId) {
             this.parentId = parentId;
             this.query = query; //delegated getters
@@ -469,11 +501,11 @@ public class RequestDao {
     }
 
     @Getter
-    class DatabaseActionWrapper  {
+    class DatabaseActionWrapper {
 
-    	@Delegate
-    	private final DatabaseAction action;
-    	private final long parentId;
+        @Delegate
+        private final DatabaseAction action;
+        private final long parentId;
 
         public DatabaseActionWrapper(long parentId, Action type, Instant start, Instant end, ExceptionInfo exception) {
             this.parentId = parentId;
@@ -481,50 +513,50 @@ public class RequestDao {
         }
     }
 
-    private static <T, U extends T> void filterAndSave(Collection<T> c, Class<U> classe, Consumer<List<U>> saveFn){
-    	var list = c.stream()
-    			.filter(classe::isInstance)
-    			.map(classe::cast)
-    			.collect(toList());
-    	if(!list.isEmpty()) {
-    		saveFn.accept(list);
-    	}
-    }
-    
-    private static <T, U, R> void filterSubAndSave(Collection<T> c, Function<T, Collection<U>> accessor, BiFunction<T, U, R> mapper, Consumer<List<R>> saveFn){
-    	var list = c.stream()
-    			.filter(o-> nonNull(accessor.apply(o)))
-    			.flatMap(o-> accessor.apply(o).stream().map(s-> mapper.apply(o, s)))
-    			.collect(toList());
-    	if(!list.isEmpty()) {
-    		saveFn.accept(list);
-    	}
-    }
-    
-    private static Timestamp fromNullableInstant(Instant instant) {
-    	return ofNullable(instant).map(Timestamp::from).orElse(null);
-    }
-    
-    private static Instant fromNullableTimestamp(Timestamp timestamp) {
-    	return ofNullable(timestamp).map(Timestamp::toInstant).orElse(null);
-    }
-    
-    private static ApplicationInfo nullableApplication(ApplicationInfo app) {
-    	return ofNullable(app).orElseGet(()-> new ApplicationInfo(null, null, null, null, null, null));
+    private static <T, U extends T> void filterAndSave(Collection<T> c, Class<U> classe, Consumer<List<U>> saveFn) {
+        var list = c.stream()
+                .filter(classe::isInstance)
+                .map(classe::cast)
+                .collect(toList());
+        if (!list.isEmpty()) {
+            saveFn.accept(list);
+        }
     }
 
-    private static ExceptionInfo nullableException(ExceptionInfo exp){
-        return ofNullable(exp).orElseGet(()-> new ExceptionInfo(null, null));
+    private static <T, U, R> void filterSubAndSave(Collection<T> c, Function<T, Collection<U>> accessor, BiFunction<T, U, R> mapper, Consumer<List<R>> saveFn) {
+        var list = c.stream()
+                .filter(o -> nonNull(accessor.apply(o)))
+                .flatMap(o -> accessor.apply(o).stream().map(s -> mapper.apply(o, s)))
+                .collect(toList());
+        if (!list.isEmpty()) {
+            saveFn.accept(list);
+        }
+    }
+
+    private static Timestamp fromNullableInstant(Instant instant) {
+        return ofNullable(instant).map(Timestamp::from).orElse(null);
+    }
+
+    private static Instant fromNullableTimestamp(Timestamp timestamp) {
+        return ofNullable(timestamp).map(Timestamp::toInstant).orElse(null);
+    }
+
+    private static ApplicationInfo nullableApplication(ApplicationInfo app) {
+        return ofNullable(app).orElseGet(() -> new ApplicationInfo(null, null, null, null, null, null));
+    }
+
+    private static ExceptionInfo nullableException(ExceptionInfo exp) {
+        return ofNullable(exp).orElseGet(() -> new ExceptionInfo(null, null));
     }
 
     private static String valueOfNullable(Object o) {
-    	return ofNullable(o).map(Object::toString).orElse(null);
+        return ofNullable(o).map(Object::toString).orElse(null);
     }
 
     private static <T extends Enum<T>> T valueOfNullable(Class<T> classe, String value) {
-    	return ofNullable(value)
-    			.flatMap(v-> Stream.of(classe.getEnumConstants()).filter(e-> e.name().equals(v)).findAny())
-    			.orElse(null);
+        return ofNullable(value)
+                .flatMap(v -> Stream.of(classe.getEnumConstants()).filter(e -> e.name().equals(v)).findAny())
+                .orElse(null);
     }
 }
 
