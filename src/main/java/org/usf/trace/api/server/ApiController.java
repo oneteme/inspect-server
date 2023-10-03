@@ -4,6 +4,7 @@ import static java.util.Objects.isNull;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.ResponseEntity.accepted;
 import static org.usf.trace.api.server.Utils.requireSingle;
+import static org.usf.traceapi.core.Session.nextId;
 
 import java.time.Instant;
 import java.util.List;
@@ -31,7 +32,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping(value = "trace", produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
-public class    ApiController {
+public class ApiController {
 	
     private final RequestDao dao;
     private final SessionQueueService queueService;
@@ -60,6 +61,11 @@ public class    ApiController {
     }
     
     private ResponseEntity<Void> appendRequest(Session... session){
+    	for(Session s : session) {
+    		if(isNull(s.getId())) {
+    			s.setId(nextId()); // safe id set (web collectors)
+    		}
+    	}
         queueService.add(session);
         return accepted().build();
     }
