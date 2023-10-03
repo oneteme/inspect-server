@@ -23,9 +23,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.usf.traceapi.core.ApplicationInfo;
-import org.usf.traceapi.core.IncomingRequest;
-import org.usf.traceapi.core.MainRequest;
-import org.usf.traceapi.core.OutcomingRequest;
+import org.usf.traceapi.core.ApiSession;
+import org.usf.traceapi.core.MainSession;
+import org.usf.traceapi.core.ApiRequest;
 import org.usf.traceapi.core.Session;
 
 import lombok.RequiredArgsConstructor;
@@ -40,12 +40,12 @@ public class    ApiController {
     private final SessionQueueService queueService;
 
     @PutMapping(INCOMING_ENDPOINT)
-    public ResponseEntity<Void> saveRequest(@RequestBody IncomingRequest req) {
+    public ResponseEntity<Void> saveRequest(@RequestBody ApiSession req) {
         return appendRequest(req);
     }
     
     @PutMapping(MAIN_ENDPOINT)
-    public ResponseEntity<Void> saveRequest(HttpServletRequest hsr,  @RequestBody MainRequest req) {
+    public ResponseEntity<Void> saveRequest(HttpServletRequest hsr,  @RequestBody MainSession req) {
     	if(isNull(req.getApplication())) { //set IP address for WABAPP trace
     		req.setApplication(new ApplicationInfo(null, null, hsr.getRemoteAddr(), null, null, null));
     	}
@@ -61,7 +61,7 @@ public class    ApiController {
     }
 
     @GetMapping(INCOMING_ENDPOINT)
-    public List<IncomingRequest> getIncomingRequestByCriteria(
+    public List<ApiSession> getIncomingRequestByCriteria(
     		@RequestParam(defaultValue = "true", name = "lazy") boolean lazy, 
     		@RequestParam(required = false, name = "id") String[] id,
     		@RequestParam(required = false, name = "name") String[] name,
@@ -75,12 +75,12 @@ public class    ApiController {
     }
 
     @GetMapping("incoming/request/{id}")
-    public IncomingRequest getIncomingRequestById(@PathVariable String id) { // without tree
+    public ApiSession getIncomingRequestById(@PathVariable String id) { // without tree
         return requireSingle(dao.getIncomingRequestById(true, id));
     }
 
     @GetMapping(MAIN_ENDPOINT)
-    public List<MainRequest> getMainRequestByCriteria(
+    public List<MainSession> getMainRequestByCriteria(
             @RequestParam(defaultValue = "true", name = "lazy") boolean lazy,
             @RequestParam(required = false, name = "id") String[] id,
             @RequestParam(required = false, name = "env") String[] env,
@@ -93,17 +93,17 @@ public class    ApiController {
     }
 
     @GetMapping("main/request/{id}")
-    public MainRequest getMainRequestById(@PathVariable String id) { // without tree
+    public MainSession getMainRequestById(@PathVariable String id) { // without tree
         return requireSingle(dao.getMainRequestById(true, id));
     }
 
     @GetMapping("incoming/request/{id}/out")
-    public OutcomingRequest getOutcomingRequestById(@PathVariable String id) {
+    public ApiRequest getOutcomingRequestById(@PathVariable String id) {
         return dao.getOutcomingRequestById(id);
     }
 
     @GetMapping("incoming/request/{id}/tree") //LATER
-    public IncomingRequest getIncomingRequestTreeById(@PathVariable String id) {
+    public ApiSession getIncomingRequestTreeById(@PathVariable String id) {
         return requireSingle(dao.getIncomingRequestById(true, id)); //change query
     }
     
