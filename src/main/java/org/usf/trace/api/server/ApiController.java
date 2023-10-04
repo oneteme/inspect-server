@@ -27,7 +27,9 @@ import org.usf.traceapi.core.MainSession;
 import org.usf.traceapi.core.Session;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @CrossOrigin
 @RestController
 @RequestMapping(value = "trace", produces = APPLICATION_JSON_VALUE)
@@ -63,7 +65,12 @@ public class ApiController {
     private ResponseEntity<Void> appendRequest(Session... session){
     	for(Session s : session) {
     		if(isNull(s.getId())) {
-    			s.setId(nextId()); // safe id set (web collectors)
+        		if(s instanceof MainSession) {
+	    			s.setId(nextId()); // safe id set for web collectors
+        		}
+        		else if(s instanceof ApiSession) {
+        			log.warn("ApiSesstion id is null : {}", s);
+        		}
     		}
     	}
         queueService.add(session);
