@@ -48,6 +48,7 @@ public class RequestDao {
         filterAndSave(sessions, MainSession.class, this::addMainRequest);
         filterSubAndSave(sessions, Session::getRequests, (s, r) -> new OutcomingRequestWrapper(r, s.getId()), this::addOutcomingRequest);
         filterSubAndSave(sessions, Session::getQueries, (s, q) -> new OutcomingQueryWrapper(q, s.getId()), this::addOutcomingQueries);
+        filterSubAndSave(sessions, Session::getStages, (s, st) -> new OutcomingStagesWrapper(st, s.getId()), this::addOutcomingStages);
     }
 
     private void addMainRequest(List<MainSession> reqList) {
@@ -132,6 +133,22 @@ public class RequestDao {
         });
     }
 
+    public void addOutcomingStages(List<OutcomingStagesWrapper> stagesList){
+        template.batchUpdate("INSERT INTO E_OUT_STG(VA_NAME,LOC,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,CD_IN_REQ)"
+                + " VALUES(?,?,?,?,?,?,?,?,?)", stagesList,stagesList.size(),(ps,o)-> {
+            var exp = nullableException(o.getException());
+            ps.setString(1,o.getName());
+            ps.setString(2,o.getLocation());
+            ps.setTimestamp(3,fromNullableInstant(o.getStart()));
+            ps.setTimestamp(4,fromNullableInstant(o.getEnd()));
+            ps.setString(5,o.getUser());
+            ps.setString(6,o.getThreadName());
+            ps.setString(7,exp.getClassname());
+            ps.setString(8,exp.getMessage());
+            ps.setString(9,o.getParentId());
+        });
+    }
+
     private void addOutcomingQueries(List<OutcomingQueryWrapper> qryList) {
         var maxId = template.queryForObject("SELECT COALESCE(MAX(ID_OUT_QRY), 0) FROM E_OUT_QRY", Long.class);
         var inc = new AtomicLong(maxId);
@@ -173,7 +190,8 @@ public class RequestDao {
                 + " WHERE ID_OUT_REQ = ? ", new Object[]{id}, newArray(1, VARCHAR), rs -> {
 
             if (rs.next()) {
-                ApiRequest out = new ApiRequest(rs.getString("ID_OUT_REQ"));
+                ApiRequest out = new ApiRequest();
+                out.setId(rs.getString("ID_OUT_REQ"));
                 out.setProtocol(rs.getString("VA_PRTCL"));
                 out.setHost(rs.getString("VA_HST"));
                 out.setPort(rs.getInt("CD_PRT"));
@@ -201,7 +219,8 @@ public class RequestDao {
 
 
         List<MainSession> res = template.query(query, args.toArray(), argTypes.stream().mapToInt(i -> i).toArray(), (rs, i) -> {
-            MainSession main = new MainSession(rs.getString("ID_MAIN_REQ"));
+            MainSession main = new MainSession();
+            main.setId(rs.getString("ID_MAIN_REQ")); // add value of nullable
             main.setName(rs.getString("VA_NAME"));
             main.setUser(rs.getString("VA_USR"));
             main.setStart(fromNullableTimestamp(rs.getTimestamp("DH_DBT")));
@@ -226,6 +245,7 @@ public class RequestDao {
         if (lazy && !res.isEmpty()) {
             var reqMap = res.stream().collect(toMap(MainSession::getId, identity()));
             outcomingRequests(reqMap.keySet(),ApiRequest::new).forEach(r -> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
+            outcomingStages(reqMap.keySet(),RunnableStage::new).forEach(r -> reqMap.get(r.getParentId()).getStages().add(r.getStage()));
             outcomingQueries(reqMap.keySet()).forEach(q -> reqMap.get(q.getParentId()).getQueries().add(q.getQuery()));
         }
         return res;
@@ -240,7 +260,8 @@ public class RequestDao {
         }
         query += " order by DH_DBT desc";
         List<MainSession> res = template.query(query, idArr, argTypes, (rs, i) -> {
-            MainSession main = new MainSession(rs.getString("ID_MAIN_REQ"));
+            MainSession main = new MainSession();
+            main.setId(rs.getString("ID_MAIN_REQ"));
             main.setName(rs.getString("VA_NAME"));
             main.setUser(rs.getString("VA_USR"));
             main.setStart(fromNullableTimestamp(rs.getTimestamp("DH_DBT")));
@@ -265,6 +286,7 @@ public class RequestDao {
         if (lazy && !res.isEmpty()) {
             var reqMap = res.stream().collect(toMap(MainSession::getId, identity()));
             outcomingRequests(reqMap.keySet(),ApiRequest::new).forEach(r -> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
+            outcomingStages(reqMap.keySet(),RunnableStage::new).forEach(r -> reqMap.get(r.getParentId()).getStages().add(r.getStage()));
             outcomingQueries(reqMap.keySet()).forEach(q -> reqMap.get(q.getParentId()).getQueries().add(q.getQuery()));
         }
         return res;
@@ -278,7 +300,8 @@ public class RequestDao {
         query += fs.toSql(ID_IN_REQ, ID_MAIN_REQ, VA_APP_NME, VA_ENV, CD_PRT, LNCH, DH_DBT, DH_FIN, args, argTypes);
         query += " order by DH_DBT desc";
         List<ApiSession> res = template.query(query, args.toArray(), argTypes.stream().mapToInt(i -> i).toArray(), (rs, i) -> {
-            ApiSession in = new ApiSession(rs.getString("ID_IN_REQ"));
+            ApiSession in = new ApiSession();
+            in.setId(rs.getString("ID_IN_REQ"));
             in.setMethod(rs.getString("VA_MTH"));
             in.setProtocol(rs.getString("VA_PRTCL"));
             in.setHost(rs.getString("VA_HST"));
@@ -312,6 +335,7 @@ public class RequestDao {
         if (lazy && !res.isEmpty()) {
             var reqMap = res.stream().collect(toMap(ApiSession::getId, identity()));
             outcomingRequests(reqMap.keySet(),ApiRequest::new).forEach(r -> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
+            outcomingStages(reqMap.keySet(),RunnableStage::new).forEach(r -> reqMap.get(r.getParentId()).getStages().add(r.getStage()));
             outcomingQueries(reqMap.keySet()).forEach(q -> reqMap.get(q.getParentId()).getQueries().add(q.getQuery()));
         }
         return res;
@@ -357,7 +381,8 @@ public class RequestDao {
         }
 
         List<ApiSession> res = template.query(query, idArr, argTypes, (rs, i) -> {
-            ApiSession in = new ApiSession(rs.getString("ID_IN_REQ"));
+            ApiSession in = new ApiSession();
+            in.setId(rs.getString("ID_IN_REQ"));
             in.setMethod(rs.getString("VA_MTH"));
             in.setProtocol(rs.getString("VA_PRTCL"));
             in.setHost(rs.getString("VA_HST"));
@@ -391,6 +416,7 @@ public class RequestDao {
         if (lazy && !res.isEmpty()) {
             var reqMap = res.stream().collect(toMap(ApiSession::getId, identity()));
             outcomingRequests(reqMap.keySet(), fn).forEach(r -> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
+            outcomingStages(reqMap.keySet(),RunnableStage::new).forEach(r -> reqMap.get(r.getParentId()).getStages().add(r.getStage()));
             outcomingQueries(reqMap.keySet()).forEach(q -> reqMap.get(q.getParentId()).getQueries().add(q.getQuery()));
         }
         return res;
@@ -400,7 +426,8 @@ public class RequestDao {
         var query = "SELECT ID_OUT_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,CD_IN_REQ FROM E_OUT_REQ"
                 + " WHERE CD_IN_REQ IN(" + nArg(incomingId.size()) + ") ORDER BY DH_DBT ASC";
         return template.query(query, incomingId.toArray(), newArray(incomingId.size(), VARCHAR), (rs, i) -> {
-            OutcomingRequestWrapper out = new OutcomingRequestWrapper(rs.getString("ID_OUT_REQ"), rs.getString("CD_IN_REQ"), fn);
+            OutcomingRequestWrapper out = new OutcomingRequestWrapper(rs.getString("CD_IN_REQ"), fn);
+            out.setId(rs.getString("ID_OUT_REQ"));
             out.setProtocol(rs.getString("VA_PRTCL"));
             out.setHost(rs.getString("VA_HST"));
             out.setPort(rs.getInt("CD_PRT"));
@@ -419,6 +446,24 @@ public class RequestDao {
             ));
 
             return out;
+        });
+    }
+
+    public List<OutcomingStagesWrapper> outcomingStages(Set<String> sessionId, Supplier<? extends RunnableStage> fn){
+        var query = "SELECT VA_NAME,LOC,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,CD_IN_REQ FROM E_OUT_STG"
+                +" WHERE CD_IN_REQ IN ("+ nArg(sessionId.size()) + ") ORDER BY DH_DBT";
+        return template.query(query,sessionId.toArray(),newArray(sessionId.size(),VARCHAR),(rs,i)-> {
+            OutcomingStagesWrapper stg = new OutcomingStagesWrapper(rs.getString("CD_IN_REQ"),fn);
+            stg.setName(rs.getString("VA_NAME"));
+            stg.setLocation(rs.getString("LOC"));
+            stg.setStart(fromNullableTimestamp(rs.getTimestamp("DH_DBT")));
+            stg.setEnd(fromNullableTimestamp(rs.getTimestamp("DH_FIN")));
+            stg.setUser(rs.getString("VA_USR"));
+            stg.setException( new ExceptionInfo(
+                    rs.getString("VA_ERR_CLS"),
+                    rs.getString("VA_ERR_MSG")
+            ));
+            return  stg;
         });
     }
 
@@ -477,6 +522,26 @@ public class RequestDao {
         public OutcomingRequestWrapper(ApiRequest request, String parentId) {
             this.parentId = parentId;
             this.request = request; //delegated getters
+        }
+
+    }
+
+    @Getter
+    @Setter
+    class OutcomingStagesWrapper {
+
+        @Delegate
+        private final RunnableStage stage;
+        private final String parentId;
+
+        public OutcomingStagesWrapper(String parentId, Supplier<? extends RunnableStage> fn){
+            this.parentId = parentId;
+            this.stage = fn.get();
+        }
+
+        public OutcomingStagesWrapper(RunnableStage stage, String parentId){
+            this.parentId = parentId;
+            this.stage = stage;
         }
     }
 
