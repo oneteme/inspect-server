@@ -45,7 +45,7 @@ public class SessionQueueService {
     	return new ArrayList<>(queue); // send copy
     }
 
-    public Collection<Session> deleteSession(Set<String> ids){
+    public Collection<Session> deleteSessions(Set<String> ids){
     	var sessions = queue.stream().filter(s-> ids.contains(s.getId())).collect(toList());
     	queue.removeAll(sessions);
     	return sessions;

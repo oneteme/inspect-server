@@ -30,7 +30,7 @@ public class CacheController {
 
     @DeleteMapping
     public Collection<Session> deleteSessions(@RequestParam("id") Set<String> ids){
-    	return queue.deleteSession(ids);
+    	return queue.deleteSessions(ids);
     }
     
 }
