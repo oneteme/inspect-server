@@ -45,13 +45,13 @@ public class ApiController {
     }
     
     @Deprecated(forRemoval = true)
-    @PutMapping("main/request")
+    @PutMapping("incoming/request")
     public ResponseEntity<Void> saveRequest(@RequestBody ApiSession req) {
         return appendRequest(req);
     }
 
     @Deprecated(forRemoval = true)
-    @PutMapping("incoming/request")
+    @PutMapping("main/request")
     public ResponseEntity<Void> saveRequest(HttpServletRequest hsr,  @RequestBody MainSession req) {
     	if(isNull(req.getApplication())) { //set IP address for WABAPP trace
     		req.setApplication(new ApplicationInfo(null, null, hsr.getRemoteAddr(), null, null, null));
