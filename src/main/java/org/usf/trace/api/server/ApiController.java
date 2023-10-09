@@ -4,9 +4,7 @@ import static java.util.Objects.isNull;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.ResponseEntity.accepted;
 import static org.usf.trace.api.server.Utils.requireSingle;
-import static org.usf.traceapi.core.RemoteTraceSender.INCOMING_ENDPOINT;
-import static org.usf.traceapi.core.RemoteTraceSender.MAIN_ENDPOINT;
-import static org.usf.traceapi.core.RemoteTraceSender.TRACE_ENDPOINT;
+import static org.usf.traceapi.core.Session.nextId;
 
 import java.time.Instant;
 import java.util.List;
@@ -22,46 +20,52 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.usf.traceapi.core.ApiRequest;
+import org.usf.traceapi.core.ApiSession;
 import org.usf.traceapi.core.ApplicationInfo;
-import org.usf.traceapi.core.IncomingRequest;
-import org.usf.traceapi.core.MainRequest;
-import org.usf.traceapi.core.OutcomingRequest;
+import org.usf.traceapi.core.MainSession;
 import org.usf.traceapi.core.Session;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @CrossOrigin
 @RestController
-@RequestMapping(value = TRACE_ENDPOINT, produces = APPLICATION_JSON_VALUE)
+@RequestMapping(value = "trace", produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
-public class    ApiController {
+public class ApiController {
 	
     private final RequestDao dao;
     private final SessionQueueService queueService;
 
-    @PutMapping(INCOMING_ENDPOINT)
-    public ResponseEntity<Void> saveRequest(@RequestBody IncomingRequest req) {
-        return appendRequest(req);
+    @PutMapping("session")
+    public ResponseEntity<Void> saveSession(HttpServletRequest hsr,@RequestBody Session[] sessions) {
+        for(Session s : sessions) {
+            if(isNull(s.getId())) {
+                if(s instanceof MainSession) {
+                    s.setId(nextId()); // safe id set for web collectors
+                    updateRemoteAddress(hsr,(MainSession) s);
+                }
+                else if(s instanceof ApiSession) {
+                    log.warn("ApiSesstion id is null : {}", s);
+                }
+            }
+        }
+        queueService.add(sessions);
+        return accepted().build();
     }
-    
-    @PutMapping(MAIN_ENDPOINT)
-    public ResponseEntity<Void> saveRequest(HttpServletRequest hsr,  @RequestBody MainRequest req) {
+    public void  updateRemoteAddress(HttpServletRequest hsr,  @RequestBody MainSession req) {
     	if(isNull(req.getApplication())) { //set IP address for WABAPP trace
     		req.setApplication(new ApplicationInfo(null, null, hsr.getRemoteAddr(), null, null, null));
     	}
     	else if(isNull(req.getApplication().getAddress())) {
     		req.setApplication(req.getApplication().withAddress(hsr.getRemoteAddr()));
     	}
-        return appendRequest(req);
-    }
-    
-    private ResponseEntity<Void> appendRequest(Session session){
-        queueService.add(session);
-        return accepted().build();
     }
 
-    @GetMapping(INCOMING_ENDPOINT)
-    public List<IncomingRequest> getIncomingRequestByCriteria(
+    @GetMapping("incoming/request")
+    public List<ApiSession> getIncomingRequestByCriteria(
     		@RequestParam(defaultValue = "true", name = "lazy") boolean lazy, 
     		@RequestParam(required = false, name = "id") String[] id,
     		@RequestParam(required = false, name = "name") String[] name,
@@ -75,12 +79,12 @@ public class    ApiController {
     }
 
     @GetMapping("incoming/request/{id}")
-    public IncomingRequest getIncomingRequestById(@PathVariable String id) { // without tree
+    public ApiSession getIncomingRequestById(@PathVariable String id) { // without tree
         return requireSingle(dao.getIncomingRequestById(true, id));
     }
 
-    @GetMapping(MAIN_ENDPOINT)
-    public List<MainRequest> getMainRequestByCriteria(
+    @GetMapping("main/request")
+    public List<MainSession> getMainRequestByCriteria(
             @RequestParam(defaultValue = "true", name = "lazy") boolean lazy,
             @RequestParam(required = false, name = "id") String[] id,
             @RequestParam(required = false, name = "env") String[] env,
@@ -93,17 +97,17 @@ public class    ApiController {
     }
 
     @GetMapping("main/request/{id}")
-    public MainRequest getMainRequestById(@PathVariable String id) { // without tree
+    public MainSession getMainRequestById(@PathVariable String id) { // without tree
         return requireSingle(dao.getMainRequestById(true, id));
     }
 
     @GetMapping("incoming/request/{id}/out")
-    public OutcomingRequest getOutcomingRequestById(@PathVariable String id) {
+    public ApiRequest getOutcomingRequestById(@PathVariable String id) {
         return dao.getOutcomingRequestById(id);
     }
 
     @GetMapping("incoming/request/{id}/tree") //LATER
-    public IncomingRequest getIncomingRequestTreeById(@PathVariable String id) {
+    public ApiSession getIncomingRequestTreeById(@PathVariable String id) {
         return requireSingle(dao.getIncomingRequestById(true, id)); //change query
     }
     
