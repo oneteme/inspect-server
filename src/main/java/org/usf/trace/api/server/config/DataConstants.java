@@ -20,103 +20,117 @@ public final class DataConstants {
 	
     public static String sessionColumns(TraceApiColumn column) {
         switch (column) {
-            case ID: 			return "id_main_req";
-            case NAME: 			return "va_name";
-            case START: 		return "dh_dbt";
-            case END: 			return "dh_fin";
-            case USER: 			return "va_usr";
-            case OS: 			return "va_os";
-            case RE: 			return "va_re";
-            case TYPE: 			return "lnch";
-            case LOCATION: 		return "loc";
-            case THREAD: 		return "va_thred";
-            case APP_NAME: 		return "va_app_nme";
-            case VERSION: 		return "va_vrs";
-            case ADDRESS: 		return "va_adrs";
-            case ENVIRONEMENT: 	return "va_env";
-            case ERR_TYPE: 		return "va_err_cls";
-            case ERR_MSG:		return "va_err_msg";
+            case ID: 			return "ID_MAIN_REQ";
+            case NAME: 			return "VA_NAME";
+            case START: 		return "DH_DBT";
+            case END: 			return "DH_FIN";
+            case USER: 			return "VA_USR";
+            case OS: 			return "VA_OS";
+            case RE: 			return "VA_RE";
+            case TYPE: 			return "LNCH";
+            case LOCATION: 		return "LOC";
+            case THREAD: 		return "VA_THRED";
+            case APP_NAME: 		return "VA_APP_NME";
+            case VERSION: 		return "VA_VRS";
+            case ADDRESS: 		return "VA_ADRS";
+            case ENVIRONEMENT: 	return "VA_ENV";
+            case ERR_TYPE: 		return "VA_ERR_CLS";
+            case ERR_MSG:		return "VA_ERR_MSG";
             default: 			return null;
         }
     }
 
     public static String incReqColumns(TraceApiColumn column) {
         switch (column) {
-            case ID: 			return "id_in_req";
-            case METHOD: 		return "va_mth";
-            case PROTOCOL: 		return "va_prtcl";
-            case HOST: 			return "va_hst";
-            case PORT: 			return "cd_prt";
-            case PATH: 			return "va_pth";
-            case QUERY: 		return "va_qry";
-            case MEDIA: 		return "va_cnt_typ";
-            case AUTH: 			return "va_auth";
-            case STATUS: 		return "cd_stt";
-            case SIZE_IN: 		return "va_i_sze";
-            case SIZE_OUT: 		return "va_o_sze";
-            case START: 		return "dh_dbt";
-            case END: 			return "dh_fin";
-            case THREAD: 		return "va_thred";
-            case API_NAME: 		return "va_api_nme";
-            case USER: 			return "va_usr";
-            case APP_NAME: 		return "va_app_nme";
-            case VERSION: 		return "va_vrs";
-            case ADDRESS: 		return "va_adrs";
-            case ENVIRONEMENT: 	return "va_env";
-            case OS: 			return "va_os";
-            case RE: 			return "va_re";
+            case ID: 			return "ID_IN_REQ";
+            case METHOD: 		return "VA_MTH";
+            case PROTOCOL: 		return "VA_PRTCL";
+            case HOST: 			return "VA_HST";
+            case PORT: 			return "CD_PRT";
+            case PATH: 			return "VA_PTH";
+            case QUERY: 		return "VA_QRY";
+            case MEDIA: 		return "VA_CNT_TYP";
+            case AUTH: 			return "VA_AUTH";
+            case STATUS: 		return "CD_STT";
+            case SIZE_IN: 		return "VA_I_SZE";
+            case SIZE_OUT: 		return "VA_O_SZE";
+            case START: 		return "DH_DBT";
+            case END: 			return "DH_FIN";
+            case THREAD: 		return "VA_THRED";
+            case API_NAME: 		return "VA_API_NME";
+            case USER: 			return "VA_USR";
+            case APP_NAME: 		return "VA_APP_NME";
+            case VERSION: 		return "VA_VRS";
+            case ADDRESS: 		return "VA_ADRS";
+            case ENVIRONEMENT: 	return "VA_ENV";
+            case OS: 			return "VA_OS";
+            case RE: 			return "VA_RE";
             default: 			return null;
         }
     }
     
     public static String outReqColumns(TraceApiColumn column) {
         switch (column) {
-            case ID: 			return "id_out_req";
-            case METHOD: 		return "va_mth";
-            case PROTOCOL: 		return "va_prtcl";
-            case HOST: 			return "va_hst";
-            case PORT: 			return "cd_prt";
-            case PATH: 			return "va_pth";
-            case QUERY: 		return "va_qry";
-            case MEDIA: 		return "va_cnt_typ";
-            case AUTH: 			return "va_auth";
-            case STATUS: 		return "cd_stt";
-            case SIZE_IN: 		return "va_i_sze";
-            case SIZE_OUT: 		return "va_o_sze";
-            case START: 		return "dh_dbt";
-            case END: 			return "dh_fin";
-            case THREAD: 		return "va_thred";
-            case PARENT: 		return "cd_in_req";
+            case ID: 			return "ID_OUT_REQ";
+            case METHOD: 		return "VA_MTH";
+            case PROTOCOL: 		return "VA_PRTCL";
+            case HOST: 			return "VA_HST";
+            case PORT: 			return "CD_PRT";
+            case PATH: 			return "VA_PTH";
+            case QUERY: 		return "VA_QRY";
+            case MEDIA: 		return "VA_CNT_TYP";
+            case AUTH: 			return "VA_AUTH";
+            case STATUS: 		return "CD_STT";
+            case SIZE_IN: 		return "VA_I_SZE";
+            case SIZE_OUT: 		return "VA_O_SZE";
+            case START: 		return "DH_DBT";
+            case END: 			return "DH_FIN";
+            case THREAD: 		return "VA_THRED";
+            case PARENT: 		return "CD_IN_REQ";
             default: 			return null;
         }
     }
     public static String outQryColumns(TraceApiColumn column) {
         switch (column){
-            case ID:           return "id_out_qry";
-            case HOST:         return "va_hst";
-            case PORT:         return "cd_prt";
-            case SCHEMA:       return "va_schma";
-            case START: 	   return "dh_dbt";
-            case END: 		   return "dh_fin";
-            case USER: 		   return "va_usr";
-            case THREAD: 	   return "va_thred";
-            case DRIVER:       return "va_drv";
-            case DB_NAME:      return "va_db_nme";
-            case DB_VERSION:   return "va_db_vrs";
-            case COMPLETE:     return "va_cmplt";
-            case PARENT:       return "cd_in_req";
+            case ID:           return "ID_OUT_QRY";
+            case HOST:         return "VA_HST";
+            case PORT:         return "CD_PRT";
+            case SCHEMA:       return "VA_SCHMA";
+            case START: 	   return "DH_DBT";
+            case END: 		   return "DH_FIN";
+            case USER: 		   return "VA_USR";
+            case THREAD: 	   return "VA_THRED";
+            case DRIVER:       return "VA_DRV";
+            case DB_NAME:      return "VA_DB_NME";
+            case DB_VERSION:   return "VA_DB_VRS";
+            case COMPLETE:     return "VA_CMPLT";
+            case PARENT:       return "CD_IN_REQ";
+            default:           return null;
+        }
+    }
+
+    public static String outStgColumns(TraceApiColumn column) {
+        switch (column){
+            case NAME: 			return "VA_NAME";
+            case LOCATION: 		return "LOC";
+            case START: 	   return "DH_DBT";
+            case END: 		   return "DH_FIN";
+            case USER: 		   return "VA_USR";
+            case THREAD: 	   return "VA_THRED";
+            case ERR_TYPE: 		return "VA_ERR_CLS";
+            case ERR_MSG:		return "VA_ERR_MSG";
             default:           return null;
         }
     }
 
     public static String dbActColumns(TraceApiColumn column){
         switch (column){
-            case TYPE:         return"va_typ";
-            case START: 		return "dh_dbt";
-            case END: 			return "dh_fin";
-            case ERR_TYPE: 		return "va_err_cls";
-            case ERR_MSG:		return "va_err_msg";
-            case PARENT: 		return "cd_out_qry";
+            case TYPE:         return"VA_TYP";
+            case START: 		return "DH_DBT";
+            case END: 			return "DH_FIN";
+            case ERR_TYPE: 		return "VA_ERR_CLS";
+            case ERR_MSG:		return "VA_ERR_MSG";
+            case PARENT: 		return "CD_OUT_QRY";
             default: 			return null;
         }
     }
