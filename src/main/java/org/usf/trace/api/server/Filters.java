@@ -5,8 +5,7 @@ import static java.sql.Types.*;
 
 
 public enum Filters {
-    ID_IN_REQ(VARCHAR),
-    ID_MAIN_REQ(VARCHAR),
+    ID_SES(VARCHAR),
     VA_APP_NME(VARCHAR),
     VA_ENV(VARCHAR),
     CD_PRT(INTEGER),
