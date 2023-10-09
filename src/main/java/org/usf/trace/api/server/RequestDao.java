@@ -52,7 +52,7 @@ public class RequestDao {
     }
 
     private void addMainRequest(List<MainSession> reqList) {
-        template.batchUpdate("INSERT INTO E_MAIN_REQ(ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE,VA_ERR_CLS,VA_ERR_MSG)"
+        template.batchUpdate("INSERT INTO E_MAIN_SES(ID_SES,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE,VA_ERR_CLS,VA_ERR_MSG)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             var app = nullableApplication(o.getApplication());
             var exp = nullableException(o.getException());
@@ -76,7 +76,7 @@ public class RequestDao {
     }
 
     private void addIncomingRequest(List<ApiSession> reqList) {
-        template.batchUpdate("INSERT INTO E_IN_REQ(ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE)"
+        template.batchUpdate("INSERT INTO E_API_SES(ID_SES,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             var app = nullableApplication(o.getApplication());
             var exp = nullableException(o.getException());
@@ -109,7 +109,7 @@ public class RequestDao {
     }
 
     private void addOutcomingRequest(List<OutcomingRequestWrapper> reqList) {
-        template.batchUpdate("INSERT INTO E_OUT_REQ(ID_OUT_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,CD_IN_REQ)"
+        template.batchUpdate("INSERT INTO E_API_REQ(CD_API,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,CD_SES)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             var exp = nullableException(o.getException());
             ps.setString(1, o.getId());
@@ -134,7 +134,7 @@ public class RequestDao {
     }
 
     public void addOutcomingStages(List<OutcomingStagesWrapper> stagesList){
-        template.batchUpdate("INSERT INTO E_OUT_STG(VA_NAME,LOC,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,CD_IN_REQ)"
+        template.batchUpdate("INSERT INTO E_STG(VA_NAME,LOC,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,CD_SES)"
                 + " VALUES(?,?,?,?,?,?,?,?,?)", stagesList,stagesList.size(),(ps,o)-> {
             var exp = nullableException(o.getException());
             ps.setString(1,o.getName());
@@ -150,9 +150,9 @@ public class RequestDao {
     }
 
     private void addOutcomingQueries(List<OutcomingQueryWrapper> qryList) {
-        var maxId = template.queryForObject("SELECT COALESCE(MAX(ID_OUT_QRY), 0) FROM E_OUT_QRY", Long.class);
+        var maxId = template.queryForObject("SELECT COALESCE(MAX(ID_OUT_QRY), 0) FROM E_DB_REQ", Long.class);
         var inc = new AtomicLong(maxId);
-        template.batchUpdate("INSERT INTO E_OUT_QRY(ID_OUT_QRY,VA_HST,VA_SCHMA,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_DRV,VA_DB_NME,VA_DB_VRS,VA_CMPLT,CD_IN_REQ)"
+        template.batchUpdate("INSERT INTO E_DB_REQ(ID_OUT_QRY,VA_HST,VA_SCHMA,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_DRV,VA_DB_NME,VA_DB_VRS,VA_CMPLT,CD_SES)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", qryList, qryList.size(), (ps, o) -> {
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getHost());
@@ -186,12 +186,12 @@ public class RequestDao {
 
     @Deprecated // reuse RequestDao::outcomingRequests using criteria
     public ApiRequest getOutcomingRequestById(String id) {
-        return template.query("SELECT ID_OUT_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,CD_IN_REQ FROM E_OUT_REQ"
-                + " WHERE ID_OUT_REQ = ? ", new Object[]{id}, newArray(1, VARCHAR), rs -> {
+        return template.query("SELECT CD_API,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,CD_SES FROM E_API_REQ"
+                + " WHERE CD_API = ? ", new Object[]{id}, newArray(1, VARCHAR), rs -> {
 
             if (rs.next()) {
                 ApiRequest out = new ApiRequest();
-                out.setId(rs.getString("ID_OUT_REQ"));
+                out.setId(rs.getString("CD_API"));
                 out.setProtocol(rs.getString("VA_PRTCL"));
                 out.setHost(rs.getString("VA_HST"));
                 out.setPort(rs.getInt("CD_PRT"));
@@ -211,16 +211,16 @@ public class RequestDao {
     }
 
     public List<MainSession> getMainRequestByCriteria(boolean lazy, FilterCriteria fc) {
-        var query = "SELECT ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE,VA_ERR_CLS,VA_ERR_MSG FROM E_MAIN_REQ";
+        var query = "SELECT ID_SES,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE,VA_ERR_CLS,VA_ERR_MSG FROM E_MAIN_SES";
 
         Collection<Integer> argTypes = new ArrayList<>();
         Collection<Object> args = new ArrayList<>();
-        query += fc.toSql(ID_IN_REQ, ID_MAIN_REQ, VA_APP_NME, VA_ENV, CD_PRT, LNCH, DH_DBT, DH_FIN, args, argTypes);
+        query += fc.toSql(ID_SES, VA_APP_NME, VA_ENV, CD_PRT, LNCH, DH_DBT, DH_FIN, args, argTypes);
 
 
         List<MainSession> res = template.query(query, args.toArray(), argTypes.stream().mapToInt(i -> i).toArray(), (rs, i) -> {
             MainSession main = new MainSession();
-            main.setId(rs.getString("ID_MAIN_REQ")); // add value of nullable
+            main.setId(rs.getString("ID_SES")); // add value of nullable
             main.setName(rs.getString("VA_NAME"));
             main.setUser(rs.getString("VA_USR"));
             main.setStart(fromNullableTimestamp(rs.getTimestamp("DH_DBT")));
@@ -252,16 +252,16 @@ public class RequestDao {
     }
 
     public List<MainSession> getMainRequestById(boolean lazy, String... idArr) {
-        var query = "SELECT ID_MAIN_REQ,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE,VA_ERR_CLS,VA_ERR_MSG FROM E_MAIN_REQ";
+        var query = "SELECT ID_SES,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE,VA_ERR_CLS,VA_ERR_MSG FROM E_MAIN_SES";
         int[] argTypes = null;
         if (!isEmpty(idArr)) {
-            query += " WHERE ID_MAIN_REQ IN(" + nArg(idArr.length) + ")";
+            query += " WHERE ID_SES IN(" + nArg(idArr.length) + ")";
             argTypes = newArray(idArr.length, VARCHAR);
         }
         query += " order by DH_DBT desc";
         List<MainSession> res = template.query(query, idArr, argTypes, (rs, i) -> {
             MainSession main = new MainSession();
-            main.setId(rs.getString("ID_MAIN_REQ"));
+            main.setId(rs.getString("ID_SES"));
             main.setName(rs.getString("VA_NAME"));
             main.setUser(rs.getString("VA_USR"));
             main.setStart(fromNullableTimestamp(rs.getTimestamp("DH_DBT")));
@@ -293,15 +293,15 @@ public class RequestDao {
     }
 
     public List<ApiSession> getIncomingRequestByCriteria(boolean lazy, FilterCriteria fs) {
-        var query = "SELECT ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE FROM E_IN_REQ ";
+        var query = "SELECT ID_SES,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE FROM E_API_SES ";
 
         Collection<Integer> argTypes = new ArrayList<>();
         Collection<Object> args = new ArrayList<>();
-        query += fs.toSql(ID_IN_REQ, ID_MAIN_REQ, VA_APP_NME, VA_ENV, CD_PRT, LNCH, DH_DBT, DH_FIN, args, argTypes);
+        query += fs.toSql(ID_SES, VA_APP_NME, VA_ENV, CD_PRT, LNCH, DH_DBT, DH_FIN, args, argTypes);
         query += " order by DH_DBT desc";
         List<ApiSession> res = template.query(query, args.toArray(), argTypes.stream().mapToInt(i -> i).toArray(), (rs, i) -> {
             ApiSession in = new ApiSession();
-            in.setId(rs.getString("ID_IN_REQ"));
+            in.setId(rs.getString("ID_SES"));
             in.setMethod(rs.getString("VA_MTH"));
             in.setProtocol(rs.getString("VA_PRTCL"));
             in.setHost(rs.getString("VA_HST"));
@@ -345,9 +345,9 @@ public class RequestDao {
         var query = " with recursive recusive(prnt,chld) as (" +
                 " select ''::varchar as prnt, ? as chld " +
                 " union all " +
-                " select  recusive.chld, e_out_req.id_out_req " +
-                " from e_out_req , recusive " +
-                " where recusive.chld= e_out_req.cd_in_req " +
+                " select  recusive.chld, E_API_REQ.CD_API " +
+                " from E_API_REQ , recusive " +
+                " where recusive.chld= E_API_REQ.CD_SES " +
                 ") select distinct(chld) from recusive";
 
         List<String> prntIds = template.query(query, (ResultSet rs, int rowNum) -> (rs.getString("chld")), id);
@@ -373,16 +373,16 @@ public class RequestDao {
     }
 
     public List<ApiSession> getIncomingRequestById(boolean lazy, Supplier<? extends ApiRequest> fn, String... idArr) {
-        var query = "SELECT ID_IN_REQ,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE FROM E_IN_REQ";
+        var query = "SELECT ID_SES,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE FROM E_API_SES";
         int[] argTypes = null;
         if (!isEmpty(idArr)) {
-            query += " WHERE ID_IN_REQ IN(" + nArg(idArr.length) + ")";
+            query += " WHERE ID_SES IN(" + nArg(idArr.length) + ")";
             argTypes = newArray(idArr.length, VARCHAR);
         }
 
         List<ApiSession> res = template.query(query, idArr, argTypes, (rs, i) -> {
             ApiSession in = new ApiSession();
-            in.setId(rs.getString("ID_IN_REQ"));
+            in.setId(rs.getString("ID_SES"));
             in.setMethod(rs.getString("VA_MTH"));
             in.setProtocol(rs.getString("VA_PRTCL"));
             in.setHost(rs.getString("VA_HST"));
@@ -423,11 +423,11 @@ public class RequestDao {
     }
 
     public List<OutcomingRequestWrapper> outcomingRequests(Set<String> incomingId, Supplier<? extends ApiRequest> fn) { //use criteria
-        var query = "SELECT ID_OUT_REQ,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,CD_IN_REQ FROM E_OUT_REQ"
-                + " WHERE CD_IN_REQ IN(" + nArg(incomingId.size()) + ") ORDER BY DH_DBT ASC";
+        var query = "SELECT CD_API,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_MTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,CD_SES FROM E_API_REQ"
+                + " WHERE CD_SES IN(" + nArg(incomingId.size()) + ") ORDER BY DH_DBT ASC";
         return template.query(query, incomingId.toArray(), newArray(incomingId.size(), VARCHAR), (rs, i) -> {
-            OutcomingRequestWrapper out = new OutcomingRequestWrapper(rs.getString("CD_IN_REQ"), fn);
-            out.setId(rs.getString("ID_OUT_REQ"));
+            OutcomingRequestWrapper out = new OutcomingRequestWrapper(rs.getString("CD_SES"), fn);
+            out.setId(rs.getString("CD_API"));
             out.setProtocol(rs.getString("VA_PRTCL"));
             out.setHost(rs.getString("VA_HST"));
             out.setPort(rs.getInt("CD_PRT"));
@@ -450,10 +450,10 @@ public class RequestDao {
     }
 
     public List<OutcomingStagesWrapper> outcomingStages(Set<String> sessionId, Supplier<? extends RunnableStage> fn){
-        var query = "SELECT VA_NAME,LOC,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,CD_IN_REQ FROM E_OUT_STG"
-                +" WHERE CD_IN_REQ IN ("+ nArg(sessionId.size()) + ") ORDER BY DH_DBT";
+        var query = "SELECT VA_NAME,LOC,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,CD_SES FROM E_STG"
+                +" WHERE CD_SES IN ("+ nArg(sessionId.size()) + ") ORDER BY DH_DBT";
         return template.query(query,sessionId.toArray(),newArray(sessionId.size(),VARCHAR),(rs,i)-> {
-            OutcomingStagesWrapper stg = new OutcomingStagesWrapper(rs.getString("CD_IN_REQ"),fn);
+            OutcomingStagesWrapper stg = new OutcomingStagesWrapper(rs.getString("CD_SES"),fn);
             stg.setName(rs.getString("VA_NAME"));
             stg.setLocation(rs.getString("LOC"));
             stg.setStart(fromNullableTimestamp(rs.getTimestamp("DH_DBT")));
@@ -468,10 +468,10 @@ public class RequestDao {
     }
 
     public List<OutcomingQueryWrapper> outcomingQueries(Set<String> incomingId) { // non empty
-        var query = "SELECT ID_OUT_QRY,VA_HST,CD_PRT,VA_SCHMA,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_DRV,VA_DB_NME,VA_DB_VRS,VA_CMPLT,CD_IN_REQ FROM E_OUT_QRY"
-                + " WHERE CD_IN_REQ IN(" + nArg(incomingId.size()) + ")";
+        var query = "SELECT ID_OUT_QRY,VA_HST,CD_PRT,VA_SCHMA,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_DRV,VA_DB_NME,VA_DB_VRS,VA_CMPLT,CD_SES FROM E_DB_REQ"
+                + " WHERE CD_SES IN(" + nArg(incomingId.size()) + ")";
         var queries = template.query(query, incomingId.toArray(), newArray(incomingId.size(), VARCHAR), (rs, i) -> {
-            var out = new OutcomingQueryWrapper(rs.getLong("ID_OUT_QRY"), rs.getString("CD_IN_REQ"));
+            var out = new OutcomingQueryWrapper(rs.getLong("ID_OUT_QRY"), rs.getString("CD_SES"));
             out.setHost(rs.getString("VA_HST"));
             out.setPort(rs.getInt("CD_PRT"));
             out.setSchema(rs.getString("VA_SCHMA"));
