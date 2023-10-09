@@ -20,7 +20,7 @@ public final class DataConstants {
 	
     public static String sessionColumns(TraceApiColumn column) {
         switch (column) {
-            case ID: 			return "ID_MAIN_REQ";
+            case ID: 			return "ID_SES";
             case NAME: 			return "VA_NAME";
             case START: 		return "DH_DBT";
             case END: 			return "DH_FIN";
@@ -42,7 +42,7 @@ public final class DataConstants {
 
     public static String incReqColumns(TraceApiColumn column) {
         switch (column) {
-            case ID: 			return "ID_IN_REQ";
+            case ID: 			return "ID_SES";
             case METHOD: 		return "VA_MTH";
             case PROTOCOL: 		return "VA_PRTCL";
             case HOST: 			return "VA_HST";
@@ -71,7 +71,7 @@ public final class DataConstants {
     
     public static String outReqColumns(TraceApiColumn column) {
         switch (column) {
-            case ID: 			return "ID_OUT_REQ";
+            case ID: 			return "CD_API";
             case METHOD: 		return "VA_MTH";
             case PROTOCOL: 		return "VA_PRTCL";
             case HOST: 			return "VA_HST";
@@ -86,7 +86,7 @@ public final class DataConstants {
             case START: 		return "DH_DBT";
             case END: 			return "DH_FIN";
             case THREAD: 		return "VA_THRED";
-            case PARENT: 		return "CD_IN_REQ";
+            case PARENT: 		return "CD_SES";
             default: 			return null;
         }
     }
@@ -104,7 +104,7 @@ public final class DataConstants {
             case DB_NAME:      return "VA_DB_NME";
             case DB_VERSION:   return "VA_DB_VRS";
             case COMPLETE:     return "VA_CMPLT";
-            case PARENT:       return "CD_IN_REQ";
+            case PARENT:       return "CD_SES";
             default:           return null;
         }
     }
@@ -119,6 +119,7 @@ public final class DataConstants {
             case THREAD: 	   return "VA_THRED";
             case ERR_TYPE: 		return "VA_ERR_CLS";
             case ERR_MSG:		return "VA_ERR_MSG";
+            case PARENT:       return "CD_SES";
             default:           return null;
         }
     }
