@@ -40,41 +40,28 @@ public class ApiController {
     private final SessionQueueService queueService;
 
     @PutMapping("session")
-    public ResponseEntity<Void> saveSession(@RequestBody Session[] req) {
-        return appendRequest(req);
+    public ResponseEntity<Void> saveSession(HttpServletRequest hsr,@RequestBody Session[] sessions) {
+        for(Session s : sessions) {
+            if(isNull(s.getId())) {
+                if(s instanceof MainSession) {
+                    s.setId(nextId()); // safe id set for web collectors
+                    updateRemoteAddress(hsr,(MainSession) s);
+                }
+                else if(s instanceof ApiSession) {
+                    log.warn("ApiSesstion id is null : {}", s);
+                }
+            }
+        }
+        queueService.add(sessions);
+        return accepted().build();
     }
-    
-    @Deprecated(forRemoval = true)
-    @PutMapping("incoming/request")
-    public ResponseEntity<Void> saveRequest(@RequestBody ApiSession req) {
-        return appendRequest(req);
-    }
-
-    @Deprecated(forRemoval = true)
-    @PutMapping("main/request")
-    public ResponseEntity<Void> saveRequest(HttpServletRequest hsr,  @RequestBody MainSession req) {
+    public void  updateRemoteAddress(HttpServletRequest hsr,  @RequestBody MainSession req) {
     	if(isNull(req.getApplication())) { //set IP address for WABAPP trace
     		req.setApplication(new ApplicationInfo(null, null, hsr.getRemoteAddr(), null, null, null));
     	}
     	else if(isNull(req.getApplication().getAddress())) {
     		req.setApplication(req.getApplication().withAddress(hsr.getRemoteAddr()));
     	}
-        return appendRequest(req);
-    }
-    
-    private ResponseEntity<Void> appendRequest(Session... session){
-    	for(Session s : session) {
-    		if(isNull(s.getId())) {
-        		if(s instanceof MainSession) {
-	    			s.setId(nextId()); // safe id set for web collectors
-        		}
-        		else if(s instanceof ApiSession) {
-        			log.warn("ApiSesstion id is null : {}", s);
-        		}
-    		}
-    	}
-        queueService.add(session);
-        return accepted().build();
     }
 
     @GetMapping("incoming/request")
