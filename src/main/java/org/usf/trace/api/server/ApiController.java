@@ -73,7 +73,7 @@ public class ApiController {
     		@RequestParam(required = false, name = "port") String[] port,
     		@RequestParam(required = false, name = "start") Instant start,
     		@RequestParam(required = false, name = "end") Instant end ){ // without tree
-        FilterCriteria fc = new FilterCriteria(id,null,name,env,port,null,start,end);
+        FilterCriteria fc = new FilterCriteria(id,name,env,port,null,start,end);
         System.out.println(fc.toString());
         return dao.getIncomingRequestByCriteria(lazy,fc);
     }
@@ -92,7 +92,7 @@ public class ApiController {
             @RequestParam(required = false, name = "start") Instant start,
             @RequestParam(required = false, name = "end") Instant end ) {
 
-        FilterCriteria fc = new FilterCriteria(null,id,null,env,null,launchMode,start,end);
+        FilterCriteria fc = new FilterCriteria(id,null,env,null,launchMode,start,end);
         return dao.getMainRequestByCriteria(lazy,fc);
     }
 
