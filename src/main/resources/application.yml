@@ -19,5 +19,5 @@ logging:
     org.springframework.jdbc.core: DEBUG
 
 trace:
-  delay: 2
+  delay: 60
   unit: SECONDS
