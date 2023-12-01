@@ -16,6 +16,7 @@ public enum TraceApiTable implements TableDecorator {
 
     OUT("e_api_req", DataConstants::outReqColumns),
     REQUEST("e_api_ses", DataConstants::incReqColumns),
+    REQUEST2("e_api_ses", DataConstants::incReqColumns),
     SESSION("e_main_ses", DataConstants::sessionColumns),
     QUERY("e_db_req",DataConstants::outQryColumns),
     STAGES("e_stg",DataConstants::outStgColumns),
