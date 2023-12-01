@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.usf.traceapi.core.ApiRequest;
 
 import lombok.RequiredArgsConstructor;
+import org.usf.traceapi.core.Session;
 
 @CrossOrigin
 @RestController
@@ -21,7 +22,7 @@ public class TreeController {
     private final RequestDao dao;
 
     @GetMapping("tree/request/{id}")
-    public ApiRequest getTreebyId(@PathVariable String id){
+        public Session getTreebyId(@PathVariable String id){
         return dao.getTreebyId(id);
     }
 }

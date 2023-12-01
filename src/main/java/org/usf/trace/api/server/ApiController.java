@@ -78,7 +78,7 @@ public class ApiController {
     }
 
     @GetMapping("incoming/request/{id}")
-    public ApiSession getIncomingRequestById(@PathVariable String id) { // without tree
+    public Session getIncomingRequestById(@PathVariable String id) { // without tree
         return requireSingle(dao.getIncomingRequestById(true, id));
     }
 
@@ -106,7 +106,7 @@ public class ApiController {
     }
 
     @GetMapping("incoming/request/{id}/tree") //LATER
-    public ApiSession getIncomingRequestTreeById(@PathVariable String id) {
+    public Session getIncomingRequestTreeById(@PathVariable String id) {
         return requireSingle(dao.getIncomingRequestById(true, id)); //change query
     }
     
