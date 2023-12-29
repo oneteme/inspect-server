@@ -2,6 +2,7 @@ package org.usf.trace.api.server.config;
 
 import org.usf.jquery.core.ComparisonExpression;
 import org.usf.jquery.core.DBColumn;
+import org.usf.jquery.core.DBFunction;
 import org.usf.jquery.core.OperationColumn;
 import org.usf.jquery.web.TableDecorator;
 
@@ -13,7 +14,7 @@ import java.time.Instant;
 
 import static org.usf.jquery.core.ComparisonExpression.*;
 import static org.usf.jquery.core.DBColumn.*;
-import static org.usf.trace.api.server.config.TraceApiColumn.STATUS;
+import static org.usf.trace.api.server.config.TraceApiColumn.*;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class DataConstants {
@@ -159,8 +160,13 @@ public final class DataConstants {
         return c -> "CAST(TIMESTAMPDIFF(MILLISECOND, DH_DBT, DH_FIN) /1000.0 AS DECIMAL(10,2))";
     }
 
-    public static DBColumn elapsedtime2(TableDecorator table) {
+    public static DBColumn elapsedtime2r(TableDecorator table) {
+
         return c -> "extract(EPOCH from (dh_fin - dh_dbt))";
+    }
+
+    public static DBColumn elapsedtime2(TableDecorator table) {
+        return DBFunction.epoch().args(table.column(END).minus(table.column(START)));
     }
 
     public static DBColumn asDate(TableDecorator table) {
@@ -199,6 +205,14 @@ public final class DataConstants {
         var status = table.column(STATUS);
         return count((status).when(op).then(status).end());
     }
+
+    private static OperationColumn countDbBySucces(TableDecorator table, ComparisonExpression op ){
+        var complete = table.column(COMPLETE);
+        return count((complete).when(op).then(complete).end());
+    }
+
+    public static OperationColumn countDbError (TableDecorator table){ return countDbBySucces(table,equal('F'));}
+    public static OperationColumn countDbSucces (TableDecorator table){ return countDbBySucces(table,equal('T'));}
 
 
     public static OperationColumn countStatus200(TableDecorator table) {
@@ -261,6 +275,7 @@ public final class DataConstants {
                 return null;
         }
     }
+
 
     private static OperationColumn elapsedTimeBySpeed(ComparisonExpression op, TableDecorator table) {
         var elapsed = elapsedtime2(table);
