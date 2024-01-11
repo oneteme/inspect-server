@@ -66,6 +66,8 @@ public final class DataConstants {
             case ENVIRONEMENT: 	return "va_env";
             case OS: 			return "va_os";
             case RE: 			return "va_re";
+            case ERR_TYPE: 		return "va_err_cls";
+            case ERR_MSG:		return "va_err_msg";
             default: 			return null;
         }
     }
@@ -87,6 +89,8 @@ public final class DataConstants {
             case START: 		return "dh_dbt";
             case END: 			return "dh_fin";
             case THREAD: 		return "va_thred";
+            case ERR_TYPE: 		return "va_err_cls";
+            case ERR_MSG:		return "va_err_msg";
             case PARENT: 		return "cd_ses";
             default: 			return null;
         }
