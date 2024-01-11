@@ -54,30 +54,12 @@ public enum TraceApiColumn implements ColumnDecorator {
     PARENT("parent"),
 
     //---
-    @Deprecated(forRemoval = true)
-    AS_DATE("asDate", DataConstants::asDate), //start.date
-    @Deprecated(forRemoval = true)
-    BY_DAY("byDay", DataConstants::byDay), //start.day
-
-    @Deprecated(forRemoval = true)
-    BY_MONTH("byMonth", DataConstants::byMonth), //start.month
-    @Deprecated(forRemoval = true)
-    BY_YEAR("byYear", DataConstants::byYear), //start.year
     ELAPSEDTIME("elapsedtime", DataConstants::elapsedtime2, DataConstants::elapsedTimeExpressions),
-    @Deprecated(forRemoval = true)
-    AVG_ELAPSEDTIME("avgElapsedTime", DataConstants::avgElapsedTime), //elapsedtime.avg
-    @Deprecated(forRemoval = true)
-    MAX_ELAPSEDTIME("maxElapsedTime", DataConstants::maxElapsedTime), //elapsedtime.max
-    @Deprecated(forRemoval = true)
-    MIN_ELAPSEDTIME("minElapsedTime", DataConstants::minElapsedTime), //elapsedtime.min
-
     COUNT_SLOWEST("elapsedTimeSlowest", DataConstants::elapsedTimeVerySlow),
     COUNT_SLOW("elapsedTimeSlow", DataConstants::elapsedTimeSlow),
     COUNT_MEDIUM("elapsedTimeMedium", DataConstants::elapsedTimeMedium),
     COUNT_FAST("elapsedTimeFast", DataConstants::elapsedTimeFast),
     COUNT_FASTEST("elapsedTimeFastest", DataConstants::elapsedTimeFastest),
-    @Deprecated(forRemoval = true)
-    COUNT("countRows", t-> DBColumn.count(), DataConstants::elapsedTimeExpressions), //use count funct
     COUNT_ERROR("countErrorRows", DataConstants::countErrorStatus),
 
     COUNT_ERROR_CLIENT("countClientErrorRows", DataConstants::countClientErrorStatus),
