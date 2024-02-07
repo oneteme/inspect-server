@@ -8,10 +8,13 @@ import static org.usf.traceapi.core.Session.nextId;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -64,52 +67,48 @@ public class ApiController {
     	}
     }
 
-    @GetMapping("incoming/request")
+    @GetMapping("session/api")
     public List<ApiSession> getIncomingRequestByCriteria(
-    		@RequestParam(defaultValue = "true", name = "lazy") boolean lazy, 
-    		@RequestParam(required = false, name = "id") String[] id,
     		@RequestParam(required = false, name = "name") String[] name,
     		@RequestParam(required = false, name = "env") String[] env,
     		@RequestParam(required = false, name = "port") String[] port,
     		@RequestParam(required = false, name = "start") Instant start,
-    		@RequestParam(required = false, name = "end") Instant end ){ // without tree
-        FilterCriteria fc = new FilterCriteria(id,name,env,port,null,start,end);
+    		@RequestParam(required = false, name = "end") Instant end,
+            @RequestParam(defaultValue = "true", name = "lazy") boolean lazy){ // without tree
+        FilterCriteria fc = new FilterCriteria(null,name,env,port,null,start,end);
         return dao.getIncomingRequestByCriteria(lazy,fc);
     }
 
-    @GetMapping("incoming/request/{id}")
-    public Session getIncomingRequestById(@PathVariable String id) { // without tree
-        return requireSingle(dao.getIncomingRequestById(true, id));
+    @GetMapping("session/api/{id}")
+    public ResponseEntity<Session> getIncomingRequestById(@PathVariable String id) { // without tree
+        String[] myArr = {id};
+        FilterCriteria fc = new FilterCriteria(myArr,null,null,null,null,null,null);
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(dao.getIncomingRequestByCriteria(true,fc)));
     }
 
-    @GetMapping("main/request")
+    @GetMapping("session/main")
     public List<MainSession> getMainRequestByCriteria(
-            @RequestParam(defaultValue = "true", name = "lazy") boolean lazy,
-            @RequestParam(required = false, name = "id") String[] id,
             @RequestParam(required = false, name = "env") String[] env,
             @RequestParam(required = false, name = "launchmode") String[] launchMode,
             @RequestParam(required = false, name = "start") Instant start,
-            @RequestParam(required = false, name = "end") Instant end ) {
+            @RequestParam(required = false, name = "end") Instant end,
+            @RequestParam(defaultValue = "true", name = "lazy") boolean lazy) {
 
-        FilterCriteria fc = new FilterCriteria(id,null,env,null,launchMode,start,end);
+        FilterCriteria fc = new FilterCriteria(null,null,env,null,launchMode,start,end);
         return dao.getMainRequestByCriteria(lazy,fc);
     }
 
-    @GetMapping("main/request/{id}")
-    public MainSession getMainRequestById(@PathVariable String id) { // without tree
-        return requireSingle(dao.getMainRequestById(true, id));
+    @GetMapping("session/main/{id}")
+    public ResponseEntity<MainSession> getMainRequestById(@PathVariable String id) { // without tree
+        String[] myArr = {id};
+        FilterCriteria fc = new FilterCriteria(myArr,null,null,null,null,null,null);
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(dao.getMainRequestByCriteria(true,fc)));
     }
 
     @GetMapping("incoming/request/{id}/out")
     public ApiRequest getOutcomingRequestById(@PathVariable String id) {
         return dao.getOutcomingRequestById(id);
     }
-
-    @GetMapping("incoming/request/{id}/tree") //LATER
-    public Session getIncomingRequestTreeById(@PathVariable String id) {
-        return requireSingle(dao.getIncomingRequestById(true, id)); //change query
-    }
-    
 }
 
 

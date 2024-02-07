@@ -1,5 +1,9 @@
 server:
   port: 9006
+  compression:
+    enabled: true
+    mime-types: application/json
+    min-response-size: 1MB
 spring:
   application:
     name: traceapi
