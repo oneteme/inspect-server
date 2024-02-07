@@ -1,4 +1,4 @@
-package org.usf.trace.api.server;
+package org.usf.trace.api.server.controller;
 
 import static java.util.Objects.isNull;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -23,6 +23,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.usf.trace.api.server.FilterCriteria;
+import org.usf.trace.api.server.RequestDao;
+import org.usf.trace.api.server.SessionQueueService;
 import org.usf.traceapi.core.ApiRequest;
 import org.usf.traceapi.core.ApiSession;
 import org.usf.traceapi.core.ApplicationInfo;
@@ -68,7 +71,7 @@ public class ApiController {
     }
 
     @GetMapping("session/api")
-    public List<ApiSession> getIncomingRequestByCriteria(
+    public List<Session> getIncomingRequestByCriteria(
     		@RequestParam(required = false, name = "name") String[] name,
     		@RequestParam(required = false, name = "env") String[] env,
     		@RequestParam(required = false, name = "port") String[] port,
@@ -76,14 +79,12 @@ public class ApiController {
     		@RequestParam(required = false, name = "end") Instant end,
             @RequestParam(defaultValue = "true", name = "lazy") boolean lazy){ // without tree
         FilterCriteria fc = new FilterCriteria(null,name,env,port,null,start,end);
-        return dao.getIncomingRequestByCriteria(lazy,fc);
+        return dao.getIncomingRequestByCriteria(lazy, fc, ApiRequest::new);
     }
 
     @GetMapping("session/api/{id}")
     public ResponseEntity<Session> getIncomingRequestById(@PathVariable String id) { // without tree
-        String[] myArr = {id};
-        FilterCriteria fc = new FilterCriteria(myArr,null,null,null,null,null,null);
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(dao.getIncomingRequestByCriteria(true,fc)));
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(dao.getIncomingRequestById(true, ApiRequest::new, id)));
     }
 
     @GetMapping("session/main")
@@ -95,14 +96,12 @@ public class ApiController {
             @RequestParam(defaultValue = "true", name = "lazy") boolean lazy) {
 
         FilterCriteria fc = new FilterCriteria(null,null,env,null,launchMode,start,end);
-        return dao.getMainRequestByCriteria(lazy,fc);
+        return dao.getMainRequestByCriteria(lazy, fc, ApiRequest::new);
     }
 
     @GetMapping("session/main/{id}")
     public ResponseEntity<MainSession> getMainRequestById(@PathVariable String id) { // without tree
-        String[] myArr = {id};
-        FilterCriteria fc = new FilterCriteria(myArr,null,null,null,null,null,null);
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(dao.getMainRequestByCriteria(true,fc)));
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(dao.getMainRequestById(true, ApiRequest::new, id)));
     }
 
     @GetMapping("incoming/request/{id}/out")
