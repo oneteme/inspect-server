@@ -1,4 +1,4 @@
-package org.usf.trace.api.server;
+package org.usf.trace.api.server.controller;
 
 import static java.util.Arrays.asList;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
