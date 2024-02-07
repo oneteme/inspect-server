@@ -1,39 +1,25 @@
 package org.usf.trace.api.server.controller;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.CacheControl;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.usf.trace.api.server.FilterCriteria;
+import org.usf.trace.api.server.RequestDao;
+import org.usf.trace.api.server.SessionQueueService;
+import org.usf.traceapi.core.*;
+
+import javax.servlet.http.HttpServletRequest;
+import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import static java.util.Objects.isNull;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.ResponseEntity.accepted;
 import static org.usf.trace.api.server.Utils.requireSingle;
 import static org.usf.traceapi.core.Session.nextId;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import javax.servlet.http.HttpServletRequest;
-
-import org.springframework.http.CacheControl;
-import org.springframework.http.ResponseEntity;
-import org.springframework.util.CollectionUtils;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.usf.trace.api.server.FilterCriteria;
-import org.usf.trace.api.server.RequestDao;
-import org.usf.trace.api.server.SessionQueueService;
-import org.usf.traceapi.core.ApiRequest;
-import org.usf.traceapi.core.ApiSession;
-import org.usf.traceapi.core.ApplicationInfo;
-import org.usf.traceapi.core.MainSession;
-import org.usf.traceapi.core.Session;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @CrossOrigin
@@ -104,7 +90,7 @@ public class ApiController {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(dao.getMainRequestById(true, ApiRequest::new, id)));
     }
 
-    @GetMapping("incoming/request/{id}/out")
+    @GetMapping("session/api/{id}/out")
     public ApiRequest getOutcomingRequestById(@PathVariable String id) {
         return dao.getOutcomingRequestById(id);
     }
