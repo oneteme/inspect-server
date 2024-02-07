@@ -141,14 +141,6 @@ public final class DataConstants {
         }
     }
 
-    public static DBColumn elapsedtime_Tera(TableDecorator table) {
-        return c -> "(CAST (((DT_FIN - DT_DBT)  second(4)) as DECIMAL(15,2)))";
-    }
-
-    public static DBColumn asDate_Tera(TableDecorator table) {
-        return c -> "(CAST(DH_DBT AS DATE))";
-    }
-
     @Deprecated(forRemoval = true)
     public static ComparisonExpression greaterOrEqualsExpressions(String timestamp) {
         return greaterOrEqual(Timestamp.from(Instant.parse(timestamp)));
@@ -159,50 +151,8 @@ public final class DataConstants {
         return lessThan(Timestamp.from(Instant.parse(timestamp)));
     }
 
-
-    public static DBColumn elapsedtime(TableDecorator table) {
-        return c -> "CAST(TIMESTAMPDIFF(MILLISECOND, DH_DBT, DH_FIN) /1000.0 AS DECIMAL(10,2))";
-    }
-
-    public static DBColumn elapsedtime2r(TableDecorator table) {
-
-        return c -> "extract(EPOCH from (dh_fin - dh_dbt))";
-    }
-
     public static DBColumn elapsedtime2(TableDecorator table) {
         return DBFunction.epoch().args(table.column(END).minus(table.column(START)));
-    }
-
-    public static DBColumn asDate(TableDecorator table) {
-        return c -> "FORMATDATETIME (DH_DBT, 'yyyy-MM-dd' )";
-    }
-
-    public static DBColumn byDay(TableDecorator table) {
-        return c -> "(EXTRACT (DAY FROM DH_DBT))";
-    }
-
-    public static DBColumn byMonth(TableDecorator table) {
-        return c -> "(EXTRACT (MONTH FROM DH_DBT))";
-    }
-
-    public static DBColumn byYear(TableDecorator table) {
-        return c -> "(EXTRACT (YEAR FROM DH_DBT))";
-    }
-
-
-    public static OperationColumn avgElapsedTime(TableDecorator table) {
-        var elapsed = elapsedtime(table);
-        return avg(elapsed);
-    }
-
-    public static OperationColumn minElapsedTime(TableDecorator table) {
-        var elapsed = elapsedtime(table);
-        return min(elapsed);
-    }
-
-    public static OperationColumn maxElapsedTime(TableDecorator table) {
-        var elapsed = elapsedtime(table);
-        return max(elapsed);
     }
 
     private static OperationColumn countStatusByType(TableDecorator table, ComparisonExpression op) {

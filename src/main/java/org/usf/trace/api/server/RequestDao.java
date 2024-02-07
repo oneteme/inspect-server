@@ -210,7 +210,7 @@ public class RequestDao {
         });
     }
 
-    public List<MainSession> getMainRequestByCriteria(boolean lazy, FilterCriteria fc) {
+    public List<MainSession> getMainRequestByCriteria(boolean lazy, FilterCriteria fc, Supplier<? extends ApiRequest> fn) {
         var query = "SELECT ID_SES,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE,VA_ERR_CLS,VA_ERR_MSG FROM E_MAIN_SES";
 
         Collection<Integer> argTypes = new ArrayList<>();
@@ -242,151 +242,25 @@ public class RequestDao {
         });
         if (lazy && !res.isEmpty()) {
             var reqMap = res.stream().collect(toMap(MainSession::getId, identity()));
-            outcomingRequests(reqMap.keySet(),ApiRequest::new).forEach(r -> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
+            outcomingRequests(reqMap.keySet(), fn).forEach(r -> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
             outcomingStages(reqMap.keySet(),RunnableStage::new).forEach(r -> reqMap.get(r.getParentId()).getStages().add(r.getStage()));
             outcomingQueries(reqMap.keySet()).forEach(q -> reqMap.get(q.getParentId()).getQueries().add(q.getQuery()));
         }
         return res;
     }
-    public List<MainSession> getMainRequestById(boolean lazy, String... idArr){
-        return  getMainRequestById( lazy, ApiRequest::new,idArr);
-    }
-    public List<MainSession> getMainRequestById(boolean lazy,Supplier<? extends ApiRequest> fn, String... idArr) {
-        var query = "SELECT ID_SES,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE,VA_ERR_CLS,VA_ERR_MSG FROM E_MAIN_SES";
-        int[] argTypes = null;
-        if (!isEmpty(idArr)) {
-            query += " WHERE ID_SES IN(" + nArg(idArr.length) + ")";
-            argTypes = newArray(idArr.length, VARCHAR);
-        }
-        query += " order by DH_DBT desc";
-        List<MainSession> res = template.query(query, idArr, argTypes, (rs, i) -> {
-            MainSession main = new MainSession();
-            main.setId(rs.getString("ID_SES"));
-            main.setName(rs.getString("VA_NAME"));
-            main.setUser(rs.getString("VA_USR"));
-            main.setStart(fromNullableTimestamp(rs.getTimestamp("DH_DBT")));
-            main.setEnd(fromNullableTimestamp(rs.getTimestamp("DH_FIN")));
-            main.setLaunchMode(valueOfNullable(LaunchMode.class, rs.getString("LNCH")));
-            main.setLocation(rs.getString("LOC"));
-            main.setThreadName(rs.getString("VA_THRED"));
-            main.setApplication(new ApplicationInfo(
-                    rs.getString("VA_APP_NME"),
-                    rs.getString("VA_VRS"),
-                    rs.getString("VA_ADRS"),
-                    rs.getString("VA_ENV"),
-                    rs.getString("VA_OS"),
-                    rs.getString("VA_RE")
-            ));
-            main.setException(new ExceptionInfo(
-                    rs.getString("VA_ERR_CLS"),
-                    rs.getString("VA_ERR_MSG")
-            ));
-            return main;
-        });
-        if (lazy && !res.isEmpty()) {
-            var reqMap = res.stream().collect(toMap(MainSession::getId, identity()));
-            outcomingRequests(reqMap.keySet(),fn).forEach(r -> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
-            outcomingStages(reqMap.keySet(),RunnableStage::new).forEach(r -> reqMap.get(r.getParentId()).getStages().add(r.getStage()));
-            outcomingQueries(reqMap.keySet()).forEach(q -> reqMap.get(q.getParentId()).getQueries().add(q.getQuery()));
-        }
-        return res;
+    public List<MainSession> getMainRequestById(boolean lazy, Supplier<? extends ApiRequest> fn, String... idArr){
+        FilterCriteria fc = new FilterCriteria(idArr,null,null,null,null,null,null);
+        return  getMainRequestByCriteria(lazy, fc, fn);
     }
 
-    public Session getTreebyId(String id) {
-        var query = " with recursive recusive(prnt,chld) as (" +
-                " select ''::varchar as prnt, ? as chld " +
-                " union all " +
-                " select  recusive.chld, E_API_REQ.CD_API " +
-                " from E_API_REQ , recusive " +
-                " where recusive.chld= E_API_REQ.CD_SES " +
-                ") select distinct(chld) from recusive";
-
-        List<String> prntIds = template.query(query, (ResultSet rs, int rowNum) -> (rs.getString("chld")), id);
-        List<Session> prntIncList = getIncomingRequestById(true, Exchange::new,prntIds.toArray(String[]::new));
-        List<MainSession> sessionList = getMainRequestById(true, Exchange::new, id);
-        if( sessionList != null && !sessionList.isEmpty()){
-            prntIncList.add(sessionList.get(0));
-        }
-
-        prntIncList.forEach((prntA) -> {
-            prntIncList.forEach((prntB) -> {
-                    if (!Objects.equals(prntA.getId(), prntB.getId())){
-                        Optional<ApiRequest> opt = prntB.getRequests().stream()
-                                .filter(k -> prntA.getId().equals(k.getId()))
-                                .findFirst();
-                        if (opt.isPresent()) {
-                            var ex = (Exchange) opt.get();
-                            ex.setRemoteTrace((ApiSession) prntA);
-                        }
-                    }
-            });
-        });
-
-        return  prntIncList.stream().filter(r ->  r.getId().equals(id)).findFirst().orElseThrow();
-    }
-
-    public List<ApiSession> getIncomingRequestByCriteria(boolean lazy, FilterCriteria fs) {
+    public List<Session> getIncomingRequestByCriteria(boolean lazy, FilterCriteria fs, Supplier<? extends ApiRequest> fn) {
         var query = "SELECT ID_SES,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE FROM E_API_SES ";
 
         Collection<Integer> argTypes = new ArrayList<>();
         Collection<Object> args = new ArrayList<>();
         query += fs.toSql(ID_SES, VA_APP_NME, VA_ENV, CD_PRT, LNCH, DH_DBT, DH_FIN, args, argTypes);
         query += " order by DH_DBT desc";
-        List<ApiSession> res = template.query(query, args.toArray(), argTypes.stream().mapToInt(i -> i).toArray(), (rs, i) -> {
-            ApiSession in = new ApiSession();
-            in.setId(rs.getString("ID_SES"));
-            in.setMethod(rs.getString("VA_MTH"));
-            in.setProtocol(rs.getString("VA_PRTCL"));
-            in.setHost(rs.getString("VA_HST"));
-            in.setPort(rs.getInt("CD_PRT"));
-            in.setPath(rs.getString("VA_PTH"));
-            in.setQuery(rs.getString("VA_QRY"));
-            in.setContentType((rs.getString("VA_CNT_TYP")));
-            in.setAuthScheme((rs.getString("VA_AUTH")));
-            in.setStatus(rs.getInt("CD_STT"));
-            in.setInDataSize(rs.getLong("VA_I_SZE"));
-            in.setOutDataSize(rs.getLong("VA_I_SZE"));
-            in.setStart(fromNullableTimestamp(rs.getTimestamp("DH_DBT")));
-            in.setEnd(fromNullableTimestamp(rs.getTimestamp("DH_FIN")));
-            in.setThreadName(rs.getString("VA_THRED"));
-            in.setException(new ExceptionInfo(
-                    rs.getString("VA_ERR_CLS"),
-                    rs.getString("VA_ERR_MSG")
-            ));
-            in.setName(rs.getString("VA_API_NME"));
-            in.setUser(rs.getString("VA_USR"));
-            in.setApplication(new ApplicationInfo(
-                    rs.getString("VA_APP_NME"),
-                    rs.getString("VA_VRS"),
-                    rs.getString("VA_ADRS"),
-                    rs.getString("VA_ENV"),
-                    rs.getString("VA_OS"),
-                    rs.getString("VA_RE")
-            ));
-            return in;
-        });
-        if (lazy && !res.isEmpty()) {
-            var reqMap = res.stream().collect(toMap(ApiSession::getId, identity()));
-            outcomingRequests(reqMap.keySet(),ApiRequest::new).forEach(r -> reqMap.get(r.getParentId()).getRequests().add(r.getRequest()));
-            outcomingStages(reqMap.keySet(),RunnableStage::new).forEach(r -> reqMap.get(r.getParentId()).getStages().add(r.getStage()));
-            outcomingQueries(reqMap.keySet()).forEach(q -> reqMap.get(q.getParentId()).getQueries().add(q.getQuery()));
-        }
-        return res;
-    }
-
-    public List<Session> getIncomingRequestById(boolean lazy, String... idArr){
-       return  getIncomingRequestById( lazy, ApiRequest::new,idArr);
-    }
-
-    public List<Session> getIncomingRequestById(boolean lazy, Supplier<? extends ApiRequest> fn, String... idArr) {
-        var query = "SELECT ID_SES,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE FROM E_API_SES";
-        int[] argTypes = null;
-        if (!isEmpty(idArr)) {
-            query += " WHERE ID_SES IN(" + nArg(idArr.length) + ")";
-            argTypes = newArray(idArr.length, VARCHAR);
-        }
-
-        List<Session> res = template.query(query, idArr, argTypes, (rs, i) -> {
+        List<Session> res = template.query(query, args.toArray(), argTypes.stream().mapToInt(i -> i).toArray(), (rs, i) -> {
             ApiSession in = new ApiSession();
             in.setId(rs.getString("ID_SES"));
             in.setMethod(rs.getString("VA_MTH"));
@@ -426,6 +300,44 @@ public class RequestDao {
             outcomingQueries(reqMap.keySet()).forEach(q -> reqMap.get(q.getParentId()).getQueries().add(q.getQuery()));
         }
         return res;
+    }
+
+    public List<Session> getIncomingRequestById(boolean lazy, Supplier<? extends ApiRequest> fn, String... idArr){
+        FilterCriteria fc = new FilterCriteria(idArr,null,null,null,null,null,null);
+        return getIncomingRequestByCriteria(lazy, fc, fn);
+    }
+
+    public Session getTreebyId(String id) {
+        var query = " with recursive recusive(prnt,chld) as (" +
+                " select ''::varchar as prnt, ? as chld " +
+                " union all " +
+                " select  recusive.chld, E_API_REQ.CD_API " +
+                " from E_API_REQ , recusive " +
+                " where recusive.chld= E_API_REQ.CD_SES " +
+                ") select distinct(chld) from recusive";
+
+        List<String> prntIds = template.query(query, (ResultSet rs, int rowNum) -> (rs.getString("chld")), id);
+        List<Session> prntIncList = getIncomingRequestById(true, Exchange::new,prntIds.toArray(String[]::new));
+        List<MainSession> sessionList = getMainRequestById(true, Exchange::new, id);
+        if( sessionList != null && !sessionList.isEmpty()){
+            prntIncList.add(sessionList.get(0));
+        }
+
+        prntIncList.forEach((prntA) -> {
+            prntIncList.forEach((prntB) -> {
+                    if (!Objects.equals(prntA.getId(), prntB.getId())){
+                        Optional<ApiRequest> opt = prntB.getRequests().stream()
+                                .filter(k -> prntA.getId().equals(k.getId()))
+                                .findFirst();
+                        if (opt.isPresent()) {
+                            var ex = (Exchange) opt.get();
+                            ex.setRemoteTrace((ApiSession) prntA);
+                        }
+                    }
+            });
+        });
+
+        return  prntIncList.stream().filter(r ->  r.getId().equals(id)).findFirst().orElseThrow();
     }
 
     public List<OutcomingRequestWrapper> outcomingRequests(Set<String> incomingId, Supplier<? extends ApiRequest> fn) { //use criteria
