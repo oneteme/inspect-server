@@ -97,8 +97,7 @@ public class FilterCriteria {
     @Override
     public String toString() {
         return "FilterCriteria{" +
-                "id=" + Arrays.toString(idSession) +
-                ", host=" + Arrays.toString(name) +
+                "host=" + Arrays.toString(name) +
                 ", env=" + Arrays.toString(env) +
                 ", port=" + Arrays.toString(port) +
                 ", start='" + start + '\'' +

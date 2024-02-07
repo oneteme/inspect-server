@@ -216,8 +216,6 @@ public class RequestDao {
         Collection<Integer> argTypes = new ArrayList<>();
         Collection<Object> args = new ArrayList<>();
         query += fc.toSql(ID_SES, VA_APP_NME, VA_ENV, CD_PRT, LNCH, DH_DBT, DH_FIN, args, argTypes);
-
-
         List<MainSession> res = template.query(query, args.toArray(), argTypes.stream().mapToInt(i -> i).toArray(), (rs, i) -> {
             MainSession main = new MainSession();
             main.setId(rs.getString("ID_SES")); // add value of nullable
@@ -294,6 +292,39 @@ public class RequestDao {
         return res;
     }
 
+    public Session getTreebyId(String id) {
+        var query = " with recursive recusive(prnt,chld) as (" +
+                " select ''::varchar as prnt, ? as chld " +
+                " union all " +
+                " select  recusive.chld, E_API_REQ.CD_API " +
+                " from E_API_REQ , recusive " +
+                " where recusive.chld= E_API_REQ.CD_SES " +
+                ") select distinct(chld) from recusive";
+
+        List<String> prntIds = template.query(query, (ResultSet rs, int rowNum) -> (rs.getString("chld")), id);
+        List<Session> prntIncList = getIncomingRequestById(true, Exchange::new,prntIds.toArray(String[]::new));
+        List<MainSession> sessionList = getMainRequestById(true, Exchange::new, id);
+        if( sessionList != null && !sessionList.isEmpty()){
+            prntIncList.add(sessionList.get(0));
+        }
+
+        prntIncList.forEach((prntA) -> {
+            prntIncList.forEach((prntB) -> {
+                    if (!Objects.equals(prntA.getId(), prntB.getId())){
+                        Optional<ApiRequest> opt = prntB.getRequests().stream()
+                                .filter(k -> prntA.getId().equals(k.getId()))
+                                .findFirst();
+                        if (opt.isPresent()) {
+                            var ex = (Exchange) opt.get();
+                            ex.setRemoteTrace((ApiSession) prntA);
+                        }
+                    }
+            });
+        });
+
+        return  prntIncList.stream().filter(r ->  r.getId().equals(id)).findFirst().orElseThrow();
+    }
+
     public List<ApiSession> getIncomingRequestByCriteria(boolean lazy, FilterCriteria fs) {
         var query = "SELECT ID_SES,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE FROM E_API_SES ";
 
@@ -343,38 +374,6 @@ public class RequestDao {
         return res;
     }
 
-    public Session getTreebyId(String id) {
-        var query = " with recursive recusive(prnt,chld) as (" +
-                " select ''::varchar as prnt, ? as chld " +
-                " union all " +
-                " select  recusive.chld, E_API_REQ.CD_API " +
-                " from E_API_REQ , recusive " +
-                " where recusive.chld= E_API_REQ.CD_SES " +
-                ") select distinct(chld) from recusive";
-
-        List<String> prntIds = template.query(query, (ResultSet rs, int rowNum) -> (rs.getString("chld")), id);
-        List<Session> prntIncList = getIncomingRequestById(true, Exchange::new,prntIds.toArray(String[]::new));
-        List<MainSession> sessionList = getMainRequestById(true, Exchange::new, id);
-        if( sessionList != null && !sessionList.isEmpty()){
-            prntIncList.add(sessionList.get(0));
-        }
-
-        prntIncList.forEach((prntA) -> {
-            prntIncList.forEach((prntB) -> {
-                    if (!Objects.equals(prntA.getId(), prntB.getId())){
-                        Optional<ApiRequest> opt = prntB.getRequests().stream()
-                                .filter(k -> prntA.getId().equals(k.getId()))
-                                .findFirst();
-                        if (opt.isPresent()) {
-                            var ex = (Exchange) opt.get();
-                            ex.setRemoteTrace((ApiSession) prntA);
-                        }
-                    }
-            });
-        });
-
-        return  prntIncList.stream().filter(r ->  r.getId().equals(id)).findFirst().orElseThrow();
-    }
     public List<Session> getIncomingRequestById(boolean lazy, String... idArr){
        return  getIncomingRequestById( lazy, ApiRequest::new,idArr);
     }
