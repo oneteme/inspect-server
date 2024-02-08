@@ -56,7 +56,7 @@ public class ApiController {
     	}
     }
 
-    @GetMapping("session/api")
+    @GetMapping("session/request")
     public List<Session> getIncomingRequestByCriteria(
     		@RequestParam(required = false, name = "name") String[] name,
     		@RequestParam(required = false, name = "env") String[] env,
@@ -68,7 +68,7 @@ public class ApiController {
         return dao.getIncomingRequestByCriteria(lazy, fc, ApiRequest::new);
     }
 
-    @GetMapping("session/api/{id}")
+    @GetMapping("session/request/{id}")
     public ResponseEntity<Session> getIncomingRequestById(@PathVariable String id) { // without tree
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(dao.getIncomingRequestById(true, ApiRequest::new, id)));
     }
@@ -93,6 +93,11 @@ public class ApiController {
     @GetMapping("session/api/{id}/out")
     public ApiRequest getOutcomingRequestById(@PathVariable String id) {
         return dao.getOutcomingRequestById(id);
+    }
+
+    @GetMapping("session/request/{id}/tree")
+    public Session getTreebyId(@PathVariable String id){
+        return dao.getTreebyId(id);
     }
 }
 
