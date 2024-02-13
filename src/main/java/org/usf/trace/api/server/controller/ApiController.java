@@ -90,7 +90,7 @@ public class ApiController {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(dao.getMainRequestById(true, ApiRequest::new, id)));
     }
 
-    @GetMapping("session/api/{id}/out")
+    @GetMapping("session/request/{id}/out")
     public ApiRequest getOutcomingRequestById(@PathVariable String id) {
         return dao.getOutcomingRequestById(id);
     }
