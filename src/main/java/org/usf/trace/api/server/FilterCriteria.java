@@ -66,7 +66,7 @@ public class FilterCriteria {
             if(values.length == 1){
                 return " AND "+ sql;
             }
-            return " AND (" + sql + " " + colname + "IN(" + Utils.nArg(values.length) + "))";//error
+            return " AND (" + sql + " " + colname + " IN(" + Utils.nArg(values.length) + "))";//error
         }
         args.addAll(Arrays.asList(values));
         argTypes.addAll(Collections.nCopies(values.length, colname.getType()));
