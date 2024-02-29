@@ -21,9 +21,7 @@ import static java.sql.Types.VARCHAR;
 @AllArgsConstructor
 public class FilterCriteria {
 
-    private final String[] idIncoming; //
-
-    private final String[] idMain;
+    private final String[] idSession; //
     private final String[] name;
     private final String[] env;
     private final String[] port;
@@ -33,8 +31,7 @@ public class FilterCriteria {
     private final Instant  end;
 
 
-    public String toSql(Filters idIncomingColname,
-                        Filters idMainColname,
+    public String toSql(Filters idSession,
                         Filters nameColname,
                         Filters envColname,
                         Filters portColname,
@@ -45,8 +42,7 @@ public class FilterCriteria {
                         Collection<Integer> argTypes) {
 
         var sql = " WHERE 1 = 1";
-        sql += toSql(idIncomingColname,args,argTypes,getIdIncoming());
-        sql += toSql(idMainColname,args,argTypes,getIdMain());
+        sql += toSql(idSession,args,argTypes,getIdSession());
         sql += toSql(nameColname,args,argTypes,getName());
         sql += toSql(envColname,args,argTypes,getEnv());
         sql += toSql(portColname,args,argTypes,getPort());
@@ -70,7 +66,7 @@ public class FilterCriteria {
             if(values.length == 1){
                 return " AND "+ sql;
             }
-            return " AND (" + sql + " " + colname + "IN(" + Utils.nArg(values.length) + "))";//error
+            return " AND (" + sql + " " + colname + " IN(" + Utils.nArg(values.length) + "))";//error
         }
         args.addAll(Arrays.asList(values));
         argTypes.addAll(Collections.nCopies(values.length, colname.getType()));
@@ -101,8 +97,7 @@ public class FilterCriteria {
     @Override
     public String toString() {
         return "FilterCriteria{" +
-                "id=" + Arrays.toString(idIncoming) +
-                ", host=" + Arrays.toString(name) +
+                "host=" + Arrays.toString(name) +
                 ", env=" + Arrays.toString(env) +
                 ", port=" + Arrays.toString(port) +
                 ", start='" + start + '\'' +

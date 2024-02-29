@@ -1,4 +1,4 @@
-package org.usf.trace.api.server;
+package org.usf.trace.api.server.controller;
 
 import static java.util.Arrays.asList;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -26,12 +26,7 @@ public class MetadataController {
     @GetMapping("aggregate")
     List<FieldMetadata> fetch() {
         return asList(
-                new SimpleFieldMetadata(REQUEST, COUNT, COUNT.reference(), "Nombre d'appels", "count"),
                 new SimpleFieldMetadata(REQUEST, ELAPSEDTIME, ELAPSEDTIME.reference(), "temps de réponse (s)", "s"),
-                new SimpleFieldMetadata(REQUEST, AVG_ELAPSEDTIME, AVG_ELAPSEDTIME.reference(), "temps de réponse moyen(s)", "s"),
-                new SimpleFieldMetadata(REQUEST, MAX_ELAPSEDTIME, MAX_ELAPSEDTIME.reference(), "temps de réponse max(s)", "s"),
-                new SimpleFieldMetadata(REQUEST, MIN_ELAPSEDTIME, MIN_ELAPSEDTIME.reference(), "temps de réponse min(s)", "s"),
-
                 new CombinedFieldMetadata("nombre d'appels OK / KO", asList(
                         new SimpleFieldMetadata(REQUEST, COUNT_ERROR, COUNT_ERROR.reference(), "nombre d'appels en erreur", "count"),
                         new SimpleFieldMetadata(REQUEST, COUNT_SUCCES, COUNT_SUCCES.reference(), "nombre d'appels OK", "count"))),
@@ -75,11 +70,7 @@ public class MetadataController {
                 new SimpleFieldMetadata(REQUEST, ADDRESS, ADDRESS.reference(), "Adresse", "count"),
                 new SimpleFieldMetadata(REQUEST, ENVIRONEMENT, ENVIRONEMENT.reference(), "Environement", "count"),
                 new SimpleFieldMetadata(REQUEST, OS, OS.reference(), "Sytèm d'exploitation", "count"),
-                new SimpleFieldMetadata(REQUEST, RE, RE.reference(), "Environement d'exécution", "count"),
-                new SimpleFieldMetadata(REQUEST, AS_DATE, AS_DATE.reference(), "Format date", "count"),
-                new SimpleFieldMetadata(REQUEST, BY_DAY, BY_DAY.reference(), "Format jour", "count"),
-                new SimpleFieldMetadata(REQUEST, BY_MONTH, BY_MONTH.reference(), "Format mois", "count"),
-                new SimpleFieldMetadata(REQUEST, BY_YEAR, BY_YEAR.reference(), "Format Year", "count")
+                new SimpleFieldMetadata(REQUEST, RE, RE.reference(), "Environement d'exécution", "count")
         );
     }
 }
