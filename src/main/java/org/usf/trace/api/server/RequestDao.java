@@ -312,11 +312,11 @@ public class RequestDao {
                 " select ''::varchar as prnt, ? as chld " +
                 " union all " +
                 " select  recusive.chld, E_API_REQ.CD_API " +
-                " from E_API_REQ , recusive " +
+                " from E_API_REQ, recusive " +
                 " where recusive.chld= E_API_REQ.CD_SES " +
                 ") select distinct(chld) from recusive";
 
-        List<String> prntIds = template.query(query, (ResultSet rs, int rowNum) -> (rs.getString("chld")), id);
+        List<String> prntIds = template.query(query, (ResultSet rs, int rowNum) -> (rs.getString("chld")), id).stream().filter(Objects::nonNull).collect(toList());
         List<Session> prntIncList = getIncomingRequestById(true, Exchange::new,prntIds.toArray(String[]::new));
         List<MainSession> sessionList = getMainRequestById(true, Exchange::new, id);
         if( sessionList != null && !sessionList.isEmpty()){
