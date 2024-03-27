@@ -417,7 +417,7 @@ public class RequestDao {
         return template.query(query, queries.toArray(), newArray(queries.size(), BIGINT), (rs, i) ->
                 new DatabaseActionWrapper(
                         rs.getLong("CD_OUT_QRY"),
-                        Action.valueOf(rs.getString("VA_TYP")),
+                        JDBCAction.valueOf(rs.getString("VA_TYP")),
                         rs.getTimestamp("DH_DBT").toInstant(),
                         ofNullable(rs.getTimestamp("DH_FIN")).map(Timestamp::toInstant).orElse(null),
                         new ExceptionInfo(
@@ -492,7 +492,7 @@ public class RequestDao {
         private final DatabaseAction action;
         private final long parentId;
 
-        public DatabaseActionWrapper(long parentId, Action type, Instant start, Instant end, ExceptionInfo exception) {
+        public DatabaseActionWrapper(long parentId, JDBCAction type, Instant start, Instant end, ExceptionInfo exception) {
             this.parentId = parentId;
             this.action = new DatabaseAction(type, start, end, exception);
         }
