@@ -33,7 +33,7 @@
 		<version>2.2.4.RELEASE</version>
 	</parent>
 	<properties>
-		<java.version>11</java.version>
+		<java.version>17</java.version>
 		<sonar.organization>jarvis</sonar.organization>
 		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
 	</properties>
@@ -60,7 +60,7 @@
 		<dependency>
 			<groupId>io.github.oneteme.traceapi</groupId>
 			<artifactId>traceapi-core</artifactId>
-			<version>0.0.16-SNAPSHOT</version>
+			<version>0.0.17-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>io.github.oneteme</groupId>
