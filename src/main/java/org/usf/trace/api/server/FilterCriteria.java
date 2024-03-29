@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Arrays;
@@ -22,33 +21,69 @@ import static java.sql.Types.VARCHAR;
 public class FilterCriteria {
 
     private final String[] idSession; //
-    private final String[] name;
-    private final String[] env;
+    private final String[] method;
+    private final String[] protocol;
+    private final String[] host;
     private final String[] port;
-
-    private final String[] launchMode;
+    private final String path;
+    private final String query;
+    private final String[] media;
+    private final String[] auth;
+    private final String[] status;
     private final Instant start;
     private final Instant  end;
+    private final String[] apiname;
+    private final String[] user;
+    private final String[] appname;
+    private final String[] env;
+    private final String[] launchMode;
+    private final String location;
+    private final String[] name;
+
 
 
     public String toSql(Filters idSession,
-                        Filters nameColname,
-                        Filters envColname,
-                        Filters portColname,
-                        Filters launchModeColName,
+                        Filters methodColName,
+                        Filters protocolColName,
+                        Filters hostColName,
+                        Filters portColName,
+                        Filters pathColName,
+                        Filters queryColName,
+                        Filters mediaColName,
+                        Filters authColName,
+                        Filters statusColName,
                         Filters startColName,
                         Filters endColName,
+                        Filters apiNameColName,
+                        Filters userColName,
+                        Filters appNameColName,
+                        Filters envColname,
+                        Filters launchModeColName,
+                        Filters locationColName,
+                        Filters nameColName,
                         Collection<Object> args,
                         Collection<Integer> argTypes) {
 
         var sql = " WHERE 1 = 1";
         sql += toSql(idSession,args,argTypes,getIdSession());
-        sql += toSql(nameColname,args,argTypes,getName());
-        sql += toSql(envColname,args,argTypes,getEnv());
-        sql += toSql(portColname,args,argTypes,getPort());
-        sql += toSql(launchModeColName,args,argTypes,getLaunchMode());
+        sql += toSql(methodColName,args,argTypes,getMethod());
+        sql += toSql(protocolColName,args,argTypes,getProtocol());
+        sql += toSql(hostColName,args,argTypes,getHost());
+        sql += toSql(portColName,args,argTypes,getPort());
+        sql += toSqlLike(pathColName,args,argTypes,getPath());
+        sql += toSqlLike(queryColName,args,argTypes,getQuery());
+        sql += toSql(mediaColName,args,argTypes,getMedia());
+        sql += toSql(authColName,args,argTypes,getAuth());
+        sql += toSql(statusColName,args,argTypes,getStatus());
         sql += startToSql(startColName,args,argTypes,getStart()) ;
         sql += endToSql( endColName,args,argTypes,getEnd());
+        sql += toSql(apiNameColName,args,argTypes,getApiname());
+        sql += toSql(userColName,args,argTypes,getUser());
+        sql += toSql(appNameColName,args,argTypes,getAppname());
+        sql += toSql(envColname,args,argTypes,getEnv());
+        sql += toSql(launchModeColName,args,argTypes,getLaunchMode());
+        sql += toSqlLike(locationColName,args,argTypes,getLocation());
+        sql += toSql(nameColName,args,argTypes,getName());
         return  sql;
     }
 
@@ -93,15 +128,38 @@ public class FilterCriteria {
         return "";
     }
 
+    String toSqlLike(Filters colname, Collection<Object> args, Collection<Integer> argTypes, String value) {
+        if(value  != null ){
+            args.add('%'+value+'%');
+            argTypes.add(VARCHAR);
+            return  " AND "+ colname +" LIKE ?";
+        }
+        return "";
+    }
+
 
     @Override
     public String toString() {
         return "FilterCriteria{" +
-                "host=" + Arrays.toString(name) +
-                ", env=" + Arrays.toString(env) +
+                "idSession=" + Arrays.toString(idSession) +
+                ", method=" + Arrays.toString(method) +
+                ", protocol=" + Arrays.toString(protocol) +
+                ", host=" + Arrays.toString(host) +
                 ", port=" + Arrays.toString(port) +
-                ", start='" + start + '\'' +
-                ", end='" + end + '\'' +
+                ", path='" + path + '\'' +
+                ", query='" + query + '\'' +
+                ", media=" + Arrays.toString(media) +
+                ", auth=" + Arrays.toString(auth) +
+                ", status=" + Arrays.toString(status) +
+                ", start=" + start +
+                ", end=" + end +
+                ", apiname=" + Arrays.toString(apiname) +
+                ", user=" + Arrays.toString(user) +
+                ", appname=" + Arrays.toString(appname) +
+                ", env=" + Arrays.toString(env) +
+                ", launchMode=" + Arrays.toString(launchMode) +
+                ", location=" + location +
+                ", name=" + Arrays.toString(name) +
                 '}';
     }
 
