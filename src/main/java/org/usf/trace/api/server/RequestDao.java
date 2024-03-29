@@ -9,7 +9,6 @@ import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.usf.trace.api.server.Filters.*;
-import static org.usf.trace.api.server.Utils.isEmpty;
 import static org.usf.trace.api.server.Utils.nArg;
 import static org.usf.trace.api.server.Utils.newArray;
 
@@ -215,7 +214,7 @@ public class RequestDao {
 
         Collection<Integer> argTypes = new ArrayList<>();
         Collection<Object> args = new ArrayList<>();
-        query += fc.toSql(ID_SES, VA_APP_NME, VA_ENV, CD_PRT, LNCH, DH_DBT, DH_FIN, args, argTypes);
+        query += fc.toSql(ID_SES,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,DH_DBT, DH_FIN,VA_API_NME,VA_USR, VA_APP_NME, VA_ENV, LNCH, LOC, VA_NAME, args, argTypes);
         List<MainSession> res = template.query(query, args.toArray(), argTypes.stream().mapToInt(i -> i).toArray(), (rs, i) -> {
             MainSession main = new MainSession();
             main.setId(rs.getString("ID_SES")); // add value of nullable
@@ -249,7 +248,7 @@ public class RequestDao {
         return res;
     }
     public List<MainSession> getMainRequestById(boolean lazy, Supplier<? extends ApiRequest> fn, String... idArr){
-        FilterCriteria fc = new FilterCriteria(idArr,null,null,null,null,null,null);
+        FilterCriteria fc = new FilterCriteria(idArr,null,null,null,null,null,null,null,null,null,null,null,null,null, null,null,null,null, null);
         return  getMainRequestByCriteria(lazy, fc, fn);
     }
 
@@ -258,7 +257,7 @@ public class RequestDao {
 
         Collection<Integer> argTypes = new ArrayList<>();
         Collection<Object> args = new ArrayList<>();
-        query += fs.toSql(ID_SES, VA_APP_NME, VA_ENV, CD_PRT, LNCH, DH_DBT, DH_FIN, args, argTypes);
+        query += fs.toSql(ID_SES,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,DH_DBT, DH_FIN,VA_API_NME,VA_USR, VA_APP_NME, VA_ENV,  LNCH, LOC, VA_NAME, args, argTypes);
         query += " order by DH_DBT desc";
         List<Session> res = template.query(query, args.toArray(), argTypes.stream().mapToInt(i -> i).toArray(), (rs, i) -> {
             ApiSession in = new ApiSession();
@@ -303,7 +302,7 @@ public class RequestDao {
     }
 
     public List<Session> getIncomingRequestById(boolean lazy, Supplier<? extends ApiRequest> fn, String... idArr){
-        FilterCriteria fc = new FilterCriteria(idArr,null,null,null,null,null,null);
+        FilterCriteria fc = new FilterCriteria(idArr,null,null,null,null,null,null,null,null,null,null,null,null, null,null,null,null,null, null);
         return getIncomingRequestByCriteria(lazy, fc, fn);
     }
 
