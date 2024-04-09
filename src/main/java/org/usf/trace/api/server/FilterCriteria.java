@@ -1,10 +1,7 @@
 package org.usf.trace.api.server;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import static java.sql.Types.TIMESTAMP;
 
-import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Arrays;
@@ -13,8 +10,9 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import static java.sql.Types.TIMESTAMP;
-import static java.sql.Types.VARCHAR;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter

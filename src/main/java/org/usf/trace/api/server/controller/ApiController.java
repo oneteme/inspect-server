@@ -12,8 +12,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -33,6 +31,7 @@ import org.usf.traceapi.core.ApplicationInfo;
 import org.usf.traceapi.core.MainSession;
 import org.usf.traceapi.core.Session;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -86,7 +85,9 @@ public class ApiController {
 
     @GetMapping("session/request/{id}")
     public ResponseEntity<Session> getIncomingRequestById(@PathVariable String id) { // without tree
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(dao.getIncomingRequestById(true, ApiRequest::new, id)));
+        return ResponseEntity.ok()
+        		.cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS))
+        		.body(requireSingle(dao.getIncomingRequestById(true, ApiRequest::new, id)));
     }
 
     @GetMapping("session/main")
