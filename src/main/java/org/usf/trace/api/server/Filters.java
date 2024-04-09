@@ -1,6 +1,8 @@
 package org.usf.trace.api.server;
 
-import static java.sql.Types.*;
+import static java.sql.Types.INTEGER;
+import static java.sql.Types.TIMESTAMP;
+import static java.sql.Types.VARCHAR;
 
 
 

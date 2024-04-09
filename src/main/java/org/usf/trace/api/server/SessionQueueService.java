@@ -4,14 +4,14 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import javax.annotation.PreDestroy;
-
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Service;
 import org.usf.traceapi.core.ScheduledSessionDispatcher;
 import org.usf.traceapi.core.Session;
 import org.usf.traceapi.core.SessionDispatcherProperties;
 import org.usf.traceapi.core.State;
+
+import jakarta.annotation.PreDestroy;
 
 @Service
 @EnableConfigurationProperties(SessionDispatcherProperties.class)
@@ -30,7 +30,7 @@ public class SessionQueueService {
     }
     
     public List<Session> waitList(){
-    	return dispatcher.peekList(); // send copy
+    	return dispatcher.peekSessions(); // send copy
     }
 
     @Deprecated(forRemoval = true)

@@ -1,5 +1,17 @@
 package org.usf.trace.api.server.config;
 
+import static org.usf.jquery.core.ComparisonExpression.equal;
+import static org.usf.jquery.core.ComparisonExpression.greaterOrEqual;
+import static org.usf.jquery.core.ComparisonExpression.lessThan;
+import static org.usf.jquery.core.DBColumn.count;
+import static org.usf.trace.api.server.config.TraceApiColumn.COMPLETE;
+import static org.usf.trace.api.server.config.TraceApiColumn.END;
+import static org.usf.trace.api.server.config.TraceApiColumn.START;
+import static org.usf.trace.api.server.config.TraceApiColumn.STATUS;
+
+import java.sql.Timestamp;
+import java.time.Instant;
+
 import org.usf.jquery.core.ComparisonExpression;
 import org.usf.jquery.core.DBColumn;
 import org.usf.jquery.core.DBFunction;
@@ -8,13 +20,6 @@ import org.usf.jquery.web.TableDecorator;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-
-import java.sql.Timestamp;
-import java.time.Instant;
-
-import static org.usf.jquery.core.ComparisonExpression.*;
-import static org.usf.jquery.core.DBColumn.*;
-import static org.usf.trace.api.server.config.TraceApiColumn.*;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class DataConstants {
