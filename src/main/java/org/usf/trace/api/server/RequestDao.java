@@ -420,7 +420,7 @@ public class RequestDao {
             out.setDriverVersion(rs.getString("VA_DRV"));
             out.setDatabaseName(rs.getString("VA_DB_NME"));
             out.setDatabaseVersion(rs.getString("VA_DB_VRS"));
-            out.setCompleted("T".equals(rs.getString("VA_CMPLT")));
+//            out.setCompleted("T".equals(rs.getString("VA_CMPLT"))); auto calculted
             out.setActions(new ArrayList<>());
             return out;
         });
