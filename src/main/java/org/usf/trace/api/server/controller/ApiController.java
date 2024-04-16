@@ -6,6 +6,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.ResponseEntity.accepted;
 import static org.springframework.http.ResponseEntity.status;
 import static org.usf.trace.api.server.Utils.requireSingle;
+import static org.usf.trace.api.server.config.TraceApiColumn.API_NAME;
+import static org.usf.trace.api.server.config.TraceApiTable.REQUEST;
 import static org.usf.traceapi.core.Session.nextId;
 
 import java.time.Instant;
@@ -22,9 +24,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.usf.jquery.core.RequestQueryBuilder;
 import org.usf.trace.api.server.FilterCriteria;
 import org.usf.trace.api.server.RequestDao;
 import org.usf.trace.api.server.SessionQueueService;
+import org.usf.trace.api.server.config.TraceApiColumn;
+import org.usf.trace.api.server.config.TraceApiTable;
 import org.usf.traceapi.core.ApiRequest;
 import org.usf.traceapi.core.ApiSession;
 import org.usf.traceapi.core.ApplicationInfo;
@@ -80,6 +85,16 @@ public class ApiController {
     		@RequestParam(required = false, name = "end") Instant end,
             @RequestParam(defaultValue = "true", name = "lazy") boolean lazy){ // without tree
         FilterCriteria fc = new FilterCriteria(null,name,env,port,null,start,end);
+        
+//        
+//        var v = new RequestQueryBuilder();
+//        v.columns(REQUEST.column(API_NAME), REQUEST.column(TraceApiColumn.ADDRESS));
+//        v.filters(TraceApiTable.REQUEST.column(TraceApiColumn.API_NAME).in(name));
+//        if(end != null) {        	
+//        	v.filters(TraceApiTable.REQUEST.column(TraceApiColumn.API_NAME).lessOrEqual(end));
+//        }
+//        v.build().execute(ds, mapper);
+        
         return dao.getIncomingRequestByCriteria(lazy, fc, ApiRequest::new);
     }
 
