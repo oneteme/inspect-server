@@ -78,23 +78,25 @@ public class ApiController {
 
     @GetMapping("session/request")
     public List<Session> getIncomingRequestByCriteria(
-    		@RequestParam(required = false, name = "name") String[] name,
+            @RequestParam(required = false, name = "method") String[] method,
+            @RequestParam(required = false, name = "protocol") String[] protocol,
+            @RequestParam(required = false, name = "host") String[] host,
+            @RequestParam(required = false, name = "port") String[] port,
+            @RequestParam(required = false, name = "path") String path,
+            @RequestParam(required = false, name = "query") String query,
+            @RequestParam(required = false, name = "media") String[] media,
+            @RequestParam(required = false, name = "auth") String[] auth,
+            @RequestParam(required = false, name = "status") String[] status,
+            @RequestParam(required = false, name = "start") Instant start,
+            @RequestParam(required = false, name = "end") Instant end,
+            @RequestParam(required = false, name = "apiname") String[] apiname,
+            @RequestParam(required = false, name = "user") String[] user,
+    		@RequestParam(required = false, name = "appname") String[] appname,
     		@RequestParam(required = false, name = "env") String[] env,
-    		@RequestParam(required = false, name = "port") String[] port,
-    		@RequestParam(required = false, name = "start") Instant start,
-    		@RequestParam(required = false, name = "end") Instant end,
+
+
             @RequestParam(defaultValue = "true", name = "lazy") boolean lazy){ // without tree
-        FilterCriteria fc = new FilterCriteria(null,name,env,port,null,start,end);
-        
-//        
-//        var v = new RequestQueryBuilder();
-//        v.columns(REQUEST.column(API_NAME), REQUEST.column(TraceApiColumn.ADDRESS));
-//        v.filters(TraceApiTable.REQUEST.column(TraceApiColumn.API_NAME).in(name));
-//        if(end != null) {        	
-//        	v.filters(TraceApiTable.REQUEST.column(TraceApiColumn.API_NAME).lessOrEqual(end));
-//        }
-//        v.build().execute(ds, mapper);
-        
+        FilterCriteria fc = new FilterCriteria(null,method,protocol,host,port,path,query,media,auth,status,start,end,apiname,user,appname,env,null,null, null);
         return dao.getIncomingRequestByCriteria(lazy, fc, ApiRequest::new);
     }
 
@@ -108,12 +110,14 @@ public class ApiController {
     @GetMapping("session/main")
     public List<MainSession> getMainRequestByCriteria(
             @RequestParam(required = false, name = "env") String[] env,
+            @RequestParam(required = false, name = "name") String[] name,
             @RequestParam(required = false, name = "launchmode") String[] launchMode,
+            @RequestParam(required = false, name = "location") String location,
             @RequestParam(required = false, name = "start") Instant start,
             @RequestParam(required = false, name = "end") Instant end,
             @RequestParam(defaultValue = "true", name = "lazy") boolean lazy) {
 
-        FilterCriteria fc = new FilterCriteria(null,null,env,null,launchMode,start,end);
+        FilterCriteria fc = new FilterCriteria(null,null,null,null,null,null,null,null,null,null, start, end,null,null,null,env,launchMode,location,name);
         return dao.getMainRequestByCriteria(lazy, fc, ApiRequest::new);
     }
 
