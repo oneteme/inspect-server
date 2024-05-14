@@ -105,7 +105,7 @@ public final class DataConstants {
             case ID:           return "id_out_qry";
             case HOST:         return "va_hst";
             case PORT:         return "cd_prt";
-            case SCHEMA:       return "va_schma";
+            case DB:           return "va_db";
             case START: 	   return "dh_dbt";
             case END: 		   return "dh_fin";
             case USER: 		   return "va_usr";
@@ -114,6 +114,9 @@ public final class DataConstants {
             case DB_NAME:      return "va_db_nme";
             case DB_VERSION:   return "va_db_vrs";
             case COMPLETE:     return "va_cmplt";
+            case COMMANDS:     return "va_cmd";
+            case NAME:         return "va_nme";
+            case LOCATION:     return "va_loc";
             case PARENT:       return "cd_ses";
             default:           return null;
         }
