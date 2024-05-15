@@ -1,13 +1,14 @@
 package org.usf.trace.api.server.controller;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.usf.trace.api.server.FilterCriteria;
 import org.usf.trace.api.server.RequestDao;
+import org.usf.trace.api.server.jquery.filter.JqueryMainSessionFilter;
+import org.usf.trace.api.server.jquery.JqueryRequestService;
 import org.usf.trace.api.server.SessionQueueService;
+import org.usf.trace.api.server.jquery.filter.JqueryRequestSessionFilter;
 import org.usf.traceapi.core.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -25,11 +26,17 @@ import static org.usf.traceapi.core.Session.nextId;
 @CrossOrigin
 @RestController
 @RequestMapping(value = "trace", produces = APPLICATION_JSON_VALUE)
-@RequiredArgsConstructor
 public class ApiController {
 	
     private final RequestDao dao;
+    private final JqueryRequestService jqueryRequestService;
     private final SessionQueueService queueService;
+
+    public ApiController(RequestDao dao, JqueryRequestService jqueryRequestService, SessionQueueService queueService) {
+        this.dao = dao;
+        this.jqueryRequestService = jqueryRequestService;
+        this.queueService = queueService;
+    }
 
     @PutMapping("session")
     public ResponseEntity<Void> saveSession(HttpServletRequest hsr,@RequestBody Session[] sessions) {
@@ -58,50 +65,48 @@ public class ApiController {
 
     @GetMapping("session/request")
     public List<Session> getIncomingRequestByCriteria(
-            @RequestParam(required = false, name = "method") String[] method,
-            @RequestParam(required = false, name = "protocol") String[] protocol,
-            @RequestParam(required = false, name = "host") String[] host,
-            @RequestParam(required = false, name = "port") String[] port,
+            @RequestParam(required = false, name = "method") String[] methods,
+            @RequestParam(required = false, name = "protocol") String[] protocols,
+            @RequestParam(required = false, name = "host") String[] hosts,
+            @RequestParam(required = false, name = "port") String[] ports,
             @RequestParam(required = false, name = "path") String path,
             @RequestParam(required = false, name = "query") String query,
-            @RequestParam(required = false, name = "media") String[] media,
-            @RequestParam(required = false, name = "auth") String[] auth,
+            @RequestParam(required = false, name = "media") String[] medias,
+            @RequestParam(required = false, name = "auth") String[] auths,
             @RequestParam(required = false, name = "status") String[] status,
             @RequestParam(required = false, name = "start") Instant start,
             @RequestParam(required = false, name = "end") Instant end,
-            @RequestParam(required = false, name = "apiname") String[] apiname,
-            @RequestParam(required = false, name = "user") String[] user,
-    		@RequestParam(required = false, name = "appname") String[] appname,
-    		@RequestParam(required = false, name = "env") String[] env,
-
-
+            @RequestParam(required = false, name = "apiname") String[] apiNames,
+            @RequestParam(required = false, name = "user") String[] users,
+    		@RequestParam(required = false, name = "appname") String[] appNames,
+    		@RequestParam(required = false, name = "env") String[] environments,
             @RequestParam(defaultValue = "true", name = "lazy") boolean lazy){ // without tree
-        FilterCriteria fc = new FilterCriteria(null,method,protocol,host,port,path,query,media,auth,status,start,end,apiname,user,appname,env,null,null, null);
-        return dao.getIncomingRequestByCriteria(lazy, fc, ApiRequest::new);
+            JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, appNames, environments, start, end, methods, protocols, hosts, ports, medias, auths, status, apiNames, users, path, query);
+        return jqueryRequestService.getIncomingRequestByCriteria(jsf, lazy);
     }
 
     @GetMapping("session/request/{id}")
     public ResponseEntity<Session> getIncomingRequestById(@PathVariable String id) { // without tree
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(dao.getIncomingRequestById(true, ApiRequest::new, id)));
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(jqueryRequestService.getIncomingRequestById( id, true)));
     }
 
     @GetMapping("session/main")
-    public List<MainSession> getMainRequestByCriteria(
-            @RequestParam(required = false, name = "env") String[] env,
-            @RequestParam(required = false, name = "name") String[] name,
-            @RequestParam(required = false, name = "launchmode") String[] launchMode,
+    public List<Session> getMainRequestByCriteria(
+            @RequestParam(required = false, name = "env") String[] environments,
+            @RequestParam(required = false, name = "name") String[] names,
+            @RequestParam(required = false, name = "launchmode") String[] launchModes,
             @RequestParam(required = false, name = "location") String location,
             @RequestParam(required = false, name = "start") Instant start,
             @RequestParam(required = false, name = "end") Instant end,
             @RequestParam(defaultValue = "true", name = "lazy") boolean lazy) {
 
-        FilterCriteria fc = new FilterCriteria(null,null,null,null,null,null,null,null,null,null, start, end,null,null,null,env,launchMode,location,name);
-        return dao.getMainRequestByCriteria(lazy, fc, ApiRequest::new);
+        JqueryMainSessionFilter fc = new JqueryMainSessionFilter(null,null, environments, start, end, names, launchModes, location);
+        return jqueryRequestService.getMainSessionByCriteria(fc, lazy);
     }
 
     @GetMapping("session/main/{id}")
-    public ResponseEntity<MainSession> getMainRequestById(@PathVariable String id) { // without tree
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(dao.getMainRequestById(true, ApiRequest::new, id)));
+    public ResponseEntity<Session> getMainRequestById(@PathVariable String id) { // without tree
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(jqueryRequestService.getMainSessionById(id, true)));
     }
 
     @GetMapping("session/request/{id}/out")
