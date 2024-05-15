@@ -113,10 +113,10 @@ public final class DataConstants {
             case DRIVER:       return "va_drv";
             case DB_NAME:      return "va_db_nme";
             case DB_VERSION:   return "va_db_vrs";
-            case COMPLETE:     return "va_cmplt";
             case COMMANDS:     return "va_cmd";
             case NAME:         return "va_nme";
             case LOCATION:     return "va_loc";
+            case COMPLETE:     return "va_cmplt";
             case PARENT:       return "cd_ses";
             default:           return null;
         }
@@ -145,6 +145,7 @@ public final class DataConstants {
             case ERR_TYPE: 		return "va_err_cls";
             case ERR_MSG:		return "va_err_msg";
             case PARENT: 		return "cd_out_qry";
+            case ACTION_COUNT:  return "cd_count";
             default: 			return null;
         }
     }
@@ -173,7 +174,7 @@ public final class DataConstants {
         return count((complete).when(op).then(complete).end());
     }
 
-    public static OperationColumn countDbError (TableDecorator table){ return countDbBySucces(table,equal('F'));}
+    public static OperationColumn countDbError(TableDecorator table){ return countDbBySucces(table,equal('F'));}
     public static OperationColumn countDbSucces (TableDecorator table){ return countDbBySucces(table,equal('T'));}
 
 

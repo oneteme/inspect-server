@@ -48,6 +48,7 @@ public enum TraceApiColumn implements ColumnDecorator {
     DB_VERSION("dbVersion"),
     COMPLETE("complete"),
     COMMANDS("commands"),
+    ACTION_COUNT("actionCount"),
     PARENT("parent"),
 
     //---
