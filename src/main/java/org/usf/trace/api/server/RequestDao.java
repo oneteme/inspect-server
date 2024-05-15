@@ -3,6 +3,7 @@ package org.usf.trace.api.server;
 import static java.sql.Types.BIGINT;
 import static java.sql.Types.TIMESTAMP;
 import static java.sql.Types.VARCHAR;
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
@@ -22,33 +23,20 @@ import static org.usf.trace.api.server.Utils.newArray;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import org.usf.traceapi.core.ApiRequest;
-import org.usf.traceapi.core.ApiSession;
-import org.usf.traceapi.core.ApplicationInfo;
-import org.usf.traceapi.core.DatabaseAction;
-import org.usf.traceapi.core.DatabaseRequest;
-import org.usf.traceapi.core.ExceptionInfo;
-import org.usf.traceapi.core.JDBCAction;
-import org.usf.traceapi.core.LaunchMode;
-import org.usf.traceapi.core.MainSession;
-import org.usf.traceapi.core.RunnableStage;
-import org.usf.traceapi.core.Session;
+import org.usf.traceapi.core.*;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -172,36 +160,42 @@ public class RequestDao {
     private void addOutcomingQueries(List<OutcomingQueryWrapper> qryList) {
         var maxId = template.queryForObject("SELECT COALESCE(MAX(ID_OUT_QRY), 0) FROM E_DB_REQ", Long.class);
         var inc = new AtomicLong(maxId);
-        template.batchUpdate("INSERT INTO E_DB_REQ(ID_OUT_QRY,VA_HST,VA_SCHMA,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_DRV,VA_DB_NME,VA_DB_VRS,VA_CMPLT,CD_SES)"
-                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", qryList, qryList.size(), (ps, o) -> {
+
+        template.batchUpdate("INSERT INTO E_DB_REQ(ID_OUT_QRY,VA_HST,CD_PRT,VA_DB,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_DRV,VA_DB_NME,VA_DB_VRS,VA_CMD,VA_NME,VA_LOC,VA_CMPLT,CD_SES)"
+                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", qryList, qryList.size(), (ps, o) -> {
+            var completed = o.query.isCompleted();// o.getActions().stream().allMatch(a-> isNull(a.getException()));
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getHost());
-            ps.setString(3, o.getSchema());
-            ps.setTimestamp(4, fromNullableInstant(o.getStart()));
-            ps.setTimestamp(5, fromNullableInstant(o.getEnd()));
-            ps.setString(6, o.getUser());
-            ps.setString(7, o.getThreadName());
-            ps.setString(8, o.getDriverVersion());
-            ps.setString(9, o.getDatabaseName());
-            ps.setString(10, o.getDatabaseVersion());
-            ps.setString(11, o.isCompleted() ? "T" : "F");
-            ps.setString(12, o.getParentId());
+            ps.setInt(3, Objects.requireNonNullElse(o.getPort(),-1));
+            ps.setString(4, o.getDatabase());
+            ps.setTimestamp(5, fromNullableInstant(o.getStart()));
+            ps.setTimestamp(6, fromNullableInstant(o.getEnd()));
+            ps.setString(7, o.getUser());
+            ps.setString(8, o.getThreadName());
+            ps.setString(9, o.getDriverVersion());
+            ps.setString(10, o.getDatabaseName());
+            ps.setString(11, o.getDatabaseVersion());
+            ps.setString(12, valueOfNullableList(o.getCommands()));
+            ps.setString(13, o.getName());
+            ps.setString(14, o.getLocation());
+            ps.setString(15, completed ? "T" : "F");
+            ps.setString(16, o.getParentId());
             o.setId(inc.get());
         });
         addDatabaseActions(qryList);
     }
 
     private void addDatabaseActions(List<OutcomingQueryWrapper> queries) {
-        template.batchUpdate("INSERT INTO E_DB_ACT(VA_TYP,DH_DBT,DH_FIN,VA_ERR_CLS,VA_ERR_MSG,CD_OUT_QRY) VALUES(?,?,?,?,?,?)",
+        template.batchUpdate("INSERT INTO E_DB_ACT(VA_TYP,DH_DBT,DH_FIN,VA_ERR_CLS,VA_ERR_MSG,CD_COUNT,CD_OUT_QRY) VALUES(?,?,?,?,?,?,?)",
                 queries.stream()
                         .flatMap(e -> e.getActions().stream().map(da -> {
                                     var exp = nullableException(da.getException());
-                                    return new Object[]{da.getType().toString(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()), exp.getClassname(), exp.getMessage(), e.getId()
+                                    return new Object[]{da.getType().toString(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()), exp.getClassname(), exp.getMessage(),valueOfNullableArray(da.getCount()), e.getId()
                                     };
                                 }
                         ))
                         .collect(toList()),
-                new int[]{VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, VARCHAR, BIGINT});
+                new int[]{VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, VARCHAR, VARCHAR, BIGINT});
     }
 
     @Deprecated // reuse RequestDao::outcomingRequests using criteria
@@ -407,13 +401,13 @@ public class RequestDao {
     }
 
     public List<OutcomingQueryWrapper> outcomingQueries(Set<String> incomingId) { // non empty
-        var query = "SELECT ID_OUT_QRY,VA_HST,CD_PRT,VA_SCHMA,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_DRV,VA_DB_NME,VA_DB_VRS,VA_CMPLT,CD_SES FROM E_DB_REQ"
+        var query = "SELECT ID_OUT_QRY,VA_HST,CD_PRT,VA_DB,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_DRV,VA_DB_NME,VA_DB_VRS,VA_CMD,VA_NME,VA_LOC,CD_SES FROM E_DB_REQ"
                 + " WHERE CD_SES IN(" + nArg(incomingId.size()) + ")";
         var queries = template.query(query, incomingId.toArray(), newArray(incomingId.size(), VARCHAR), (rs, i) -> {
             var out = new OutcomingQueryWrapper(rs.getLong("ID_OUT_QRY"), rs.getString("CD_SES"));
             out.setHost(rs.getString("VA_HST"));
             out.setPort(rs.getInt("CD_PRT"));
-            out.setSchema(rs.getString("VA_SCHMA"));
+            out.setSchema(rs.getString("VA_DB")); // --
             out.setStart(fromNullableTimestamp(rs.getTimestamp("DH_DBT")));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp("DH_FIN")));
             out.setUser(rs.getString("VA_USR"));
@@ -421,7 +415,9 @@ public class RequestDao {
             out.setDriverVersion(rs.getString("VA_DRV"));
             out.setDatabaseName(rs.getString("VA_DB_NME"));
             out.setDatabaseVersion(rs.getString("VA_DB_VRS"));
-//            out.setCompleted("T".equals(rs.getString("VA_CMPLT"))); auto calculted
+            out.setCommands(valueOfNullabletoEnumList(SqlCommand.class, rs.getString("VA_CMD")));
+            out.setName(rs.getString("VA_NME"));
+            out.setLocation(rs.getString("VA_LOC"));
             out.setActions(new ArrayList<>());
             return out;
         });
@@ -433,18 +429,19 @@ public class RequestDao {
     }
 
     public List<DatabaseActionWrapper> databaseActions(Set<Long> queries) { // non empty
-        var query = "SELECT VA_TYP,DH_DBT,DH_FIN,VA_ERR_CLS,VA_ERR_MSG,CD_OUT_QRY FROM E_DB_ACT"
+        var query = "SELECT VA_TYP,DH_DBT,DH_FIN,VA_ERR_CLS,VA_ERR_MSG,CD_COUNT,CD_OUT_QRY FROM E_DB_ACT"
                 + " WHERE CD_OUT_QRY IN(" + nArg(queries.size()) + ")  ORDER BY DH_DBT ASC";
         return template.query(query, queries.toArray(), newArray(queries.size(), BIGINT), (rs, i) ->
                 new DatabaseActionWrapper(
                         rs.getLong("CD_OUT_QRY"),
                         JDBCAction.valueOf(rs.getString("VA_TYP")),
-                        rs.getTimestamp("DH_DBT").toInstant(),
+                        ofNullable(rs.getTimestamp("DH_DBT")).map(Timestamp::toInstant).orElse(null),
                         ofNullable(rs.getTimestamp("DH_FIN")).map(Timestamp::toInstant).orElse(null),
                         new ExceptionInfo(
                                 rs.getString("VA_ERR_CLS"),
                                 rs.getString("VA_ERR_MSG")
-                        )));
+                        ),
+                       ofNullable(rs.getString("CD_COUNT")).map(str -> Arrays.stream(str.split(",")).mapToLong(Long::parseLong).toArray()).orElse(null)));
     }
 
     @Getter
@@ -513,9 +510,9 @@ public class RequestDao {
         private final DatabaseAction action;
         private final long parentId;
 
-        public DatabaseActionWrapper(long parentId, JDBCAction type, Instant start, Instant end, ExceptionInfo exception) {
+        public DatabaseActionWrapper(long parentId, JDBCAction type, Instant start, Instant end, ExceptionInfo exception, long[] count) {
             this.parentId = parentId;
-            this.action = new DatabaseAction(type, start, end, exception);
+            this.action = new DatabaseAction(type, start, end,exception, count);
         }
     }
 
@@ -559,10 +556,24 @@ public class RequestDao {
         return ofNullable(o).map(Object::toString).orElse(null);
     }
 
+    private static <T extends Enum<T>> String valueOfNullableList(List<T> enumList) { return ofNullable(enumList).map(list -> list.stream().map(Enum::toString).collect(Collectors.joining(","))).orElse(null);}
+    private static String  valueOfNullableArray(long[]array){ return ofNullable(array).map(arr -> LongStream.of(arr).mapToObj(Long::toString).collect(Collectors.joining(","))).orElse(null);}
+
     private static <T extends Enum<T>> T valueOfNullable(Class<T> classe, String value) {
         return ofNullable(value)
                 .flatMap(v -> Stream.of(classe.getEnumConstants()).filter(e -> e.name().equals(v)).findAny())
                 .orElse(null);
+    }
+
+    private static final String[] empty_array = new String[0];
+    private static String[] splitNullable(String s){
+        return isNull(s) ? empty_array : s.split(",");
+    }
+    private static <T extends Enum<T>> List<T> valueOfNullabletoEnumList(Class<T> classe, String... values){
+        return Stream.of(values)
+                .map(v-> valueOfNullable(classe, v))
+                .filter(Objects::nonNull)
+                .toList();
     }
 }
 
