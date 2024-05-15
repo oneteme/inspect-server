@@ -42,11 +42,13 @@ public enum TraceApiColumn implements ColumnDecorator {
     ERR_TYPE("errorType"),
     ERR_MSG("errorMessage"),
 
-    SCHEMA("schema"),
+    DB("db"),
     DRIVER("driver"),
     DB_NAME("dbName"),
     DB_VERSION("dbVersion"),
-    COMPLETE ("complete"),
+    COMPLETE("complete"),
+    COMMANDS("commands"),
+    ACTION_COUNT("actionCount"),
     PARENT("parent"),
 
     //---
