@@ -1,25 +1,27 @@
-package org.usf.trace.api.server.jquery;
+package org.usf.trace.api.server.service;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.experimental.Delegate;
 import org.springframework.stereotype.Repository;
 import org.usf.jquery.core.RequestQueryBuilder;
 import org.usf.jquery.core.TaggableColumn;
 import org.usf.jquery.web.ColumnDecorator;
 import org.usf.jquery.web.TableDecorator;
+import org.usf.trace.api.server.model.Exchange;
+import org.usf.trace.api.server.dao.RequestDao;
 import org.usf.trace.api.server.config.DataConstants;
-import org.usf.trace.api.server.jquery.filter.JqueryMainSessionFilter;
-import org.usf.trace.api.server.jquery.filter.JqueryRequestSessionFilter;
+import org.usf.trace.api.server.model.filter.JqueryMainSessionFilter;
+import org.usf.trace.api.server.model.filter.JqueryRequestSessionFilter;
+import org.usf.trace.api.server.model.wrapper.DatabaseActionWrapper;
+import org.usf.trace.api.server.model.wrapper.OutcomingQueryWrapper;
+import org.usf.trace.api.server.model.wrapper.OutcomingRequestWrapper;
+import org.usf.trace.api.server.model.wrapper.OutcomingStageWrapper;
 import org.usf.traceapi.core.*;
 
 import javax.sql.DataSource;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
@@ -33,13 +35,41 @@ import static org.usf.trace.api.server.config.TraceApiTable.*;
 public class JqueryRequestService {
 
     private final DataSource ds;
+    private final RequestDao dao;
 
-    public List<Session> getIncomingRequestById(String id, boolean lazy){
-        JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(Collections.singletonList(id).toArray(String[]::new));
-        return getIncomingRequestByCriteria(jsf, lazy);
+    public void addSessions(List<Session> sessions) {
+        dao.saveSessions(sessions);
     }
 
-    public List<Session> getIncomingRequestByCriteria(JqueryRequestSessionFilter jsf, boolean lazy) {
+    public Session getTreeById(String id) {
+        List<String> prntIds = dao.selectChildsById(id);
+        List<Session> prntIncList = getIncomingRequestById(prntIds, Exchange::new);
+        List<Session> sessionList = getMainSessionById(id, Exchange::new);
+        if(sessionList != null && !sessionList.isEmpty()){
+            prntIncList.add(sessionList.get(0));
+        }
+        prntIncList.forEach((prntA) -> {
+            prntIncList.forEach((prntB) -> {
+                if (!Objects.equals(prntA.getId(), prntB.getId())){
+                    Optional<ApiRequest> opt = prntB.getRequests().stream()
+                            .filter(k -> prntA.getId().equals(k.getId()))
+                            .findFirst();
+                    if (opt.isPresent()) {
+                        var ex = (Exchange) opt.get();
+                        ex.setRemoteTrace((ApiSession) prntA);
+                    }
+                }
+            });
+        });
+        return prntIncList.stream().filter(r ->  r.getId().equals(id)).findFirst().orElseThrow();
+    }
+
+    public List<Session> getIncomingRequestById(List<String> ids, Supplier<? extends ApiRequest> fn){
+        JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(ids.toArray(String[]::new), true);
+        return getIncomingRequestByCriteria(jsf, fn);
+    }
+
+    public List<Session> getIncomingRequestByCriteria(JqueryRequestSessionFilter jsf, Supplier<? extends ApiRequest> fn) {
         var v = new RequestQueryBuilder();
         v.select(
                 REQUEST.table(),
@@ -90,21 +120,21 @@ public class JqueryRequestService {
             }
             return sessions;
         });
-        if (lazy && !res.isEmpty()) {
+        if (Objects.requireNonNull(jsf).isLazy() && !res.isEmpty()) {
             var reqMap = res.stream().collect(toMap(Session::getId, identity()));
-            getOutcomingRequests(reqMap.keySet().toArray(String[]::new)).forEach(r -> reqMap.get(r.getParentId()).append(r.getRequest()));
+            getOutcomingRequests(reqMap.keySet().toArray(String[]::new), fn).forEach(r -> reqMap.get(r.getParentId()).append(r.getRequest()));
             getOutcomingStages(reqMap.keySet().toArray(String[]::new)).forEach(r -> reqMap.get(r.getParentId()).append(r.getStage()));
             getOutcomingQueries(reqMap.keySet().toArray(String[]::new)).forEach(q -> reqMap.get(q.getParentId()).append(q.getQuery()));
         }
         return res;
     }
 
-    public List<Session> getMainSessionById(String id, boolean lazy){
-        JqueryMainSessionFilter jsf = new JqueryMainSessionFilter(Collections.singletonList(id).toArray(String[]::new));
-        return getMainSessionByCriteria(jsf, lazy);
+    public List<Session> getMainSessionById(String id, Supplier<? extends ApiRequest> fn){
+        JqueryMainSessionFilter jsf = new JqueryMainSessionFilter(Collections.singletonList(id).toArray(String[]::new), true);
+        return getMainSessionByCriteria(jsf, fn);
     }
 
-    public List<Session> getMainSessionByCriteria(JqueryMainSessionFilter jsf, boolean lazy) {
+    public List<Session> getMainSessionByCriteria(JqueryMainSessionFilter jsf, Supplier<? extends ApiRequest> fn) {
         var v = new RequestQueryBuilder();
         v.select(
                 SESSION.table(),
@@ -145,15 +175,15 @@ public class JqueryRequestService {
 
             return sessions;
         });
-        if (lazy && !res.isEmpty()) {
+        if (Objects.requireNonNull(jsf).isLazy() && !res.isEmpty()) {
             var reqMap = res.stream().collect(toMap(Session::getId, identity()));
-            getOutcomingRequests(reqMap.keySet().toArray(String[]::new)).forEach(r -> reqMap.get(r.getParentId()).append(r.getRequest()));
+            getOutcomingRequests(reqMap.keySet().toArray(String[]::new), fn).forEach(r -> reqMap.get(r.getParentId()).append(r.getRequest()));
             getOutcomingStages(reqMap.keySet().toArray(String[]::new)).forEach(r -> reqMap.get(r.getParentId()).append(r.getStage()));
             getOutcomingQueries(reqMap.keySet().toArray(String[]::new)).forEach(q -> reqMap.get(q.getParentId()).append(q.getQuery()));
         }
         return res;
     }
-    public List<OutcomingRequestWrapper> getOutcomingRequests(String[] incomingId) { //use criteria
+    public List<OutcomingRequestWrapper> getOutcomingRequests(String[] incomingId, Supplier<? extends ApiRequest> fn) { //use criteria
         var v = new RequestQueryBuilder();
         v.select(
                 OUT.table(),
@@ -167,7 +197,7 @@ public class JqueryRequestService {
         return v.build().execute(ds, (rs) -> {
             List<OutcomingRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
-                OutcomingRequestWrapper out = new OutcomingRequestWrapper(rs.getString(DataConstants.outReqColumns(PARENT)));
+                OutcomingRequestWrapper out = new OutcomingRequestWrapper(rs.getString(DataConstants.outReqColumns(PARENT)), fn);
                 out.setId(rs.getString(DataConstants.outReqColumns(ID)));
                 out.setProtocol(rs.getString(DataConstants.outReqColumns(PROTOCOL)));
                 out.setHost(rs.getString(DataConstants.outReqColumns(HOST)));
@@ -191,7 +221,7 @@ public class JqueryRequestService {
         });
     }
 
-    public List<OutcomingStagesWrapper> getOutcomingStages(String[] ids){
+    public List<OutcomingStageWrapper> getOutcomingStages(String[] ids){
         var v = new RequestQueryBuilder();
         v.select(
                 STAGES.table(),
@@ -202,9 +232,9 @@ public class JqueryRequestService {
         v.filters(STAGES.column(PARENT).in(ids));
         v.orders(STAGES.column(START).order());
         return v.build().execute(ds, (rs) -> {
-            List<OutcomingStagesWrapper> outs = new ArrayList<>();
+            List<OutcomingStageWrapper> outs = new ArrayList<>();
             while (rs.next()) {
-                OutcomingStagesWrapper out = new OutcomingStagesWrapper(rs.getString(DataConstants.outStgColumns(PARENT)));
+                OutcomingStageWrapper out = new OutcomingStageWrapper(rs.getString(DataConstants.outStgColumns(PARENT)));
                 out.setName(rs.getString(DataConstants.outStgColumns(NAME)));
                 out.setLocation(rs.getString(DataConstants.outStgColumns(LOCATION)));
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(DataConstants.outStgColumns(START))));
@@ -226,8 +256,8 @@ public class JqueryRequestService {
         v.select(
                 DBQUERY.table(),
                 getColumns(
-                        DBQUERY, ID, HOST, PORT, SCHEMA, START, END, USER, THREAD, DRIVER,
-                        DB_NAME, DB_VERSION, PARENT
+                        DBQUERY, ID, HOST, PORT, DB, START, END, USER, THREAD, DRIVER,
+                        DB_NAME, DB_VERSION, NAME, COMMANDS, LOCATION, PARENT
                 )
         );
         v.filters(DBQUERY.column(PARENT).in(ids));
@@ -235,10 +265,10 @@ public class JqueryRequestService {
         var queries = v.build().execute(ds, (rs) -> {
             List<OutcomingQueryWrapper> outs = new ArrayList<>();
             while (rs.next()) {
-                OutcomingQueryWrapper out = new OutcomingQueryWrapper(rs.getLong(DataConstants.outQryColumns(ID)), rs.getString(DataConstants.outQryColumns(PARENT)));
+                OutcomingQueryWrapper out = new OutcomingQueryWrapper(rs.getString(DataConstants.outQryColumns(PARENT)), rs.getLong(DataConstants.outQryColumns(ID)));
                 out.setHost(rs.getString(DataConstants.outQryColumns(HOST)));
                 out.setPort(rs.getInt(DataConstants.outQryColumns(PORT)));
-                out.setSchema(rs.getString(DataConstants.outQryColumns(SCHEMA)));
+                out.setDatabase(rs.getString(DataConstants.outQryColumns(DB)));
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(DataConstants.outQryColumns(START))));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(DataConstants.outQryColumns(END))));
                 out.setUser(rs.getString(DataConstants.outQryColumns(USER)));
@@ -246,6 +276,9 @@ public class JqueryRequestService {
                 out.setDriverVersion(rs.getString(DataConstants.outQryColumns(DRIVER)));
                 out.setDatabaseName(rs.getString(DataConstants.outQryColumns(DB_NAME)));
                 out.setDatabaseVersion(rs.getString(DataConstants.outQryColumns(DB_VERSION)));
+                out.setLocation(rs.getString(DataConstants.outQryColumns(LOCATION)));
+                out.setName(rs.getString(DataConstants.outQryColumns(NAME)));
+                out.setCommands(valueOfNullabletoEnumList(SqlCommand.class, rs.getString(DataConstants.outQryColumns(COMMANDS))));
                 outs.add(out);
             }
             return outs;
@@ -262,7 +295,7 @@ public class JqueryRequestService {
         var v = new RequestQueryBuilder();
         v.select(
                 DBACTION.table(),
-                getColumns(DBACTION, TYPE, START, END, ERR_TYPE, ERR_MSG, PARENT)
+                getColumns(DBACTION, TYPE, START, END, ERR_TYPE, ERR_MSG, ACTION_COUNT, PARENT)
         );
         v.filters(DBACTION.column(PARENT).in(ids));
         v.orders(DBACTION.column(START).order());
@@ -278,68 +311,13 @@ public class JqueryRequestService {
                             new ExceptionInfo(
                                     rs.getString(DataConstants.dbActColumns(ERR_TYPE)),
                                     rs.getString(DataConstants.dbActColumns(ERR_MSG))
-                            )
+                            ),
+                            ofNullable(DataConstants.dbActColumns(ACTION_COUNT)).map(str -> Arrays.stream(str.split(",")).mapToLong(Long::parseLong).toArray()).orElse(null)
                         )
                 );
             }
             return actions;
         });
-    }
-
-    @Getter
-    static class OutcomingRequestWrapper {
-
-        @Delegate
-        private final ApiRequest request;
-        private final String parentId;
-
-        public OutcomingRequestWrapper(String parentId) {
-            this.parentId = parentId;
-            this.request = new ApiRequest();
-        }
-    }
-
-    @Getter
-    @Setter
-    static class OutcomingStagesWrapper {
-
-        @Delegate
-        private final RunnableStage stage;
-        private final String parentId;
-
-        public OutcomingStagesWrapper(String parentId){
-            this.parentId = parentId;
-            this.stage = new RunnableStage();
-        }
-    }
-
-    @Setter
-    @Getter
-    static class OutcomingQueryWrapper {
-
-        @Delegate
-        private final DatabaseRequest query;
-        private final String parentId;
-        private long id;
-
-        public OutcomingQueryWrapper(Long id, String parentId) {
-            this.parentId = parentId;
-            this.id = id;
-            this.query = new DatabaseRequest();
-        }
-    }
-
-    @Getter
-    static class DatabaseActionWrapper {
-
-        @Delegate
-        private final DatabaseAction action;
-        private final long parentId;
-
-        public DatabaseActionWrapper(long parentId, JDBCAction type, Instant start, Instant end, ExceptionInfo exception) {
-            this.parentId = parentId;
-            this.action = new DatabaseAction(type, start, end, exception);
-        }
     }
 
     private static TaggableColumn[] getColumns(TableDecorator table, ColumnDecorator... columns) {
@@ -354,5 +332,12 @@ public class JqueryRequestService {
         return ofNullable(value)
                 .flatMap(v -> Stream.of(classe.getEnumConstants()).filter(e -> e.name().equals(v)).findAny())
                 .orElse(null);
+    }
+
+    private static <T extends Enum<T>> List<T> valueOfNullabletoEnumList(Class<T> classe, String... values){
+        return Stream.of(values)
+                .map(v-> valueOfNullable(classe, v))
+                .filter(Objects::nonNull)
+                .toList();
     }
 }

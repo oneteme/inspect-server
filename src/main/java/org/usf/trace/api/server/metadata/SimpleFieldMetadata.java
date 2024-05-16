@@ -2,6 +2,7 @@ package org.usf.trace.api.server.metadata;
 
 import org.usf.trace.api.server.config.TraceApiColumn;
 import org.usf.trace.api.server.config.TraceApiTable;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 

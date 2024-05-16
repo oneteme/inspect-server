@@ -1,4 +1,4 @@
-package org.usf.trace.api.server.jquery.filter;
+package org.usf.trace.api.server.model.filter;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -28,8 +28,8 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
     private final String path;
     private final String query;
 
-    public JqueryRequestSessionFilter(String[] ids, String[] appNames, String[] environments, Instant start, Instant end, String[] methods, String[] protocols, String[] hosts, String[] ports, String[] medias, String[] auths, String[] status, String[] apiNames, String[] users, String path, String query) {
-        super(ids, appNames, environments, start, end);
+    public JqueryRequestSessionFilter(String[] ids, String[] appNames, String[] environments, Instant start, Instant end, boolean lazy, String[] methods, String[] protocols, String[] hosts, String[] ports, String[] medias, String[] auths, String[] status, String[] apiNames, String[] users, String path, String query) {
+        super(ids, appNames, environments, start, end, lazy);
         this.methods = methods;
         this.protocols = protocols;
         this.hosts = hosts;
@@ -43,8 +43,8 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
         this.query = query;
     }
 
-    public JqueryRequestSessionFilter(String[] ids) {
-        this(ids, null,null,null,null,null,null,null,null,null,null,null,null, null,null,null);
+    public JqueryRequestSessionFilter(String[] ids, boolean lazy) {
+        this(ids, null,null,null,null, lazy, null,null,null,null,null,null,null,null, null,null,null);
     }
 
     public DBFilter[] filters() {
