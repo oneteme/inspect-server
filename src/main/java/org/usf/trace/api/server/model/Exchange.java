@@ -1,10 +1,10 @@
-package org.usf.trace.api.server;
+package org.usf.trace.api.server.model;
 
-import lombok.Setter;
-import org.usf.traceapi.core.ApiSession;
 import org.usf.traceapi.core.ApiRequest;
+import org.usf.traceapi.core.ApiSession;
 
 import lombok.Getter;
+import lombok.Setter;
 
 /**
  * 

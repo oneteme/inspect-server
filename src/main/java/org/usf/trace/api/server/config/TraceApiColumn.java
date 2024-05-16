@@ -1,11 +1,7 @@
 package org.usf.trace.api.server.config;
 
 import static java.util.Objects.nonNull;
-import static java.util.Objects.requireNonNullElseGet;
 
-import java.util.Objects;
-
-import org.usf.jquery.core.DBColumn;
 import org.usf.jquery.web.ColumnBuilder;
 import org.usf.jquery.web.ColumnDecorator;
 import org.usf.jquery.web.CriteriaBuilder;
@@ -46,11 +42,13 @@ public enum TraceApiColumn implements ColumnDecorator {
     ERR_TYPE("errorType"),
     ERR_MSG("errorMessage"),
 
-    SCHEMA("schema"),
+    DB("db"),
     DRIVER("driver"),
     DB_NAME("dbName"),
     DB_VERSION("dbVersion"),
-    COMPLETE ("complete"),
+    COMPLETE("complete"),
+    COMMANDS("commands"),
+    ACTION_COUNT("actionCount"),
     PARENT("parent"),
 
     //---
