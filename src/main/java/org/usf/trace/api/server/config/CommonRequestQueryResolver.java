@@ -1,11 +1,10 @@
-package org.usf.trace.api.server;
+package org.usf.trace.api.server.config;
 
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
-import org.usf.jquery.core.RequestQuery;
 import org.usf.jquery.core.RequestQueryBuilder;
 import org.usf.jquery.web.RequestQueryParam;
 import org.usf.jquery.web.RequestQueryParamResolver;

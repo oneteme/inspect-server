@@ -1,4 +1,4 @@
-package org.usf.trace.api.server.jquery.filter;
+package org.usf.trace.api.server.model.filter;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,4 +15,5 @@ public class JquerySessionFilter {
     private final String[] environments;
     private final Instant start;
     private final Instant end;
+    private final boolean lazy;
 }

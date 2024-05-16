@@ -1,4 +1,4 @@
-package org.usf.trace.api.server.jquery.filter;
+package org.usf.trace.api.server.model.filter;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -21,15 +21,15 @@ public class JqueryMainSessionFilter extends JquerySessionFilter {
     private final String[] launchModes;
     private final String location;
 
-    public JqueryMainSessionFilter(String[] ids, String[] appNames, String[] environments, Instant start, Instant end, String[] names, String[] launchModes, String location) {
-        super(ids, appNames, environments, start, end);
+    public JqueryMainSessionFilter(String[] ids, String[] appNames, String[] environments, Instant start, Instant end, boolean lazy, String[] names, String[] launchModes, String location) {
+        super(ids, appNames, environments, start, end, lazy);
         this.names = names;
         this.launchModes = launchModes;
         this.location = location;
     }
 
-    public JqueryMainSessionFilter(String[] ids) {
-        this(ids, null, null, null, null, null, null, null);
+    public JqueryMainSessionFilter(String[] ids, boolean lazy) {
+        this(ids, null, null, null, null, lazy, null, null, null);
     }
 
     public DBFilter[] filters() {

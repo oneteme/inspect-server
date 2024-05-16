@@ -21,7 +21,9 @@ spring:
 logging:
   level:
     org.springframework.jdbc.core: DEBUG
+    org.usf.traceapi.core: trace
 
 trace:
   delay: 60
   unit: SECONDS
+  buffer-max-size: -1

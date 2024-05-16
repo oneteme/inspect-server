@@ -1,4 +1,4 @@
-package org.usf.trace.api.server;
+package org.usf.trace.api.server.config;
 
 import static java.util.Arrays.asList;
 import static org.usf.jquery.web.JQueryContext.register;
@@ -10,6 +10,7 @@ import javax.sql.DataSource;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.usf.trace.api.server.config.CommonRequestQueryResolver;
 import org.usf.trace.api.server.config.TraceApiColumn;
 import org.usf.trace.api.server.config.TraceApiTable;
 
