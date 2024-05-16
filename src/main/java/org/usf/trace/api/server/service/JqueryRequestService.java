@@ -279,6 +279,7 @@ public class JqueryRequestService {
                 out.setLocation(rs.getString(DataConstants.outQryColumns(LOCATION)));
                 out.setName(rs.getString(DataConstants.outQryColumns(NAME)));
                 out.setCommands(valueOfNullabletoEnumList(SqlCommand.class, rs.getString(DataConstants.outQryColumns(COMMANDS))));
+                out.setActions(new ArrayList<>());
                 outs.add(out);
             }
             return outs;
@@ -312,7 +313,7 @@ public class JqueryRequestService {
                                     rs.getString(DataConstants.dbActColumns(ERR_TYPE)),
                                     rs.getString(DataConstants.dbActColumns(ERR_MSG))
                             ),
-                            ofNullable(DataConstants.dbActColumns(ACTION_COUNT)).map(str -> Arrays.stream(str.split(",")).mapToLong(Long::parseLong).toArray()).orElse(null)
+                            ofNullable(rs.getString(DataConstants.dbActColumns(ACTION_COUNT))).map(str -> Arrays.stream(str.split(",")).mapToLong(Long::parseLong).toArray()).orElse(null)
                         )
                 );
             }
