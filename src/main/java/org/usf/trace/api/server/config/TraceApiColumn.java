@@ -41,7 +41,6 @@ public enum TraceApiColumn implements ColumnDecorator {
     LOCATION("location"),
     ERR_TYPE("errorType"),
     ERR_MSG("errorMessage"),
-
     DB("db"),
     DRIVER("driver"),
     DB_NAME("dbName"),
@@ -50,7 +49,6 @@ public enum TraceApiColumn implements ColumnDecorator {
     COMMANDS("commands"),
     ACTION_COUNT("actionCount"),
     PARENT("parent"),
-
     //---
     ELAPSEDTIME("elapsedtime", DataConstants::elapsedtime2, DataConstants::elapsedTimeExpressions),
     COUNT_SLOWEST("elapsedTimeSlowest", DataConstants::elapsedTimeVerySlow),
