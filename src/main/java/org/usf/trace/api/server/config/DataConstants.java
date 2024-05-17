@@ -223,20 +223,14 @@ public final class DataConstants {
     }
 
     public static ComparisonExpression elapsedTimeExpressions(String name) {
-        switch (name) {
-            case "fastest":
-                return lessThan(1);
-            case "fast":
-                return greaterOrEqual(1).and(lessThan(3));
-            case "medium":
-                return greaterOrEqual(3).and(lessThan(5));
-            case "slow":
-                return greaterOrEqual(5).and(lessThan(10));
-            case "slowest":
-                return greaterOrEqual(10);
-            default:
-                return null;
-        }
+        return switch (name) {
+            case "fastest" -> lessThan(1);
+            case "fast" -> greaterOrEqual(1).and(lessThan(3));
+            case "medium" -> greaterOrEqual(3).and(lessThan(5));
+            case "slow" -> greaterOrEqual(5).and(lessThan(10));
+            case "slowest" -> greaterOrEqual(10);
+            default -> null;
+        };
     }
 
 

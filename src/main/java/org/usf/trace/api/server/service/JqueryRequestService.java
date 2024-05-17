@@ -2,6 +2,7 @@ package org.usf.trace.api.server.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.usf.jquery.core.DBFilter;
 import org.usf.jquery.core.RequestQueryBuilder;
 import org.usf.jquery.core.TaggableColumn;
 import org.usf.jquery.web.ColumnDecorator;
@@ -81,7 +82,7 @@ public class JqueryRequestService {
                 )
         );
         if(jsf != null) {
-            v.filters(jsf.filters());
+            v.filters(jsf.filters(REQUEST).toArray(DBFilter[]::new));
         }
         List<Session> res = v.build().execute(ds, (rs) -> {
             List<Session> sessions = new ArrayList<>();
@@ -144,7 +145,7 @@ public class JqueryRequestService {
                 )
         );
         if(jsf != null) {
-            v.filters(jsf.filters());
+            v.filters(jsf.filters(SESSION).toArray(DBFilter[]::new));
         }
         List<Session> res = v.build().execute(ds, (rs) -> {
             List<Session> sessions = new ArrayList<>();
