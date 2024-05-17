@@ -3,14 +3,13 @@ package org.usf.trace.api.server.model.filter;
 import lombok.Getter;
 import lombok.Setter;
 import org.usf.jquery.core.DBFilter;
-import org.usf.jquery.core.Utils;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.usf.jquery.core.Utils.isEmpty;
 import static org.usf.trace.api.server.config.TraceApiColumn.*;
-import static org.usf.trace.api.server.config.TraceApiColumn.END;
 import static org.usf.trace.api.server.config.TraceApiTable.REQUEST;
 import static org.usf.trace.api.server.config.TraceApiTable.SESSION;
 
@@ -34,13 +33,13 @@ public class JqueryMainSessionFilter extends JquerySessionFilter {
 
     public DBFilter[] filters() {
         List<DBFilter> filters = new ArrayList<>();
-        if(!Utils.isEmpty(getIds())) {
+        if(!isEmpty(getIds())) {
             filters.add(SESSION.column(ID).in(getIds()));
         }
-        if(!Utils.isEmpty(getNames())) {
+        if(!isEmpty(getNames())) {
             filters.add(SESSION.column(NAME).in(getNames()));
         }
-        if(!Utils.isEmpty(getLaunchModes())) {
+        if(!isEmpty(getLaunchModes())) {
             filters.add(SESSION.column(TYPE).in(getLaunchModes()));
         }
         if(getLocation() != null) {
