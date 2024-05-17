@@ -1,4 +1,4 @@
-package org.usf.trace.api.server;
+package org.usf.trace.api.server.model;
 
 import org.usf.traceapi.core.ApiRequest;
 import org.usf.traceapi.core.ApiSession;

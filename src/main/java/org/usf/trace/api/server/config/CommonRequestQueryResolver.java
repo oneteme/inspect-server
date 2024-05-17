@@ -1,4 +1,4 @@
-package org.usf.trace.api.server;
+package org.usf.trace.api.server.config;
 
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;

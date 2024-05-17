@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.usf.trace.api.server.SessionQueueService;
+import org.usf.trace.api.server.service.SessionQueueService;
 import org.usf.traceapi.core.Session;
 
 import lombok.RequiredArgsConstructor;
@@ -28,10 +28,4 @@ public class CacheController {
     public Collection<Session> getCache(){
     	return queue.waitList();
     }
-
-    @DeleteMapping
-    public Collection<Session> deleteSessions(@RequestParam("id") Set<String> ids){
-    	return queue.deleteSessions(ids);
-    }
-    
 }

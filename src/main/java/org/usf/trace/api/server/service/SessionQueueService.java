@@ -1,4 +1,4 @@
-package org.usf.trace.api.server;
+package org.usf.trace.api.server.service;
 
 import java.util.Collection;
 import java.util.List;
@@ -17,11 +17,11 @@ import jakarta.annotation.PreDestroy;
 @EnableConfigurationProperties(SessionDispatcherProperties.class)
 public class SessionQueueService {
 
-    private final RequestDao dao;
+    private final JqueryRequestService service;
     private final ScheduledSessionDispatcher dispatcher;
     
-    public SessionQueueService(RequestDao dao, SessionDispatcherProperties prop) {
-    	this.dao = dao;
+    public SessionQueueService(JqueryRequestService service, SessionDispatcherProperties prop) {
+    	this.service = service;
 		this.dispatcher = new ScheduledSessionDispatcher(prop, this::safeBackup);
     }
     
@@ -33,13 +33,8 @@ public class SessionQueueService {
     	return dispatcher.peekSessions(); // send copy
     }
 
-    @Deprecated(forRemoval = true)
-    public Collection<Session> deleteSessions(Set<String> ids){
-    	throw new UnsupportedOperationException();
-    }
-
     boolean safeBackup(int attempts, List<Session> sessions) {
-        dao.saveSessions(sessions);
+        service.addSessions(sessions);
         return true;
     }
     
