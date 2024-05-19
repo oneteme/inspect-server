@@ -67,8 +67,8 @@ public class ApiController {
     	}
     }
 
-    @GetMapping("session/request")
-    public List<Session> getIncomingRequestByCriteria(
+    @GetMapping("session/api")
+    public List<Session> getApiSessionsByCriteria(
             @RequestParam(required = false, name = "method") String[] methods,
             @RequestParam(required = false, name = "protocol") String[] protocols,
             @RequestParam(required = false, name = "host") String[] hosts,
@@ -86,12 +86,12 @@ public class ApiController {
     		@RequestParam(required = false, name = "env") String[] environments,
             @RequestParam(defaultValue = "true", name = "lazy") boolean lazy){ // without tree
             JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, appNames, environments, start, end, lazy, methods, protocols, hosts, ports, medias, auths, status, apiNames, users, path, query);
-        return jqueryRequestService.getIncomingRequestByCriteria(jsf, ApiRequest::new);
+        return jqueryRequestService.getApiSesssionsByCriteria(jsf, ApiRequest::new);
     }
 
-    @GetMapping("session/request/{id}")
+    @GetMapping("session/api/{id}")
     public ResponseEntity<Session> getIncomingRequestById(@PathVariable String id) { // without tree
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(jqueryRequestService.getIncomingRequestById(Collections.singletonList(id), ApiRequest::new)));
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(jqueryRequestService.getApiSessionById(Collections.singletonList(id), ApiRequest::new)));
     }
 
     @GetMapping("session/main")
@@ -105,13 +105,23 @@ public class ApiController {
             @RequestParam(defaultValue = "true", name = "lazy") boolean lazy) {
 
         JqueryMainSessionFilter fc = new JqueryMainSessionFilter(null, null, environments, start, end, lazy, names, launchModes, location);
-        return jqueryRequestService.getMainSessionByCriteria(fc, ApiRequest::new);
+        return jqueryRequestService.getMainSessionsByCriteria(fc, ApiRequest::new);
     }
 
     @GetMapping("session/main/{id}")
     public ResponseEntity<Session> getMainRequestById(@PathVariable String id) { // without tree
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(jqueryRequestService.getMainSessionById(id, ApiRequest::new)));
     }
+
+    /*@GetMapping("db/request/{id}")
+    public ResponseEntity<DatabaseRequest> getDatabaseRequestById(@PathVariable long id){
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1,TimeUnit.DAYS)).body(requireSingle(dao.getDbRequestById()));
+    }*/
+
+    /*@GetMapping("session/api/{id}")
+    public ResponseEntity<Session> getApiSessionParentByChildId(@PathVariable String id){
+
+    }*/
 
     @GetMapping("session/request/{id}/tree")
     public Session getTreebyId(@PathVariable String id){

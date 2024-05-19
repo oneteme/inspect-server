@@ -7,17 +7,17 @@ import org.usf.traceapi.core.RunnableStage;
 
 @Getter
 @Setter
-public class OutcomingStageWrapper {
+public class RunnableStageWrapper {
     @Delegate
     private final RunnableStage stage;
     private final String parentId;
 
-    public OutcomingStageWrapper(String parentId){
+    public RunnableStageWrapper(String parentId){
         this.parentId = parentId;
         this.stage = new RunnableStage();
     }
 
-    public OutcomingStageWrapper(String parentId, RunnableStage stage) {
+    public RunnableStageWrapper(String parentId, RunnableStage stage) {
         this.parentId = parentId;
         this.stage = stage;
     }
