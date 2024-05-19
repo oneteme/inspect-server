@@ -34,7 +34,8 @@ import static org.usf.trace.api.server.config.TraceApiColumn.STATUS;
 import static org.usf.trace.api.server.config.TraceApiColumn.THREAD;
 import static org.usf.trace.api.server.config.TraceApiColumn.USER;
 import static org.usf.trace.api.server.config.TraceApiColumn.VERSION;
-import static org.usf.trace.api.server.config.TraceApiTable.REQUEST;
+import static org.usf.trace.api.server.config.TraceApiTable.APIREQUEST;
+
 
 import java.util.List;
 
@@ -57,22 +58,22 @@ public class MetadataController {
     @GetMapping("aggregate")
     List<FieldMetadata> fetch() {
         return asList(
-                new SimpleFieldMetadata(REQUEST, ELAPSEDTIME, ELAPSEDTIME.reference(), "temps de réponse (s)", "s"),
+                new SimpleFieldMetadata(APIREQUEST, ELAPSEDTIME, ELAPSEDTIME.reference(), "temps de réponse (s)", "s"),
                 new CombinedFieldMetadata("nombre d'appels OK / KO", asList(
-                        new SimpleFieldMetadata(REQUEST, COUNT_ERROR, COUNT_ERROR.reference(), "nombre d'appels en erreur", "count"),
-                        new SimpleFieldMetadata(REQUEST, COUNT_SUCCES, COUNT_SUCCES.reference(), "nombre d'appels OK", "count"))),
+                        new SimpleFieldMetadata(APIREQUEST, COUNT_ERROR, COUNT_ERROR.reference(), "nombre d'appels en erreur", "count"),
+                        new SimpleFieldMetadata(APIREQUEST, COUNT_SUCCES, COUNT_SUCCES.reference(), "nombre d'appels OK", "count"))),
 
                 new CombinedFieldMetadata("nombre d'appels 2xx/4xx/5xx", asList(
-                        new SimpleFieldMetadata(REQUEST, COUNT_ERROR_CLIENT, COUNT_ERROR_CLIENT.reference(), "nombre d'appels en erreur client", "count"),
-                        new SimpleFieldMetadata(REQUEST, COUNT_ERROR_SERVER, COUNT_ERROR_SERVER.reference(), "nombre d'appels en erreur serveur", "count"),
-                        new SimpleFieldMetadata(REQUEST, COUNT_SUCCES, COUNT_SUCCES.reference(), "nombre d'appels OK", "c°"))),
+                        new SimpleFieldMetadata(APIREQUEST, COUNT_ERROR_CLIENT, COUNT_ERROR_CLIENT.reference(), "nombre d'appels en erreur client", "count"),
+                        new SimpleFieldMetadata(APIREQUEST, COUNT_ERROR_SERVER, COUNT_ERROR_SERVER.reference(), "nombre d'appels en erreur serveur", "count"),
+                        new SimpleFieldMetadata(APIREQUEST, COUNT_SUCCES, COUNT_SUCCES.reference(), "nombre d'appels OK", "c°"))),
 
                 new CombinedFieldMetadata("nombre d'appels par temps de réponse", asList(
-                        new SimpleFieldMetadata(REQUEST, COUNT_SLOWEST, COUNT_SLOWEST.reference(), "temps de réponse les plus lents ", "count"),
-                        new SimpleFieldMetadata(REQUEST, COUNT_SLOW, COUNT_SLOW.reference(), "temps de réponse lent", "count"),
-                        new SimpleFieldMetadata(REQUEST, COUNT_MEDIUM, COUNT_MEDIUM.reference(), "temps de réponse moyen", "count"),
-                        new SimpleFieldMetadata(REQUEST, COUNT_FAST, COUNT_FAST.reference(), "temps de réponse rapide", "count"),
-                        new SimpleFieldMetadata(REQUEST, COUNT_FASTEST, COUNT_FASTEST.reference(), "temps de réponse les plus rapides", "count")))
+                        new SimpleFieldMetadata(APIREQUEST, COUNT_SLOWEST, COUNT_SLOWEST.reference(), "temps de réponse les plus lents ", "count"),
+                        new SimpleFieldMetadata(APIREQUEST, COUNT_SLOW, COUNT_SLOW.reference(), "temps de réponse lent", "count"),
+                        new SimpleFieldMetadata(APIREQUEST, COUNT_MEDIUM, COUNT_MEDIUM.reference(), "temps de réponse moyen", "count"),
+                        new SimpleFieldMetadata(APIREQUEST, COUNT_FAST, COUNT_FAST.reference(), "temps de réponse rapide", "count"),
+                        new SimpleFieldMetadata(APIREQUEST, COUNT_FASTEST, COUNT_FASTEST.reference(), "temps de réponse les plus rapides", "count")))
         );
     }
 
@@ -80,28 +81,28 @@ public class MetadataController {
     List<SimpleFieldMetadata> fetchFilters() {
         return asList(
 
-                new SimpleFieldMetadata(REQUEST, METHOD, METHOD.reference(), "Methode", "count"),
-                new SimpleFieldMetadata(REQUEST, PROTOCOL, PROTOCOL.reference(), "Protocole", "count"),
-                new SimpleFieldMetadata(REQUEST, HOST, HOST.reference(), "Hôte", "count"),
-                new SimpleFieldMetadata(REQUEST, PORT, PORT.reference(), "Port", "count"),
-                new SimpleFieldMetadata(REQUEST, PATH, PATH.reference(), "Path", "count"),
-                new SimpleFieldMetadata(REQUEST, QUERY, QUERY.reference(), "Query", "count"),
-                new SimpleFieldMetadata(REQUEST, MEDIA, MEDIA.reference(), "Content-Type", "count"),
-                new SimpleFieldMetadata(REQUEST, AUTH, AUTH.reference(), "Schéma d'authentification", "count"),
-                new SimpleFieldMetadata(REQUEST, STATUS, STATUS.reference(), "Status", "count"),
-                new SimpleFieldMetadata(REQUEST, SIZE_IN, SIZE_IN.reference(), "Taille d'entrée", "count"),
-                new SimpleFieldMetadata(REQUEST, SIZE_OUT, SIZE_OUT.reference(), "Taille de sortie", "count"),
-                new SimpleFieldMetadata(REQUEST, START, START.reference(), "Date de début", "count"),
-                new SimpleFieldMetadata(REQUEST, END, END.reference(), "Date de fin", "count"),
-                new SimpleFieldMetadata(REQUEST, THREAD, THREAD.reference(), "Thread", "count"),
-                new SimpleFieldMetadata(REQUEST, API_NAME, API_NAME.reference(), "Nom d'Api", "count"),
-                new SimpleFieldMetadata(REQUEST, USER, USER.reference(), "Utilisateur", "count"),
-                new SimpleFieldMetadata(REQUEST, APP_NAME, APP_NAME.reference(), "Nom d'application", "count"),
-                new SimpleFieldMetadata(REQUEST, VERSION, VERSION.reference(), "Version", "count"),
-                new SimpleFieldMetadata(REQUEST, ADDRESS, ADDRESS.reference(), "Adresse", "count"),
-                new SimpleFieldMetadata(REQUEST, ENVIRONEMENT, ENVIRONEMENT.reference(), "Environement", "count"),
-                new SimpleFieldMetadata(REQUEST, OS, OS.reference(), "Sytèm d'exploitation", "count"),
-                new SimpleFieldMetadata(REQUEST, RE, RE.reference(), "Environement d'exécution", "count")
+                new SimpleFieldMetadata(APIREQUEST, METHOD, METHOD.reference(), "Methode", "count"),
+                new SimpleFieldMetadata(APIREQUEST, PROTOCOL, PROTOCOL.reference(), "Protocole", "count"),
+                new SimpleFieldMetadata(APIREQUEST, HOST, HOST.reference(), "Hôte", "count"),
+                new SimpleFieldMetadata(APIREQUEST, PORT, PORT.reference(), "Port", "count"),
+                new SimpleFieldMetadata(APIREQUEST, PATH, PATH.reference(), "Path", "count"),
+                new SimpleFieldMetadata(APIREQUEST, QUERY, QUERY.reference(), "Query", "count"),
+                new SimpleFieldMetadata(APIREQUEST, MEDIA, MEDIA.reference(), "Content-Type", "count"),
+                new SimpleFieldMetadata(APIREQUEST, AUTH, AUTH.reference(), "Schéma d'authentification", "count"),
+                new SimpleFieldMetadata(APIREQUEST, STATUS, STATUS.reference(), "Status", "count"),
+                new SimpleFieldMetadata(APIREQUEST, SIZE_IN, SIZE_IN.reference(), "Taille d'entrée", "count"),
+                new SimpleFieldMetadata(APIREQUEST, SIZE_OUT, SIZE_OUT.reference(), "Taille de sortie", "count"),
+                new SimpleFieldMetadata(APIREQUEST, START, START.reference(), "Date de début", "count"),
+                new SimpleFieldMetadata(APIREQUEST, END, END.reference(), "Date de fin", "count"),
+                new SimpleFieldMetadata(APIREQUEST, THREAD, THREAD.reference(), "Thread", "count"),
+                new SimpleFieldMetadata(APIREQUEST, API_NAME, API_NAME.reference(), "Nom d'Api", "count"),
+                new SimpleFieldMetadata(APIREQUEST, USER, USER.reference(), "Utilisateur", "count"),
+                new SimpleFieldMetadata(APIREQUEST, APP_NAME, APP_NAME.reference(), "Nom d'application", "count"),
+                new SimpleFieldMetadata(APIREQUEST, VERSION, VERSION.reference(), "Version", "count"),
+                new SimpleFieldMetadata(APIREQUEST, ADDRESS, ADDRESS.reference(), "Adresse", "count"),
+                new SimpleFieldMetadata(APIREQUEST, ENVIRONEMENT, ENVIRONEMENT.reference(), "Environement", "count"),
+                new SimpleFieldMetadata(APIREQUEST, OS, OS.reference(), "Sytèm d'exploitation", "count"),
+                new SimpleFieldMetadata(APIREQUEST, RE, RE.reference(), "Environement d'exécution", "count")
         );
     }
 }

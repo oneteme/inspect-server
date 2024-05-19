@@ -10,7 +10,7 @@ import java.util.List;
 
 import static org.usf.jquery.core.Utils.isEmpty;
 import static org.usf.trace.api.server.config.TraceApiColumn.*;
-import static org.usf.trace.api.server.config.TraceApiTable.REQUEST;
+import static org.usf.trace.api.server.config.TraceApiTable.APISESSION;
 
 @Getter
 @Setter
@@ -49,52 +49,52 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
     public DBFilter[] filters() {
         List<DBFilter> filters = new ArrayList<>();
         if(!isEmpty(getIds())) {
-            filters.add(REQUEST.column(ID).in(getIds()));
+            filters.add(APISESSION.column(ID).in(getIds()));
         }
         if(!isEmpty(getApiNames())) {
-            filters.add(REQUEST.column(API_NAME).in(getApiNames()));
+            filters.add(APISESSION.column(API_NAME).in(getApiNames()));
         }
         if(!isEmpty(getAppNames())) {
-            filters.add(REQUEST.column(APP_NAME).in(getAppNames()));
+            filters.add(APISESSION.column(APP_NAME).in(getAppNames()));
         }
         if(!isEmpty(getMethods())) {
-            filters.add(REQUEST.column(METHOD).in(getMethods()));
+            filters.add(APISESSION.column(METHOD).in(getMethods()));
         }
         if(!isEmpty(getProtocols())) {
-            filters.add(REQUEST.column(PROTOCOL).in(getProtocols()));
+            filters.add(APISESSION.column(PROTOCOL).in(getProtocols()));
         }
         if(!isEmpty(getHosts())) {
-            filters.add(REQUEST.column(HOST).in(getHosts()));
+            filters.add(APISESSION.column(HOST).in(getHosts()));
         }
         if(!isEmpty(getPorts())) {
-            filters.add(REQUEST.column(PORT).in(getPorts()));
+            filters.add(APISESSION.column(PORT).in(getPorts()));
         }
         if(getPath() != null) {
-            filters.add(REQUEST.column(PATH).like(getPath()));
+            filters.add(APISESSION.column(PATH).like(getPath()));
         }
         if(getQuery() != null) {
-            filters.add(REQUEST.column(QUERY).like(getQuery()));
+            filters.add(APISESSION.column(QUERY).like(getQuery()));
         }
         if(!isEmpty(getMedias())) {
-            filters.add(REQUEST.column(MEDIA).in(getMedias()));
+            filters.add(APISESSION.column(MEDIA).in(getMedias()));
         }
         if(!isEmpty(getAuths())) {
-            filters.add(REQUEST.column(AUTH).in(getAuths()));
+            filters.add(APISESSION.column(AUTH).in(getAuths()));
         }
         if(!isEmpty(getStatus())) {
-            filters.add(REQUEST.column(STATUS).in(getStatus()));
+            filters.add(APISESSION.column(STATUS).in(getStatus()));
         }
         if(!isEmpty(getUsers())) {
-            filters.add(REQUEST.column(USER).in(getUsers()));
+            filters.add(APISESSION.column(USER).in(getUsers()));
         }
         if(!isEmpty(getEnvironments())) {
-            filters.add(REQUEST.column(ENVIRONEMENT).in(getEnvironments()));
+            filters.add(APISESSION.column(ENVIRONEMENT).in(getEnvironments()));
         }
         if(getStart() != null) {
-            filters.add(REQUEST.column(START).greaterOrEqual(getStart()));
+            filters.add(APISESSION.column(START).greaterOrEqual(getStart()));
         }
         if(getEnd() != null) {
-            filters.add(REQUEST.column(END).lessThan(getEnd()));
+            filters.add(APISESSION.column(END).lessThan(getEnd()));
         }
         return filters.toArray(DBFilter[]::new);
     }
