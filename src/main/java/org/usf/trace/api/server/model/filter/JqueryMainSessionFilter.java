@@ -43,13 +43,13 @@ public class JqueryMainSessionFilter extends JquerySessionFilter {
             filters.add(MAINSESSION.column(TYPE).in(getLaunchModes()));
         }
         if(getLocation() != null) {
-            filters.add(APIREQUEST.column(METHOD).like(getLocation()));
+            filters.add(MAINSESSION.column(LOCATION).like(getLocation())); // method - get location ?
         }
         if(getStart() != null) {
-            filters.add(APIREQUEST.column(START).greaterOrEqual(getStart()));
+            filters.add(MAINSESSION.column(START).greaterOrEqual(getStart()));
         }
         if(getEnd() != null) {
-            filters.add(APIREQUEST.column(END).lessThan(getEnd()));
+            filters.add(MAINSESSION.column(END).lessThan(getEnd()));
         }
         return filters.toArray(DBFilter[]::new);
     }
