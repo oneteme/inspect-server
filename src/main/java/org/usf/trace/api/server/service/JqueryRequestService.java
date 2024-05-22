@@ -2,15 +2,19 @@ package org.usf.trace.api.server.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.usf.jquery.core.DBFilter;
 import org.usf.jquery.core.RequestQueryBuilder;
 import org.usf.jquery.core.TaggableColumn;
 import org.usf.jquery.web.ColumnDecorator;
 import org.usf.jquery.web.TableDecorator;
+import org.usf.trace.api.server.config.TraceApiColumn;
+import org.usf.trace.api.server.config.TraceApiTable;
 import org.usf.trace.api.server.model.Exchange;
 import org.usf.trace.api.server.dao.RequestDao;
 import org.usf.trace.api.server.config.DataConstants;
 import org.usf.trace.api.server.model.filter.JqueryMainSessionFilter;
 import org.usf.trace.api.server.model.filter.JqueryRequestSessionFilter;
+import org.usf.trace.api.server.model.filter.JquerySessionFilter;
 import org.usf.trace.api.server.model.wrapper.DatabaseActionWrapper;
 import org.usf.trace.api.server.model.wrapper.DatabaseRequestWrapper;
 import org.usf.trace.api.server.model.wrapper.ApiRequestWrapper;
@@ -63,6 +67,40 @@ public class JqueryRequestService {
             });
         });
         return prntIncList.stream().filter(r ->  r.getId().equals(id)).findFirst().orElseThrow();
+    }
+    public Map<String,String> getSessionParent ( String childId){
+       Map<String,String> result = null;
+        var res = getSessionParentByChildId("APISESSION", childId);
+        if(res != null) {
+            result = Map.of("id",res,"type","api");
+        }
+        else{
+            res = getSessionParentByChildId("MAINSESSION", childId);
+            if(res!= null){
+                result = Map.of("id",res,"type","main");
+            }
+        }
+        return result;
+    }
+    public String getSessionParentByChildId(String tableName, String childId){
+
+        TraceApiTable table;
+        try{
+            table  = TraceApiTable.valueOf(tableName.toUpperCase());
+        }catch (IllegalArgumentException e ){
+            return null;
+        }
+        var v = new RequestQueryBuilder();
+        v.select(table.table(),
+                getColumns(
+                         table,ID
+                )
+        );
+        v.tables(APIREQUEST.table());
+        v.filters(table.column(ID).equal(APIREQUEST.column(PARENT)).and(APIREQUEST.column(ID).equal(childId)));
+        return v.build().execute(ds,(rs -> { if(rs.next()) return rs.getString(table.columnName(ID).get()); // to be changed
+            return null;
+        }));
     }
 
     public List<Session> getApiSessionById(List<String> ids, Supplier<? extends ApiRequest> fn){
@@ -123,9 +161,10 @@ public class JqueryRequestService {
         });
         if (Objects.requireNonNull(jsf).isLazy() && !res.isEmpty()) {
             var reqMap = res.stream().collect(toMap(Session::getId, identity()));
-            getApiRequests(reqMap.keySet().toArray(String[]::new), fn).forEach(r -> reqMap.get(r.getParentId()).append(r.getRequest()));
-            getRunnableStages(reqMap.keySet().toArray(String[]::new)).forEach(r -> reqMap.get(r.getParentId()).append(r.getStage()));
-            getDatabaseRequests(reqMap.keySet().toArray(String[]::new)).forEach(q -> reqMap.get(q.getParentId()).append(q.getQuery()));
+            var parentIds = reqMap.keySet().toArray(String[]::new);
+            getApiRequests(parentIds, fn).forEach(r -> reqMap.get(r.getParentId()).append(r.getRequest()));
+            getRunnableStages(parentIds).forEach(r -> reqMap.get(r.getParentId()).append(r.getStage()));
+            getDatabaseRequests(DBQUERY.column(PARENT).in(parentIds)).forEach(q -> reqMap.get(q.getParentId()).append(q));
         }
         return res;
     }
@@ -178,9 +217,10 @@ public class JqueryRequestService {
         });
         if (Objects.requireNonNull(jsf).isLazy() && !res.isEmpty()) {
             var reqMap = res.stream().collect(toMap(Session::getId, identity()));
-            getApiRequests(reqMap.keySet().toArray(String[]::new), fn).forEach(r -> reqMap.get(r.getParentId()).append(r.getRequest()));
-            getRunnableStages(reqMap.keySet().toArray(String[]::new)).forEach(r -> reqMap.get(r.getParentId()).append(r.getStage()));
-            getDatabaseRequests(reqMap.keySet().toArray(String[]::new)).forEach(q -> reqMap.get(q.getParentId()).append(q.getQuery()));
+            var parentIds = reqMap.keySet().toArray(String[]::new);
+            getApiRequests(parentIds, fn).forEach(r -> reqMap.get(r.getParentId()).append(r.getRequest()));
+            getRunnableStages(parentIds).forEach(r -> reqMap.get(r.getParentId()).append(r.getStage()));
+            getDatabaseRequests(DBQUERY.column(PARENT).in(parentIds)).forEach(q -> reqMap.get(q.getParentId()).append(q));
         }
         return res;
     }
@@ -252,7 +292,7 @@ public class JqueryRequestService {
         });
     }
 
-    public List<DatabaseRequestWrapper> getDatabaseRequests(String[] ids) {
+    public List<DatabaseRequestWrapper> getDatabaseRequests(DBFilter filter) {
         var v = new RequestQueryBuilder();
         v.select(
                 DBQUERY.table(),
@@ -261,7 +301,7 @@ public class JqueryRequestService {
                         DB_NAME, DB_VERSION, NAME, COMMANDS, LOCATION, PARENT
                 )
         );
-        v.filters(DBQUERY.column(PARENT).in(ids));
+        v.filters(filter);
         v.orders(DBQUERY.column(START).order());
         var queries = v.build().execute(ds, (rs) -> {
             List<DatabaseRequestWrapper> outs = new ArrayList<>();
@@ -285,10 +325,10 @@ public class JqueryRequestService {
             }
             return outs;
         });
-        if (!queries.isEmpty()) {
+       /* if (!queries.isEmpty()) {
             var qMap = queries.stream().collect(toMap(DatabaseRequestWrapper::getId, identity())); //unique
             getDatabaseActions(qMap.keySet().toArray(Long[]::new)).forEach(a -> qMap.get(a.getParentId()).getActions().add(a.getAction()));
-        }
+        }*/
         return queries;
     }
 

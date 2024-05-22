@@ -3,9 +3,11 @@ package org.usf.trace.api.server.controller;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.CacheControl;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.usf.trace.api.server.dao.RequestDao;
+import org.usf.trace.api.server.model.wrapper.DatabaseRequestWrapper;
 import org.usf.trace.api.server.service.SessionQueueService;
 import org.usf.trace.api.server.service.JqueryRequestService;
 import org.usf.trace.api.server.model.filter.JqueryMainSessionFilter;
@@ -13,8 +15,7 @@ import org.usf.trace.api.server.model.filter.JqueryRequestSessionFilter;
 import org.usf.traceapi.core.*;
 
 import java.time.Instant;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.Objects.isNull;
@@ -23,6 +24,9 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.ResponseEntity.accepted;
 import static org.springframework.http.ResponseEntity.status;
 import static org.usf.trace.api.server.Utils.requireSingle;
+import static org.usf.trace.api.server.config.TraceApiColumn.ID;
+import static org.usf.trace.api.server.config.TraceApiColumn.PARENT;
+import static org.usf.trace.api.server.config.TraceApiTable.DBQUERY;
 import static org.usf.traceapi.core.Session.nextId;
 
 @Slf4j
@@ -113,10 +117,20 @@ public class ApiController {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(jqueryRequestService.getMainSessionById(id, ApiRequest::new)));
     }
 
-    /*@GetMapping("db/request/{id}")
-    public ResponseEntity<DatabaseRequest> getDatabaseRequestById(@PathVariable long id){
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1,TimeUnit.DAYS)).body(requireSingle(dao.getDbRequestById()));
-    }*/
+    @GetMapping("session/api/{id}/parent")
+    public ResponseEntity<Map<String,String>> getParentIdByChildId(@PathVariable String id){
+         return Optional.ofNullable(jqueryRequestService.getSessionParent(id))
+                 .map(o -> ResponseEntity.ok().body(o))
+                 .orElseGet(()->ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    }
+
+    @GetMapping("db/{id}")
+    public ResponseEntity<DatabaseRequestWrapper> getDatabaseRequestById(@PathVariable long id){
+         return Optional.ofNullable(requireSingle(jqueryRequestService.getDatabaseRequests(DBQUERY.column(ID).equal(id))))
+                 .map(object -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1,TimeUnit.DAYS))
+                 .body(object))
+                 .orElseGet(() ->ResponseEntity.status(HttpStatus.NOT_FOUND).cacheControl(CacheControl.noCache()).body(null));
+    }
 
     /*@GetMapping("session/api/{id}")
     public ResponseEntity<Session> getApiSessionParentByChildId(@PathVariable String id){
