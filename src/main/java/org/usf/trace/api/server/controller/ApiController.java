@@ -98,6 +98,21 @@ public class ApiController {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(jqueryRequestService.getApiSessionById(Collections.singletonList(id), ApiRequest::new, false)));
     }
 
+    @GetMapping("session/api/{id}/parent")
+    public ResponseEntity<Map<String,String>> getParentIdByChildId(@PathVariable String id){
+        return Optional.ofNullable(jqueryRequestService.getSessionParent(id))
+                .map(o -> ResponseEntity.ok().body(o))
+                .orElseGet(()->ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    }
+
+    @GetMapping("session/db/{id}")
+    public ResponseEntity<DatabaseRequestWrapper> getDatabaseRequestById(@PathVariable long id){
+        return Optional.ofNullable(requireSingle(jqueryRequestService.getDatabaseRequests(DBQUERY.column(ID).equal(id),true)))
+                .map(object -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1,TimeUnit.DAYS))
+                        .body(object))
+                .orElseGet(() ->ResponseEntity.status(HttpStatus.NOT_FOUND).cacheControl(CacheControl.noCache()).body(null));
+    }
+
     @GetMapping("session/main")
     public List<Session> getMainRequestByCriteria(
             @RequestParam(required = false, name = "env") String[] environments,
@@ -117,20 +132,6 @@ public class ApiController {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(jqueryRequestService.getMainSessionById(id, ApiRequest::new, false)));
     }
 
-    @GetMapping("session/api/{id}/parent")
-    public ResponseEntity<Map<String,String>> getParentIdByChildId(@PathVariable String id){
-         return Optional.ofNullable(jqueryRequestService.getSessionParent(id))
-                 .map(o -> ResponseEntity.ok().body(o))
-                 .orElseGet(()->ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
-    }
-
-    @GetMapping("session/db/{id}")
-    public ResponseEntity<DatabaseRequestWrapper> getDatabaseRequestById(@PathVariable long id){
-         return Optional.ofNullable(requireSingle(jqueryRequestService.getDatabaseRequests(DBQUERY.column(ID).equal(id),true)))
-                 .map(object -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1,TimeUnit.DAYS))
-                 .body(object))
-                 .orElseGet(() ->ResponseEntity.status(HttpStatus.NOT_FOUND).cacheControl(CacheControl.noCache()).body(null));
-    }
 
     @GetMapping("session/request/{id}/tree")
     public Session getTreebyId(@PathVariable String id){
