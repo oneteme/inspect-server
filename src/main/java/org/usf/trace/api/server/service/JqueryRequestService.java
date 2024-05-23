@@ -7,24 +7,25 @@ import org.usf.jquery.core.RequestQueryBuilder;
 import org.usf.jquery.core.TaggableColumn;
 import org.usf.jquery.web.ColumnDecorator;
 import org.usf.jquery.web.TableDecorator;
+import org.usf.trace.api.server.config.TraceApiColumn;
+import org.usf.trace.api.server.config.TraceApiTable;
 import org.usf.trace.api.server.model.Exchange;
 import org.usf.trace.api.server.dao.RequestDao;
 import org.usf.trace.api.server.config.DataConstants;
 import org.usf.trace.api.server.model.filter.JqueryMainSessionFilter;
 import org.usf.trace.api.server.model.filter.JqueryRequestSessionFilter;
 import org.usf.trace.api.server.model.wrapper.DatabaseActionWrapper;
-import org.usf.trace.api.server.model.wrapper.OutcomingQueryWrapper;
-import org.usf.trace.api.server.model.wrapper.OutcomingRequestWrapper;
-import org.usf.trace.api.server.model.wrapper.OutcomingStageWrapper;
+import org.usf.trace.api.server.model.wrapper.DatabaseRequestWrapper;
+import org.usf.trace.api.server.model.wrapper.ApiRequestWrapper;
+import org.usf.trace.api.server.model.wrapper.RunnableStageWrapper;
 import org.usf.traceapi.core.*;
-
 import javax.sql.DataSource;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-
+import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
@@ -44,8 +45,8 @@ public class JqueryRequestService {
 
     public Session getTreeById(String id) {
         List<String> prntIds = dao.selectChildsById(id);
-        List<Session> prntIncList = getIncomingRequestById(prntIds, Exchange::new);
-        List<Session> sessionList = getMainSessionById(id, Exchange::new);
+        List<Session> prntIncList = getApiSessionById(prntIds, Exchange::new, false);
+        List<Session> sessionList = getMainSessionById(id, Exchange::new, false);
         if(sessionList != null && !sessionList.isEmpty()){
             prntIncList.add(sessionList.get(0));
         }
@@ -64,25 +65,50 @@ public class JqueryRequestService {
         });
         return prntIncList.stream().filter(r ->  r.getId().equals(id)).findFirst().orElseThrow();
     }
+    public Map<String,String> getSessionParent (String childId){
 
-    public List<Session> getIncomingRequestById(List<String> ids, Supplier<? extends ApiRequest> fn){
-        JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(ids.toArray(String[]::new), true);
-        return getIncomingRequestByCriteria(jsf, fn);
+       var prnt = getSessionById(APIREQUEST, PARENT , APIREQUEST.column(ID).equal(childId));
+       if(prnt != null){
+           var res = getSessionById(APISESSION, ID, APISESSION.column(ID).equal(prnt));
+           if(res != null) {
+              return Map.of("id", res, "type", "api");
+           }
+           res = getSessionById(MAINSESSION, ID, MAINSESSION.column(ID).equal(prnt));
+           if(res!= null){
+               return Map.of("id", res, "type", "main");
+           }
+       }
+       return null;
     }
 
-    public List<Session> getIncomingRequestByCriteria(JqueryRequestSessionFilter jsf, Supplier<? extends ApiRequest> fn) {
+    public String getSessionById(TraceApiTable table, TraceApiColumn target, DBFilter filters){ // main / apissesion
+        var v = new RequestQueryBuilder().select(table.table(), getColumns(table,target)).filters(filters);
+        return v.build().execute(ds, rs -> {
+            if(rs.next()){
+                return rs.getString(table.columnName(target).get()); // to be changed
+            }
+            return null;
+        });
+    }
+
+    public List<Session> getApiSessionById(List<String> ids, Supplier<? extends ApiRequest> fn, boolean queryLazy){
+        JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(ids.toArray(String[]::new), true);
+        return getApiSesssionsByCriteria(jsf, fn, queryLazy);
+    }
+
+    public List<Session> getApiSesssionsByCriteria(JqueryRequestSessionFilter jsf, Supplier<? extends ApiRequest> fn, boolean queryLazy) {
         var v = new RequestQueryBuilder();
         v.select(
-                REQUEST.table(),
+                APISESSION.table(),
                 getColumns(
-                        REQUEST, ID, API_NAME, APP_NAME, METHOD,
+                        APISESSION, ID, API_NAME, APP_NAME, METHOD,
                         PROTOCOL, HOST, PORT, PATH, QUERY, MEDIA, AUTH, STATUS, SIZE_IN, SIZE_OUT,
                         START, END, THREAD, ERR_TYPE, ERR_MSG, USER, VERSION, ADDRESS, ENVIRONEMENT,
                         OS, RE
                 )
         );
         if(jsf != null) {
-            v.filters(jsf.filters(REQUEST).toArray(DBFilter[]::new));
+            v.filters(jsf.filters(APISESSION).toArray(DBFilter[]::new));
         }
         List<Session> res = v.build().execute(ds, (rs) -> {
             List<Session> sessions = new ArrayList<>();
@@ -123,29 +149,30 @@ public class JqueryRequestService {
         });
         if (Objects.requireNonNull(jsf).isLazy() && !res.isEmpty()) {
             var reqMap = res.stream().collect(toMap(Session::getId, identity()));
-            getOutcomingRequests(reqMap.keySet().toArray(String[]::new), fn).forEach(r -> reqMap.get(r.getParentId()).append(r.getRequest()));
-            getOutcomingStages(reqMap.keySet().toArray(String[]::new)).forEach(r -> reqMap.get(r.getParentId()).append(r.getStage()));
-            getOutcomingQueries(reqMap.keySet().toArray(String[]::new)).forEach(q -> reqMap.get(q.getParentId()).append(q.getQuery()));
+            var parentIds = reqMap.keySet().toArray(String[]::new);
+            getApiRequests(parentIds, fn).forEach(r -> reqMap.get(r.getParentId()).append(r.getRequest()));
+            getRunnableStages(parentIds).forEach(r -> reqMap.get(r.getParentId()).append(r.getStage()));
+            getDatabaseRequests(DBQUERY.column(PARENT).in(parentIds),queryLazy).forEach(q -> reqMap.get(q.getParentId()).append(q));
         }
         return res;
     }
 
-    public List<Session> getMainSessionById(String id, Supplier<? extends ApiRequest> fn){
+    public List<Session> getMainSessionById(String id, Supplier<? extends ApiRequest> fn, boolean queryLazy){
         JqueryMainSessionFilter jsf = new JqueryMainSessionFilter(Collections.singletonList(id).toArray(String[]::new), true);
-        return getMainSessionByCriteria(jsf, fn);
+        return getMainSessionsByCriteria(jsf, fn, queryLazy);
     }
 
-    public List<Session> getMainSessionByCriteria(JqueryMainSessionFilter jsf, Supplier<? extends ApiRequest> fn) {
+    public List<Session> getMainSessionsByCriteria(JqueryMainSessionFilter jsf, Supplier<? extends ApiRequest> fn,boolean queryLazy) {
         var v = new RequestQueryBuilder();
         v.select(
-                SESSION.table(),
+                MAINSESSION.table(),
                 getColumns(
-                        SESSION, ID, NAME, START, END, USER, OS, RE, TYPE, LOCATION, THREAD,
+                        MAINSESSION, ID, NAME, START, END, USER, OS, RE, TYPE, LOCATION, THREAD,
                         APP_NAME, VERSION, ADDRESS, ENVIRONEMENT, ERR_TYPE, ERR_MSG
                 )
         );
         if(jsf != null) {
-            v.filters(jsf.filters(SESSION).toArray(DBFilter[]::new));
+            v.filters(jsf.filters(MAINSESSION).toArray(DBFilter[]::new));
         }
         List<Session> res = v.build().execute(ds, (rs) -> {
             List<Session> sessions = new ArrayList<>();
@@ -178,27 +205,28 @@ public class JqueryRequestService {
         });
         if (Objects.requireNonNull(jsf).isLazy() && !res.isEmpty()) {
             var reqMap = res.stream().collect(toMap(Session::getId, identity()));
-            getOutcomingRequests(reqMap.keySet().toArray(String[]::new), fn).forEach(r -> reqMap.get(r.getParentId()).append(r.getRequest()));
-            getOutcomingStages(reqMap.keySet().toArray(String[]::new)).forEach(r -> reqMap.get(r.getParentId()).append(r.getStage()));
-            getOutcomingQueries(reqMap.keySet().toArray(String[]::new)).forEach(q -> reqMap.get(q.getParentId()).append(q.getQuery()));
+            var parentIds = reqMap.keySet().toArray(String[]::new);
+            getApiRequests(parentIds, fn).forEach(r -> reqMap.get(r.getParentId()).append(r.getRequest()));
+            getRunnableStages(parentIds).forEach(r -> reqMap.get(r.getParentId()).append(r.getStage()));
+            getDatabaseRequests(DBQUERY.column(PARENT).in(parentIds),queryLazy).forEach(q -> reqMap.get(q.getParentId()).append(q));
         }
         return res;
     }
-    public List<OutcomingRequestWrapper> getOutcomingRequests(String[] incomingId, Supplier<? extends ApiRequest> fn) { //use criteria
+    public List<ApiRequestWrapper> getApiRequests(String[] incomingId, Supplier<? extends ApiRequest> fn) { //use criteria
         var v = new RequestQueryBuilder();
         v.select(
-                OUT.table(),
+                APIREQUEST.table(),
                 getColumns(
-                        OUT, ID, PROTOCOL, HOST, PORT, PATH, QUERY, METHOD, STATUS, SIZE_IN,
+                        APIREQUEST, ID, PROTOCOL, HOST, PORT, PATH, QUERY, METHOD, STATUS, SIZE_IN,
                         SIZE_OUT, START, END, THREAD, ERR_TYPE, ERR_MSG, PARENT
                 )
         );
-        v.filters(OUT.column(PARENT).in(incomingId));
-        v.orders(OUT.column(START).order());
+        v.filters(APIREQUEST.column(PARENT).in(incomingId));
+        v.orders(APIREQUEST.column(START).order());
         return v.build().execute(ds, (rs) -> {
-            List<OutcomingRequestWrapper> outs = new ArrayList<>();
+            List<ApiRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
-                OutcomingRequestWrapper out = new OutcomingRequestWrapper(rs.getString(DataConstants.outReqColumns(PARENT)), fn);
+                ApiRequestWrapper out = new ApiRequestWrapper(rs.getString(DataConstants.outReqColumns(PARENT)), fn);
                 out.setId(rs.getString(DataConstants.outReqColumns(ID)));
                 out.setProtocol(rs.getString(DataConstants.outReqColumns(PROTOCOL)));
                 out.setHost(rs.getString(DataConstants.outReqColumns(HOST)));
@@ -222,7 +250,7 @@ public class JqueryRequestService {
         });
     }
 
-    public List<OutcomingStageWrapper> getOutcomingStages(String[] ids){
+    public List<RunnableStageWrapper> getRunnableStages(String[] ids){
         var v = new RequestQueryBuilder();
         v.select(
                 STAGES.table(),
@@ -233,9 +261,9 @@ public class JqueryRequestService {
         v.filters(STAGES.column(PARENT).in(ids));
         v.orders(STAGES.column(START).order());
         return v.build().execute(ds, (rs) -> {
-            List<OutcomingStageWrapper> outs = new ArrayList<>();
+            List<RunnableStageWrapper> outs = new ArrayList<>();
             while (rs.next()) {
-                OutcomingStageWrapper out = new OutcomingStageWrapper(rs.getString(DataConstants.outStgColumns(PARENT)));
+                RunnableStageWrapper out = new RunnableStageWrapper(rs.getString(DataConstants.outStgColumns(PARENT)));
                 out.setName(rs.getString(DataConstants.outStgColumns(NAME)));
                 out.setLocation(rs.getString(DataConstants.outStgColumns(LOCATION)));
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(DataConstants.outStgColumns(START))));
@@ -252,21 +280,21 @@ public class JqueryRequestService {
         });
     }
 
-    public List<OutcomingQueryWrapper> getOutcomingQueries(String[] ids) { // non empty
+    public List<DatabaseRequestWrapper> getDatabaseRequests(DBFilter filter, boolean queryLazy) {
         var v = new RequestQueryBuilder();
         v.select(
                 DBQUERY.table(),
                 getColumns(
                         DBQUERY, ID, HOST, PORT, DB, START, END, USER, THREAD, DRIVER,
-                        DB_NAME, DB_VERSION, NAME, COMMANDS, LOCATION, PARENT
+                        DB_NAME, DB_VERSION, NAME, COMMANDS, LOCATION, COMPLETE, PARENT
                 )
         );
-        v.filters(DBQUERY.column(PARENT).in(ids));
+        v.filters(filter);
         v.orders(DBQUERY.column(START).order());
         var queries = v.build().execute(ds, (rs) -> {
-            List<OutcomingQueryWrapper> outs = new ArrayList<>();
+            List<DatabaseRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
-                OutcomingQueryWrapper out = new OutcomingQueryWrapper(rs.getString(DataConstants.outQryColumns(PARENT)), rs.getLong(DataConstants.outQryColumns(ID)));
+                DatabaseRequestWrapper out = new DatabaseRequestWrapper(rs.getString(DataConstants.outQryColumns(PARENT)), rs.getLong(DataConstants.outQryColumns(ID)));
                 out.setHost(rs.getString(DataConstants.outQryColumns(HOST)));
                 out.setPort(rs.getInt(DataConstants.outQryColumns(PORT)));
                 out.setDatabase(rs.getString(DataConstants.outQryColumns(DB)));
@@ -281,16 +309,16 @@ public class JqueryRequestService {
                 out.setName(rs.getString(DataConstants.outQryColumns(NAME)));
                 out.setCommands(valueOfNullabletoEnumList(SqlCommand.class, rs.getString(DataConstants.outQryColumns(COMMANDS))));
                 out.setActions(new ArrayList<>());
+                out.setCompleted("T".equals(rs.getString(DataConstants.outQryColumns(COMPLETE))));
                 outs.add(out);
             }
             return outs;
         });
-        if (!queries.isEmpty()) {
-            var qMap = queries.stream().collect(toMap(OutcomingQueryWrapper::getId, identity())); //unique
+        if (queryLazy && !queries.isEmpty()) {
+            var qMap = queries.stream().collect(toMap(DatabaseRequestWrapper::getId, identity())); //unique
             getDatabaseActions(qMap.keySet().toArray(Long[]::new)).forEach(a -> qMap.get(a.getParentId()).getActions().add(a.getAction()));
         }
         return queries;
-
     }
 
     public List<DatabaseActionWrapper> getDatabaseActions(Long[] ids) {
@@ -336,10 +364,14 @@ public class JqueryRequestService {
                 .orElse(null);
     }
 
-    private static <T extends Enum<T>> List<T> valueOfNullabletoEnumList(Class<T> classe, String... values){
-        return Stream.of(values)
+    private static <T extends Enum<T>> List<T> valueOfNullabletoEnumList(Class<T> classe, String values){
+        return Stream.of(splitNullable(values))
                 .map(v-> valueOfNullable(classe, v))
                 .filter(Objects::nonNull)
                 .toList();
+    }
+    private static final String[] empty_array = new String[0];
+    private static String[] splitNullable(String s){
+        return isNull(s) ? empty_array : s.split(",");
     }
 }

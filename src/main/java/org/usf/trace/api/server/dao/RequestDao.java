@@ -4,9 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import org.usf.trace.api.server.model.wrapper.OutcomingQueryWrapper;
-import org.usf.trace.api.server.model.wrapper.OutcomingRequestWrapper;
-import org.usf.trace.api.server.model.wrapper.OutcomingStageWrapper;
+import org.usf.trace.api.server.model.wrapper.DatabaseRequestWrapper;
+import org.usf.trace.api.server.model.wrapper.ApiRequestWrapper;
+import org.usf.trace.api.server.model.wrapper.RunnableStageWrapper;
 import org.usf.traceapi.core.*;
 
 import java.sql.ResultSet;
@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
 import static java.sql.Types.*;
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
@@ -35,14 +36,14 @@ public class RequestDao {
 
     @Transactional(rollbackFor = Exception.class)
     public void saveSessions(List<Session> sessions) {
-        filterAndSave(sessions, ApiSession.class, this::addIncomingRequest);
-        filterAndSave(sessions, MainSession.class, this::addMainRequest);
-        filterSubAndSave(sessions, Session::getRequests, (s, r) -> new OutcomingRequestWrapper(s.getId(), r), this::addOutcomingRequest);
-        filterSubAndSave(sessions, Session::getQueries, (s, q) -> new OutcomingQueryWrapper(s.getId(), q), this::addOutcomingQueries);
-        filterSubAndSave(sessions, Session::getStages, (s, st) -> new OutcomingStageWrapper(s.getId(), st), this::addOutcomingStages);
+        filterAndSave(sessions, ApiSession.class, this::addApiSessions);
+        filterAndSave(sessions, MainSession.class, this::addMainSessions);
+        filterSubAndSave(sessions, Session::getRequests, (s, r) -> new ApiRequestWrapper(s.getId(), r), this::addApiRequests);
+        filterSubAndSave(sessions, Session::getQueries, (s, q) -> new DatabaseRequestWrapper(s.getId(), q), this::addDatabaseRequests);
+        filterSubAndSave(sessions, Session::getStages, (s, st) -> new RunnableStageWrapper(s.getId(), st), this::addRunnableStages);
     }
 
-    private void addMainRequest(List<MainSession> reqList) {
+    private void addMainSessions(List<MainSession> reqList) {
         template.batchUpdate("INSERT INTO E_MAIN_SES(ID_SES,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE,VA_ERR_CLS,VA_ERR_MSG)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             var app = nullableApplication(o.getApplication());
@@ -66,7 +67,7 @@ public class RequestDao {
         });
     }
 
-    private void addIncomingRequest(List<ApiSession> reqList) {
+    private void addApiSessions(List<ApiSession> reqList) {
         template.batchUpdate("INSERT INTO E_API_SES(ID_SES,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             var app = nullableApplication(o.getApplication());
@@ -99,7 +100,7 @@ public class RequestDao {
         });
     }
 
-    private void addOutcomingRequest(List<OutcomingRequestWrapper> reqList) {
+    private void addApiRequests(List<ApiRequestWrapper> reqList) {
         template.batchUpdate("INSERT INTO E_API_REQ(CD_API,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,CD_SES)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             var exp = nullableException(o.getException());
@@ -124,7 +125,7 @@ public class RequestDao {
         });
     }
 
-    public void addOutcomingStages(List<OutcomingStageWrapper> stagesList){
+    public void addRunnableStages(List<RunnableStageWrapper> stagesList){
         template.batchUpdate("INSERT INTO E_STG(VA_NAME,LOC,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,CD_SES)"
                 + " VALUES(?,?,?,?,?,?,?,?,?)", stagesList,stagesList.size(),(ps,o)-> {
             var exp = nullableException(o.getException());
@@ -140,13 +141,13 @@ public class RequestDao {
         });
     }
 
-    private void addOutcomingQueries(List<OutcomingQueryWrapper> qryList) {
+    private void addDatabaseRequests(List<DatabaseRequestWrapper> qryList) {
         var maxId = template.queryForObject("SELECT COALESCE(MAX(ID_OUT_QRY), 0) FROM E_DB_REQ", Long.class);
         var inc = new AtomicLong(maxId);
 
         template.batchUpdate("INSERT INTO E_DB_REQ(ID_OUT_QRY,VA_HST,CD_PRT,VA_DB,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_DRV,VA_DB_NME,VA_DB_VRS,VA_CMD,VA_NME,VA_LOC,VA_CMPLT,CD_SES)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", qryList, qryList.size(), (ps, o) -> {
-            var completed = o.getQuery().isCompleted();// o.getActions().stream().allMatch(a-> isNull(a.getException()));
+            var completed = o.getActions().stream().allMatch(a-> isNull(a.getException()));
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getHost());
             ps.setInt(3, Objects.requireNonNullElse(o.getPort(),-1));
@@ -168,7 +169,7 @@ public class RequestDao {
         addDatabaseActions(qryList);
     }
 
-    private void addDatabaseActions(List<OutcomingQueryWrapper> queries) {
+    private void addDatabaseActions(List<DatabaseRequestWrapper> queries) {
         template.batchUpdate("INSERT INTO E_DB_ACT(VA_TYP,DH_DBT,DH_FIN,VA_ERR_CLS,VA_ERR_MSG,CD_COUNT,CD_OUT_QRY) VALUES(?,?,?,?,?,?,?)",
                 queries.stream()
                         .flatMap(e -> e.getActions().stream().map(da -> {
@@ -223,12 +224,15 @@ public class RequestDao {
     private static ExceptionInfo nullableException(ExceptionInfo exp) {
         return ofNullable(exp).orElseGet(() -> new ExceptionInfo(null, null));
     }
-
     private static String valueOfNullable(Object o) {
         return ofNullable(o).map(Object::toString).orElse(null);
     }
-
     private static <T extends Enum<T>> String valueOfNullableList(List<T> enumList) { return ofNullable(enumList).map(list -> list.stream().map(Enum::toString).collect(Collectors.joining(","))).orElse(null);}
+
+    private static final String[] empty_array = new String[0];
+    private static String[] splitNullable(String s){
+        return isNull(s) ? empty_array : s.split(",");
+    }
     private static String  valueOfNullableArray(long[]array){ return ofNullable(array).map(arr -> LongStream.of(arr).mapToObj(Long::toString).collect(Collectors.joining(","))).orElse(null);}
 }
 

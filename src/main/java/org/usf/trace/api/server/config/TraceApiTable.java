@@ -14,10 +14,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum TraceApiTable implements TableDecorator {
 
-    OUT("e_api_req", DataConstants::outReqColumns),
-    REQUEST("e_api_ses", DataConstants::incReqColumns),
-    REQUEST2("e_api_ses", DataConstants::incReqColumns),
-    SESSION("e_main_ses", DataConstants::sessionColumns),
+    APIREQUEST("e_api_req", DataConstants::outReqColumns),
+    APISESSION("e_api_ses", DataConstants::incReqColumns),
+    APISESSION2("e_api_ses", DataConstants::incReqColumns),
+    MAINSESSION("e_main_ses", DataConstants::sessionColumns),
     DBQUERY("e_db_req",DataConstants::outQryColumns),
     STAGES("e_stg",DataConstants::outStgColumns),
     DBACTION("e_db_act",DataConstants::dbActColumns);

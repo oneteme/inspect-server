@@ -7,17 +7,17 @@ import org.usf.traceapi.core.ApiRequest;
 import java.util.function.Supplier;
 
 @Getter
-public class OutcomingRequestWrapper {
+public class ApiRequestWrapper {
     @Delegate
     private final ApiRequest request;
     private final String parentId;
 
-    public OutcomingRequestWrapper(String parentId, Supplier<? extends ApiRequest> fn) {
+    public ApiRequestWrapper(String parentId, Supplier<? extends ApiRequest> fn) {
         this.parentId = parentId;
         this.request = fn.get(); //delegated setters
     }
 
-    public OutcomingRequestWrapper(String parentId, ApiRequest request) {
+    public ApiRequestWrapper(String parentId, ApiRequest request) {
         this.parentId = parentId;
         this.request = request; //delegated getters
     }
