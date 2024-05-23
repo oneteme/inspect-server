@@ -7,6 +7,7 @@ import org.usf.jquery.core.RequestQueryBuilder;
 import org.usf.jquery.core.TaggableColumn;
 import org.usf.jquery.web.ColumnDecorator;
 import org.usf.jquery.web.TableDecorator;
+import org.usf.trace.api.server.config.TraceApiColumn;
 import org.usf.trace.api.server.config.TraceApiTable;
 import org.usf.trace.api.server.model.Exchange;
 import org.usf.trace.api.server.dao.RequestDao;
@@ -64,39 +65,30 @@ public class JqueryRequestService {
         });
         return prntIncList.stream().filter(r ->  r.getId().equals(id)).findFirst().orElseThrow();
     }
-    public Map<String,String> getSessionParent ( String childId){
-       Map<String,String> result = null;
-        var res = getSessionParentByChildId("APISESSION", childId);
-        if(res != null) {
-            result = Map.of("id",res,"type","api");
-        }
-        else{
-            res = getSessionParentByChildId("MAINSESSION", childId);
-            if(res!= null){
-                result = Map.of("id",res,"type","main");
-            }
-        }
-        return result;
-    }
-    public String getSessionParentByChildId(String tableName, String childId){
+    public Map<String,String> getSessionParent (String childId){
 
-        TraceApiTable table;
-        try{
-            table  = TraceApiTable.valueOf(tableName.toUpperCase());
-        }catch (IllegalArgumentException e ){
+       var prnt = getSessionById(APIREQUEST, PARENT , APIREQUEST.column(ID).equal(childId));
+       if(prnt != null){
+           var res = getSessionById(APISESSION, ID, APISESSION.column(ID).equal(prnt));
+           if(res != null) {
+              return Map.of("id", res, "type", "api");
+           }
+           res = getSessionById(MAINSESSION, ID, MAINSESSION.column(ID).equal(prnt));
+           if(res!= null){
+               return Map.of("id", res, "type", "main");
+           }
+       }
+       return null;
+    }
+
+    public String getSessionById(TraceApiTable table, TraceApiColumn target, DBFilter filters){ // main / apissesion
+        var v = new RequestQueryBuilder().select(table.table(), getColumns(table,target)).filters(filters);
+        return v.build().execute(ds, rs -> {
+            if(rs.next()){
+                return rs.getString(table.columnName(target).get()); // to be changed
+            }
             return null;
-        }
-        var v = new RequestQueryBuilder();
-        v.select(table.table(),
-                getColumns(
-                         table,ID
-                )
-        );
-        v.tables(APIREQUEST.table());
-        v.filters(table.column(ID).equal(APIREQUEST.column(PARENT)).and(APIREQUEST.column(ID).equal(childId)));
-        return v.build().execute(ds,(rs -> { if(rs.next()) return rs.getString(table.columnName(ID).get()); // to be changed
-            return null;
-        }));
+        });
     }
 
     public List<Session> getApiSessionById(List<String> ids, Supplier<? extends ApiRequest> fn, boolean queryLazy){
