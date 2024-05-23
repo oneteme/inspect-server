@@ -3,14 +3,13 @@ package org.usf.trace.api.server.model.filter;
 import lombok.Getter;
 import lombok.Setter;
 import org.usf.jquery.core.DBFilter;
+import org.usf.trace.api.server.config.TraceApiTable;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 
 import static org.usf.jquery.core.Utils.isEmpty;
 import static org.usf.trace.api.server.config.TraceApiColumn.*;
-import static org.usf.trace.api.server.config.TraceApiTable.APISESSION;
 
 @Getter
 @Setter
@@ -46,56 +45,41 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
         this(ids, null,null,null,null, lazy, null,null,null,null,null,null,null,null, null,null,null);
     }
 
-    public DBFilter[] filters() {
-        List<DBFilter> filters = new ArrayList<>();
-        if(!isEmpty(getIds())) {
-            filters.add(APISESSION.column(ID).in(getIds()));
-        }
-        if(!isEmpty(getApiNames())) {
-            filters.add(APISESSION.column(API_NAME).in(getApiNames()));
-        }
+    public Collection<DBFilter> filters(TraceApiTable table) {
+        Collection<DBFilter> filters = super.filters(table);
         if(!isEmpty(getAppNames())) {
-            filters.add(APISESSION.column(APP_NAME).in(getAppNames()));
+            filters.add(table.column(APP_NAME).in(getAppNames()));
         }
         if(!isEmpty(getMethods())) {
-            filters.add(APISESSION.column(METHOD).in(getMethods()));
+            filters.add(table.column(METHOD).in(getMethods()));
         }
         if(!isEmpty(getProtocols())) {
-            filters.add(APISESSION.column(PROTOCOL).in(getProtocols()));
+            filters.add(table.column(PROTOCOL).in(getProtocols()));
         }
         if(!isEmpty(getHosts())) {
-            filters.add(APISESSION.column(HOST).in(getHosts()));
+            filters.add(table.column(HOST).in(getHosts()));
         }
         if(!isEmpty(getPorts())) {
-            filters.add(APISESSION.column(PORT).in(getPorts()));
+            filters.add(table.column(PORT).in(getPorts()));
         }
         if(getPath() != null) {
-            filters.add(APISESSION.column(PATH).like(getPath()));
+            filters.add(table.column(PATH).like(getPath()));
         }
         if(getQuery() != null) {
-            filters.add(APISESSION.column(QUERY).like(getQuery()));
+            filters.add(table.column(QUERY).like(getQuery()));
         }
         if(!isEmpty(getMedias())) {
-            filters.add(APISESSION.column(MEDIA).in(getMedias()));
+            filters.add(table.column(MEDIA).in(getMedias()));
         }
         if(!isEmpty(getAuths())) {
-            filters.add(APISESSION.column(AUTH).in(getAuths()));
+            filters.add(table.column(AUTH).in(getAuths()));
         }
         if(!isEmpty(getStatus())) {
-            filters.add(APISESSION.column(STATUS).in(getStatus()));
+            filters.add(table.column(STATUS).in(getStatus()));
         }
         if(!isEmpty(getUsers())) {
-            filters.add(APISESSION.column(USER).in(getUsers()));
+            filters.add(table.column(USER).in(getUsers()));
         }
-        if(!isEmpty(getEnvironments())) {
-            filters.add(APISESSION.column(ENVIRONEMENT).in(getEnvironments()));
-        }
-        if(getStart() != null) {
-            filters.add(APISESSION.column(START).greaterOrEqual(getStart()));
-        }
-        if(getEnd() != null) {
-            filters.add(APISESSION.column(END).lessThan(getEnd()));
-        }
-        return filters.toArray(DBFilter[]::new);
+        return filters;
     }
 }

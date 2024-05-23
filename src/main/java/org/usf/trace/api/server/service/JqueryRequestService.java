@@ -120,7 +120,7 @@ public class JqueryRequestService {
                 )
         );
         if(jsf != null) {
-            v.filters(jsf.filters());
+            v.filters(jsf.filters(REQUEST).toArray(DBFilter[]::new));
         }
         List<Session> res = v.build().execute(ds, (rs) -> {
             List<Session> sessions = new ArrayList<>();
@@ -184,7 +184,7 @@ public class JqueryRequestService {
                 )
         );
         if(jsf != null) {
-            v.filters(jsf.filters());
+            v.filters(jsf.filters(SESSION).toArray(DBFilter[]::new));
         }
         List<Session> res = v.build().execute(ds, (rs) -> {
             List<Session> sessions = new ArrayList<>();
