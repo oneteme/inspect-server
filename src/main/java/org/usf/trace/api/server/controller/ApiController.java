@@ -90,12 +90,12 @@ public class ApiController {
     		@RequestParam(required = false, name = "env") String[] environments,
             @RequestParam(defaultValue = "true", name = "lazy") boolean lazy){ // without tree
             JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, appNames, environments, start, end, lazy, methods, protocols, hosts, ports, medias, auths, status, apiNames, users, path, query);
-        return jqueryRequestService.getApiSesssionsByCriteria(jsf, ApiRequest::new);
+        return jqueryRequestService.getApiSesssionsByCriteria(jsf, ApiRequest::new,false);
     }
 
     @GetMapping("session/api/{id}")
     public ResponseEntity<Session> getIncomingRequestById(@PathVariable String id) { // without tree
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(jqueryRequestService.getApiSessionById(Collections.singletonList(id), ApiRequest::new)));
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(jqueryRequestService.getApiSessionById(Collections.singletonList(id), ApiRequest::new, false)));
     }
 
     @GetMapping("session/main")
@@ -109,12 +109,12 @@ public class ApiController {
             @RequestParam(defaultValue = "true", name = "lazy") boolean lazy) {
 
         JqueryMainSessionFilter fc = new JqueryMainSessionFilter(null, null, environments, start, end, lazy, names, launchModes, location);
-        return jqueryRequestService.getMainSessionsByCriteria(fc, ApiRequest::new);
+        return jqueryRequestService.getMainSessionsByCriteria(fc, ApiRequest::new,false);
     }
 
     @GetMapping("session/main/{id}")
     public ResponseEntity<Session> getMainRequestById(@PathVariable String id) { // without tree
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(jqueryRequestService.getMainSessionById(id, ApiRequest::new)));
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(jqueryRequestService.getMainSessionById(id, ApiRequest::new, false)));
     }
 
     @GetMapping("session/api/{id}/parent")
@@ -126,7 +126,7 @@ public class ApiController {
 
     @GetMapping("db/{id}")
     public ResponseEntity<DatabaseRequestWrapper> getDatabaseRequestById(@PathVariable long id){
-         return Optional.ofNullable(requireSingle(jqueryRequestService.getDatabaseRequests(DBQUERY.column(ID).equal(id))))
+         return Optional.ofNullable(requireSingle(jqueryRequestService.getDatabaseRequests(DBQUERY.column(ID).equal(id),true)))
                  .map(object -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1,TimeUnit.DAYS))
                  .body(object))
                  .orElseGet(() ->ResponseEntity.status(HttpStatus.NOT_FOUND).cacheControl(CacheControl.noCache()).body(null));
