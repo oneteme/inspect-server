@@ -23,21 +23,21 @@ public class PerformanceStatsController {
 
     private final JdbcTemplate template;
 
-    @GetMapping(value="incoming/request", produces = APPLICATION_JSON_VALUE)
+    @GetMapping(value="apisession", produces = APPLICATION_JSON_VALUE)
     public List<DynamicModel> request(
-            @RequestQueryParam(name = "request", defaultColumns = "count") RequestQueryBuilder query) {
+            @RequestQueryParam(name = "apisession", defaultColumns = "count") RequestQueryBuilder query) {
         return usingSpringJdbc(query);
     }
 
-    @GetMapping(value="session", produces = APPLICATION_JSON_VALUE)
+    @GetMapping(value="mainsession", produces = APPLICATION_JSON_VALUE)
     public List<DynamicModel> session(
-            @RequestQueryParam(name = "session", defaultColumns = "count") RequestQueryBuilder query) {
+            @RequestQueryParam(name = "mainsession", defaultColumns = "count") RequestQueryBuilder query) {
         return usingSpringJdbc(query);
     }
 
     @GetMapping(value="environment", produces = APPLICATION_JSON_VALUE)
     public List<DynamicModel> environment(
-            @RequestQueryParam(name = "request", defaultColumns = "environement") RequestQueryBuilder query
+            @RequestQueryParam(name = "apisession", defaultColumns = "environement") RequestQueryBuilder query
     ) {
         return usingSpringJdbc(query.distinct());
     }
