@@ -124,18 +124,13 @@ public class ApiController {
                  .orElseGet(()->ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping("db/{id}")
+    @GetMapping("session/db/{id}")
     public ResponseEntity<DatabaseRequestWrapper> getDatabaseRequestById(@PathVariable long id){
          return Optional.ofNullable(requireSingle(jqueryRequestService.getDatabaseRequests(DBQUERY.column(ID).equal(id),true)))
                  .map(object -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1,TimeUnit.DAYS))
                  .body(object))
                  .orElseGet(() ->ResponseEntity.status(HttpStatus.NOT_FOUND).cacheControl(CacheControl.noCache()).body(null));
     }
-
-    /*@GetMapping("session/api/{id}")
-    public ResponseEntity<Session> getApiSessionParentByChildId(@PathVariable String id){
-
-    }*/
 
     @GetMapping("session/request/{id}/tree")
     public Session getTreebyId(@PathVariable String id){
