@@ -2,10 +2,8 @@ package org.usf.trace.api.server.model.wrapper;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.Delegate;
 import org.usf.traceapi.core.DatabaseRequest;
 
 @Setter
