@@ -3,6 +3,7 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+/src/main/java/org/usf/trace/api/server/controller/CacheSaveController.java
 
 ### STS ###
 .apt_generated
