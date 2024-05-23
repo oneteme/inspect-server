@@ -25,7 +25,6 @@ import static org.springframework.http.ResponseEntity.accepted;
 import static org.springframework.http.ResponseEntity.status;
 import static org.usf.trace.api.server.Utils.requireSingle;
 import static org.usf.trace.api.server.config.TraceApiColumn.ID;
-import static org.usf.trace.api.server.config.TraceApiColumn.PARENT;
 import static org.usf.trace.api.server.config.TraceApiTable.DBQUERY;
 import static org.usf.traceapi.core.Session.nextId;
 

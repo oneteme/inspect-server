@@ -7,27 +7,23 @@ import org.usf.jquery.core.RequestQueryBuilder;
 import org.usf.jquery.core.TaggableColumn;
 import org.usf.jquery.web.ColumnDecorator;
 import org.usf.jquery.web.TableDecorator;
-import org.usf.trace.api.server.config.TraceApiColumn;
 import org.usf.trace.api.server.config.TraceApiTable;
 import org.usf.trace.api.server.model.Exchange;
 import org.usf.trace.api.server.dao.RequestDao;
 import org.usf.trace.api.server.config.DataConstants;
 import org.usf.trace.api.server.model.filter.JqueryMainSessionFilter;
 import org.usf.trace.api.server.model.filter.JqueryRequestSessionFilter;
-import org.usf.trace.api.server.model.filter.JquerySessionFilter;
 import org.usf.trace.api.server.model.wrapper.DatabaseActionWrapper;
 import org.usf.trace.api.server.model.wrapper.DatabaseRequestWrapper;
 import org.usf.trace.api.server.model.wrapper.ApiRequestWrapper;
 import org.usf.trace.api.server.model.wrapper.RunnableStageWrapper;
 import org.usf.traceapi.core.*;
-
 import javax.sql.DataSource;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
