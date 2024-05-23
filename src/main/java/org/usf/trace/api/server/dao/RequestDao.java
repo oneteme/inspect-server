@@ -147,7 +147,7 @@ public class RequestDao {
 
         template.batchUpdate("INSERT INTO E_DB_REQ(ID_OUT_QRY,VA_HST,CD_PRT,VA_DB,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_DRV,VA_DB_NME,VA_DB_VRS,VA_CMD,VA_NME,VA_LOC,VA_CMPLT,CD_SES)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", qryList, qryList.size(), (ps, o) -> {
-            var completed = o.isCompleted();// o.getActions().stream().allMatch(a-> isNull(a.getException()));
+            var completed = o.getActions().stream().allMatch(a-> isNull(a.getException()));
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getHost());
             ps.setInt(3, Objects.requireNonNullElse(o.getPort(),-1));

@@ -48,8 +48,8 @@ public class JqueryRequestService {
 
     public Session getTreeById(String id) {
         List<String> prntIds = dao.selectChildsById(id);
-        List<Session> prntIncList = getApiSessionById(prntIds, Exchange::new);
-        List<Session> sessionList = getMainSessionById(id, Exchange::new);
+        List<Session> prntIncList = getApiSessionById(prntIds, Exchange::new, false);
+        List<Session> sessionList = getMainSessionById(id, Exchange::new, false);
         if(sessionList != null && !sessionList.isEmpty()){
             prntIncList.add(sessionList.get(0));
         }
@@ -103,12 +103,12 @@ public class JqueryRequestService {
         }));
     }
 
-    public List<Session> getApiSessionById(List<String> ids, Supplier<? extends ApiRequest> fn){
+    public List<Session> getApiSessionById(List<String> ids, Supplier<? extends ApiRequest> fn, boolean queryLazy){
         JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(ids.toArray(String[]::new), true);
-        return getApiSesssionsByCriteria(jsf, fn);
+        return getApiSesssionsByCriteria(jsf, fn, queryLazy);
     }
 
-    public List<Session> getApiSesssionsByCriteria(JqueryRequestSessionFilter jsf, Supplier<? extends ApiRequest> fn) {
+    public List<Session> getApiSesssionsByCriteria(JqueryRequestSessionFilter jsf, Supplier<? extends ApiRequest> fn, boolean queryLazy) {
         var v = new RequestQueryBuilder();
         v.select(
                 APISESSION.table(),
@@ -120,7 +120,7 @@ public class JqueryRequestService {
                 )
         );
         if(jsf != null) {
-            v.filters(jsf.filters(REQUEST).toArray(DBFilter[]::new));
+            v.filters(jsf.filters(APISESSION).toArray(DBFilter[]::new));
         }
         List<Session> res = v.build().execute(ds, (rs) -> {
             List<Session> sessions = new ArrayList<>();
@@ -164,17 +164,17 @@ public class JqueryRequestService {
             var parentIds = reqMap.keySet().toArray(String[]::new);
             getApiRequests(parentIds, fn).forEach(r -> reqMap.get(r.getParentId()).append(r.getRequest()));
             getRunnableStages(parentIds).forEach(r -> reqMap.get(r.getParentId()).append(r.getStage()));
-            getDatabaseRequests(DBQUERY.column(PARENT).in(parentIds)).forEach(q -> reqMap.get(q.getParentId()).append(q));
+            getDatabaseRequests(DBQUERY.column(PARENT).in(parentIds),queryLazy).forEach(q -> reqMap.get(q.getParentId()).append(q));
         }
         return res;
     }
 
-    public List<Session> getMainSessionById(String id, Supplier<? extends ApiRequest> fn){
+    public List<Session> getMainSessionById(String id, Supplier<? extends ApiRequest> fn, boolean queryLazy){
         JqueryMainSessionFilter jsf = new JqueryMainSessionFilter(Collections.singletonList(id).toArray(String[]::new), true);
-        return getMainSessionsByCriteria(jsf, fn);
+        return getMainSessionsByCriteria(jsf, fn, queryLazy);
     }
 
-    public List<Session> getMainSessionsByCriteria(JqueryMainSessionFilter jsf, Supplier<? extends ApiRequest> fn) {
+    public List<Session> getMainSessionsByCriteria(JqueryMainSessionFilter jsf, Supplier<? extends ApiRequest> fn,boolean queryLazy) {
         var v = new RequestQueryBuilder();
         v.select(
                 MAINSESSION.table(),
@@ -184,7 +184,7 @@ public class JqueryRequestService {
                 )
         );
         if(jsf != null) {
-            v.filters(jsf.filters(SESSION).toArray(DBFilter[]::new));
+            v.filters(jsf.filters(MAINSESSION).toArray(DBFilter[]::new));
         }
         List<Session> res = v.build().execute(ds, (rs) -> {
             List<Session> sessions = new ArrayList<>();
@@ -220,7 +220,7 @@ public class JqueryRequestService {
             var parentIds = reqMap.keySet().toArray(String[]::new);
             getApiRequests(parentIds, fn).forEach(r -> reqMap.get(r.getParentId()).append(r.getRequest()));
             getRunnableStages(parentIds).forEach(r -> reqMap.get(r.getParentId()).append(r.getStage()));
-            getDatabaseRequests(DBQUERY.column(PARENT).in(parentIds)).forEach(q -> reqMap.get(q.getParentId()).append(q));
+            getDatabaseRequests(DBQUERY.column(PARENT).in(parentIds),queryLazy).forEach(q -> reqMap.get(q.getParentId()).append(q));
         }
         return res;
     }
@@ -292,13 +292,13 @@ public class JqueryRequestService {
         });
     }
 
-    public List<DatabaseRequestWrapper> getDatabaseRequests(DBFilter filter) {
+    public List<DatabaseRequestWrapper> getDatabaseRequests(DBFilter filter, boolean queryLazy) {
         var v = new RequestQueryBuilder();
         v.select(
                 DBQUERY.table(),
                 getColumns(
                         DBQUERY, ID, HOST, PORT, DB, START, END, USER, THREAD, DRIVER,
-                        DB_NAME, DB_VERSION, NAME, COMMANDS, LOCATION, PARENT
+                        DB_NAME, DB_VERSION, NAME, COMMANDS, LOCATION, COMPLETE, PARENT
                 )
         );
         v.filters(filter);
@@ -321,14 +321,15 @@ public class JqueryRequestService {
                 out.setName(rs.getString(DataConstants.outQryColumns(NAME)));
                 out.setCommands(valueOfNullabletoEnumList(SqlCommand.class, rs.getString(DataConstants.outQryColumns(COMMANDS))));
                 out.setActions(new ArrayList<>());
+                out.setCompleted("T".equals(rs.getString(DataConstants.outQryColumns(COMPLETE))));
                 outs.add(out);
             }
             return outs;
         });
-       /* if (!queries.isEmpty()) {
+        if (queryLazy && !queries.isEmpty()) {
             var qMap = queries.stream().collect(toMap(DatabaseRequestWrapper::getId, identity())); //unique
             getDatabaseActions(qMap.keySet().toArray(Long[]::new)).forEach(a -> qMap.get(a.getParentId()).getActions().add(a.getAction()));
-        }*/
+        }
         return queries;
     }
 

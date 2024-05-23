@@ -11,6 +11,7 @@ public class DatabaseRequestWrapper extends DatabaseRequest {
 
     private final String parentId;
     private long id;
+    private boolean completed;
 
     public DatabaseRequestWrapper(String parentId, Long id) {
         this.parentId = parentId;
