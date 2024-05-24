@@ -20,6 +20,9 @@ public class DatabaseRequestWrapper extends DatabaseRequest {
         this.id = id;
     }
 
+    /**
+     * @deprecated  (temp solution)
+     */
     @Deprecated
     public DatabaseRequestWrapper(String parentId, DatabaseRequest query) {
         this.parentId = parentId;

@@ -4,13 +4,11 @@ import static org.usf.jquery.core.ComparisonExpression.equal;
 import static org.usf.jquery.core.ComparisonExpression.greaterOrEqual;
 import static org.usf.jquery.core.ComparisonExpression.lessThan;
 import static org.usf.jquery.core.DBColumn.count;
+import static org.usf.trace.api.server.config.DbFields.*;
 import static org.usf.trace.api.server.config.TraceApiColumn.COMPLETE;
 import static org.usf.trace.api.server.config.TraceApiColumn.END;
 import static org.usf.trace.api.server.config.TraceApiColumn.START;
 import static org.usf.trace.api.server.config.TraceApiColumn.STATUS;
-
-import java.sql.Timestamp;
-import java.time.Instant;
 
 import org.usf.jquery.core.ComparisonExpression;
 import org.usf.jquery.core.DBColumn;
@@ -26,138 +24,128 @@ public final class DataConstants {
 	
     public static String sessionColumns(TraceApiColumn column) {
         return switch (column) {
-            case ID -> "id_ses";
-            case NAME -> "va_name";
-            case START -> "dh_dbt";
-            case END -> "dh_fin";
-            case USER -> "va_usr";
-            case OS -> "va_os";
-            case RE -> "va_re";
-            case TYPE -> "lnch";
-            case LOCATION -> "loc";
-            case THREAD -> "va_thred";
-            case APP_NAME -> "va_app_nme";
-            case VERSION -> "va_vrs";
-            case ADDRESS -> "va_adrs";
-            case ENVIRONEMENT -> "va_env";
-            case ERR_TYPE -> "va_err_cls";
-            case ERR_MSG -> "va_err_msg";
+            case ID -> ID_SES ;
+            case NAME -> VA_NAME ;
+            case START -> DH_DBT;
+            case END -> DH_FIN;
+            case USER -> VA_USR;
+            case OS -> VA_OS;
+            case RE -> VA_RE;
+            case TYPE -> LNCH;
+            case LOCATION -> LOC;
+            case THREAD -> VA_THRED;
+            case APP_NAME -> VA_APP_NME;
+            case VERSION -> VA_VRS;
+            case ADDRESS -> VA_ADRS;
+            case ENVIRONEMENT -> VA_ENV;
+            case ERR_TYPE -> VA_ERR_CLS;
+            case ERR_MSG -> VA_ERR_MSG;
             default -> null;
         };
     }
 
     public static String incReqColumns(TraceApiColumn column) {
         return switch (column) {
-            case ID -> "id_ses";
-            case METHOD -> "va_mth";
-            case PROTOCOL -> "va_prtcl";
-            case HOST -> "va_hst";
-            case PORT -> "cd_prt";
-            case PATH -> "va_pth";
-            case QUERY -> "va_qry";
-            case MEDIA -> "va_cnt_typ";
-            case AUTH -> "va_auth";
-            case STATUS -> "cd_stt";
-            case SIZE_IN -> "va_i_sze";
-            case SIZE_OUT -> "va_o_sze";
-            case START -> "dh_dbt";
-            case END -> "dh_fin";
-            case THREAD -> "va_thred";
-            case API_NAME -> "va_api_nme";
-            case USER -> "va_usr";
-            case APP_NAME -> "va_app_nme";
-            case VERSION -> "va_vrs";
-            case ADDRESS -> "va_adrs";
-            case ENVIRONEMENT -> "va_env";
-            case OS -> "va_os";
-            case RE -> "va_re";
-            case ERR_TYPE -> "va_err_cls";
-            case ERR_MSG -> "va_err_msg";
+            case ID -> ID_SES;
+            case METHOD -> VA_MTH;
+            case PROTOCOL -> VA_PRTCL;
+            case HOST -> VA_HST;
+            case PORT -> CD_PRT;
+            case PATH -> VA_PTH;
+            case QUERY -> VA_QRY;
+            case MEDIA -> VA_CNT_TYP;
+            case AUTH -> VA_AUTH;
+            case STATUS -> CD_STT;
+            case SIZE_IN -> VA_I_SZE;
+            case SIZE_OUT -> VA_O_SZE;
+            case START -> DH_DBT;
+            case END -> DH_FIN;
+            case THREAD -> VA_THRED;
+            case API_NAME -> VA_API_NME;
+            case USER -> VA_USR;
+            case APP_NAME -> VA_APP_NME;
+            case VERSION -> VA_VRS;
+            case ADDRESS -> VA_ADRS;
+            case ENVIRONEMENT -> VA_ENV;
+            case OS -> VA_OS;
+            case RE -> VA_RE;
+            case ERR_TYPE -> VA_ERR_CLS;
+            case ERR_MSG -> VA_ERR_MSG;
             default -> null;
         };
     }
     
     public static String outReqColumns(TraceApiColumn column) {
         return switch (column) {
-            case ID -> "cd_api";
-            case METHOD -> "va_mth";
-            case PROTOCOL -> "va_prtcl";
-            case HOST -> "va_hst";
-            case PORT -> "cd_prt";
-            case PATH -> "va_pth";
-            case QUERY -> "va_qry";
-            case MEDIA -> "va_cnt_typ";
-            case AUTH -> "va_auth";
-            case STATUS -> "cd_stt";
-            case SIZE_IN -> "va_i_sze";
-            case SIZE_OUT -> "va_o_sze";
-            case START -> "dh_dbt";
-            case END -> "dh_fin";
-            case THREAD -> "va_thred";
-            case ERR_TYPE -> "va_err_cls";
-            case ERR_MSG -> "va_err_msg";
-            case PARENT -> "cd_ses";
+            case ID -> CD_API;
+            case METHOD -> VA_MTH;
+            case PROTOCOL -> VA_PRTCL;
+            case HOST -> VA_HST;
+            case PORT -> CD_PRT;
+            case PATH -> VA_PTH;
+            case QUERY -> VA_QRY;
+            case MEDIA -> VA_CNT_TYP;
+            case AUTH -> VA_AUTH;
+            case STATUS -> CD_STT;
+            case SIZE_IN -> VA_I_SZE;
+            case SIZE_OUT -> VA_O_SZE;
+            case START -> DH_DBT;
+            case END -> DH_FIN;
+            case THREAD -> VA_THRED;
+            case ERR_TYPE -> VA_ERR_CLS;
+            case ERR_MSG -> VA_ERR_MSG;
+            case PARENT -> CD_SES;
             default -> null;
         };
     }
     public static String outQryColumns(TraceApiColumn column) {
         return switch (column) {
-            case ID -> "id_out_qry";
-            case HOST -> "va_hst";
-            case PORT -> "cd_prt";
-            case DB -> "va_db";
-            case START -> "dh_dbt";
-            case END -> "dh_fin";
-            case USER -> "va_usr";
-            case THREAD -> "va_thred";
-            case DRIVER -> "va_drv";
-            case DB_NAME -> "va_db_nme";
-            case DB_VERSION -> "va_db_vrs";
-            case COMMANDS -> "va_cmd";
-            case NAME -> "va_nme";
-            case LOCATION -> "va_loc";
-            case COMPLETE -> "va_cmplt";
-            case PARENT -> "cd_ses";
+            case ID -> ID_OUT_QRY;
+            case HOST -> VA_HST;
+            case PORT -> CD_PRT;
+            case DB -> VA_DB;
+            case START -> DH_DBT;
+            case END -> DH_FIN;
+            case USER -> VA_USR;
+            case THREAD -> VA_THRED;
+            case DRIVER -> VA_DRV;
+            case DB_NAME -> VA_DB_NME;
+            case DB_VERSION -> VA_DB_VRS;
+            case COMMANDS -> VA_CMD;
+            case NAME -> VA_NME;
+            case LOCATION -> VA_LOC;
+            case COMPLETE -> VA_CMPLT;
+            case PARENT -> CD_SES;
             default -> null;
         };
     }
 
     public static String outStgColumns(TraceApiColumn column) {
         return switch (column) {
-            case NAME -> "va_name";
-            case LOCATION -> "loc";
-            case START -> "dh_dbt";
-            case END -> "dh_fin";
-            case USER -> "va_usr";
-            case THREAD -> "va_thred";
-            case ERR_TYPE -> "va_err_cls";
-            case ERR_MSG -> "va_err_msg";
-            case PARENT -> "cd_ses";
+            case NAME -> VA_NAME;
+            case LOCATION -> LOC;
+            case START -> DH_DBT;
+            case END -> DH_FIN;
+            case USER -> VA_USR;
+            case THREAD -> VA_THRED;
+            case ERR_TYPE -> VA_ERR_CLS;
+            case ERR_MSG -> VA_ERR_MSG;
+            case PARENT -> CD_SES;
             default -> null;
         };
     }
 
     public static String dbActColumns(TraceApiColumn column){
         return switch (column) {
-            case TYPE -> "va_typ";
-            case START -> "dh_dbt";
-            case END -> "dh_fin";
-            case ERR_TYPE -> "va_err_cls";
-            case ERR_MSG -> "va_err_msg";
-            case PARENT -> "cd_out_qry";
-            case ACTION_COUNT -> "cd_count";
+            case TYPE -> VA_TYP;
+            case START -> DH_DBT;
+            case END -> DH_FIN;
+            case ERR_TYPE -> VA_ERR_CLS;
+            case ERR_MSG -> VA_ERR_MSG;
+            case PARENT -> CD_OUT_QRY;
+            case ACTION_COUNT -> CD_COUNT;
             default -> null;
         };
-    }
-
-    @Deprecated(forRemoval = true)
-    public static ComparisonExpression greaterOrEqualsExpressions(String timestamp) {
-        return greaterOrEqual(Timestamp.from(Instant.parse(timestamp)));
-    }
-
-    @Deprecated(forRemoval = true)
-    public static ComparisonExpression lessThanExpressions(String timestamp) {
-        return lessThan(Timestamp.from(Instant.parse(timestamp)));
     }
 
     public static DBColumn elapsedtime2(TableDecorator table) {
