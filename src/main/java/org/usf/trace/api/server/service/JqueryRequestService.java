@@ -50,8 +50,8 @@ public class JqueryRequestService {
         if(sessionList != null && !sessionList.isEmpty()){
             prntIncList.add(sessionList.get(0));
         }
-        prntIncList.forEach((prntA) -> {
-            prntIncList.forEach((prntB) -> {
+        prntIncList.forEach(prntA ->
+            prntIncList.forEach(prntB -> {
                 if (!Objects.equals(prntA.getId(), prntB.getId())){
                     Optional<ApiRequest> opt = prntB.getRequests().stream()
                             .filter(k -> prntA.getId().equals(k.getId()))
@@ -61,27 +61,26 @@ public class JqueryRequestService {
                         ex.setRemoteTrace((ApiSession) prntA);
                     }
                 }
-            });
-        });
+            }));
         return prntIncList.stream().filter(r ->  r.getId().equals(id)).findFirst().orElseThrow();
     }
     public Map<String,String> getSessionParent (String childId){
 
-       var prnt = getSessionById(APIREQUEST, PARENT , APIREQUEST.column(ID).equal(childId));
+       var prnt = getPropertyByFilters(APIREQUEST, PARENT , APIREQUEST.column(ID).equal(childId));
        if(prnt != null){
-           var res = getSessionById(APISESSION, ID, APISESSION.column(ID).equal(prnt));
+           var res = getPropertyByFilters(APISESSION, ID, APISESSION.column(ID).equal(prnt));
            if(res != null) {
               return Map.of("id", res, "type", "api");
            }
-           res = getSessionById(MAINSESSION, ID, MAINSESSION.column(ID).equal(prnt));
+           res = getPropertyByFilters(MAINSESSION, ID, MAINSESSION.column(ID).equal(prnt));
            if(res!= null){
                return Map.of("id", res, "type", "main");
            }
        }
-       return null;
+       return Collections.emptyMap();
     }
 
-    public String getSessionById(TraceApiTable table, TraceApiColumn target, DBFilter filters){ // main / apissesion
+    public String getPropertyByFilters(TraceApiTable table, TraceApiColumn target, DBFilter filters){ // main / apissesion
         var v = new RequestQueryBuilder().select(table.table(), getColumns(table,target)).filters(filters);
         return v.build().execute(ds, rs -> {
             if(rs.next()){
@@ -110,7 +109,7 @@ public class JqueryRequestService {
         if(jsf != null) {
             v.filters(jsf.filters(APISESSION).toArray(DBFilter[]::new));
         }
-        List<Session> res = v.build().execute(ds, (rs) -> {
+        List<Session> res = v.build().execute(ds, rs -> {
             List<Session> sessions = new ArrayList<>();
             while (rs.next()) {
                 ApiSession session = new ApiSession();
@@ -174,7 +173,7 @@ public class JqueryRequestService {
         if(jsf != null) {
             v.filters(jsf.filters(MAINSESSION).toArray(DBFilter[]::new));
         }
-        List<Session> res = v.build().execute(ds, (rs) -> {
+        List<Session> res = v.build().execute(ds, rs -> {
             List<Session> sessions = new ArrayList<>();
             while(rs.next()) {
                 MainSession main = new MainSession();
@@ -223,7 +222,7 @@ public class JqueryRequestService {
         );
         v.filters(APIREQUEST.column(PARENT).in(incomingId));
         v.orders(APIREQUEST.column(START).order());
-        return v.build().execute(ds, (rs) -> {
+        return v.build().execute(ds, rs -> {
             List<ApiRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
                 ApiRequestWrapper out = new ApiRequestWrapper(rs.getString(DataConstants.outReqColumns(PARENT)), fn);
@@ -260,7 +259,7 @@ public class JqueryRequestService {
         );
         v.filters(STAGES.column(PARENT).in(ids));
         v.orders(STAGES.column(START).order());
-        return v.build().execute(ds, (rs) -> {
+        return v.build().execute(ds, rs -> {
             List<RunnableStageWrapper> outs = new ArrayList<>();
             while (rs.next()) {
                 RunnableStageWrapper out = new RunnableStageWrapper(rs.getString(DataConstants.outStgColumns(PARENT)));
@@ -291,7 +290,7 @@ public class JqueryRequestService {
         );
         v.filters(filter);
         v.orders(DBQUERY.column(START).order());
-        var queries = v.build().execute(ds, (rs) -> {
+        var queries = v.build().execute(ds, rs -> {
             List<DatabaseRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
                 DatabaseRequestWrapper out = new DatabaseRequestWrapper(rs.getString(DataConstants.outQryColumns(PARENT)), rs.getLong(DataConstants.outQryColumns(ID)));
@@ -329,7 +328,7 @@ public class JqueryRequestService {
         );
         v.filters(DBACTION.column(PARENT).in(ids));
         v.orders(DBACTION.column(START).order());
-        return v.build().execute(ds, (rs) -> {
+        return v.build().execute(ds, rs -> {
             List<DatabaseActionWrapper> actions = new ArrayList<>();
             while (rs.next()) {
                 actions.add(
