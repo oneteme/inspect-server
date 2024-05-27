@@ -6,10 +6,12 @@ import lombok.Setter;
 import org.usf.jquery.core.DBFilter;
 import org.usf.trace.api.server.config.TraceApiTable;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import static java.sql.Timestamp.from;
 import static org.usf.jquery.core.Utils.isEmpty;
 import static org.usf.trace.api.server.config.TraceApiColumn.*;
 
@@ -36,10 +38,10 @@ public class JquerySessionFilter {
             filters.add(table.column(ENVIRONEMENT).in(getEnvironments()));
         }
         if(getStart() != null) {
-            filters.add(table.column(START).greaterOrEqual(getStart()));
+            filters.add(table.column(START).greaterOrEqual(from(getStart())));
         }
         if(getEnd() != null) {
-            filters.add(table.column(END).lessThan(getEnd()));
+            filters.add(table.column(END).lessThan(from(getEnd())));
         }
         return filters;
     }
