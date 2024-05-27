@@ -11,7 +11,6 @@ import org.usf.trace.api.server.config.TraceApiColumn;
 import org.usf.trace.api.server.config.TraceApiTable;
 import org.usf.trace.api.server.model.Exchange;
 import org.usf.trace.api.server.dao.RequestDao;
-import org.usf.trace.api.server.config.DataConstants;
 import org.usf.trace.api.server.model.filter.JqueryMainSessionFilter;
 import org.usf.trace.api.server.model.filter.JqueryRequestSessionFilter;
 import org.usf.trace.api.server.model.wrapper.DatabaseActionWrapper;
@@ -84,7 +83,7 @@ public class JqueryRequestService {
         var v = new RequestQueryBuilder().select(table.table(), getColumns(table,target)).filters(filters);
         return v.build().execute(ds, rs -> {
             if(rs.next()){
-                return rs.getString(table.columnName(target).get()); // to be changed
+                return rs.getString(target.reference()); // to be changed
             }
             return null;
         });
