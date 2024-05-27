@@ -113,34 +113,34 @@ public class JqueryRequestService {
             List<Session> sessions = new ArrayList<>();
             while (rs.next()) {
                 ApiSession session = new ApiSession();
-                session.setId(rs.getString(DataConstants.incReqColumns(ID)));
-                session.setMethod(rs.getString(DataConstants.incReqColumns(METHOD)));
-                session.setProtocol(rs.getString(DataConstants.incReqColumns(PROTOCOL)));
-                session.setHost(rs.getString(DataConstants.incReqColumns(HOST)));
-                session.setPort(rs.getInt(DataConstants.incReqColumns(PORT)));
-                session.setPath(rs.getString(DataConstants.incReqColumns(PATH)));
-                session.setQuery(rs.getString(DataConstants.incReqColumns(QUERY)));
-                session.setContentType((rs.getString(DataConstants.incReqColumns(MEDIA))));
-                session.setAuthScheme((rs.getString(DataConstants.incReqColumns(AUTH))));
-                session.setStatus(rs.getInt(DataConstants.incReqColumns(STATUS)));
-                session.setInDataSize(rs.getLong(DataConstants.incReqColumns(SIZE_IN)));
-                session.setOutDataSize(rs.getLong(DataConstants.incReqColumns(SIZE_OUT)));
-                session.setStart(fromNullableTimestamp(rs.getTimestamp(DataConstants.incReqColumns(START))));
-                session.setEnd(fromNullableTimestamp(rs.getTimestamp(DataConstants.incReqColumns(END))));
-                session.setThreadName(rs.getString(DataConstants.incReqColumns(THREAD)));
+                session.setId(rs.getString(ID.reference()));
+                session.setMethod(rs.getString(METHOD.reference()));
+                session.setProtocol(rs.getString(PROTOCOL.reference()));
+                session.setHost(rs.getString(HOST.reference()));
+                session.setPort(rs.getInt(PORT.reference()));
+                session.setPath(rs.getString(PATH.reference()));
+                session.setQuery(rs.getString(QUERY.reference()));
+                session.setContentType((rs.getString(MEDIA.reference())));
+                session.setAuthScheme((rs.getString(AUTH.reference())));
+                session.setStatus(rs.getInt(STATUS.reference()));
+                session.setInDataSize(rs.getLong(SIZE_IN.reference()));
+                session.setOutDataSize(rs.getLong(SIZE_OUT.reference()));
+                session.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
+                session.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                session.setThreadName(rs.getString(THREAD.reference()));
                 session.setException(new ExceptionInfo(
-                        rs.getString(DataConstants.incReqColumns(ERR_TYPE)),
-                        rs.getString(DataConstants.incReqColumns(ERR_MSG))
+                        rs.getString(ERR_TYPE.reference()),
+                        rs.getString(ERR_MSG.reference())
                 ));
-                session.setName(rs.getString(DataConstants.incReqColumns(API_NAME)));
-                session.setUser(rs.getString(DataConstants.incReqColumns(USER)));
+                session.setName(rs.getString(API_NAME.reference()));
+                session.setUser(rs.getString(USER.reference()));
                 session.setApplication(new ApplicationInfo(
-                        rs.getString(DataConstants.incReqColumns(APP_NAME)),
-                        rs.getString(DataConstants.incReqColumns(VERSION)),
-                        rs.getString(DataConstants.incReqColumns(ADDRESS)),
-                        rs.getString(DataConstants.incReqColumns(ENVIRONEMENT)),
-                        rs.getString(DataConstants.incReqColumns(OS)),
-                        rs.getString(DataConstants.incReqColumns(RE))
+                        rs.getString(APP_NAME.reference()),
+                        rs.getString(VERSION.reference()),
+                        rs.getString(ADDRESS.reference()),
+                        rs.getString(ENVIRONEMENT.reference()),
+                        rs.getString(OS.reference()),
+                        rs.getString(RE.reference())
                 ));
                 sessions.add(session);
             }
@@ -177,25 +177,25 @@ public class JqueryRequestService {
             List<Session> sessions = new ArrayList<>();
             while(rs.next()) {
                 MainSession main = new MainSession();
-                main.setId(rs.getString(DataConstants.sessionColumns(ID))); // add value of nullable
-                main.setName(rs.getString(DataConstants.sessionColumns(NAME)));
-                main.setUser(rs.getString(DataConstants.sessionColumns(USER)));
-                main.setStart(fromNullableTimestamp(rs.getTimestamp(DataConstants.sessionColumns(START))));
-                main.setEnd(fromNullableTimestamp(rs.getTimestamp(DataConstants.sessionColumns(END))));
-                main.setLaunchMode(valueOfNullable(LaunchMode.class, rs.getString(DataConstants.sessionColumns(TYPE))));
-                main.setLocation(rs.getString(DataConstants.sessionColumns(LOCATION)));
-                main.setThreadName(rs.getString(DataConstants.sessionColumns(THREAD)));
+                main.setId(rs.getString(ID.reference())); // add value of nullable
+                main.setName(rs.getString(NAME.reference()));
+                main.setUser(rs.getString(USER.reference()));
+                main.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
+                main.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                main.setLaunchMode(valueOfNullable(LaunchMode.class, rs.getString(TYPE.reference())));
+                main.setLocation(rs.getString(LOCATION.reference()));
+                main.setThreadName(rs.getString(THREAD.reference()));
                 main.setApplication(new ApplicationInfo(
-                        rs.getString(DataConstants.sessionColumns(APP_NAME)),
-                        rs.getString(DataConstants.sessionColumns(VERSION)),
-                        rs.getString(DataConstants.sessionColumns(ADDRESS)),
-                        rs.getString(DataConstants.sessionColumns(ENVIRONEMENT)),
-                        rs.getString(DataConstants.sessionColumns(OS)),
-                        rs.getString(DataConstants.sessionColumns(RE))
+                        rs.getString(APP_NAME.reference()),
+                        rs.getString(VERSION.reference()),
+                        rs.getString(ADDRESS.reference()),
+                        rs.getString(ENVIRONEMENT.reference()),
+                        rs.getString(OS.reference()),
+                        rs.getString(RE.reference())
                 ));
                 main.setException(new ExceptionInfo(
-                        rs.getString(DataConstants.sessionColumns(ERR_TYPE)),
-                        rs.getString(DataConstants.sessionColumns(ERR_MSG))
+                        rs.getString(ERR_TYPE.reference()),
+                        rs.getString(ERR_MSG.reference())
                 ));
                 sessions.add(main);
             }
@@ -225,23 +225,23 @@ public class JqueryRequestService {
         return v.build().execute(ds, rs -> {
             List<ApiRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
-                ApiRequestWrapper out = new ApiRequestWrapper(rs.getString(DataConstants.outReqColumns(PARENT)), fn);
-                out.setId(rs.getString(DataConstants.outReqColumns(ID)));
-                out.setProtocol(rs.getString(DataConstants.outReqColumns(PROTOCOL)));
-                out.setHost(rs.getString(DataConstants.outReqColumns(HOST)));
-                out.setPort(rs.getInt(DataConstants.outReqColumns(PORT)));
-                out.setPath(rs.getString(DataConstants.outReqColumns(PATH)));
-                out.setQuery(rs.getString(DataConstants.outReqColumns(QUERY)));
-                out.setMethod(rs.getString(DataConstants.outReqColumns(METHOD)));
-                out.setStatus(rs.getInt(DataConstants.outReqColumns(STATUS)));
-                out.setInDataSize(rs.getLong(DataConstants.outReqColumns(SIZE_IN)));
-                out.setOutDataSize(rs.getLong(DataConstants.outReqColumns(SIZE_OUT)));
-                out.setStart(fromNullableTimestamp(rs.getTimestamp(DataConstants.outReqColumns(START))));
-                out.setEnd(fromNullableTimestamp(rs.getTimestamp(DataConstants.outReqColumns(END))));
-                out.setThreadName(rs.getString(DataConstants.outReqColumns(THREAD)));
+                ApiRequestWrapper out = new ApiRequestWrapper(rs.getString(PARENT.reference()), fn);
+                out.setId(rs.getString(ID.reference()));
+                out.setProtocol(rs.getString(PROTOCOL.reference()));
+                out.setHost(rs.getString(HOST.reference()));
+                out.setPort(rs.getInt(PORT.reference()));
+                out.setPath(rs.getString(PATH.reference()));
+                out.setQuery(rs.getString(QUERY.reference()));
+                out.setMethod(rs.getString(METHOD.reference()));
+                out.setStatus(rs.getInt(STATUS.reference()));
+                out.setInDataSize(rs.getLong(SIZE_IN.reference()));
+                out.setOutDataSize(rs.getLong(SIZE_OUT.reference()));
+                out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
+                out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                out.setThreadName(rs.getString(THREAD.reference()));
                 out.setException(new ExceptionInfo(
-                        rs.getString(DataConstants.outReqColumns(ERR_TYPE)),
-                        rs.getString(DataConstants.outReqColumns(ERR_MSG))
+                        rs.getString(ERR_TYPE.reference()),
+                        rs.getString(ERR_MSG.reference())
                 ));
                 outs.add(out);
             }
@@ -262,16 +262,16 @@ public class JqueryRequestService {
         return v.build().execute(ds, rs -> {
             List<RunnableStageWrapper> outs = new ArrayList<>();
             while (rs.next()) {
-                RunnableStageWrapper out = new RunnableStageWrapper(rs.getString(DataConstants.outStgColumns(PARENT)));
-                out.setName(rs.getString(DataConstants.outStgColumns(NAME)));
-                out.setLocation(rs.getString(DataConstants.outStgColumns(LOCATION)));
-                out.setStart(fromNullableTimestamp(rs.getTimestamp(DataConstants.outStgColumns(START))));
-                out.setEnd(fromNullableTimestamp(rs.getTimestamp(DataConstants.outStgColumns(END))));
-                out.setUser(rs.getString(DataConstants.outStgColumns(USER)));
-                out.setThreadName(rs.getString(DataConstants.outStgColumns(THREAD)));
+                RunnableStageWrapper out = new RunnableStageWrapper(rs.getString(PARENT.reference()));
+                out.setName(rs.getString(NAME.reference()));
+                out.setLocation(rs.getString(LOCATION.reference()));
+                out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
+                out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                out.setUser(rs.getString(USER.reference()));
+                out.setThreadName(rs.getString(THREAD.reference()));
                 out.setException( new ExceptionInfo(
-                        rs.getString(DataConstants.outStgColumns(ERR_TYPE)),
-                        rs.getString(DataConstants.outStgColumns(ERR_MSG))
+                        rs.getString(ERR_TYPE.reference()),
+                        rs.getString(ERR_MSG.reference())
                 ));
                 outs.add(out);
             }
@@ -293,22 +293,22 @@ public class JqueryRequestService {
         var queries = v.build().execute(ds, rs -> {
             List<DatabaseRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
-                DatabaseRequestWrapper out = new DatabaseRequestWrapper(rs.getString(DataConstants.outQryColumns(PARENT)), rs.getLong(DataConstants.outQryColumns(ID)));
-                out.setHost(rs.getString(DataConstants.outQryColumns(HOST)));
-                out.setPort(rs.getInt(DataConstants.outQryColumns(PORT)));
-                out.setDatabase(rs.getString(DataConstants.outQryColumns(DB)));
-                out.setStart(fromNullableTimestamp(rs.getTimestamp(DataConstants.outQryColumns(START))));
-                out.setEnd(fromNullableTimestamp(rs.getTimestamp(DataConstants.outQryColumns(END))));
-                out.setUser(rs.getString(DataConstants.outQryColumns(USER)));
-                out.setThreadName(rs.getString(DataConstants.outQryColumns(THREAD)));
-                out.setDriverVersion(rs.getString(DataConstants.outQryColumns(DRIVER)));
-                out.setDatabaseName(rs.getString(DataConstants.outQryColumns(DB_NAME)));
-                out.setDatabaseVersion(rs.getString(DataConstants.outQryColumns(DB_VERSION)));
-                out.setLocation(rs.getString(DataConstants.outQryColumns(LOCATION)));
-                out.setName(rs.getString(DataConstants.outQryColumns(NAME)));
-                out.setCommands(valueOfNullabletoEnumList(SqlCommand.class, rs.getString(DataConstants.outQryColumns(COMMANDS))));
+                DatabaseRequestWrapper out = new DatabaseRequestWrapper(rs.getString(PARENT.reference()), rs.getLong(ID.reference()));
+                out.setHost(rs.getString(HOST.reference()));
+                out.setPort(rs.getInt(PORT.reference()));
+                out.setDatabase(rs.getString(DB.reference()));
+                out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
+                out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                out.setUser(rs.getString(USER.reference()));
+                out.setThreadName(rs.getString(THREAD.reference()));
+                out.setDriverVersion(rs.getString(DRIVER.reference()));
+                out.setDatabaseName(rs.getString(DB_NAME.reference()));
+                out.setDatabaseVersion(rs.getString(DB_VERSION.reference()));
+                out.setLocation(rs.getString(LOCATION.reference()));
+                out.setName(rs.getString(NAME.reference()));
+                out.setCommands(valueOfNullabletoEnumList(SqlCommand.class, rs.getString(COMMANDS.reference())));
                 out.setActions(new ArrayList<>());
-                out.setCompleted("T".equals(rs.getString(DataConstants.outQryColumns(COMPLETE))));
+                out.setCompleted("T".equals(rs.getString(COMPLETE.reference())));
                 outs.add(out);
             }
             return outs;
@@ -333,15 +333,15 @@ public class JqueryRequestService {
             while (rs.next()) {
                 actions.add(
                         new DatabaseActionWrapper(
-                            rs.getLong(DataConstants.dbActColumns(PARENT)),
-                            JDBCAction.valueOf(rs.getString(DataConstants.dbActColumns(TYPE))),
-                            fromNullableTimestamp(rs.getTimestamp(DataConstants.dbActColumns(START))),
-                            fromNullableTimestamp(rs.getTimestamp(DataConstants.dbActColumns(END))),
+                            rs.getLong(PARENT.reference()),
+                            JDBCAction.valueOf(rs.getString(TYPE.reference())),
+                            fromNullableTimestamp(rs.getTimestamp(START.reference())),
+                            fromNullableTimestamp(rs.getTimestamp(END.reference())),
                             new ExceptionInfo(
-                                    rs.getString(DataConstants.dbActColumns(ERR_TYPE)),
-                                    rs.getString(DataConstants.dbActColumns(ERR_MSG))
+                                    rs.getString(ERR_TYPE.reference()),
+                                    rs.getString(ERR_MSG.reference())
                             ),
-                            ofNullable(rs.getString(DataConstants.dbActColumns(ACTION_COUNT))).map(str -> Arrays.stream(str.split(",")).mapToLong(Long::parseLong).toArray()).orElse(null)
+                            ofNullable(rs.getString(ACTION_COUNT.reference())).map(str -> Arrays.stream(str.split(",")).mapToLong(Long::parseLong).toArray()).orElse(null)
                         )
                 );
             }
