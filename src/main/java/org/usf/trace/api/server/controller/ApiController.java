@@ -99,7 +99,8 @@ public class ApiController {
 
     @GetMapping("session/api/{id}/parent")
     public ResponseEntity<Map<String,String>> getParentIdByChildId(@PathVariable String id){
-        return Optional.ofNullable(jqueryRequestService.getSessionParent(id))
+        return Optional.of(jqueryRequestService.getSessionParent(id))
+                .filter(o -> !o.isEmpty())
                 .map(o -> ResponseEntity.ok().body(o))
                 .orElseGet(()->ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }

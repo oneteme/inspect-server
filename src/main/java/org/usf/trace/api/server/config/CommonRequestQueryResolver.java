@@ -9,6 +9,8 @@ import org.usf.jquery.core.RequestQueryBuilder;
 import org.usf.jquery.web.RequestQueryParam;
 import org.usf.jquery.web.RequestQueryParamResolver;
 
+import java.util.Objects;
+
 public class CommonRequestQueryResolver implements HandlerMethodArgumentResolver {
 
     private final RequestQueryParamResolver resolver = new RequestQueryParamResolver();
@@ -21,8 +23,8 @@ public class CommonRequestQueryResolver implements HandlerMethodArgumentResolver
 
     @Override
     public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
-                                  NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
-        var crp = parameter.getParameterAnnotation(RequestQueryParam.class);
+                                  NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
+        var crp = Objects.requireNonNull(parameter.getParameterAnnotation(RequestQueryParam.class));
         return resolver.requestQuery(crp, webRequest.getParameterMap());
     }
 }
