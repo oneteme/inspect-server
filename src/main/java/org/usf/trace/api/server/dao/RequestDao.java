@@ -26,7 +26,6 @@ import static java.sql.Types.*;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.toList;
 
 @Repository
 @RequiredArgsConstructor
@@ -178,7 +177,7 @@ public class RequestDao {
                                     };
                                 }
                         ))
-                        .collect(toList()),
+                        .toList(),
                 new int[]{VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, VARCHAR, VARCHAR, BIGINT});
     }
 
@@ -197,7 +196,7 @@ public class RequestDao {
         var list = c.stream()
                 .filter(classe::isInstance)
                 .map(classe::cast)
-                .collect(toList());
+                .toList();
         if (!list.isEmpty()) {
             saveFn.accept(list);
         }
@@ -207,7 +206,7 @@ public class RequestDao {
         var list = c.stream()
                 .filter(o -> nonNull(accessor.apply(o)))
                 .flatMap(o -> accessor.apply(o).stream().map(s -> mapper.apply(o, s)))
-                .collect(toList());
+                .toList();
         if (!list.isEmpty()) {
             saveFn.accept(list);
         }
@@ -228,11 +227,7 @@ public class RequestDao {
         return ofNullable(o).map(Object::toString).orElse(null);
     }
     private static <T extends Enum<T>> String valueOfNullableList(List<T> enumList) { return ofNullable(enumList).map(list -> list.stream().map(Enum::toString).collect(Collectors.joining(","))).orElse(null);}
-
     private static final String[] empty_array = new String[0];
-    private static String[] splitNullable(String s){
-        return isNull(s) ? empty_array : s.split(",");
-    }
     private static String  valueOfNullableArray(long[]array){ return ofNullable(array).map(arr -> LongStream.of(arr).mapToObj(Long::toString).collect(Collectors.joining(","))).orElse(null);}
 }
 

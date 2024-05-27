@@ -45,6 +45,7 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
         this(ids, null,null,null,null, lazy, null,null,null,null,null,null,null,null, null,null,null);
     }
 
+    @Override
     public Collection<DBFilter> filters(TraceApiTable table) {
         Collection<DBFilter> filters = super.filters(table);
         if(!isEmpty(getAppNames())) {

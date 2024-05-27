@@ -28,7 +28,7 @@ public class JqueryMainSessionFilter extends JquerySessionFilter {
     public JqueryMainSessionFilter(String[] ids, boolean lazy) {
         this(ids, null, null, null, null, lazy, null, null, null);
     }
-
+    @Override
     public Collection<DBFilter> filters(TraceApiTable table) {
         Collection<DBFilter> filters = super.filters(table);
         if(!isEmpty(getNames())) {
