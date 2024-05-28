@@ -105,6 +105,11 @@ public class ApiController {
                 .orElseGet(()->ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
+    @GetMapping("session/{id}/tree")
+    public Session getTreebyId(@PathVariable String id){
+        return jqueryRequestService.getTreeById(id);
+    }
+
     @GetMapping("session/db/{id}")
     public ResponseEntity<DatabaseRequestWrapper> getDatabaseRequestById(@PathVariable long id){
         return Optional.ofNullable(requireSingle(jqueryRequestService.getDatabaseRequests(DBQUERY.column(ID).equal(id),true)))
@@ -133,10 +138,7 @@ public class ApiController {
     }
 
 
-    @GetMapping("session/request/{id}/tree")
-    public Session getTreebyId(@PathVariable String id){
-        return jqueryRequestService.getTreeById(id);
-    }
+
 }
 
 
