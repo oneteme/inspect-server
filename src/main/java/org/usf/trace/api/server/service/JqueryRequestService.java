@@ -127,10 +127,7 @@ public class JqueryRequestService {
                 session.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 session.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 session.setThreadName(rs.getString(THREAD.reference()));
-                session.setException(new ExceptionInfo(
-                        rs.getString(ERR_TYPE.reference()),
-                        rs.getString(ERR_MSG.reference())
-                ));
+                session.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 session.setName(rs.getString(API_NAME.reference()));
                 session.setUser(rs.getString(USER.reference()));
                 session.setApplication(new ApplicationInfo(
@@ -192,10 +189,7 @@ public class JqueryRequestService {
                         rs.getString(OS.reference()),
                         rs.getString(RE.reference())
                 ));
-                main.setException(new ExceptionInfo(
-                        rs.getString(ERR_TYPE.reference()),
-                        rs.getString(ERR_MSG.reference())
-                ));
+                main.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 sessions.add(main);
             }
 
@@ -238,10 +232,7 @@ public class JqueryRequestService {
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setThreadName(rs.getString(THREAD.reference()));
-                out.setException(new ExceptionInfo(
-                        rs.getString(ERR_TYPE.reference()),
-                        rs.getString(ERR_MSG.reference())
-                ));
+                out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 outs.add(out);
             }
             return outs;
@@ -268,10 +259,7 @@ public class JqueryRequestService {
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setUser(rs.getString(USER.reference()));
                 out.setThreadName(rs.getString(THREAD.reference()));
-                out.setException( new ExceptionInfo(
-                        rs.getString(ERR_TYPE.reference()),
-                        rs.getString(ERR_MSG.reference())
-                ));
+                out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 outs.add(out);
             }
             return outs;
@@ -336,10 +324,7 @@ public class JqueryRequestService {
                             JDBCAction.valueOf(rs.getString(TYPE.reference())),
                             fromNullableTimestamp(rs.getTimestamp(START.reference())),
                             fromNullableTimestamp(rs.getTimestamp(END.reference())),
-                            new ExceptionInfo(
-                                    rs.getString(ERR_TYPE.reference()),
-                                    rs.getString(ERR_MSG.reference())
-                            ),
+                            getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())),
                             ofNullable(rs.getString(ACTION_COUNT.reference())).map(str -> Arrays.stream(str.split(",")).mapToLong(Long::parseLong).toArray()).orElse(null)
                         )
                 );
@@ -354,6 +339,13 @@ public class JqueryRequestService {
 
     private static Instant fromNullableTimestamp(Timestamp timestamp) {
         return ofNullable(timestamp).map(Timestamp::toInstant).orElse(null);
+    }
+
+    private static ExceptionInfo getExceptionInfoIfNotNull(String className, String message) {
+        if(className != null || message != null) {
+            return new ExceptionInfo(className, message);
+        }
+        return null;
     }
 
     private static <T extends Enum<T>> T valueOfNullable(Class<T> classe, String value) {
