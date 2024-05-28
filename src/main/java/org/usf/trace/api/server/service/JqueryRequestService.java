@@ -343,7 +343,7 @@ public class JqueryRequestService {
     }
 
     private static ExceptionInfo getExceptionInfoIfNotNull(String className, String message) {
-        if(className != null && message != null) {
+        if(className != null || message != null) {
             return new ExceptionInfo(className, message);
         }
         return null;
