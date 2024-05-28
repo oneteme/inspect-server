@@ -13,6 +13,9 @@ spring:
     password:
     driver-class-name: org.h2.Driver
     #data: classpath:data-h2.sql
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
   h2:
     console:
       enabled: true
