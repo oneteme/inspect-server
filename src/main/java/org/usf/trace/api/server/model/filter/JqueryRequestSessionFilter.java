@@ -22,12 +22,11 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
     private final String[] auths;
     private final String[] status;
     private final String[] apiNames;
-    private final String[] users;
     private final String path;
     private final String query;
 
-    public JqueryRequestSessionFilter(String[] ids, String[] appNames, String[] environments, Instant start, Instant end, boolean lazy, String[] methods, String[] protocols, String[] hosts, String[] ports, String[] medias, String[] auths, String[] status, String[] apiNames, String[] users, String path, String query) {
-        super(ids, appNames, environments, start, end, lazy);
+    public JqueryRequestSessionFilter(String[] ids, String[] appNames, String[] environments, String[] users, Instant start, Instant end, boolean lazy, String[] methods, String[] protocols, String[] hosts, String[] ports, String[] medias, String[] auths, String[] status, String[] apiNames, String path, String query) {
+        super(ids, appNames, environments, users, start, end, lazy);
         this.methods = methods;
         this.protocols = protocols;
         this.hosts = hosts;
@@ -36,13 +35,12 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
         this.auths = auths;
         this.status = status;
         this.apiNames = apiNames;
-        this.users = users;
         this.path = path;
         this.query = query;
     }
 
     public JqueryRequestSessionFilter(String[] ids, boolean lazy) {
-        this(ids, null,null,null,null, lazy, null,null,null,null,null,null,null,null, null,null,null);
+        this(ids, null,null,null,null, null, lazy, null,null,null,null,null,null,null, null,null,null);
     }
 
     @Override
@@ -77,9 +75,6 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
         }
         if(!isEmpty(getStatus())) {
             filters.add(table.column(STATUS).in(getStatus()));
-        }
-        if(!isEmpty(getUsers())) {
-            filters.add(table.column(USER).in(getUsers()));
         }
         return filters;
     }

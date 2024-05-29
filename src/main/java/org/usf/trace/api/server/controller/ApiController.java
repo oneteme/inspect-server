@@ -33,13 +33,11 @@ import static org.usf.traceapi.core.Session.nextId;
 @RestController
 @RequestMapping(value = "trace", produces = APPLICATION_JSON_VALUE)
 public class ApiController {
-	
-    private final RequestDao dao;
+
     private final JqueryRequestService jqueryRequestService;
     private final SessionQueueService queueService;
 
-    public ApiController(RequestDao dao, JqueryRequestService jqueryRequestService, SessionQueueService queueService) {
-        this.dao = dao;
+    public ApiController(JqueryRequestService jqueryRequestService, SessionQueueService queueService) {
         this.jqueryRequestService = jqueryRequestService;
         this.queueService = queueService;
     }
@@ -88,7 +86,8 @@ public class ApiController {
     		@RequestParam(required = false, name = "appname") String[] appNames,
     		@RequestParam(required = false, name = "env") String[] environments,
             @RequestParam(defaultValue = "true", name = "lazy") boolean lazy){ // without tree
-            JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, appNames, environments, start, end, lazy, methods, protocols, hosts, ports, medias, auths, status, apiNames, users, path, query);
+
+        JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, appNames, environments, users, start, end, lazy, methods, protocols, hosts, ports, medias, auths, status, apiNames, path, query);
         return jqueryRequestService.getApiSesssionsByCriteria(jsf, ApiRequest::new,false);
     }
 
@@ -126,9 +125,9 @@ public class ApiController {
             @RequestParam(required = false, name = "location") String location,
             @RequestParam(required = false, name = "start") Instant start,
             @RequestParam(required = false, name = "end") Instant end,
+            @RequestParam(required = false, name = "user") String[] users,
             @RequestParam(defaultValue = "true", name = "lazy") boolean lazy) {
-
-        JqueryMainSessionFilter fc = new JqueryMainSessionFilter(null, null, environments, start, end, lazy, names, launchModes, location);
+        JqueryMainSessionFilter fc = new JqueryMainSessionFilter(null, null, environments, users, start, end, lazy, names, launchModes, location);
         return jqueryRequestService.getMainSessionsByCriteria(fc, ApiRequest::new,false);
     }
 
