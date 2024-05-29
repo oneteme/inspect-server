@@ -1,14 +1,9 @@
 package org.usf.trace.api.server.config;
 
-import static org.usf.jquery.core.ComparisonExpression.equal;
-import static org.usf.jquery.core.ComparisonExpression.greaterOrEqual;
-import static org.usf.jquery.core.ComparisonExpression.lessThan;
+import static org.usf.jquery.core.ComparisonExpression.*;
 import static org.usf.jquery.core.DBColumn.count;
 import static org.usf.trace.api.server.config.DbFields.*;
-import static org.usf.trace.api.server.config.TraceApiColumn.COMPLETE;
-import static org.usf.trace.api.server.config.TraceApiColumn.END;
-import static org.usf.trace.api.server.config.TraceApiColumn.START;
-import static org.usf.trace.api.server.config.TraceApiColumn.STATUS;
+import static org.usf.trace.api.server.config.TraceApiColumn.*;
 
 import org.usf.jquery.core.ComparisonExpression;
 import org.usf.jquery.core.DBColumn;
@@ -150,11 +145,19 @@ public final class DataConstants {
 
     public static DBColumn elapsedtime2(TableDecorator table) {
         return DBFunction.epoch().args(table.column(END).minus(table.column(START)));
+
     }
 
     private static OperationColumn countStatusByType(TableDecorator table, ComparisonExpression op) {
         var status = table.column(STATUS);
         return count((status).when(op).then(status).end());
+    }
+    public static DBColumn err (TableDecorator table){ // temporary solution to be changed
+        return DBFunction.coalesce().args(table.column(ERR_MSG),table.column(ERR_TYPE));
+    }
+
+    public static ComparisonExpression errComp (String name){// temporary solution to be changed
+        return isNotNull();
     }
 
     private static OperationColumn countDbBySucces(TableDecorator table, ComparisonExpression op ){
