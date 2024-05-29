@@ -22,6 +22,7 @@ public class JquerySessionFilter {
     private final String[] ids;
     private final String[] appNames;
     private final String[] environments;
+    private final String[] users;
     private final Instant start;
     private final Instant end;
     private final boolean lazy;
@@ -36,6 +37,9 @@ public class JquerySessionFilter {
         }
         if(!isEmpty(getEnvironments())) {
             filters.add(table.column(ENVIRONEMENT).in(getEnvironments()));
+        }
+        if(!isEmpty(getUsers())) {
+            filters.add(table.column(USER).in(getUsers()));
         }
         if(getStart() != null) {
             filters.add(table.column(START).greaterOrEqual(from(getStart())));
