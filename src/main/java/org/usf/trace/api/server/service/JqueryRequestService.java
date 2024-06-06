@@ -18,6 +18,8 @@ import org.usf.trace.api.server.model.wrapper.DatabaseRequestWrapper;
 import org.usf.trace.api.server.model.wrapper.ApiRequestWrapper;
 import org.usf.trace.api.server.model.wrapper.RunnableStageWrapper;
 import org.usf.traceapi.core.*;
+import org.usf.traceapi.jdbc.JDBCAction;
+
 import javax.sql.DataSource;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -52,12 +54,12 @@ public class JqueryRequestService {
         prntIncList.forEach(prntA ->
             prntIncList.forEach(prntB -> {
                 if (!Objects.equals(prntA.getId(), prntB.getId())){
-                    Optional<ApiRequest> opt = prntB.getRequests().stream()
+                    Optional<RestRequest> opt = prntB.getRequests().stream()
                             .filter(k -> prntA.getId().equals(k.getId()))
                             .findFirst();
                     if (opt.isPresent()) {
                         var ex = (Exchange) opt.get();
-                        ex.setRemoteTrace((ApiSession) prntA);
+                        ex.setRemoteTrace((RestSession) prntA);
                     }
                 }
             }));
@@ -89,12 +91,12 @@ public class JqueryRequestService {
         });
     }
 
-    public List<Session> getApiSessionById(List<String> ids, Supplier<? extends ApiRequest> fn, boolean queryLazy){
+    public List<Session> getApiSessionById(List<String> ids, Supplier<? extends RestRequest> fn, boolean queryLazy){
         JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(ids.toArray(String[]::new), true);
         return getApiSesssionsByCriteria(jsf, fn, queryLazy);
     }
 
-    public List<Session> getApiSesssionsByCriteria(JqueryRequestSessionFilter jsf, Supplier<? extends ApiRequest> fn, boolean queryLazy) {
+    public List<Session> getApiSesssionsByCriteria(JqueryRequestSessionFilter jsf, Supplier<? extends RestRequest> fn, boolean queryLazy) {
         var v = new RequestQueryBuilder();
         v.select(
                 APISESSION.table(),
@@ -111,7 +113,7 @@ public class JqueryRequestService {
         List<Session> res = v.build().execute(ds, rs -> {
             List<Session> sessions = new ArrayList<>();
             while (rs.next()) {
-                ApiSession session = new ApiSession();
+                RestSession session = new RestSession();
                 session.setId(rs.getString(ID.reference()));
                 session.setMethod(rs.getString(METHOD.reference()));
                 session.setProtocol(rs.getString(PROTOCOL.reference()));
@@ -155,12 +157,12 @@ public class JqueryRequestService {
         return res;
     }
 
-    public List<Session> getMainSessionById(String id, Supplier<? extends ApiRequest> fn, boolean queryLazy){
+    public List<Session> getMainSessionById(String id, Supplier<? extends RestRequest> fn, boolean queryLazy){
         JqueryMainSessionFilter jsf = new JqueryMainSessionFilter(Collections.singletonList(id).toArray(String[]::new), true);
         return getMainSessionsByCriteria(jsf, fn, queryLazy);
     }
 
-    public List<Session> getMainSessionsByCriteria(JqueryMainSessionFilter jsf, Supplier<? extends ApiRequest> fn,boolean queryLazy) {
+    public List<Session> getMainSessionsByCriteria(JqueryMainSessionFilter jsf, Supplier<? extends RestRequest> fn,boolean queryLazy) {
         var v = new RequestQueryBuilder();
         v.select(
                 MAINSESSION.table(),
@@ -210,7 +212,7 @@ public class JqueryRequestService {
         }
         return res;
     }
-    public List<ApiRequestWrapper> getApiRequests(String[] incomingId, Supplier<? extends ApiRequest> fn) { //use criteria
+    public List<ApiRequestWrapper> getApiRequests(String[] incomingId, Supplier<? extends RestRequest> fn) { //use criteria
         var v = new RequestQueryBuilder();
         v.select(
                 APIREQUEST.table(),
