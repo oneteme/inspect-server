@@ -52,7 +52,7 @@ public class ApiController {
                     s.setId(nextId()); // safe id set for web collectors
                     updateRemoteAddress(hsr, ms);
                 }
-                else if(s instanceof ApiSession) {
+                else if(s instanceof RestSession) {
                     log.warn("ApiSesstion id is null : {}", s);
                 }
             }
@@ -89,12 +89,12 @@ public class ApiController {
     		@RequestParam(required = false, name = "env") String[] environments,
             @RequestParam(defaultValue = "true", name = "lazy") boolean lazy){ // without tree
             JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, appNames, environments, start, end, lazy, methods, protocols, hosts, ports, medias, auths, status, apiNames, users, path, query);
-        return jqueryRequestService.getApiSesssionsByCriteria(jsf, ApiRequest::new,false);
+        return jqueryRequestService.getApiSesssionsByCriteria(jsf, RestRequest::new,false);
     }
 
     @GetMapping("session/api/{id}")
     public ResponseEntity<Session> getIncomingRequestById(@PathVariable String id) { // without tree
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(jqueryRequestService.getApiSessionById(Collections.singletonList(id), ApiRequest::new, false)));
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(jqueryRequestService.getApiSessionById(Collections.singletonList(id), RestRequest::new, false)));
     }
 
     @GetMapping("session/api/{id}/parent")
@@ -124,12 +124,12 @@ public class ApiController {
             @RequestParam(defaultValue = "true", name = "lazy") boolean lazy) {
 
         JqueryMainSessionFilter fc = new JqueryMainSessionFilter(null, null, environments, start, end, lazy, names, launchModes, location);
-        return jqueryRequestService.getMainSessionsByCriteria(fc, ApiRequest::new,false);
+        return jqueryRequestService.getMainSessionsByCriteria(fc, RestRequest::new,false);
     }
 
     @GetMapping("session/main/{id}")
     public ResponseEntity<Session> getMainRequestById(@PathVariable String id) { // without tree
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(jqueryRequestService.getMainSessionById(id, ApiRequest::new, false)));
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requireSingle(jqueryRequestService.getMainSessionById(id, RestRequest::new, false)));
     }
 
 

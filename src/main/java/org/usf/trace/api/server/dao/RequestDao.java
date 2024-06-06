@@ -35,7 +35,7 @@ public class RequestDao {
 
     @Transactional(rollbackFor = Exception.class)
     public void saveSessions(List<Session> sessions) {
-        filterAndSave(sessions, ApiSession.class, this::addApiSessions);
+        filterAndSave(sessions, RestSession.class, this::addApiSessions);
         filterAndSave(sessions, MainSession.class, this::addMainSessions);
         filterSubAndSave(sessions, Session::getRequests, (s, r) -> new ApiRequestWrapper(s.getId(), r), this::addApiRequests);
         filterSubAndSave(sessions, Session::getQueries, (s, q) -> new DatabaseRequestWrapper(s.getId(), q), this::addDatabaseRequests);
@@ -66,7 +66,7 @@ public class RequestDao {
         });
     }
 
-    private void addApiSessions(List<ApiSession> reqList) {
+    private void addApiSessions(List<RestSession> reqList) {
         template.batchUpdate("INSERT INTO E_API_SES(ID_SES,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             var app = nullableApplication(o.getApplication());
