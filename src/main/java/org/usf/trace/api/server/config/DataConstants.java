@@ -1,14 +1,9 @@
 package org.usf.trace.api.server.config;
 
-import static org.usf.jquery.core.ComparisonExpression.equal;
-import static org.usf.jquery.core.ComparisonExpression.greaterOrEqual;
-import static org.usf.jquery.core.ComparisonExpression.lessThan;
+import static org.usf.jquery.core.ComparisonExpression.*;
 import static org.usf.jquery.core.DBColumn.count;
 import static org.usf.trace.api.server.config.DbFields.*;
-import static org.usf.trace.api.server.config.TraceApiColumn.COMPLETE;
-import static org.usf.trace.api.server.config.TraceApiColumn.END;
-import static org.usf.trace.api.server.config.TraceApiColumn.START;
-import static org.usf.trace.api.server.config.TraceApiColumn.STATUS;
+import static org.usf.trace.api.server.config.TraceApiColumn.*;
 
 import org.usf.jquery.core.ComparisonExpression;
 import org.usf.jquery.core.DBColumn;
@@ -29,17 +24,12 @@ public final class DataConstants {
             case START -> DH_DBT;
             case END -> DH_FIN;
             case USER -> VA_USR;
-            case OS -> VA_OS;
-            case RE -> VA_RE;
             case TYPE -> LNCH;
             case LOCATION -> LOC;
             case THREAD -> VA_THRED;
-            case APP_NAME -> VA_APP_NME;
-            case VERSION -> VA_VRS;
-            case ADDRESS -> VA_ADRS;
-            case ENVIRONEMENT -> VA_ENV;
             case ERR_TYPE -> VA_ERR_CLS;
             case ERR_MSG -> VA_ERR_MSG;
+            case INSTANCE_ENV -> CD_INS_ENV;
             default -> null;
         };
     }
@@ -58,19 +48,17 @@ public final class DataConstants {
             case STATUS -> CD_STT;
             case SIZE_IN -> VA_I_SZE;
             case SIZE_OUT -> VA_O_SZE;
+            case CONTENT_ENCODING_IN -> VA_I_CNT_ENC;
+            case CONTENT_ENCODING_OUT -> VA_O_CNT_ENC;
             case START -> DH_DBT;
             case END -> DH_FIN;
             case THREAD -> VA_THRED;
             case API_NAME -> VA_API_NME;
             case USER -> VA_USR;
-            case APP_NAME -> VA_APP_NME;
-            case VERSION -> VA_VRS;
-            case ADDRESS -> VA_ADRS;
-            case ENVIRONEMENT -> VA_ENV;
-            case OS -> VA_OS;
-            case RE -> VA_RE;
+            case USER_AGT -> VA_USR_AGT;
             case ERR_TYPE -> VA_ERR_CLS;
             case ERR_MSG -> VA_ERR_MSG;
+            case INSTANCE_ENV -> CD_INS_ENV;
             default -> null;
         };
     }
@@ -89,12 +77,15 @@ public final class DataConstants {
             case STATUS -> CD_STT;
             case SIZE_IN -> VA_I_SZE;
             case SIZE_OUT -> VA_O_SZE;
+            case CONTENT_ENCODING_IN -> VA_I_CNT_ENC;
+            case CONTENT_ENCODING_OUT -> VA_O_CNT_ENC;
             case START -> DH_DBT;
             case END -> DH_FIN;
             case THREAD -> VA_THRED;
             case ERR_TYPE -> VA_ERR_CLS;
             case ERR_MSG -> VA_ERR_MSG;
             case PARENT -> CD_SES;
+
             default -> null;
         };
     }
@@ -112,8 +103,6 @@ public final class DataConstants {
             case DB_NAME -> VA_DB_NME;
             case DB_VERSION -> VA_DB_VRS;
             case COMMANDS -> VA_CMD;
-            case NAME -> VA_NME;
-            case LOCATION -> VA_LOC;
             case COMPLETE -> VA_CMPLT;
             case PARENT -> CD_SES;
             default -> null;
@@ -148,13 +137,37 @@ public final class DataConstants {
         };
     }
 
+    public static String instanceEnvColumns(TraceApiColumn column){
+        return switch (column) {
+            case ID -> ID_INS_ENV;
+            case TYPE -> VA_TYP;
+            case START -> DH_DBT;
+            case APP_NAME -> VA_APP_NME;
+            case VERSION -> VA_VRS;
+            case ADDRESS -> VA_ADRS;
+            case ENVIRONEMENT -> VA_ENV;
+            case OS -> VA_OS;
+            case RE -> VA_RE;
+            case COLLECTOR -> VA_CLCT;
+            default -> null;
+        };
+    }
+
     public static DBColumn elapsedtime2(TableDecorator table) {
         return DBFunction.epoch().args(table.column(END).minus(table.column(START)));
+
     }
 
     private static OperationColumn countStatusByType(TableDecorator table, ComparisonExpression op) {
         var status = table.column(STATUS);
         return count((status).when(op).then(status).end());
+    }
+    public static DBColumn err(TableDecorator table){ // temporary solution to be changed
+        return DBFunction.coalesce().args(table.column(ERR_MSG),table.column(ERR_TYPE));
+    }
+
+    public static ComparisonExpression errComp(String name){// temporary solution to be changed
+        return isNotNull();
     }
 
     private static OperationColumn countDbBySucces(TableDecorator table, ComparisonExpression op ){

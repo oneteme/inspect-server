@@ -1,11 +1,15 @@
-package org.usf.trace.api.server.dao;
+package org.usf.trace.api.server.dao.v3;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import org.usf.trace.api.server.model.wrapper.DatabaseRequestWrapper;
+import org.usf.trace.api.server.model.InstanceMainSession;
+import org.usf.trace.api.server.model.InstanceRestSession;
+import org.usf.trace.api.server.model.InstanceSession;
 import org.usf.trace.api.server.model.wrapper.ApiRequestWrapper;
+import org.usf.trace.api.server.model.wrapper.DatabaseRequestWrapper;
+import org.usf.trace.api.server.model.wrapper.InstanceEnvironmentWrapper;
 import org.usf.trace.api.server.model.wrapper.RunnableStageWrapper;
 import org.usf.traceapi.core.*;
 
@@ -29,47 +33,57 @@ import static java.util.Optional.ofNullable;
 
 @Repository
 @RequiredArgsConstructor
-public class RequestDao {
+public class V3RequestDao {
 
     private final JdbcTemplate template;
 
-    @Transactional(rollbackFor = Exception.class)
-    public void saveSessions(List<Session> sessions) {
-        filterAndSave(sessions, RestSession.class, this::addApiSessions);
-        filterAndSave(sessions, MainSession.class, this::addMainSessions);
-        filterSubAndSave(sessions, Session::getRequests, (s, r) -> new ApiRequestWrapper(s.getId(), r), this::addApiRequests);
-        filterSubAndSave(sessions, Session::getQueries, (s, q) -> new DatabaseRequestWrapper(s.getId(), q), this::addDatabaseRequests);
-        filterSubAndSave(sessions, Session::getStages, (s, st) -> new RunnableStageWrapper(s.getId(), st), this::addRunnableStages);
+    public void saveInstanceEnvironment(List<InstanceEnvironmentWrapper> instances) {
+        template.batchUpdate("INSERT INTO E_INS_ENV(ID_INS_ENV, VA_TYP, DH_DBT, VA_APP_NME, VA_VRS, VA_ADRS, VA_ENV, VA_OS, VA_RE, VA_USR, VA_CLCT) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", instances, instances.size(), (ps, o) -> {
+            ps.setString(1, o.getInstanceId());
+            ps.setString(2, o.getType().name());
+            ps.setTimestamp(3, fromNullableInstant(o.getInstant()));
+            ps.setString(4, o.getName());
+            ps.setString(5, o.getVersion());
+            ps.setString(6, o.getAddress());
+            ps.setString(7, o.getEnv());
+            ps.setString(8, o.getOs());
+            ps.setString(9, o.getRe());
+            ps.setString(10, o.getUser());
+            ps.setString(11, o.getCollector());
+        });
     }
 
-    private void addMainSessions(List<MainSession> reqList) {
-        template.batchUpdate("INSERT INTO E_MAIN_SES(ID_SES,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_THRED,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE,VA_ERR_CLS,VA_ERR_MSG)"
-                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
-            var app = nullableApplication(o.getApplication());
+    @Transactional(rollbackFor = Exception.class)
+    public void saveSessions(List<InstanceSession> sessions) {
+        filterAndSave(sessions, InstanceRestSession.class, this::saveApiSessions);
+        filterAndSave(sessions, InstanceMainSession.class, this::saveMainSessions);
+        filterSubAndSave(sessions, Session::getRequests, (s, r) -> new ApiRequestWrapper(s.getId(), r), this::saveApiRequests);
+        filterSubAndSave(sessions, Session::getQueries, (s, q) -> new DatabaseRequestWrapper(s.getId(), q), this::saveDatabaseRequests);
+        filterSubAndSave(sessions, Session::getStages, (s, st) -> new RunnableStageWrapper(s.getId(), st), this::saveRunnableStages);
+    }
+
+    private void saveMainSessions(List<InstanceMainSession> reqList) {
+        template.batchUpdate("INSERT INTO E_MAIN_SES(ID_SES,VA_NAME,VA_USR,DH_DBT,DH_FIN,LNCH,LOC,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,CD_INS_ENV)"
+                + " VALUES(?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             var exp = nullableException(o.getException());
             ps.setString(1, o.getId());
             ps.setString(2, o.getName());
             ps.setString(3, o.getUser());
             ps.setTimestamp(4, fromNullableInstant(o.getStart()));
             ps.setTimestamp(5, fromNullableInstant(o.getEnd()));
-            ps.setString(6, valueOfNullable(o.getLaunchMode()));
+            ps.setString(6, valueOfNullable(o.getType()));
             ps.setString(7, o.getLocation());
             ps.setString(8, o.getThreadName());
-            ps.setString(9, app.getName());
-            ps.setString(10, app.getVersion());
-            ps.setString(11, app.getAddress());
-            ps.setString(12, app.getEnv());
-            ps.setString(13, app.getOs());
-            ps.setString(14, app.getRe());
-            ps.setString(15, exp.getClassname());
-            ps.setString(16, exp.getMessage());
+            ps.setString(9, exp.getType());
+            ps.setString(10, exp.getMessage());
+            ps.setString(11, o.getInstanceId());
         });
     }
 
-    private void addApiSessions(List<RestSession> reqList) {
-        template.batchUpdate("INSERT INTO E_API_SES(ID_SES,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,VA_API_NME,VA_USR,VA_APP_NME,VA_VRS,VA_ADRS,VA_ENV,VA_OS,VA_RE)"
-                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
-            var app = nullableApplication(o.getApplication());
+    private void saveApiSessions(List<InstanceRestSession> reqList) {
+        template.batchUpdate("INSERT INTO E_API_SES(ID_SES,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,VA_API_NME,VA_USR,VA_USR_AGT,CD_INS_ENV)"
+                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             var exp = nullableException(o.getException());
             ps.setString(1, o.getId());
             ps.setString(2, o.getMethod());
@@ -83,25 +97,23 @@ public class RequestDao {
             ps.setInt(10, o.getStatus());
             ps.setLong(11, o.getInDataSize());
             ps.setLong(12, o.getOutDataSize());
-            ps.setTimestamp(13, fromNullableInstant(o.getStart()));
-            ps.setTimestamp(14, fromNullableInstant(o.getEnd()));
-            ps.setString(15, o.getThreadName());
-            ps.setString(16, exp.getClassname());
-            ps.setString(17, exp.getMessage());
-            ps.setString(18, o.getName());
-            ps.setString(19, o.getUser());
-            ps.setString(20, app.getName());
-            ps.setString(21, app.getVersion());
-            ps.setString(22, app.getAddress());
-            ps.setString(23, app.getEnv());
-            ps.setString(24, app.getOs());
-            ps.setString(25, app.getRe());
+            ps.setString(13, o.getInContentEncoding());
+            ps.setString(14, o.getOutContentEncoding());
+            ps.setTimestamp(15, fromNullableInstant(o.getStart()));
+            ps.setTimestamp(16, fromNullableInstant(o.getEnd()));
+            ps.setString(17, o.getThreadName());
+            ps.setString(18, exp.getType());
+            ps.setString(19, exp.getMessage());
+            ps.setString(20, o.getName());
+            ps.setString(21, o.getUser());
+            ps.setString(22, o.getUserAgent());
+            ps.setString(23, o.getInstanceId());
         });
     }
 
-    private void addApiRequests(List<ApiRequestWrapper> reqList) {
-        template.batchUpdate("INSERT INTO E_API_REQ(CD_API,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,CD_SES)"
-                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
+    public void saveApiRequests(List<ApiRequestWrapper> reqList) {
+        template.batchUpdate("INSERT INTO E_API_REQ(CD_API,VA_MTH,VA_PRTCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_AUTH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_DBT,DH_FIN,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,CD_SES)"
+                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             var exp = nullableException(o.getException());
             ps.setString(1, o.getId());
             ps.setString(2, o.getMethod());
@@ -115,16 +127,18 @@ public class RequestDao {
             ps.setInt(10, o.getStatus());
             ps.setLong(11, o.getInDataSize());
             ps.setLong(12, o.getOutDataSize());
-            ps.setTimestamp(13, fromNullableInstant(o.getStart()));
-            ps.setTimestamp(14, fromNullableInstant(o.getEnd()));
-            ps.setString(15, o.getThreadName());
-            ps.setString(16, exp.getClassname());
-            ps.setString(17, exp.getMessage());
-            ps.setString(18, o.getParentId());
+            ps.setString(13, o.getInContentEncoding());
+            ps.setString(14, o.getOutContentEncoding());
+            ps.setTimestamp(15, fromNullableInstant(o.getStart()));
+            ps.setTimestamp(16, fromNullableInstant(o.getEnd()));
+            ps.setString(17, o.getThreadName());
+            ps.setString(18, exp.getType());
+            ps.setString(19, exp.getMessage());
+            ps.setString(20, o.getParentId());
         });
     }
 
-    public void addRunnableStages(List<RunnableStageWrapper> stagesList){
+    public void saveRunnableStages(List<RunnableStageWrapper> stagesList){
         template.batchUpdate("INSERT INTO E_STG(VA_NAME,LOC,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_ERR_CLS,VA_ERR_MSG,CD_SES)"
                 + " VALUES(?,?,?,?,?,?,?,?,?)", stagesList,stagesList.size(),(ps,o)-> {
             var exp = nullableException(o.getException());
@@ -134,18 +148,19 @@ public class RequestDao {
             ps.setTimestamp(4,fromNullableInstant(o.getEnd()));
             ps.setString(5,o.getUser());
             ps.setString(6,o.getThreadName());
-            ps.setString(7,exp.getClassname());
+            ps.setString(7,exp.getType());
             ps.setString(8,exp.getMessage());
             ps.setString(9,o.getParentId());
         });
     }
 
-    private void addDatabaseRequests(List<DatabaseRequestWrapper> qryList) {
+    @Transactional(rollbackFor = Exception.class)
+    public void saveDatabaseRequests(List<DatabaseRequestWrapper> qryList) {
         var maxId = template.queryForObject("SELECT COALESCE(MAX(ID_OUT_QRY), 0) FROM E_DB_REQ", Long.class);
         var inc = new AtomicLong(maxId);
 
-        template.batchUpdate("INSERT INTO E_DB_REQ(ID_OUT_QRY,VA_HST,CD_PRT,VA_DB,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_DRV,VA_DB_NME,VA_DB_VRS,VA_CMD,VA_NME,VA_LOC,VA_CMPLT,CD_SES)"
-                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", qryList, qryList.size(), (ps, o) -> {
+        template.batchUpdate("INSERT INTO E_DB_REQ(ID_OUT_QRY,VA_HST,CD_PRT,VA_DB,DH_DBT,DH_FIN,VA_USR,VA_THRED,VA_DRV,VA_DB_NME,VA_DB_VRS,VA_CMD,VA_CMPLT,CD_SES)"
+                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)", qryList, qryList.size(), (ps, o) -> {
             var completed = o.getActions().stream().allMatch(a-> isNull(a.getException()));
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getHost());
@@ -159,16 +174,14 @@ public class RequestDao {
             ps.setString(10, o.getDatabaseName());
             ps.setString(11, o.getDatabaseVersion());
             ps.setString(12, valueOfNullableList(o.getCommands()));
-            ps.setString(13, o.getName());
-            ps.setString(14, o.getLocation());
-            ps.setString(15, completed ? "T" : "F");
-            ps.setString(16, o.getParentId());
+            ps.setString(13, completed ? "T" : "F");
+            ps.setString(14, o.getParentId());
             o.setId(inc.get());
         });
-        addDatabaseActions(qryList);
+        saveDatabaseActions(qryList);
     }
 
-    private void addDatabaseActions(List<DatabaseRequestWrapper> queries) {
+    private void saveDatabaseActions(List<DatabaseRequestWrapper> queries) {
         template.batchUpdate("INSERT INTO E_DB_ACT(VA_TYP,DH_DBT,DH_FIN,VA_ERR_CLS,VA_ERR_MSG,CD_COUNT,CD_OUT_QRY) VALUES(?,?,?,?,?,?,?)",
                 queries.stream()
                         .flatMap(e -> e.getActions().stream().map(da -> {
@@ -216,19 +229,14 @@ public class RequestDao {
         return ofNullable(instant).map(Timestamp::from).orElse(null);
     }
 
-    private static ApplicationInfo nullableApplication(ApplicationInfo app) {
-        return ofNullable(app).orElseGet(() -> new ApplicationInfo(null, null, null, null, null, null));
+    private static String valueOfNullable(Object o) {
+        return ofNullable(o).map(Object::toString).orElse(null);
     }
+
+    private static <T extends Enum<T>> String valueOfNullableList(List<T> enumList) { return ofNullable(enumList).map(list -> list.stream().map(Enum::toString).collect(Collectors.joining(","))).orElse(null);}
+    private static String  valueOfNullableArray(long[]array){ return ofNullable(array).map(arr -> LongStream.of(arr).mapToObj(Long::toString).collect(Collectors.joining(","))).orElse(null);}
 
     private static ExceptionInfo nullableException(ExceptionInfo exp) {
         return ofNullable(exp).orElseGet(() -> new ExceptionInfo(null, null));
     }
-    private static String valueOfNullable(Object o) {
-        return ofNullable(o).map(Object::toString).orElse(null);
-    }
-    private static <T extends Enum<T>> String valueOfNullableList(List<T> enumList) { return ofNullable(enumList).map(list -> list.stream().map(Enum::toString).collect(Collectors.joining(","))).orElse(null);}
-    private static final String[] empty_array = new String[0];
-    private static String  valueOfNullableArray(long[]array){ return ofNullable(array).map(arr -> LongStream.of(arr).mapToObj(Long::toString).collect(Collectors.joining(","))).orElse(null);}
 }
-
-

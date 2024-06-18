@@ -20,7 +20,8 @@ public enum TraceApiTable implements TableDecorator {
     MAINSESSION("e_main_ses", DataConstants::sessionColumns),
     DBQUERY("e_db_req",DataConstants::outQryColumns),
     STAGES("e_stg",DataConstants::outStgColumns),
-    DBACTION("e_db_act",DataConstants::dbActColumns);
+    DBACTION("e_db_act",DataConstants::dbActColumns),
+    INSTANCE("e_ins_env", DataConstants::instanceEnvColumns);
 
     @NonNull
     private final String tableName;

@@ -8,6 +8,8 @@ public class DbFields {
     public static final String CD_SES = "cd_ses";
     public static final String CD_OUT_QRY = "cd_out_qry";
     public static final String ID_OUT_QRY = "id_out_qry";
+    public static final String ID_INS_ENV = "id_ins_env";
+    public static final String CD_INS_ENV = "cd_ins_env";
     public static final String VA_MTH = "va_mth";
     public static final String VA_PRTCL = "va_prtcl";
     public static final String VA_HST = "va_hst";
@@ -19,10 +21,13 @@ public class DbFields {
     public static final String CD_STT = "cd_stt";
     public static final String VA_I_SZE = "va_i_sze";
     public static final String VA_O_SZE = "va_o_sze";
+    public static final String VA_I_CNT_ENC = "va_i_cnt_enc";
+    public static final String VA_O_CNT_ENC = "va_o_cnt_enc";
     public static final String VA_NAME = "va_name";
     public static final String DH_DBT = "dh_dbt";
     public static final String DH_FIN = "dh_fin";
     public static final String VA_USR = "va_usr";
+    public static final String VA_USR_AGT = "va_usr_agt";
     public static final String VA_OS = "va_os";
     public static final String VA_RE = "va_re";
     public static final String LNCH = "lnch";
@@ -32,6 +37,7 @@ public class DbFields {
     public static final String VA_APP_NME = "va_app_nme";
     public static final String VA_VRS = "va_vrs";
     public static final String VA_ADRS = "va_adrs";
+    public static final String VA_CLCT = "va_clct";
     public static final String VA_ENV = "va_env";
     public static final String VA_DB = "va_db";
     public static final String VA_DRV = "va_drv";

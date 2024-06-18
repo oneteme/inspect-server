@@ -14,6 +14,7 @@ import java.util.Collection;
 import static java.sql.Timestamp.from;
 import static org.usf.jquery.core.Utils.isEmpty;
 import static org.usf.trace.api.server.config.TraceApiColumn.*;
+import static org.usf.trace.api.server.config.TraceApiTable.*;
 
 @Getter
 @Setter
@@ -22,9 +23,9 @@ public class JquerySessionFilter {
     private final String[] ids;
     private final String[] appNames;
     private final String[] environments;
+    private final String[] users;
     private final Instant start;
     private final Instant end;
-    private final boolean lazy;
 
     public Collection<DBFilter> filters(TraceApiTable table) {
         Collection<DBFilter> filters = new ArrayList<>();
@@ -32,10 +33,13 @@ public class JquerySessionFilter {
             filters.add(table.column(ID).in(getIds()));
         }
         if(!isEmpty(getAppNames())) {
-            filters.add(table.column(APP_NAME).in(getAppNames()));
+            filters.add(INSTANCE.column(APP_NAME).in(getAppNames()));
         }
         if(!isEmpty(getEnvironments())) {
-            filters.add(table.column(ENVIRONEMENT).in(getEnvironments()));
+            filters.add(INSTANCE.column(ENVIRONEMENT).in(getEnvironments()));
+        }
+        if(!isEmpty(getUsers())) {
+            filters.add(INSTANCE.column(USER).in(getUsers()));
         }
         if(getStart() != null) {
             filters.add(table.column(START).greaterOrEqual(from(getStart())));

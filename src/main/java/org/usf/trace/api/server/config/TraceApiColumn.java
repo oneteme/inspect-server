@@ -24,12 +24,16 @@ public enum TraceApiColumn implements ColumnDecorator {
     STATUS("status"),
     SIZE_IN("sizeIn"),
     SIZE_OUT("sizeOut"),
+    CONTENT_ENCODING_IN("contentEncodingIn"),
+    CONTENT_ENCODING_OUT("contentEncodingOut"),
     START("start"),
     END("end"),
     THREAD("thread"),
     API_NAME("apiName"), //API
     APP_NAME("appName"), //APP
     USER("user"),
+
+    USER_AGT("userAgent"),
     VERSION("version"),
     ADDRESS("address"),
     ENVIRONEMENT("environement"), //ENV
@@ -49,6 +53,10 @@ public enum TraceApiColumn implements ColumnDecorator {
     COMMANDS("commands"),
     ACTION_COUNT("actionCount"),
     PARENT("parent"),
+
+    INSTANCE_ENV("instance"),
+
+    COLLECTOR("collector"),
     //---
     ELAPSEDTIME("elapsedtime", DataConstants::elapsedtime2, DataConstants::elapsedTimeExpressions),
     COUNT_SLOWEST("elapsedTimeSlowest", DataConstants::elapsedTimeVerySlow),
@@ -69,9 +77,8 @@ public enum TraceApiColumn implements ColumnDecorator {
     COUNT_500("count500", DataConstants::countStatus500),
     COUNT_503("count503", DataConstants::countStatus503),
     COUNT_DB_ERROR("countDbError", DataConstants::countDbError),
-    COUNT_DB_SUCCES("countDbSucces", DataConstants::countDbSucces);
-
-
+    COUNT_DB_SUCCES("countDbSucces", DataConstants::countDbSucces),
+    ERR("err", DataConstants::err,DataConstants::errComp);
     private final String out; //nullable
     private final ColumnBuilder columnTemplate;
     private final CriteriaBuilder<String> expressionFn;

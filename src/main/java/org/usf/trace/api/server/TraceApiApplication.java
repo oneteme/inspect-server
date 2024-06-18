@@ -7,6 +7,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.usf.trace.api.server.model.InstanceMainSession;
+import org.usf.trace.api.server.model.InstanceRestSession;
+import org.usf.trace.api.server.model.wrapper.InstanceEnvironmentWrapper;
 import org.usf.traceapi.core.RestSession;
 import org.usf.traceapi.core.MainSession;
 
@@ -28,7 +31,7 @@ public class TraceApiApplication {
 		var mapper = json()
 				.modules(new JavaTimeModule(), new ParameterNamesModule())
 				.build();
-		mapper.registerSubtypes(RestSession.class, MainSession.class);
+		mapper.registerSubtypes(InstanceRestSession.class, InstanceMainSession.class);
 		return mapper;
 	}
 }

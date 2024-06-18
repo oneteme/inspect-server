@@ -16,6 +16,11 @@ public class DatabaseActionWrapper {
 
     public DatabaseActionWrapper(long parentId, JDBCAction type, Instant start, Instant end, ExceptionInfo exception, long[] count) {
         this.parentId = parentId;
-        this.action = new DatabaseRequestStage(type, start, end, exception, count);
+        this.action = new DatabaseRequestStage();
+        this.action.setName(type.toString());
+        this.action.setStart(start);
+        this.action.setEnd(end);
+        this.action.setException(exception);
+        this.action.setCount(count);
     }
 }
