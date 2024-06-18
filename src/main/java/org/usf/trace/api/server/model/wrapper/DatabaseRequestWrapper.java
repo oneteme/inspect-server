@@ -34,13 +34,10 @@ public class DatabaseRequestWrapper extends DatabaseRequest {
         this.setDatabaseVersion(query.getDatabaseVersion());
         this.setActions(query.getActions());
         this.setCommands(query.getCommands());
-        this.setName(query.getName());
-        this.setLocation(query.getLocation());
         this.setStart(query.getStart());
         this.setEnd(query.getEnd());
         this.setUser(query.getUser());
         this.setThreadName(query.getThreadName());
-
     }
 
 }
