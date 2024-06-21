@@ -24,10 +24,21 @@ spring:
 logging:
   level:
     org.springframework.jdbc.core: DEBUG
-    org.usf.traceapi.core: trace
-    org.usf.jquery.core: DEBUG
+    org.usf.traceapi: TRACE
+    org.usf.jquery: DEBUG
 
-trace:
-  delay: 60
-  unit: SECONDS
-  buffer-max-size: -1
+inspect:
+  enabled: true
+  mode: #REMOTE => log only
+  dispatch:
+    delay: 60
+    unit: SECONDS
+#  track:
+#    jdbc-request: true
+#    rest-request: true
+#    main-session: true
+#    rest-session: true
+#   buffer-max-size: -1
+# server:
+#   host:
+#   compress-min-size:
