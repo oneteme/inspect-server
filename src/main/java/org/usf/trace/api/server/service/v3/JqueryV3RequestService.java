@@ -7,6 +7,7 @@ import org.usf.jquery.core.RequestQueryBuilder;
 import org.usf.jquery.core.TaggableColumn;
 import org.usf.jquery.web.ColumnDecorator;
 import org.usf.jquery.web.TableDecorator;
+import org.usf.trace.api.server.Utils;
 import org.usf.trace.api.server.config.TraceApiColumn;
 import org.usf.trace.api.server.config.TraceApiTable;
 import org.usf.trace.api.server.dao.v3.V3RequestDao;
@@ -31,6 +32,8 @@ import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
+import static org.usf.trace.api.server.Utils.isEmpty;
+import static org.usf.trace.api.server.Utils.requireSingle;
 import static org.usf.trace.api.server.config.TraceApiColumn.*;
 import static org.usf.trace.api.server.config.TraceApiTable.*;
 
@@ -51,10 +54,10 @@ public class JqueryV3RequestService {
 
     public Session getTreeById(String id) {
         List<String> prntIds = dao.selectChildsById(id);
-        List<Session> prntIncList = getApiSessionById(prntIds, Exchange::new, false);
-        List<Session> sessionList = getMainSessionById(id, Exchange::new, false);
-        if(sessionList != null && !sessionList.isEmpty()){
-            prntIncList.add(sessionList.get(0));
+        List<Session> prntIncList = getRestSessionsForTree(prntIds);
+        Session session = getMainSessionForTree(id);
+        if(session != null){
+            prntIncList.add(session);
         }
         prntIncList.forEach(prntA ->
                 prntIncList.forEach(prntB -> {
@@ -87,15 +90,14 @@ public class JqueryV3RequestService {
         return Collections.emptyMap();
     }
 
-    public InstanceEnvironmentWrapper getInstanceBySessionId(String id, TableDecorator tableDecorator) {
+    public InstanceEnvironmentWrapper getInstanceById(String id) {
         var v = new RequestQueryBuilder();
-        v.tables(INSTANCE.table(), tableDecorator.table()).columns(
+        v.select(INSTANCE.table(),
                 getColumns(INSTANCE, ID, TYPE, START, APP_NAME, VERSION, ADDRESS,
-                    ENVIRONEMENT, OS, RE, COLLECTOR)
+                ENVIRONEMENT, OS, RE, COLLECTOR)
         ).filters(
-                INSTANCE.column(ID).equal(tableDecorator.column(INSTANCE_ENV)),
-                tableDecorator.column(INSTANCE_ENV).equal(id)
-        );;
+                INSTANCE.column(ID).equal(id)
+        );
         return v.build().execute(ds, rs -> {
             if(rs.next()) {
                 return new InstanceEnvironmentWrapper(
@@ -115,28 +117,33 @@ public class JqueryV3RequestService {
         });
     }
 
-    public List<Session> getApiSessionById(List<String> ids, Supplier<? extends RestRequest> fn, boolean queryLazy){
+    public Session getRestSession(String id){
+        JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(Collections.singletonList(id).toArray(String[]::new));
+        return requireSingle(getRestSessions(jsf));
+    }
+
+    public List<Session> getRestSessionsForTree(List<String> ids){
         JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(ids.toArray(String[]::new));
-        List<Session> sessions = getApiSesssionsByCriteria(jsf, fn, queryLazy);
+        List<Session> sessions = getRestSessions(jsf);
         if (!sessions.isEmpty()) {
             var reqMap = sessions.stream().collect(toMap(Session::getId, identity()));
-            var parentIds = reqMap.keySet().toArray(String[]::new);
-            getApiRequests(parentIds, fn).forEach(r -> reqMap.get(r.getParentId()).append(r.getRequest()));
+            var parentIds = reqMap.keySet().stream().toList();
+            getApiRequests(parentIds, Exchange::new).forEach(r -> reqMap.get(r.getParentId()).append(r.getRequest()));
             getRunnableStages(parentIds).forEach(r -> reqMap.get(r.getParentId()).append(r.getStage()));
-            getDatabaseRequests(DBQUERY.column(PARENT).in(parentIds), queryLazy).forEach(q -> reqMap.get(q.getParentId()).append(q));
+            getDatabaseRequests(parentIds).forEach(q -> reqMap.get(q.getParentId()).append(q));
         }
         return sessions;
     }
 
-    public List<Session> getApiSesssionsByCriteria(JqueryRequestSessionFilter jsf, Supplier<? extends RestRequest> fn, boolean queryLazy) {
+    public List<Session> getRestSessions(JqueryRequestSessionFilter jsf) {
         var v = new RequestQueryBuilder();
         v.tables(APISESSION.table(), INSTANCE.table()).columns(
                 getColumns(
                     APISESSION, ID, API_NAME, METHOD,
                     PROTOCOL, HOST, PORT, PATH, QUERY, MEDIA, AUTH, STATUS, SIZE_IN, SIZE_OUT, CONTENT_ENCODING_IN, CONTENT_ENCODING_OUT,
-                    START, END, THREAD, ERR_TYPE, ERR_MSG, USER, USER_AGT
+                    START, END, THREAD, ERR_TYPE, ERR_MSG, USER_AGT
                 )
-        ).columns(getColumns(INSTANCE, APP_NAME)).filters(APISESSION.column(INSTANCE_ENV).equal(INSTANCE.column(ID)));
+        ).columns(getColumns(INSTANCE, APP_NAME, USER)).filters(APISESSION.column(INSTANCE_ENV).equal(INSTANCE.column(ID)));
         if(jsf != null) {
             v.filters(jsf.filters(APISESSION).toArray(DBFilter[]::new));
         }
@@ -163,36 +170,39 @@ public class JqueryV3RequestService {
                 session.setThreadName(rs.getString(THREAD.reference()));
                 session.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 session.setName(rs.getString(API_NAME.reference()));
-                session.setAppName(rs.getString(APP_NAME.reference()));
-                session.setUser(rs.getString(USER.reference()));
                 session.setUserAgent(rs.getString(USER_AGT.reference()));
+                session.setInstanceUser(rs.getString(USER.reference()));
+                session.setAppName(rs.getString(APP_NAME.reference()));
                 sessions.add(session);
             }
             return sessions;
         });
     }
 
-    public List<Session> getMainSessionById(String id, Supplier<? extends RestRequest> fn, boolean queryLazy){
+    public Session getMainSessionForTree(String id){
         JqueryMainSessionFilter jsf = new JqueryMainSessionFilter(Collections.singletonList(id).toArray(String[]::new));
-        List<Session> sessions = getMainSessionsByCriteria(jsf, fn, queryLazy);
-        if (!sessions.isEmpty()) {
-            var reqMap = sessions.stream().collect(toMap(Session::getId, identity()));
-            var parentIds = reqMap.keySet().toArray(String[]::new);
-            getApiRequests(parentIds, fn).forEach(r -> reqMap.get(r.getParentId()).append(r.getRequest()));
-            getRunnableStages(parentIds).forEach(r -> reqMap.get(r.getParentId()).append(r.getStage()));
-            getDatabaseRequests(DBQUERY.column(PARENT).in(parentIds),queryLazy).forEach(q -> reqMap.get(q.getParentId()).append(q));
+        Session session = requireSingle(getMainSessions(jsf));
+        if (session != null) {
+            getApiRequests(session.getId(), Exchange::new).forEach(r -> session.append(r.getRequest()));
+            getRunnableStages(session.getId()).forEach(r -> session.append(r.getStage()));
+            getDatabaseRequests(session.getId()).forEach(session::append);
         }
-        return sessions;
+        return session;
     }
 
-    public List<Session> getMainSessionsByCriteria(JqueryMainSessionFilter jsf, Supplier<? extends RestRequest> fn, boolean queryLazy) {
+    public Session getMainSession(String id){
+        JqueryMainSessionFilter jsf = new JqueryMainSessionFilter(Collections.singletonList(id).toArray(String[]::new));
+        return requireSingle(getMainSessions(jsf));
+    }
+
+    public List<Session> getMainSessions(JqueryMainSessionFilter jsf) {
         var v = new RequestQueryBuilder();
         v.tables(MAINSESSION.table(), INSTANCE.table()).columns(
                 getColumns(
-                        MAINSESSION, ID, NAME, START, END, USER, TYPE, LOCATION, THREAD,
+                        MAINSESSION, ID, NAME, START, END, TYPE, LOCATION, THREAD,
                         ERR_TYPE, ERR_MSG
                 )
-        ).columns(getColumns(INSTANCE, APP_NAME)).filters(MAINSESSION.column(INSTANCE_ENV).equal(INSTANCE.column(ID)));;
+        ).columns(getColumns(INSTANCE, APP_NAME, USER)).filters(MAINSESSION.column(INSTANCE_ENV).equal(INSTANCE.column(ID)));;
         if(jsf != null) {
             v.filters(jsf.filters(MAINSESSION).toArray(DBFilter[]::new));
         }
@@ -202,20 +212,24 @@ public class JqueryV3RequestService {
                 InstanceMainSession main = new InstanceMainSession();
                 main.setId(rs.getString(ID.reference())); // add value of nullable
                 main.setName(rs.getString(NAME.reference()));
-                main.setUser(rs.getString(USER.reference()));
                 main.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 main.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 main.setType(rs.getString(TYPE.reference()));
                 main.setLocation(rs.getString(LOCATION.reference()));
                 main.setThreadName(rs.getString(THREAD.reference()));
-                main.setAppName(rs.getString(APP_NAME.reference()));
                 main.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+                main.setAppName(rs.getString(APP_NAME.reference()));
+                main.setInstanceUser(rs.getString(USER.reference()));
                 sessions.add(main);
             }
             return sessions;
         });
     }
-    public List<ApiRequestWrapper> getApiRequests(String[] incomingId, Supplier<? extends RestRequest> fn) { //use criteria
+    public List<ApiRequestWrapper> getApiRequests(String cdSession, Supplier<? extends RestRequest> fn) {
+        return getApiRequests(Collections.singletonList(cdSession), fn);
+    }
+
+    private List<ApiRequestWrapper> getApiRequests(List<String> cdSessions, Supplier<? extends RestRequest> fn) { //use criteria
         var v = new RequestQueryBuilder();
         v.select(
                 APIREQUEST.table(),
@@ -223,7 +237,7 @@ public class JqueryV3RequestService {
                         APIREQUEST, ID, PROTOCOL, HOST, PORT, PATH, QUERY, METHOD, STATUS, SIZE_IN,
                         SIZE_OUT, CONTENT_ENCODING_IN, CONTENT_ENCODING_OUT, START, END, THREAD, ERR_TYPE, ERR_MSG, PARENT
                 )
-        ).filters(APIREQUEST.column(PARENT).in(incomingId)).orders(APIREQUEST.column(START).order());
+        ).filters(APIREQUEST.column(PARENT).in(cdSessions.toArray())).orders(APIREQUEST.column(START).order());
         return v.build().execute(ds, rs -> {
             List<ApiRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
@@ -250,14 +264,18 @@ public class JqueryV3RequestService {
         });
     }
 
-    public List<RunnableStageWrapper> getRunnableStages(String[] ids){
+    public List<RunnableStageWrapper> getRunnableStages(String cdSession){
+        return getRunnableStages(Collections.singletonList(cdSession));
+    }
+
+    private List<RunnableStageWrapper> getRunnableStages(List<String> cdSessions){
         var v = new RequestQueryBuilder();
         v.select(
                 STAGES.table(),
                 getColumns(
                         STAGES, NAME, LOCATION, START, END, USER, THREAD, ERR_TYPE, ERR_MSG, PARENT
                 )
-        ).filters(STAGES.column(PARENT).in(ids)).orders(STAGES.column(START).order());
+        ).filters(STAGES.column(PARENT).in(cdSessions.toArray())).orders(STAGES.column(START).order());
         return v.build().execute(ds, rs -> {
             List<RunnableStageWrapper> outs = new ArrayList<>();
             while (rs.next()) {
@@ -275,7 +293,18 @@ public class JqueryV3RequestService {
         });
     }
 
-    public List<DatabaseRequestWrapper> getDatabaseRequests(DBFilter filter, boolean queryLazy) {
+    public DatabaseRequestWrapper getDatabaseRequest(long idDatabase) {
+        return requireSingle(getDatabaseRequests(DBQUERY.column(ID).equal(idDatabase)));
+    }
+
+    public List<DatabaseRequestWrapper> getDatabaseRequests(List<String> cdSession) {
+        return getDatabaseRequests(DBQUERY.column(PARENT).in(cdSession.toArray()));
+    }
+    public List<DatabaseRequestWrapper> getDatabaseRequests(String cdSession) {
+        return getDatabaseRequests(DBQUERY.column(PARENT).in(cdSession));
+    }
+
+    private List<DatabaseRequestWrapper> getDatabaseRequests(DBFilter filter) {
         var v = new RequestQueryBuilder();
         v.select(
                 DBQUERY.table(),
@@ -284,7 +313,8 @@ public class JqueryV3RequestService {
                         DB_NAME, DB_VERSION, COMMANDS, COMPLETE, PARENT
                 )
         ).filters(filter).orders(DBQUERY.column(START).order());
-        var queries = v.build().execute(ds, rs -> {
+
+        return v.build().execute(ds, rs -> {
             List<DatabaseRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
                 DatabaseRequestWrapper out = new DatabaseRequestWrapper(rs.getString(PARENT.reference()), rs.getLong(ID.reference()));
@@ -305,32 +335,24 @@ public class JqueryV3RequestService {
             }
             return outs;
         });
-        if (queryLazy && !queries.isEmpty()) {
-            var qMap = queries.stream().collect(toMap(DatabaseRequestWrapper::getId, identity())); //unique
-            getDatabaseActions(qMap.keySet().toArray(Long[]::new)).forEach(a -> qMap.get(a.getParentId()).getActions().add(a.getAction()));
-        }
-        return queries;
     }
 
-    public List<DatabaseActionWrapper> getDatabaseActions(Long[] ids) {
+    public List<DatabaseRequestStage> getDatabaseActions(Long id) {
         var v = new RequestQueryBuilder();
         v.select(
                 DBACTION.table(),
                 getColumns(DBACTION, TYPE, START, END, ERR_TYPE, ERR_MSG, ACTION_COUNT, PARENT)
-        ).filters(DBACTION.column(PARENT).in(ids)).orders(DBACTION.column(START).order());
+        ).filters(DBACTION.column(PARENT).equal(id)).orders(DBACTION.column(START).order());
         return v.build().execute(ds, rs -> {
-            List<DatabaseActionWrapper> actions = new ArrayList<>();
+            List<DatabaseRequestStage> actions = new ArrayList<>();
             while (rs.next()) {
-                actions.add(
-                        new DatabaseActionWrapper(
-                                rs.getLong(PARENT.reference()),
-                                JDBCAction.valueOf(rs.getString(TYPE.reference())),
-                                fromNullableTimestamp(rs.getTimestamp(START.reference())),
-                                fromNullableTimestamp(rs.getTimestamp(END.reference())),
-                                getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())),
-                                ofNullable(rs.getString(ACTION_COUNT.reference())).map(str -> Arrays.stream(str.split(",")).mapToLong(Long::parseLong).toArray()).orElse(null)
-                        )
-                );
+                var action = new DatabaseRequestStage();
+                action.setName(rs.getString(TYPE.reference()));
+                action.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
+                action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                action.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+                action.setCount(ofNullable(rs.getString(ACTION_COUNT.reference())).map(str -> Arrays.stream(str.split(",")).mapToLong(Long::parseLong).toArray()).orElse(null));
+                actions.add(action);
             }
             return actions;
         });

@@ -11,14 +11,14 @@ import java.time.Instant;
 @Setter
 public class InstanceEnvironmentWrapper extends InstanceEnvironment {
 
-    private String instanceId;
+    private String id;
 
-    public InstanceEnvironmentWrapper(String instanceId, String name, String version, String address, String env, String os, String re, String user, InstanceType type, Instant instant, String collector) {
+    public InstanceEnvironmentWrapper(String id, String name, String version, String address, String env, String os, String re, String user, InstanceType type, Instant instant, String collector) {
         super(name, version, address, env, os, re, user, type, instant, collector);
-        this.instanceId = instanceId;
+        this.id = id;
     }
 
     public InstanceEnvironmentWrapper withAddress(String address) {
-        return new InstanceEnvironmentWrapper(getInstanceId(), getName(), getVersion(), address, getEnv(), getOs(), getRe(), getUser(), getType(), getInstant(), getCollector());
+        return new InstanceEnvironmentWrapper(getId(), getName(), getVersion(), address, getEnv(), getOs(), getRe(), getUser(), getType(), getInstant(), getCollector());
     }
 }

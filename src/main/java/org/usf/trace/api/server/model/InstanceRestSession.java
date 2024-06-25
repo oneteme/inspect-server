@@ -11,5 +11,6 @@ import org.usf.traceapi.core.RestSession;
 @Setter
 public class InstanceRestSession extends RestSession implements InstanceSession {
     private String instanceId;
+    private String instanceUser;
     private String appName;
 }

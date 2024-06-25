@@ -32,11 +32,11 @@ public class PerformanceStatsController {
         return usingSpringJdbc(query);
     }
 
-    @GetMapping(value="environment", produces = APPLICATION_JSON_VALUE)
+    @GetMapping(value="instance", produces = APPLICATION_JSON_VALUE)
     public List<DynamicModel> environment(
-            @RequestQueryParam(name = "apisession", defaultColumns = "environement") RequestQueryBuilder query
+            @RequestQueryParam(name = "instance") RequestQueryBuilder query
     ) {
-        return usingSpringJdbc(query.distinct());
+        return usingSpringJdbc(query);
     }
 
     private List<DynamicModel> usingSpringJdbc(RequestQueryBuilder req) {
