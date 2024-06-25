@@ -11,7 +11,7 @@ import java.time.Instant;
 @Setter
 public class InstanceEnvironmentWrapper extends InstanceEnvironment {
 
-    private String instanceId;
+    private String instanceId; //TODO rename id
 
     public InstanceEnvironmentWrapper(String instanceId, String name, String version, String address, String env, String os, String re, String user, InstanceType type, Instant instant, String collector) {
         super(name, version, address, env, os, re, user, type, instant, collector);

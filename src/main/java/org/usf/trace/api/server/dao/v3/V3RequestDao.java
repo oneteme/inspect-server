@@ -41,7 +41,7 @@ public class V3RequestDao {
         template.batchUpdate("INSERT INTO E_INS_ENV(ID_INS_ENV, VA_TYP, DH_DBT, VA_APP_NME, VA_VRS, VA_ADRS, VA_ENV, VA_OS, VA_RE, VA_USR, VA_CLCT) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", instances, instances.size(), (ps, o) -> {
             ps.setString(1, o.getInstanceId());
-            ps.setString(2, o.getType().name());
+            ps.setString(2, o.getType().name()); //TODO nullable !?
             ps.setTimestamp(3, fromNullableInstant(o.getInstant()));
             ps.setString(4, o.getName());
             ps.setString(5, o.getVersion());
@@ -164,7 +164,7 @@ public class V3RequestDao {
             var completed = o.getActions().stream().allMatch(a-> isNull(a.getException()));
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getHost());
-            ps.setInt(3, Objects.requireNonNullElse(o.getPort(),-1));
+            ps.setInt(3, o.getPort());
             ps.setString(4, o.getDatabase());
             ps.setTimestamp(5, fromNullableInstant(o.getStart()));
             ps.setTimestamp(6, fromNullableInstant(o.getEnd()));
