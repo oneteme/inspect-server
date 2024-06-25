@@ -8,6 +8,10 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 
+ * Optimizes application performance by efficiently managing protocol activations.
+ * This enum uses a bitmask strategy to represent and check activated protocols based on session data,
+ * reducing unnecessary queries to a large database table.
+ *  
  * @author u$f
  *
  */
