@@ -8,7 +8,7 @@ import org.usf.trace.api.server.model.wrapper.InstanceEnvironmentWrapper;
 import org.usf.trace.api.server.service.v3.JqueryV3RequestService;
 import org.usf.traceapi.core.InspectConfigurationProperties;
 import org.usf.traceapi.core.ScheduledDispatchHandler;
-import org.usf.traceapi.core.State;
+import org.usf.traceapi.core.DispatchState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +50,7 @@ public class SessionQueueService {
         return true;
     }
     
-    public void enableSave(State state) {
+    public void enableSave(DispatchState state) {
     	dispatcher.updateState(state);
     }
     
