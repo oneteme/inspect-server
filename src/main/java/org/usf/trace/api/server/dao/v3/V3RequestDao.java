@@ -40,7 +40,7 @@ public class V3RequestDao {
     public void saveInstanceEnvironment(List<InstanceEnvironmentWrapper> instances) {
         template.batchUpdate("INSERT INTO E_INS_ENV(ID_INS_ENV, VA_TYP, DH_DBT, VA_APP_NME, VA_VRS, VA_ADRS, VA_ENV, VA_OS, VA_RE, VA_USR, VA_CLCT) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", instances, instances.size(), (ps, o) -> {
-            ps.setString(1, o.getInstanceId());
+            ps.setString(1, o.getId());
             ps.setString(2, o.getType().name());
             ps.setTimestamp(3, fromNullableInstant(o.getInstant()));
             ps.setString(4, o.getName());

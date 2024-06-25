@@ -148,6 +148,7 @@ public final class DataConstants {
             case ENVIRONEMENT -> VA_ENV;
             case OS -> VA_OS;
             case RE -> VA_RE;
+            case USER -> VA_USR;
             case COLLECTOR -> VA_CLCT;
             default -> null;
         };

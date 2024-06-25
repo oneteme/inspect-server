@@ -11,5 +11,6 @@ import org.usf.traceapi.core.MainSession;
 @Setter
 public class InstanceMainSession extends MainSession implements InstanceSession {
     private String instanceId;
+    private String instanceUser;
     private String appName;
 }

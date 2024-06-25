@@ -11,7 +11,6 @@ import org.usf.trace.api.server.model.InstanceSession;
 import org.usf.trace.api.server.model.wrapper.InstanceEnvironmentWrapper;
 import org.usf.trace.api.server.service.SessionQueueService;
 import org.usf.trace.api.server.service.JqueryRequestService;
-import org.usf.traceapi.core.*;
 
 import java.time.Instant;
 import java.util.*;
@@ -58,7 +57,7 @@ public class ApiController {
                 Optional<InstanceEnvironmentWrapper> instance = instanceStream.filter(mainPredicate(ms)).findFirst();
                 String nextId;
                 if(instance.isPresent()) {
-                    nextId = instance.get().getInstanceId();
+                    nextId = instance.get().getId();
                 } else {
                     nextId = nextId();
                     var application = ms.getApplication() != null ?
@@ -81,7 +80,7 @@ public class ApiController {
                     log.warn("ApiSesstion id is null : {}", s);
                 }
                 Optional<InstanceEnvironmentWrapper> instance = instanceStream.filter(restPredicate(rs)).findFirst();
-                instance.ifPresent(instanceEnvironmentWrapper -> rs.setInstanceId(instanceEnvironmentWrapper.getInstanceId()));
+                instance.ifPresent(instanceEnvironmentWrapper -> rs.setInstanceId(instanceEnvironmentWrapper.getId()));
             }
         }
         return queueService.add(sessions) 
