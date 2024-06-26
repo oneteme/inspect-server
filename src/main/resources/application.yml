@@ -33,6 +33,7 @@ inspect:
   dispatch:
     delay: 60
     unit: SECONDS
+    buffer-max-size: -1
   track:
 #    jdbc-request: false
 #    rest-request: false
@@ -40,8 +41,7 @@ inspect:
     rest-session: 
       excludes:
         method: OPTIONS; 
-        path: /favicon.ico, /actuator/*
-#   buffer-max-size: -1
+        path: /favicon.ico, /actuator/info
 # server:
 #   host:
 #   compress-min-size:
