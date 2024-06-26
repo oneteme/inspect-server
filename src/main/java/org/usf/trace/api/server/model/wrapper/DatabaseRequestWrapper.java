@@ -30,8 +30,8 @@ public class DatabaseRequestWrapper extends DatabaseRequest {
         this.setPort(query.getPort());
         this.setDatabase(query.getDatabase());
         this.setDriverVersion(query.getDriverVersion());
-        this.setDatabaseName(query.getDatabaseName());
-        this.setDatabaseVersion(query.getDatabaseVersion());
+        this.setProductName(query.getProductName());
+        this.setProductVersion(query.getProductVersion());
         this.setActions(query.getActions());
         this.setCommands(query.getCommands());
         this.setStart(query.getStart());
