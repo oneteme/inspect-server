@@ -113,12 +113,12 @@ public class ApiV3Controller {
 
     @GetMapping("session/main/{id}/tree")
     public Session getMainTreebyId(@PathVariable String id){
-        return jqueryRequestService.getTreeById(id);
+        return jqueryRequestService.getMainTreeById(id);
     }
 
     @GetMapping("session/rest/{id}/tree")
     public Session getRestTreebyId(@PathVariable String id){
-        return jqueryRequestService.getTreeById(id);
+        return jqueryRequestService.getRestTreeById(id);
     }
 
     @GetMapping("session/main")
@@ -142,8 +142,8 @@ public class ApiV3Controller {
     }
 
     @GetMapping("session/{id}/request/rest")
-    public ResponseEntity<List<ApiRequestWrapper>> getRestRequests(@PathVariable String id) {
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(jqueryRequestService.getApiRequests(id, RestRequest::new));
+    public ResponseEntity<List<RestRequestWrapper>> getRestRequests(@PathVariable String id) {
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(jqueryRequestService.getRestRequests(id, RestRequest::new));
     }
 
     @GetMapping("session/{id}/request/runnable")
@@ -170,4 +170,5 @@ public class ApiV3Controller {
                                                                          @PathVariable(name = "id_database") long idDatabase){
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(jqueryRequestService.getDatabaseActions(idDatabase));
     }
+
 }

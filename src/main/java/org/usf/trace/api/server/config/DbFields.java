@@ -51,7 +51,7 @@ public class DbFields {
     public static final String VA_LOC = "va_loc";
     public static final String VA_ERR_CLS = "va_err_cls";
     public static final String VA_ERR_MSG = "va_err_msg";
-
+    public static final String VA_MSK = "va_msk";
     private DbFields() {
         throw new IllegalStateException("Utility class");
     }

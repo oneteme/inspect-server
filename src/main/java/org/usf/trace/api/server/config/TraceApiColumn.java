@@ -32,8 +32,8 @@ public enum TraceApiColumn implements ColumnDecorator {
     API_NAME("apiName"), //API
     APP_NAME("appName"), //APP
     USER("user"),
-
     USER_AGT("userAgent"),
+    MASK("mask"),
     VERSION("version"),
     ADDRESS("address"),
     ENVIRONEMENT("environement"), //ENV
