@@ -29,6 +29,7 @@ public final class DataConstants {
             case THREAD -> VA_THRED;
             case ERR_TYPE -> VA_ERR_CLS;
             case ERR_MSG -> VA_ERR_MSG;
+            case MASK -> VA_MSK;
             case INSTANCE_ENV -> CD_INS_ENV;
             default -> null;
         };
@@ -58,6 +59,7 @@ public final class DataConstants {
             case USER_AGT -> VA_USR_AGT;
             case ERR_TYPE -> VA_ERR_CLS;
             case ERR_MSG -> VA_ERR_MSG;
+            case MASK -> VA_MSK;
             case INSTANCE_ENV -> CD_INS_ENV;
             default -> null;
         };

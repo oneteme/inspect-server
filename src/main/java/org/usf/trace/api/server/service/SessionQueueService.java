@@ -6,8 +6,8 @@ import org.springframework.stereotype.Service;
 import org.usf.trace.api.server.model.InstanceSession;
 import org.usf.trace.api.server.model.wrapper.InstanceEnvironmentWrapper;
 import org.usf.trace.api.server.service.v3.JqueryV3RequestService;
-import org.usf.traceapi.core.ScheduledDispatcher;
-import org.usf.traceapi.core.SessionDispatcherProperties;
+import org.usf.traceapi.core.InspectConfigurationProperties;
+import org.usf.traceapi.core.ScheduledDispatchHandler;
 import org.usf.traceapi.core.State;
 
 import java.util.ArrayList;
@@ -16,20 +16,20 @@ import java.util.List;
 import static java.util.Collections.synchronizedList;
 
 @Service
-@EnableConfigurationProperties(SessionDispatcherProperties.class)
+@EnableConfigurationProperties(InspectConfigurationProperties.class)
 public class SessionQueueService {
 
     private final JqueryV3RequestService service;
-    private final ScheduledDispatcher<InstanceSession> dispatcher;
+    private final ScheduledDispatchHandler<InstanceSession> dispatcher;
     private final List<InstanceEnvironmentWrapper> instances = synchronizedList(new ArrayList<>(10));
     
-    public SessionQueueService(JqueryV3RequestService service, SessionDispatcherProperties prop) {
+    public SessionQueueService(JqueryV3RequestService service, InspectConfigurationProperties prop) {
         this.service = service;
-		this.dispatcher = new ScheduledDispatcher<>(prop, this::safeBackup);
+		this.dispatcher = new ScheduledDispatchHandler<>(prop.getDispatch(), this::safeBackup);
     }
 
     public boolean add(InstanceSession... sessions) {
-    	return dispatcher.add(sessions);
+    	return dispatcher.submit(sessions);
     }
 
     public boolean add(InstanceEnvironmentWrapper instance) {
@@ -37,10 +37,10 @@ public class SessionQueueService {
     }
 
     public List<InstanceSession> waitList(){
-    	return dispatcher.peek(); // send copy
+    	return dispatcher.peek();
     }
 
-    boolean safeBackup(int attempts, List<InstanceSession> sessions) {
+    boolean safeBackup(boolean complete, int attempts, List<InstanceSession> sessions) {
         if(!instances.isEmpty()) {
             var copy = new ArrayList<>(instances);
             service.addInstanceEnvironment(copy);
@@ -56,6 +56,6 @@ public class SessionQueueService {
     
     @PreDestroy
     void destroy() throws InterruptedException {
-		dispatcher.shutdown();
+		dispatcher.complete();
 	}
 }

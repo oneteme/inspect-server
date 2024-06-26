@@ -7,17 +7,17 @@ import org.usf.traceapi.core.RestRequest;
 import java.util.function.Supplier;
 
 @Getter
-public class ApiRequestWrapper {
+public class RestRequestWrapper {
     @Delegate
     private final RestRequest request;
     private final String parentId;
 
-    public ApiRequestWrapper(String parentId, Supplier<? extends RestRequest> fn) {
+    public RestRequestWrapper(String parentId, Supplier<? extends RestRequest> fn) {
         this.parentId = parentId;
         this.request = fn.get(); //delegated setters
     }
 
-    public ApiRequestWrapper(String parentId, RestRequest request) {
+    public RestRequestWrapper(String parentId, RestRequest request) {
         this.parentId = parentId;
         this.request = request; //delegated getters
     }

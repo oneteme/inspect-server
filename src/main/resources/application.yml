@@ -23,11 +23,25 @@ spring:
 
 logging:
   level:
+    org.usf.jquery: DEBUG
+    org.usf.traceapi: TRACE
     org.springframework.jdbc.core: DEBUG
-    org.usf.traceapi.core: trace
-    org.usf.jquery.core: DEBUG
 
-trace:
-  delay: 60
-  unit: SECONDS
-  buffer-max-size: -1
+inspect:
+  enabled: true
+  mode: #REMOTE => log only
+  dispatch:
+    delay: 60
+    unit: SECONDS
+  track:
+#    jdbc-request: false
+#    rest-request: false
+#    main-session: false
+    rest-session: 
+      excludes:
+        method: OPTIONS; 
+        path: /favicon.ico, /actuator/*
+#   buffer-max-size: -1
+# server:
+#   host:
+#   compress-min-size:

@@ -7,7 +7,6 @@ import org.usf.jquery.core.RequestQueryBuilder;
 import org.usf.jquery.core.TaggableColumn;
 import org.usf.jquery.web.ColumnDecorator;
 import org.usf.jquery.web.TableDecorator;
-import org.usf.trace.api.server.Utils;
 import org.usf.trace.api.server.config.TraceApiColumn;
 import org.usf.trace.api.server.config.TraceApiTable;
 import org.usf.trace.api.server.dao.v3.V3RequestDao;
@@ -17,9 +16,11 @@ import org.usf.trace.api.server.model.InstanceRestSession;
 import org.usf.trace.api.server.model.InstanceSession;
 import org.usf.trace.api.server.model.filter.JqueryMainSessionFilter;
 import org.usf.trace.api.server.model.filter.JqueryRequestSessionFilter;
-import org.usf.trace.api.server.model.wrapper.*;
+import org.usf.trace.api.server.model.wrapper.RestRequestWrapper;
+import org.usf.trace.api.server.model.wrapper.DatabaseRequestWrapper;
+import org.usf.trace.api.server.model.wrapper.InstanceEnvironmentWrapper;
+import org.usf.trace.api.server.model.wrapper.RunnableStageWrapper;
 import org.usf.traceapi.core.*;
-import org.usf.traceapi.jdbc.JDBCAction;
 
 import javax.sql.DataSource;
 import java.sql.Timestamp;
@@ -32,7 +33,6 @@ import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
-import static org.usf.trace.api.server.Utils.isEmpty;
 import static org.usf.trace.api.server.Utils.requireSingle;
 import static org.usf.trace.api.server.config.TraceApiColumn.*;
 import static org.usf.trace.api.server.config.TraceApiTable.*;
@@ -52,15 +52,27 @@ public class JqueryV3RequestService {
         dao.saveSessions(sessions);
     }
 
-    public Session getTreeById(String id) {
+    public Session getMainTreeById(String id) {
         List<String> prntIds = dao.selectChildsById(id);
         List<Session> prntIncList = getRestSessionsForTree(prntIds);
         Session session = getMainSessionForTree(id);
         if(session != null){
             prntIncList.add(session);
         }
-        prntIncList.forEach(prntA ->
-                prntIncList.forEach(prntB -> {
+        createTree(prntIncList);
+        return prntIncList.stream().filter(r ->  r.getId().equals(id)).findFirst().orElseThrow();
+    }
+
+    public Session getRestTreeById(String id) {
+        List<String> prntIds = dao.selectChildsById(id);
+        List<Session> prntIncList = getRestSessionsForTree(prntIds);
+        createTree(prntIncList);
+        return prntIncList.stream().filter(r ->  r.getId().equals(id)).findFirst().orElseThrow();
+    }
+
+    private void createTree(List<Session> sessions) {
+        sessions.forEach(prntA ->
+                sessions.forEach(prntB -> {
                     if (!Objects.equals(prntA.getId(), prntB.getId())){
                         Optional<RestRequest> opt = prntB.getRequests().stream()
                                 .filter(k -> prntA.getId().equals(k.getId()))
@@ -70,8 +82,8 @@ public class JqueryV3RequestService {
                             ex.setRemoteTrace((RestSession) prntA);
                         }
                     }
-                }));
-        return prntIncList.stream().filter(r ->  r.getId().equals(id)).findFirst().orElseThrow();
+                })
+        );
     }
 
     public Map<String,String> getSessionParent(String childId){
@@ -128,7 +140,7 @@ public class JqueryV3RequestService {
         if (!sessions.isEmpty()) {
             var reqMap = sessions.stream().collect(toMap(Session::getId, identity()));
             var parentIds = reqMap.keySet().stream().toList();
-            getApiRequests(parentIds, Exchange::new).forEach(r -> reqMap.get(r.getParentId()).append(r.getRequest()));
+            getRestRequests(parentIds, Exchange::new).forEach(r -> reqMap.get(r.getParentId()).append(r.getRequest()));
             getRunnableStages(parentIds).forEach(r -> reqMap.get(r.getParentId()).append(r.getStage()));
             getDatabaseRequests(parentIds).forEach(q -> reqMap.get(q.getParentId()).append(q));
         }
@@ -141,7 +153,7 @@ public class JqueryV3RequestService {
                 getColumns(
                     APISESSION, ID, API_NAME, METHOD,
                     PROTOCOL, HOST, PORT, PATH, QUERY, MEDIA, AUTH, STATUS, SIZE_IN, SIZE_OUT, CONTENT_ENCODING_IN, CONTENT_ENCODING_OUT,
-                    START, END, THREAD, ERR_TYPE, ERR_MSG, USER_AGT
+                    START, END, THREAD, ERR_TYPE, ERR_MSG, USER_AGT, MASK
                 )
         ).columns(getColumns(INSTANCE, APP_NAME, USER)).filters(APISESSION.column(INSTANCE_ENV).equal(INSTANCE.column(ID)));
         if(jsf != null) {
@@ -173,6 +185,7 @@ public class JqueryV3RequestService {
                 session.setUserAgent(rs.getString(USER_AGT.reference()));
                 session.setInstanceUser(rs.getString(USER.reference()));
                 session.setAppName(rs.getString(APP_NAME.reference()));
+                session.setMask(rs.getInt(MASK.reference()));
                 sessions.add(session);
             }
             return sessions;
@@ -183,7 +196,7 @@ public class JqueryV3RequestService {
         JqueryMainSessionFilter jsf = new JqueryMainSessionFilter(Collections.singletonList(id).toArray(String[]::new));
         Session session = requireSingle(getMainSessions(jsf));
         if (session != null) {
-            getApiRequests(session.getId(), Exchange::new).forEach(r -> session.append(r.getRequest()));
+            getRestRequests(session.getId(), Exchange::new).forEach(r -> session.append(r.getRequest()));
             getRunnableStages(session.getId()).forEach(r -> session.append(r.getStage()));
             getDatabaseRequests(session.getId()).forEach(session::append);
         }
@@ -200,7 +213,7 @@ public class JqueryV3RequestService {
         v.tables(MAINSESSION.table(), INSTANCE.table()).columns(
                 getColumns(
                         MAINSESSION, ID, NAME, START, END, TYPE, LOCATION, THREAD,
-                        ERR_TYPE, ERR_MSG
+                        ERR_TYPE, ERR_MSG, MASK
                 )
         ).columns(getColumns(INSTANCE, APP_NAME, USER)).filters(MAINSESSION.column(INSTANCE_ENV).equal(INSTANCE.column(ID)));;
         if(jsf != null) {
@@ -220,16 +233,17 @@ public class JqueryV3RequestService {
                 main.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 main.setAppName(rs.getString(APP_NAME.reference()));
                 main.setInstanceUser(rs.getString(USER.reference()));
+                main.setMask(rs.getInt(MASK.reference()));
                 sessions.add(main);
             }
             return sessions;
         });
     }
-    public List<ApiRequestWrapper> getApiRequests(String cdSession, Supplier<? extends RestRequest> fn) {
-        return getApiRequests(Collections.singletonList(cdSession), fn);
+    public List<RestRequestWrapper> getRestRequests(String cdSession, Supplier<? extends RestRequest> fn) {
+        return getRestRequests(Collections.singletonList(cdSession), fn);
     }
 
-    private List<ApiRequestWrapper> getApiRequests(List<String> cdSessions, Supplier<? extends RestRequest> fn) { //use criteria
+    private List<RestRequestWrapper> getRestRequests(List<String> cdSessions, Supplier<? extends RestRequest> fn) { //use criteria
         var v = new RequestQueryBuilder();
         v.select(
                 APIREQUEST.table(),
@@ -239,9 +253,9 @@ public class JqueryV3RequestService {
                 )
         ).filters(APIREQUEST.column(PARENT).in(cdSessions.toArray())).orders(APIREQUEST.column(START).order());
         return v.build().execute(ds, rs -> {
-            List<ApiRequestWrapper> outs = new ArrayList<>();
+            List<RestRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
-                ApiRequestWrapper out = new ApiRequestWrapper(rs.getString(PARENT.reference()), fn);
+                RestRequestWrapper out = new RestRequestWrapper(rs.getString(PARENT.reference()), fn);
                 out.setId(rs.getString(ID.reference()));
                 out.setProtocol(rs.getString(PROTOCOL.reference()));
                 out.setHost(rs.getString(HOST.reference()));

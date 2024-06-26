@@ -30,7 +30,7 @@ public class TraceApiApplication {
 	public ObjectMapper mapper(){
 		var mapper = json()
 				.modules(new JavaTimeModule(), new ParameterNamesModule())
-				.build();
+				.build(); //TODO ignore null & empty field configuration
 		mapper.registerSubtypes(InstanceRestSession.class, InstanceMainSession.class);
 		return mapper;
 	}
