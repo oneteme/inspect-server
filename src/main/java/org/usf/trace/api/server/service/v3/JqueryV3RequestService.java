@@ -296,8 +296,8 @@ public class JqueryV3RequestService {
                 out.setUser(rs.getString(USER.reference()));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setDriverVersion(rs.getString(DRIVER.reference()));
-                out.setDatabaseName(rs.getString(DB_NAME.reference()));
-                out.setDatabaseVersion(rs.getString(DB_VERSION.reference()));
+                out.setProductName(rs.getString(DB_NAME.reference()));
+                out.setProductVersion(rs.getString(DB_VERSION.reference()));
                 out.setCommands(valueOfNullabletoEnumList(org.usf.traceapi.jdbc.SqlCommand.class, rs.getString(COMMANDS.reference())));
                 out.setActions(new ArrayList<>());
                 out.setCompleted("T".equals(rs.getString(COMPLETE.reference())));

@@ -171,8 +171,8 @@ public class V3RequestDao {
             ps.setString(7, o.getUser());
             ps.setString(8, o.getThreadName());
             ps.setString(9, o.getDriverVersion());
-            ps.setString(10, o.getDatabaseName());
-            ps.setString(11, o.getDatabaseVersion());
+            ps.setString(10, o.getProductName());
+            ps.setString(11, o.getProductVersion());
             ps.setString(12, valueOfNullableList(o.getCommands()));
             ps.setString(13, completed ? "T" : "F");
             ps.setString(14, o.getParentId());
