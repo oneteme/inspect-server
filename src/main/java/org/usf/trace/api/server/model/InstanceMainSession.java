@@ -3,6 +3,8 @@ package org.usf.trace.api.server.model;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import lombok.Getter;
 import lombok.Setter;
+
+import org.usf.traceapi.core.InstanceEnvironment;
 import org.usf.traceapi.core.MainSession;
 
 
@@ -14,4 +16,9 @@ public class InstanceMainSession extends MainSession implements InstanceSession 
     private String instanceUser;
     private String appName;
     private int mask;
+
+    @Deprecated
+	public InstanceEnvironment getApplication() {
+		throw new UnsupportedOperationException();
+	}
 }
