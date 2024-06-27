@@ -4,40 +4,28 @@ package org.usf.trace.api.server.model.wrapper;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Delegate;
 import org.usf.traceapi.core.DatabaseRequest;
+import org.usf.traceapi.core.MailRequest;
 
 @Setter
 @Getter
-public class DatabaseRequestWrapper extends DatabaseRequest {
+public class DatabaseRequestWrapper {
 
     @JsonIgnore
     private final String parentId;
+    @Delegate
+    private final DatabaseRequest databaseRequest;
     private long id;
     private boolean completed;
 
-    public DatabaseRequestWrapper(String parentId, Long id) {
+    public DatabaseRequestWrapper(String parentId) {
         this.parentId = parentId;
-        this.id = id;
+        this.databaseRequest = new DatabaseRequest();
     }
 
-    /**
-     * @deprecated  (temp solution)
-     */
-    @Deprecated
-    public DatabaseRequestWrapper(String parentId, DatabaseRequest query) {
+    public DatabaseRequestWrapper(String parentId, DatabaseRequest databaseRequest) {
         this.parentId = parentId;
-        this.setHost(query.getHost());
-        this.setPort(query.getPort());
-        this.setDatabase(query.getDatabase());
-        this.setDriverVersion(query.getDriverVersion());
-        this.setDatabaseName(query.getDatabaseName());
-        this.setDatabaseVersion(query.getDatabaseVersion());
-        this.setActions(query.getActions());
-        this.setCommands(query.getCommands());
-        this.setStart(query.getStart());
-        this.setEnd(query.getEnd());
-        this.setUser(query.getUser());
-        this.setThreadName(query.getThreadName());
+        this.databaseRequest = databaseRequest;
     }
-
 }

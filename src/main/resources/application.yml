@@ -31,7 +31,7 @@ inspect:
   enabled: true
   mode: #REMOTE => log only
   dispatch:
-    delay: 60
+    delay: 5
     unit: SECONDS
   track:
 #    jdbc-request: false

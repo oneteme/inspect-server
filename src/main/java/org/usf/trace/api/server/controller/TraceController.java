@@ -1,4 +1,4 @@
-package org.usf.trace.api.server.controller.v3;
+package org.usf.trace.api.server.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -14,10 +14,11 @@ import org.usf.trace.api.server.model.filter.JqueryMainSessionFilter;
 import org.usf.trace.api.server.model.filter.JqueryRequestSessionFilter;
 import org.usf.trace.api.server.model.wrapper.*;
 import org.usf.trace.api.server.service.SessionQueueService;
-import org.usf.trace.api.server.service.v3.JqueryV3RequestService;
+import org.usf.trace.api.server.service.RequestService;
 import org.usf.traceapi.core.*;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -36,9 +37,9 @@ import static org.usf.traceapi.core.Session.nextId;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping(value = "v3/trace", produces = APPLICATION_JSON_VALUE)
-public class ApiV3Controller {
+public class TraceController {
 
-    private final JqueryV3RequestService jqueryRequestService;
+    private final RequestService requestService;
     private final SessionQueueService queueService;
 
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
@@ -47,14 +48,17 @@ public class ApiV3Controller {
             instance = instance.withAddress(hsr.getRemoteAddr());
         }
         instance.setId(nextId());
-        return queueService.add(instance)
-                ? accepted().body(instance.getId())
-                : status(SERVICE_UNAVAILABLE).build();
+        try {
+            requestService.addInstanceEnvironment(Collections.singletonList(instance));
+            return accepted().body(instance.getId());
+        } catch(Exception e) {
+            return status(SERVICE_UNAVAILABLE).build();
+        }
     }
 
     @GetMapping("instance/{id}")
     public ResponseEntity<InstanceEnvironmentWrapper> getInstance(@PathVariable String id) {
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(jqueryRequestService.getInstanceById(id));
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getInstanceById(id));
     }
 
     @PutMapping("instance/{id}/session")
@@ -95,17 +99,17 @@ public class ApiV3Controller {
             @RequestParam(required = false, name = "env") String[] environments){
 
         JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, appNames, environments, users, start, end, methods, protocols, hosts, ports, medias, auths, status, apiNames, path, query);
-        return jqueryRequestService.getRestSessions(jsf);
+        return requestService.getRestSessions(jsf);
     }
 
     @GetMapping("session/rest/{id}")
     public ResponseEntity<Session> getRestSession(@PathVariable String id) {
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(jqueryRequestService.getRestSession(id));
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getRestSession(id));
     }
 
     @GetMapping("session/rest/{id}/parent")
     public ResponseEntity<Map<String, String>> getParentIdByChildId(@PathVariable String id){
-        return Optional.of(jqueryRequestService.getSessionParent(id))
+        return Optional.of(requestService.getSessionParent(id))
                 .filter(o -> !o.isEmpty())
                 .map(o -> ResponseEntity.ok().body(o))
                 .orElseGet(()->ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
@@ -113,12 +117,12 @@ public class ApiV3Controller {
 
     @GetMapping("session/main/{id}/tree")
     public Session getMainTreebyId(@PathVariable String id){
-        return jqueryRequestService.getMainTreeById(id);
+        return requestService.getMainTreeById(id);
     }
 
     @GetMapping("session/rest/{id}/tree")
     public Session getRestTreebyId(@PathVariable String id){
-        return jqueryRequestService.getRestTreeById(id);
+        return requestService.getRestTreeById(id);
     }
 
     @GetMapping("session/main")
@@ -133,33 +137,33 @@ public class ApiV3Controller {
     ) {
 
         JqueryMainSessionFilter fc = new JqueryMainSessionFilter(null, null, environments, users, start, end, names, launchModes, location);
-        return jqueryRequestService.getMainSessions(fc);
+        return requestService.getMainSessions(fc);
     }
 
     @GetMapping("session/main/{id}")
     public ResponseEntity<Session> getMainSession(@PathVariable String id) { // without tree
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(jqueryRequestService.getMainSession(id));
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getMainSession(id));
     }
 
     @GetMapping("session/{id}/request/rest")
     public ResponseEntity<List<RestRequestWrapper>> getRestRequests(@PathVariable String id) {
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(jqueryRequestService.getRestRequests(id, RestRequest::new));
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getRestRequests(id, RestRequest::new));
     }
 
     @GetMapping("session/{id}/request/runnable")
-    public ResponseEntity<List<RunnableStageWrapper>> getRunnableRequests(@PathVariable String id) {
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(jqueryRequestService.getRunnableStages(id));
+    public ResponseEntity<List<LocalRequestWrapper>> getRunnableRequests(@PathVariable String id) {
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getRunnableStages(id));
     }
 
     @GetMapping("session/{id}/request/database")
     public ResponseEntity<List<DatabaseRequestWrapper>> getDatabaseRequests(@PathVariable String id) {
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(jqueryRequestService.getDatabaseRequests(id));
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getDatabaseRequests(id));
     }
 
     @GetMapping("session/{id_session}/request/database/{id_database}")
     public ResponseEntity<DatabaseRequestWrapper> getDatabaseRequest(@PathVariable(name = "id_session") String idSession,
                                                                      @PathVariable(name = "id_database") long idDatabase){
-        DatabaseRequestWrapper databaseRequest = jqueryRequestService.getDatabaseRequest(idDatabase);
+        DatabaseRequestWrapper databaseRequest = requestService.getDatabaseRequest(idDatabase);
         return databaseRequest != null ?
                 ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(databaseRequest) :
                 ResponseEntity.status(HttpStatus.NOT_FOUND).cacheControl(CacheControl.noCache()).body(null);
@@ -168,7 +172,7 @@ public class ApiV3Controller {
     @GetMapping("session/{id_session}/request/database/{id_database}/action")
     public ResponseEntity<List<DatabaseRequestStage>> getDatabaseActions(@PathVariable(name = "id_session") String idSession,
                                                                          @PathVariable(name = "id_database") long idDatabase){
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(jqueryRequestService.getDatabaseActions(idDatabase));
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getDatabaseActions(idDatabase));
     }
 
 }
