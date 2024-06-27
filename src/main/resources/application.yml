@@ -33,7 +33,7 @@ inspect:
   dispatch:
     delay: 60
     unit: SECONDS
-    buffer-max-size: -1
+    buffer-max-size: -1 #inspect-server only
   track:
 #    jdbc-request: false
 #    rest-request: false
