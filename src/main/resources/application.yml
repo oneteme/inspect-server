@@ -35,13 +35,10 @@ inspect:
     unit: SECONDS
     buffer-max-size: -1 #inspect-server only
   track:
-#    jdbc-request: false
-#    rest-request: false
-#    main-session: false
-    rest-session: 
-      excludes:
-        method: OPTIONS; 
-        path: /favicon.ico, /actuator/info
-# server:
+#   jdbc-request: false
+#   rest-request: false
+#   main-session: false
+    rest-session: false
+#server:
 #   host:
 #   compress-min-size:
