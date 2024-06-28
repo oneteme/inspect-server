@@ -336,7 +336,7 @@ public class RequestService {
                 out.setId(rs.getLong(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setPort(rs.getInt(PORT.reference()));
-                out.setDatabase(rs.getString(DB.reference()));
+                out.setName(rs.getString(DB.reference()));
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setUser(rs.getString(USER.reference()));

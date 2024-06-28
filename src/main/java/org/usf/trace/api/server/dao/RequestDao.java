@@ -250,7 +250,7 @@ public class RequestDao {
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getHost());
             ps.setInt(3, o.getPort());
-            ps.setString(4, o.getDatabase());
+            ps.setString(4, o.getName());
             ps.setTimestamp(5, fromNullableInstant(o.getStart()));
             ps.setTimestamp(6, fromNullableInstant(o.getEnd()));
             ps.setString(7, o.getUser());
