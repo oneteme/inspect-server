@@ -74,7 +74,7 @@ public class RequestService {
         sessions.forEach(prntA ->
                 sessions.forEach(prntB -> {
                     if (!Objects.equals(prntA.getId(), prntB.getId())){
-                        Optional<RestRequest> opt = prntB.getRequests().stream()
+                        Optional<RestRequest> opt = prntB.getRestRequests().stream()
                                 .filter(k -> prntA.getId().equals(k.getId()))
                                 .findFirst();
                         if (opt.isPresent()) {
