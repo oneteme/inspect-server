@@ -2,7 +2,7 @@ package org.usf.inspect.server;
 
 import static org.usf.inspect.server.Utils.isEmpty;
 
-import org.usf.traceapi.core.Session;
+import org.usf.inspect.core.Session;
 
 import lombok.RequiredArgsConstructor;
 

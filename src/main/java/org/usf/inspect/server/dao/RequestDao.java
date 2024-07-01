@@ -1,15 +1,11 @@
 package org.usf.inspect.server.dao;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
-import org.usf.inspect.server.RequestMask;
-import org.usf.inspect.server.model.InstanceMainSession;
-import org.usf.inspect.server.model.InstanceRestSession;
-import org.usf.inspect.server.model.InstanceSession;
-import org.usf.inspect.server.model.wrapper.*;
-import org.usf.traceapi.core.*;
+import static java.sql.Types.BIGINT;
+import static java.sql.Types.TIMESTAMP;
+import static java.sql.Types.VARCHAR;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+import static java.util.Optional.ofNullable;
 
 import java.sql.ResultSet;
 import java.sql.Timestamp;
@@ -24,10 +20,23 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
-import static java.sql.Types.*;
-import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
-import static java.util.Optional.ofNullable;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+import org.usf.inspect.core.ExceptionInfo;
+import org.usf.inspect.core.Session;
+import org.usf.inspect.server.RequestMask;
+import org.usf.inspect.server.model.InstanceMainSession;
+import org.usf.inspect.server.model.InstanceRestSession;
+import org.usf.inspect.server.model.InstanceSession;
+import org.usf.inspect.server.model.wrapper.DatabaseRequestWrapper;
+import org.usf.inspect.server.model.wrapper.FtpRequestWrapper;
+import org.usf.inspect.server.model.wrapper.InstanceEnvironmentWrapper;
+import org.usf.inspect.server.model.wrapper.LocalRequestWrapper;
+import org.usf.inspect.server.model.wrapper.MailRequestWrapper;
+import org.usf.inspect.server.model.wrapper.RestRequestWrapper;
+
+import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor

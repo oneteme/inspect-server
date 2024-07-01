@@ -1,9 +1,10 @@
 package org.usf.inspect.server.model.wrapper;
 
+import org.usf.inspect.core.LocalRequest;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;
-import org.usf.traceapi.core.LocalRequest;
 
 @Getter
 @Setter

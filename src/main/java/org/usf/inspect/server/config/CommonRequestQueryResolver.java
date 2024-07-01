@@ -1,5 +1,7 @@
 package org.usf.inspect.server.config;
 
+import java.util.Objects;
+
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
@@ -8,8 +10,6 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 import org.usf.jquery.core.RequestQueryBuilder;
 import org.usf.jquery.web.RequestQueryParam;
 import org.usf.jquery.web.RequestQueryParamResolver;
-
-import java.util.Objects;
 
 public class CommonRequestQueryResolver implements HandlerMethodArgumentResolver {
 

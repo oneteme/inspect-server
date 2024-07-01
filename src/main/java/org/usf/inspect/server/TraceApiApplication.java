@@ -7,11 +7,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.usf.traceapi.core.RestSession;
 import org.usf.inspect.server.model.InstanceMainSession;
 import org.usf.inspect.server.model.InstanceRestSession;
-import org.usf.inspect.server.model.wrapper.InstanceEnvironmentWrapper;
-import org.usf.traceapi.core.MainSession;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;

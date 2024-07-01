@@ -1,11 +1,12 @@
 package org.usf.inspect.server.model.wrapper;
 
+import java.time.Instant;
+
+import org.usf.inspect.core.InstanceEnvironment;
+import org.usf.inspect.core.InstanceType;
+
 import lombok.Getter;
 import lombok.Setter;
-import org.usf.traceapi.core.InstanceEnvironment;
-import org.usf.traceapi.core.InstanceType;
-
-import java.time.Instant;
 
 @Getter
 @Setter

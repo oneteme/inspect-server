@@ -1,15 +1,17 @@
 package org.usf.inspect.server.config;
 
-import lombok.RequiredArgsConstructor;
+import static java.util.Arrays.asList;
+import static org.usf.jquery.web.JQueryContext.register;
+
+import java.util.List;
+
+import javax.sql.DataSource;
+
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import javax.sql.DataSource;
-import java.util.List;
-
-import static java.util.Arrays.asList;
-import static org.usf.jquery.web.JQueryContext.register;
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @RequiredArgsConstructor
