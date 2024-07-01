@@ -6,7 +6,7 @@ server:
     min-response-size: 1MB
 spring:
   application:
-    name: traceapi
+    name: inspect
   datasource:
     url: jdbc:h2:mem:testdb;DATABASE_TO_LOWER=TRUE;
     username: sa
