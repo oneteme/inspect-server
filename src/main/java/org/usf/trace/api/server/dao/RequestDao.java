@@ -56,11 +56,11 @@ public class RequestDao {
     public void saveSessions(List<InstanceSession> sessions) {
         filterAndSave(sessions, InstanceRestSession.class, this::saveRestSessions);
         filterAndSave(sessions, InstanceMainSession.class, this::saveMainSessions);
-        filterSubAndSave(sessions, Session::getRequests, (s, r) -> new RestRequestWrapper(s.getId(), r), this::saveRestRequests);
+        filterSubAndSave(sessions, Session::getRestRequests, (s, r) -> new RestRequestWrapper(s.getId(), r), this::saveRestRequests);
         filterSubAndSave(sessions, Session::getFtpRequests, (s, r) -> new FtpRequestWrapper(s.getId(), r), this::saveFtpRequests);
         filterSubAndSave(sessions, Session::getMailRequests, (s, r) -> new MailRequestWrapper(s.getId(), r), this::saveMailRequests);
-        filterSubAndSave(sessions, Session::getQueries, (s, q) -> new DatabaseRequestWrapper(s.getId(), q), this::saveDatabaseRequests);
-        filterSubAndSave(sessions, Session::getStages, (s, st) -> new LocalRequestWrapper(s.getId(), st), this::saveLocalRequests);
+        filterSubAndSave(sessions, Session::getDatabaseRequests, (s, q) -> new DatabaseRequestWrapper(s.getId(), q), this::saveDatabaseRequests);
+        filterSubAndSave(sessions, Session::getLocalRequests, (s, st) -> new LocalRequestWrapper(s.getId(), st), this::saveLocalRequests);
     }
 
     private void saveMainSessions(List<InstanceMainSession> reqList) {
@@ -250,7 +250,7 @@ public class RequestDao {
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getHost());
             ps.setInt(3, o.getPort());
-            ps.setString(4, o.getDatabase());
+            ps.setString(4, o.getName());
             ps.setTimestamp(5, fromNullableInstant(o.getStart()));
             ps.setTimestamp(6, fromNullableInstant(o.getEnd()));
             ps.setString(7, o.getUser());
