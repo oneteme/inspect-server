@@ -1,7 +1,7 @@
 package org.usf.inspect.server.model;
 
-import org.usf.traceapi.core.RestRequest;
-import org.usf.traceapi.core.RestSession;
+import org.usf.inspect.core.RestRequest;
+import org.usf.inspect.core.RestSession;
 
 import lombok.Getter;
 import lombok.Setter;

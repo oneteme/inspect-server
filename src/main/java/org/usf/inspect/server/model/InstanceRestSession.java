@@ -1,10 +1,12 @@
 package org.usf.inspect.server.model;
 
+import org.usf.inspect.core.InstanceEnvironment;
+import org.usf.inspect.core.RestSession;
+
 import com.fasterxml.jackson.annotation.JsonTypeName;
+
 import lombok.Getter;
 import lombok.Setter;
-import org.usf.traceapi.core.InstanceEnvironment;
-import org.usf.traceapi.core.RestSession;
 
 @JsonTypeName("api")
 @Getter

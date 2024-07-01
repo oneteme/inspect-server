@@ -1,10 +1,11 @@
 package org.usf.inspect.server.model.wrapper;
 
+import org.usf.inspect.core.MailRequest;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Delegate;
-import org.usf.traceapi.core.MailRequest;
 
 @Getter
 @Setter

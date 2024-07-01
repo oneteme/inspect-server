@@ -1,21 +1,12 @@
 package org.usf.inspect.server.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.CacheControl;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.usf.inspect.server.model.InstanceMainSession;
-import org.usf.inspect.server.model.InstanceRestSession;
-import org.usf.inspect.server.model.InstanceSession;
-import org.usf.inspect.server.model.filter.JqueryMainSessionFilter;
-import org.usf.inspect.server.model.filter.JqueryRequestSessionFilter;
-import org.usf.inspect.server.model.wrapper.*;
-import org.usf.inspect.server.service.RequestService;
-import org.usf.inspect.server.service.SessionQueueService;
-import org.usf.traceapi.core.*;
+import static java.util.Objects.isNull;
+import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
+import static org.springframework.http.ResponseEntity.accepted;
+import static org.springframework.http.ResponseEntity.status;
+import static org.usf.inspect.core.Session.nextId;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -24,13 +15,37 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import static java.util.Objects.isNull;
-import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
-import static org.springframework.http.ResponseEntity.accepted;
-import static org.springframework.http.ResponseEntity.status;
-import static org.usf.traceapi.core.Session.nextId;
+import org.springframework.http.CacheControl;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.usf.inspect.core.DatabaseRequestStage;
+import org.usf.inspect.core.InstanceType;
+import org.usf.inspect.core.RestRequest;
+import org.usf.inspect.core.Session;
+import org.usf.inspect.server.model.InstanceMainSession;
+import org.usf.inspect.server.model.InstanceRestSession;
+import org.usf.inspect.server.model.InstanceSession;
+import org.usf.inspect.server.model.filter.JqueryMainSessionFilter;
+import org.usf.inspect.server.model.filter.JqueryRequestSessionFilter;
+import org.usf.inspect.server.model.wrapper.DatabaseRequestWrapper;
+import org.usf.inspect.server.model.wrapper.InstanceEnvironmentWrapper;
+import org.usf.inspect.server.model.wrapper.LocalRequestWrapper;
+import org.usf.inspect.server.model.wrapper.RestRequestWrapper;
+import org.usf.inspect.server.service.RequestService;
+import org.usf.inspect.server.service.SessionQueueService;
+
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @CrossOrigin

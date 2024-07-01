@@ -1,10 +1,11 @@
 package org.usf.inspect.server.model.wrapper;
 
+import org.usf.inspect.core.FtpRequest;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Delegate;
-import org.usf.traceapi.core.FtpRequest;
 
 @Getter
 @Setter

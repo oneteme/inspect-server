@@ -1,10 +1,11 @@
 package org.usf.inspect.server.model.wrapper;
 
+import java.util.function.Supplier;
+
+import org.usf.inspect.core.RestRequest;
+
 import lombok.Getter;
 import lombok.experimental.Delegate;
-import org.usf.traceapi.core.RestRequest;
-
-import java.util.function.Supplier;
 
 @Getter
 public class RestRequestWrapper {
