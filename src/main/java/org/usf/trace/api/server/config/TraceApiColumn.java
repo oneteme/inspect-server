@@ -61,6 +61,7 @@ public enum TraceApiColumn implements ColumnDecorator {
 
     INSTANCE_ENV("instance"),
 
+    ORDER("order"),
     COLLECTOR("collector"),
     //---
     ELAPSEDTIME("elapsedtime", DataConstants::elapsedtime2, DataConstants::elapsedTimeExpressions),
