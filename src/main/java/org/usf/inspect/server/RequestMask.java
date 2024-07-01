@@ -44,4 +44,12 @@ public enum RequestMask {
 		}
 		return v;
 	}
+
+	public static int mask(RequestMask... masks) {
+		var v = 0;
+		for(var m : masks) {
+			v |= m.value;
+		}
+		return v;
+	}
 }
