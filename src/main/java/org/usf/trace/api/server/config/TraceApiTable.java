@@ -24,6 +24,7 @@ public enum TraceApiTable implements TableDecorator {
     FTP_STAGE("e_ftp_stg",DataConstants::ftpStageColumns),
 
     LOCAL_REQUEST("e_lcl_rqt",DataConstants::localRequestColumns),
+    EXCEPTION("e_exc_inf", DataConstants::exceptionColumns),
     INSTANCE("e_env_ins", DataConstants::instanceColumns);
 
     @NonNull

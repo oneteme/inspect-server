@@ -170,6 +170,16 @@ public final class DataConstants {
         };
     }
 
+    public static String exceptionColumns(TraceApiColumn column) {
+        return switch (column) {
+            case TYPE -> VA_TYP;
+            case ERR_TYPE -> VA_ERR_TYP;
+            case ERR_MSG -> VA_ERR_MSG;
+            case ORDER -> CD_ORD;
+            case PARENT -> CD_RQT;
+            default -> null;
+        };
+    }
     public static String instanceColumns(TraceApiColumn column){
         return switch (column) {
             case ID -> ID_INS;
