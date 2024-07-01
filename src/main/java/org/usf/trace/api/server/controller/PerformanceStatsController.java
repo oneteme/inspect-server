@@ -14,28 +14,27 @@ import lombok.RequiredArgsConstructor;
 
 @CrossOrigin
 @RestController
-@RequestMapping(value = "stat")
+@RequestMapping(value = "stat", produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 public class PerformanceStatsController {
 
     private final JdbcTemplate template;
 
-    @GetMapping(value="apisession", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("apisession")
     public List<DynamicModel> request(
             @RequestQueryParam(name = "apisession", defaultColumns = "count") RequestQueryBuilder query) {
         return usingSpringJdbc(query);
     }
 
-    @GetMapping(value="mainsession", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("mainsession")
     public List<DynamicModel> session(
             @RequestQueryParam(name = "mainsession", defaultColumns = "count") RequestQueryBuilder query) {
         return usingSpringJdbc(query);
     }
 
-    @GetMapping(value="instance", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("instance")
     public List<DynamicModel> environment(
-            @RequestQueryParam(name = "instance") RequestQueryBuilder query
-    ) {
+            @RequestQueryParam(name = "instance") RequestQueryBuilder query) {
         return usingSpringJdbc(query);
     }
 
