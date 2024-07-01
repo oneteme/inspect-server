@@ -8,6 +8,9 @@ public class DbFields {
     public static final String CD_PRN_SES = "cd_prn_ses";
     public static final String CD_DTB_RQT = "cd_dtb_rqt";
     public static final String ID_DTB_RQT = "id_dtb_rqt";
+    public static final String ID_FTP_RQT = "id_ftp_rqt";
+    public static final String CD_FTP_RQT = "cd_ftp_rqt";
+
     public static final String ID_INS = "id_ins";
     public static final String CD_INS = "cd_ins";
     public static final String VA_MTH = "va_mth";
@@ -48,6 +51,9 @@ public class DbFields {
     public static final String VA_ERR_MSG = "va_err_msg";
 
     public static final String VA_CCH_CTR = "va_cch_ctr";
+    public static final String VA_SRV_VRS = "va_srv_vrs";
+    public static final String VA_CLT_VRS = "va_clt_vrs";
+    public static final String VA_ARG = "va_arg";
     public static final String VA_MSK = "va_msk";
     private DbFields() {
         throw new IllegalStateException("Utility class");

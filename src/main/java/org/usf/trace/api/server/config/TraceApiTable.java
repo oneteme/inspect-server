@@ -20,6 +20,9 @@ public enum TraceApiTable implements TableDecorator {
     MAIN_SESSION("e_main_ses", DataConstants::mainSessionColumns),
     DATABASE_REQUEST("e_dtb_rqt",DataConstants::databaseRequestColumns),
     DATABASE_STAGE("e_dtb_stg",DataConstants::databaseStageColumns),
+    FTP_REQUEST("e_ftp_rqt",DataConstants::ftpRequestColumns),
+    FTP_STAGE("e_ftp_stg",DataConstants::ftpStageColumns),
+
     LOCAL_REQUEST("e_lcl_rqt",DataConstants::localRequestColumns),
     INSTANCE("e_env_ins", DataConstants::instanceColumns);
 
