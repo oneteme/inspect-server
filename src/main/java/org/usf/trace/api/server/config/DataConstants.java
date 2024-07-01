@@ -91,6 +91,24 @@ public final class DataConstants {
             default -> null;
         };
     }
+
+    public static String ftpRequestColumns(TraceApiColumn column) {
+        return switch (column) {
+            case ID -> ID_FTP_RQT;
+            case HOST -> VA_HST;
+            case PORT -> CD_PRT;
+            case PROTOCOL -> VA_PCL;
+            case SERVER_VERSION -> VA_SRV_VRS;
+            case CLIENT_VERSION -> VA_CLT_VRS;
+            case USER -> VA_USR;
+            case START -> DH_STR;
+            case END -> DH_END;
+            case THREAD -> VA_THR;
+            case PARENT -> CD_PRN_SES;
+            default -> null;
+        };
+    }
+
     public static String databaseRequestColumns(TraceApiColumn column) {
         return switch (column) {
             case ID -> ID_DTB_RQT;
@@ -122,6 +140,19 @@ public final class DataConstants {
             case ERR_TYPE -> VA_ERR_TYP;
             case ERR_MSG -> VA_ERR_MSG;
             case PARENT -> CD_PRN_SES;
+            default -> null;
+        };
+    }
+
+    public static String ftpStageColumns(TraceApiColumn column){
+        return switch (column) {
+            case NAME -> VA_NAM;
+            case START -> DH_STR;
+            case END -> DH_END;
+            case ERR_TYPE -> VA_ERR_TYP;
+            case ERR_MSG -> VA_ERR_MSG;
+            case ARG -> VA_ARG;
+            case PARENT -> CD_FTP_RQT;
             default -> null;
         };
     }

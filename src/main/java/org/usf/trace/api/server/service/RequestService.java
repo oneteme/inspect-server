@@ -307,7 +307,6 @@ public class RequestService {
             return outs;
         });
     }
-
     public DatabaseRequestWrapper getDatabaseRequest(long idDatabase) {
         return requireSingle(getDatabaseRequests(DATABASE_REQUEST.column(ID).equal(idDatabase)));
     }
