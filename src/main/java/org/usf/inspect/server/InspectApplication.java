@@ -16,10 +16,10 @@ import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 
 @SpringBootApplication
 @EnableTransactionManagement
-public class TraceApiApplication {
+public class InspectApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(TraceApiApplication.class, args);
+		SpringApplication.run(InspectApplication.class, args);
 	}
 
 	@Bean
