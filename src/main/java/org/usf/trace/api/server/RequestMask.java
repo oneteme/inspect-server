@@ -18,19 +18,19 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum RequestMask {
 	
-	LOCAL(1), JDBC(2), REST(4), FTP(8), SMTP(0x10);
+	LOCAL(0x1), JDBC(0x2), REST(0x4), FTP(0x8), SMTP(0x10), LDAP(0x20);
 	
 	private final int value;
 	
 	public static int mask(Session s) {
 		var v = 0;
-		if(!isEmpty(s.getStages())) {
+		if(!isEmpty(s.getLocalRequests())) {
 			v |= LOCAL.value;
 		}
-		if(!isEmpty(s.getQueries())) {
+		if(!isEmpty(s.getDatabaseRequests())) {
 			v |= JDBC.value;
 		}
-		if(!isEmpty(s.getRequests())) {
+		if(!isEmpty(s.getRestRequests())) {
 			v |= REST.value;
 		}
 		if(!isEmpty(s.getFtpRequests())) {
@@ -38,6 +38,9 @@ public enum RequestMask {
 		}
 		if(!isEmpty(s.getMailRequests())) {
 			v |= SMTP.value;
+		}
+		if(!isEmpty(s.getLdapRequests())) {
+			v |= LDAP.value;
 		}
 		return v;
 	}

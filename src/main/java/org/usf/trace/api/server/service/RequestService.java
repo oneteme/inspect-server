@@ -74,7 +74,7 @@ public class RequestService {
         sessions.forEach(prntA ->
                 sessions.forEach(prntB -> {
                     if (!Objects.equals(prntA.getId(), prntB.getId())){
-                        Optional<RestRequest> opt = prntB.getRequests().stream()
+                        Optional<RestRequest> opt = prntB.getRestRequests().stream()
                                 .filter(k -> prntA.getId().equals(k.getId()))
                                 .findFirst();
                         if (opt.isPresent()) {
@@ -335,7 +335,7 @@ public class RequestService {
                 out.setId(rs.getLong(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setPort(rs.getInt(PORT.reference()));
-                out.setDatabase(rs.getString(DB.reference()));
+                out.setName(rs.getString(DB.reference()));
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setUser(rs.getString(USER.reference()));
