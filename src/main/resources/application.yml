@@ -6,7 +6,7 @@ server:
     min-response-size: 1MB
 spring:
   application:
-    name: traceapi
+    name: inspect
   datasource:
     url: jdbc:h2:mem:testdb;DATABASE_TO_LOWER=TRUE;
     username: sa
@@ -24,7 +24,7 @@ spring:
 logging:
   level:
     org.usf.jquery: DEBUG
-    org.usf.traceapi: TRACE
+    org.usf.inspect: TRACE
     org.springframework.jdbc.core: DEBUG
 
 inspect:
