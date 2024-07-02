@@ -34,11 +34,11 @@ inspect:
     delay: 5
     unit: SECONDS
     buffer-max-size: -1 #inspect-server only
-  track:
+# track:
 #   jdbc-request: false
 #   rest-request: false
 #   main-session: false
-    rest-session: false
-#server:
+#   rest-session: false
+# server:
 #   host:
 #   compress-min-size:
