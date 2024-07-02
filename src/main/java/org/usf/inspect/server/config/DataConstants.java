@@ -12,10 +12,11 @@ import static org.usf.jquery.core.ComparisonExpression.greaterOrEqual;
 import static org.usf.jquery.core.ComparisonExpression.isNotNull;
 import static org.usf.jquery.core.ComparisonExpression.lessThan;
 import static org.usf.jquery.core.DBColumn.count;
+import static org.usf.jquery.core.DBFunction.coalesce;
+import static org.usf.jquery.core.DBFunction.epoch;
 
 import org.usf.jquery.core.ComparisonExpression;
 import org.usf.jquery.core.DBColumn;
-import org.usf.jquery.core.DBFunction;
 import org.usf.jquery.core.OperationColumn;
 import org.usf.jquery.web.TableDecorator;
 
@@ -200,8 +201,7 @@ public final class DataConstants {
     }
 
     public static DBColumn elapsedtime2(TableDecorator table) {
-        return DBFunction.epoch().args(table.column(END).minus(table.column(START)));
-
+        return epoch().args(table.column(END).minus(table.column(START)));
     }
 
     private static OperationColumn countStatusByType(TableDecorator table, ComparisonExpression op) {
@@ -209,7 +209,7 @@ public final class DataConstants {
         return count((status).when(op).then(status).end());
     }
     public static DBColumn err(TableDecorator table){ // temporary solution to be changed
-        return DBFunction.coalesce().args(table.column(ERR_MSG),table.column(ERR_TYPE));
+        return coalesce().args(table.column(ERR_MSG),table.column(ERR_TYPE));
     }
 
     public static ComparisonExpression errComp(String name){// temporary solution to be changed
@@ -221,9 +221,13 @@ public final class DataConstants {
         return count((complete).when(op).then(complete).end());
     }
 
-    public static OperationColumn countDbError(TableDecorator table){ return countDbBySucces(table,equal('F'));}
-    public static OperationColumn countDbSucces (TableDecorator table){ return countDbBySucces(table,equal('T'));}
-
+    public static OperationColumn countDbError(TableDecorator table){ 
+    	return countDbBySucces(table, equal('F'));
+    }
+    
+    public static OperationColumn countDbSucces (TableDecorator table){ 
+    	return countDbBySucces(table, equal('T'));
+    }
 
     public static OperationColumn countStatus200(TableDecorator table) {
         return countStatusByType(table, equal(200));
