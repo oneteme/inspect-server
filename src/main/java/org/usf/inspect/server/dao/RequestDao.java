@@ -31,7 +31,7 @@ import static java.sql.Types.*;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
-import static org.usf.inspect.server.RequestType.*;
+import static org.usf.inspect.server.RequestMask.*;
 
 @Repository
 @RequiredArgsConstructor
@@ -82,7 +82,7 @@ public class RequestDao {
             ps.setString(8, o.getThreadName());
             ps.setString(9, exp.getType());
             ps.setString(10, exp.getMessage());
-            ps.setInt(11, RequestMask.mask(o));
+            ps.setInt(11, mask(o));
             ps.setString(12, o.getInstanceId());
         });
     }
@@ -114,7 +114,7 @@ public class RequestDao {
             ps.setString(21, o.getUser());
             ps.setString(22, o.getUserAgent());
             ps.setString(23, o.getCacheControl());
-            ps.setInt(24, RequestMask.mask(o));
+            ps.setInt(24, mask(o));
             ps.setString(25, o.getInstanceId());
         });
     }
@@ -149,7 +149,7 @@ public class RequestDao {
                 exceptions.add(new ExceptionWrapper(id, new ExceptionInfo(o.getException().getType(), o.getException().getMessage()), null));
             }
         });
-        saveExceptions(exceptions, REQUEST);
+        saveExceptions(exceptions, REST);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -340,9 +340,9 @@ public class RequestDao {
         saveExceptions(exceptions, JDBC);
     }
 
-    private void saveExceptions(List<ExceptionWrapper> exceptionList, RequestType type) {
+    private void saveExceptions(List<ExceptionWrapper> exceptionList, RequestMask mask) {
         template.batchUpdate("INSERT INTO E_EXC_INF(VA_TYP,VA_ERR_TYP,VA_ERR_MSG,CD_ORD,CD_RQT) VALUES(?,?,?,?,?)",
-                exceptionList.stream().map(e -> new Object[]{type.name(), e.getExceptionInfo().getType(), e.getExceptionInfo().getMessage(), e.getOrder(), e.getParentId()}).toList(),
+                exceptionList.stream().map(e -> new Object[]{mask.name(), e.getExceptionInfo().getType(), e.getExceptionInfo().getMessage(), e.getOrder(), e.getParentId()}).toList(),
                 new int[]{VARCHAR, VARCHAR, VARCHAR, INTEGER, BIGINT});
     }
 

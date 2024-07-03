@@ -76,6 +76,7 @@ public final class DataConstants {
     
     public static String restRequestColumns(TraceApiColumn column) {
         return switch (column) {
+            case ID -> ID_RST_RQT;
             case METHOD -> VA_MTH;
             case PROTOCOL -> VA_PCL;
             case HOST -> VA_HST;
