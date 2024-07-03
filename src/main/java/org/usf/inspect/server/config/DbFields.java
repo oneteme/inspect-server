@@ -1,9 +1,12 @@
 package org.usf.inspect.server.config;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
-
-public class DbFields {
-    public static final String ID_SES = "id_ses";
+@NoArgsConstructor(access = AccessLevel.PRIVATE) //hide constructor better than throwing exception
+public final class DbFields {
+   
+	public static final String ID_SES = "id_ses";
     public static final String CD_RMT_SES = "cd_rmt_ses";
     public static final String CD_PRN_SES = "cd_prn_ses";
     public static final String CD_DTB_RQT = "cd_dtb_rqt";
@@ -61,7 +64,4 @@ public class DbFields {
     public static final String VA_MSK = "va_msk";
     public static final String CD_ORD = "cd_ord";
 
-    private DbFields() {
-        throw new IllegalStateException("Utility class");
-    }
 }
