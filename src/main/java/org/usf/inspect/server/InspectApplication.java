@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.usf.inspect.server.model.InstanceMainSession;
 import org.usf.inspect.server.model.InstanceRestSession;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
@@ -27,7 +28,8 @@ public class InspectApplication {
 	public ObjectMapper mapper(){
 		var mapper = json()
 				.modules(new JavaTimeModule(), new ParameterNamesModule())
-				.build(); //TODO ignore null & empty field configuration
+				.build()
+			    .setSerializationInclusion(JsonInclude.Include.NON_EMPTY); // !null & !empty
 		mapper.registerSubtypes(InstanceRestSession.class, InstanceMainSession.class);
 		return mapper;
 	}
