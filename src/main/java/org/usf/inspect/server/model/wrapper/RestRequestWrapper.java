@@ -14,7 +14,7 @@ public class RestRequestWrapper {
     @Delegate
     private final RestRequest request;
     private final String parentId;
-    private long idRestRequest;
+    private long idRequest;
 
     public RestRequestWrapper(String parentId, Supplier<? extends RestRequest> fn) {
         this.parentId = parentId;

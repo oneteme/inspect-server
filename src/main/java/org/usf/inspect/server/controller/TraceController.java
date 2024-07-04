@@ -27,7 +27,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.usf.inspect.core.DatabaseRequestStage;
 import org.usf.inspect.core.InstanceType;
 import org.usf.inspect.core.RestRequest;
 import org.usf.inspect.core.Session;
@@ -36,10 +35,7 @@ import org.usf.inspect.server.model.InstanceRestSession;
 import org.usf.inspect.server.model.InstanceSession;
 import org.usf.inspect.server.model.filter.JqueryMainSessionFilter;
 import org.usf.inspect.server.model.filter.JqueryRequestSessionFilter;
-import org.usf.inspect.server.model.wrapper.DatabaseRequestWrapper;
-import org.usf.inspect.server.model.wrapper.InstanceEnvironmentWrapper;
-import org.usf.inspect.server.model.wrapper.LocalRequestWrapper;
-import org.usf.inspect.server.model.wrapper.RestRequestWrapper;
+import org.usf.inspect.server.model.wrapper.*;
 import org.usf.inspect.server.service.RequestService;
 import org.usf.inspect.server.service.SessionQueueService;
 
@@ -167,7 +163,7 @@ public class TraceController {
 
     @GetMapping("session/{id}/request/runnable")
     public ResponseEntity<List<LocalRequestWrapper>> getRunnableRequests(@PathVariable String id) {
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getRunnableStages(id));
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getLocalRequests(id));
     }
 
     @GetMapping("session/{id}/request/database")
@@ -185,9 +181,9 @@ public class TraceController {
     }
 
     @GetMapping("session/{id_session}/request/database/{id_database}/action")
-    public ResponseEntity<List<DatabaseRequestStage>> getDatabaseActions(@PathVariable(name = "id_session") String idSession,
-                                                                         @PathVariable(name = "id_database") long idDatabase){
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getDatabaseActions(idDatabase));
+    public ResponseEntity<List<DatabaseRequestStageWrapper>> getDatabaseActions(@PathVariable(name = "id_session") String idSession,
+                                                                                @PathVariable(name = "id_database") long idDatabase){
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getDatabaseRequestStages(idDatabase));
     }
 
 }
