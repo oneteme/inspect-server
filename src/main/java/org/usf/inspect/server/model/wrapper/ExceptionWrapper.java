@@ -9,7 +9,7 @@ import org.usf.inspect.core.ExceptionInfo;
 @Setter
 @RequiredArgsConstructor
 public class ExceptionWrapper {
-    private final long parentId;
-    private final ExceptionInfo exceptionInfo;
+    private final long cdRequest;
     private final Long order;
+    private final ExceptionInfo exceptionInfo;
 }

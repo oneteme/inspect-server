@@ -7,7 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.ExceptionInfo;
 import org.usf.inspect.core.Session;
 import org.usf.inspect.server.RequestMask;
-import org.usf.inspect.server.RequestType;
 import org.usf.inspect.server.model.InstanceMainSession;
 import org.usf.inspect.server.model.InstanceRestSession;
 import org.usf.inspect.server.model.InstanceSession;
@@ -146,7 +145,7 @@ public class RequestDao {
             ps.setString(18, o.getThreadName());
             ps.setString(19, o.getParentId());
             if(o.getException() != null) {
-                exceptions.add(new ExceptionWrapper(id, new ExceptionInfo(o.getException().getType(), o.getException().getMessage()), null));
+                exceptions.add(new ExceptionWrapper(id, null, new ExceptionInfo(o.getException().getType(), o.getException().getMessage())));
             }
         });
         saveExceptions(exceptions, REST);
@@ -168,7 +167,7 @@ public class RequestDao {
             ps.setString(7,o.getThreadName());
             ps.setString(8,o.getParentId());
             if(o.getException() != null) {
-                exceptions.add(new ExceptionWrapper(id, new ExceptionInfo(o.getException().getType(), o.getException().getMessage()), null));
+                exceptions.add(new ExceptionWrapper(id, null, new ExceptionInfo(o.getException().getType(), o.getException().getMessage())));
             }
         });
         saveExceptions(exceptions, LOCAL);
@@ -203,7 +202,7 @@ public class RequestDao {
                             return e.getActions().stream().map(da -> {
                                 var id = inc.incrementAndGet();
                                 if(da.getException() != null) {
-                                    exceptions.add(new ExceptionWrapper(e.getId(), new ExceptionInfo(da.getException().getType(), da.getException().getMessage()), id));
+                                    exceptions.add(new ExceptionWrapper(e.getId(), id, new ExceptionInfo(da.getException().getType(), da.getException().getMessage())));
                                 }
                                 return new Object[]{da.getName(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()), id, e.getId()};
                             });
@@ -251,7 +250,7 @@ public class RequestDao {
                             return e.getActions().stream().map(da -> {
                                 var id = inc.incrementAndGet();
                                 if(da.getException() != null) {
-                                    exceptions.add(new ExceptionWrapper(e.getId(), new ExceptionInfo(da.getException().getType(), da.getException().getMessage()), id));
+                                    exceptions.add(new ExceptionWrapper(e.getId(), id, new ExceptionInfo(da.getException().getType(), da.getException().getMessage())));
                                 }
                                 return new Object[]{da.getName(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()), String.join(", ", da.getArgs()), id, e.getId()};
                             });
@@ -288,7 +287,7 @@ public class RequestDao {
                             return e.getActions().stream().map(da -> {
                                 var id = inc.incrementAndGet();
                                 if(da.getException() != null) {
-                                    exceptions.add(new ExceptionWrapper(e.getId(), new ExceptionInfo(da.getException().getType(), da.getException().getMessage()), id));
+                                    exceptions.add(new ExceptionWrapper(e.getId(), id, new ExceptionInfo(da.getException().getType(), da.getException().getMessage())));
                                 }
                                 return new Object[]{da.getName(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()), String.join(", ", da.getArgs()), id, e.getId()};
                             });
@@ -317,7 +316,7 @@ public class RequestDao {
             ps.setString(12, valueOfNullableList(o.getCommands()));
             ps.setString(13, completed ? "T" : "F");
             ps.setString(14, o.getParentId());
-            o.setId(inc.get());
+            o.setIdRequest(inc.get());
         });
         saveDatabaseActions(qryList);
     }
@@ -331,9 +330,9 @@ public class RequestDao {
                             return e.getActions().stream().map(da -> {
                                 var id = inc.incrementAndGet();
                                 if(da.getException() != null) {
-                                    exceptions.add(new ExceptionWrapper(e.getId(), new ExceptionInfo(da.getException().getType(), da.getException().getMessage()), id));
+                                    exceptions.add(new ExceptionWrapper(e.getIdRequest(), id, new ExceptionInfo(da.getException().getType(), da.getException().getMessage())));
                                 }
-                                return new Object[]{da.getName(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()),valueOfNullableArray(da.getCount()), id, e.getId()};
+                                return new Object[]{da.getName(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()),valueOfNullableArray(da.getCount()), id, e.getIdRequest()};
                             });
                         }).toList(),
                 new int[]{VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, INTEGER, BIGINT});
@@ -342,13 +341,13 @@ public class RequestDao {
 
     private void saveExceptions(List<ExceptionWrapper> exceptionList, RequestMask mask) {
         template.batchUpdate("INSERT INTO E_EXC_INF(VA_TYP,VA_ERR_TYP,VA_ERR_MSG,CD_ORD,CD_RQT) VALUES(?,?,?,?,?)",
-                exceptionList.stream().map(e -> new Object[]{mask.name(), e.getExceptionInfo().getType(), e.getExceptionInfo().getMessage(), e.getOrder(), e.getParentId()}).toList(),
+                exceptionList.stream().map(e -> new Object[]{mask.name(), e.getExceptionInfo().getType(), e.getExceptionInfo().getMessage(), e.getOrder(), e.getCdRequest()}).toList(),
                 new int[]{VARCHAR, VARCHAR, VARCHAR, INTEGER, BIGINT});
     }
 
     // TODO use RequestQueryBuilder
     private long selectMaxId(String table, String column) {
-        return template.queryForObject(String.format("SELECT COALESCE(MAX(%s), 0) FROM %s", table, column), Long.class);
+        return template.queryForObject(String.format("SELECT COALESCE(MAX(%s),0) FROM %s", column, table), Long.class);
     }
 
     public List<String> selectChildsById(String id) {

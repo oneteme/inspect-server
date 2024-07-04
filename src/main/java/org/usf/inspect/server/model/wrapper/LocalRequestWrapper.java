@@ -9,9 +9,10 @@ import lombok.experimental.Delegate;
 @Getter
 @Setter
 public class LocalRequestWrapper {
+    private final String parentId;
+    private long idRequest;
     @Delegate
     private final LocalRequest stage;
-    private final String parentId;
 
     public LocalRequestWrapper(String parentId){
         this.parentId = parentId;

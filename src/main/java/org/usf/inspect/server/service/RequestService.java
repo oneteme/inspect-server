@@ -3,6 +3,7 @@ package org.usf.inspect.server.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.usf.inspect.core.*;
+import org.usf.inspect.jdbc.SqlCommand;
 import org.usf.inspect.server.config.TraceApiColumn;
 import org.usf.inspect.server.config.TraceApiTable;
 import org.usf.inspect.server.dao.RequestDao;
@@ -138,7 +139,7 @@ public class RequestService {
             var reqMap = sessions.stream().collect(toMap(Session::getId, identity()));
             var parentIds = reqMap.keySet().stream().toList();
             getRestRequests(parentIds, Exchange::new).forEach(r -> reqMap.get(r.getParentId()).append(r.getRequest()));
-            getRunnableStages(parentIds).forEach(r -> reqMap.get(r.getParentId()).append(r.getStage()));
+            getLocalRequests(parentIds).forEach(r -> reqMap.get(r.getParentId()).append(r.getStage()));
             getDatabaseRequests(parentIds).forEach(q -> reqMap.get(q.getParentId()).append(q.getDatabaseRequest()));
         }
         return sessions;
@@ -195,7 +196,7 @@ public class RequestService {
         Session session = requireSingle(getMainSessions(jsf));
         if (session != null) {
             getRestRequests(session.getId(), Exchange::new).forEach(r -> session.append(r.getRequest()));
-            getRunnableStages(session.getId()).forEach(r -> session.append(r.getStage()));
+            getLocalRequests(session.getId()).forEach(r -> session.append(r.getStage()));
             getDatabaseRequests(session.getId()).forEach(d -> session.append(d.getDatabaseRequest()));
         }
         return session;
@@ -243,19 +244,18 @@ public class RequestService {
 
     private List<RestRequestWrapper> getRestRequests(List<String> cdSessions, Supplier<? extends RestRequest> fn) { //use criteria
         var v = new RequestQueryBuilder();
-        v.tables(REST_REQUEST.table(), EXCEPTION.table())
-                .columns(getColumns(
-                        REST_REQUEST, PROTOCOL, HOST, PORT, PATH, QUERY, METHOD, STATUS, SIZE_IN,
+        v.select(REST_REQUEST.table(),
+                getColumns(
+                        REST_REQUEST, ID, PROTOCOL, HOST, PORT, PATH, QUERY, METHOD, STATUS, SIZE_IN,
                         SIZE_OUT, CONTENT_ENCODING_IN, CONTENT_ENCODING_OUT, START, END, THREAD, REMOTE, PARENT
                 ))
-                .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
-                .filters(REST_REQUEST.column(ID).equal(EXCEPTION.column(PARENT)))
                 .filters(REST_REQUEST.column(PARENT).in(cdSessions.toArray()))
                 .orders(REST_REQUEST.column(START).order());
         List<RestRequestWrapper> requests = v.build().execute(ds, rs -> {
             List<RestRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
                 RestRequestWrapper out = new RestRequestWrapper(rs.getString(PARENT.reference()), fn);
+                out.setIdRequest(rs.getLong(ID.reference()));
                 out.setId(rs.getString(REMOTE.reference()));
                 out.setProtocol(rs.getString(PROTOCOL.reference()));
                 out.setHost(rs.getString(HOST.reference()));
@@ -271,43 +271,51 @@ public class RequestService {
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setThreadName(rs.getString(THREAD.reference()));
-                out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 outs.add(out);
             }
             return outs;
         });
         if(!requests.isEmpty()) {
-
+            var reqMap = requests.stream().collect(toMap(RestRequestWrapper::getIdRequest, identity()));
+            var parentIds = reqMap.keySet().stream().toList();
+            getExceptions(parentIds).forEach(e -> reqMap.get(e.getCdRequest()).setException(e.getExceptionInfo()));
         }
+        return requests;
     }
 
-    public List<LocalRequestWrapper> getRunnableStages(String cdSession){
-        return getRunnableStages(Collections.singletonList(cdSession));
+    public List<LocalRequestWrapper> getLocalRequests(String cdSession){
+        return getLocalRequests(Collections.singletonList(cdSession));
     }
 
-    private List<LocalRequestWrapper> getRunnableStages(List<String> cdSessions){
+    private List<LocalRequestWrapper> getLocalRequests(List<String> cdSessions){
         var v = new RequestQueryBuilder();
         v.select(
                 LOCAL_REQUEST.table(),
                 getColumns(
-                        LOCAL_REQUEST, NAME, LOCATION, START, END, USER, THREAD, ERR_TYPE, ERR_MSG, PARENT
+                        LOCAL_REQUEST, ID, NAME, LOCATION, START, END, USER, THREAD, PARENT
                 )
         ).filters(LOCAL_REQUEST.column(PARENT).in(cdSessions.toArray())).orders(LOCAL_REQUEST.column(START).order());
-        return v.build().execute(ds, rs -> {
+        List<LocalRequestWrapper> requests = v.build().execute(ds, rs -> {
             List<LocalRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
                 LocalRequestWrapper out = new LocalRequestWrapper(rs.getString(PARENT.reference()));
+                out.setIdRequest(rs.getLong(ID.reference()));
                 out.setName(rs.getString(NAME.reference()));
                 out.setLocation(rs.getString(LOCATION.reference()));
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setUser(rs.getString(USER.reference()));
                 out.setThreadName(rs.getString(THREAD.reference()));
-                out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 outs.add(out);
             }
             return outs;
         });
+        if(!requests.isEmpty()) {
+            var reqMap = requests.stream().collect(toMap(LocalRequestWrapper::getIdRequest, identity()));
+            var parentIds = reqMap.keySet().stream().toList();
+            getExceptions(parentIds).forEach(e -> reqMap.get(e.getCdRequest()).setException(e.getExceptionInfo()));
+        }
+        return requests;
     }
     public DatabaseRequestWrapper getDatabaseRequest(long idDatabase) {
         return requireSingle(getDatabaseRequests(DATABASE_REQUEST.column(ID).equal(idDatabase)));
@@ -334,7 +342,7 @@ public class RequestService {
             List<DatabaseRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
                 DatabaseRequestWrapper out = new DatabaseRequestWrapper(rs.getString(PARENT.reference()));
-                out.setId(rs.getLong(ID.reference()));
+                out.setIdRequest(rs.getLong(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setPort(rs.getInt(PORT.reference()));
                 out.setName(rs.getString(DB.reference()));
@@ -345,8 +353,7 @@ public class RequestService {
                 out.setDriverVersion(rs.getString(DRIVER.reference()));
                 out.setProductName(rs.getString(DB_NAME.reference()));
                 out.setProductVersion(rs.getString(DB_VERSION.reference()));
-                out.setCommands(valueOfNullabletoEnumList(org.usf.inspect.jdbc.SqlCommand.class, rs.getString(COMMANDS.reference())));
-                out.setActions(new ArrayList<>());
+                out.setCommands(valueOfNullabletoEnumList(SqlCommand.class, rs.getString(COMMANDS.reference())));
                 out.setCompleted("T".equals(rs.getString(COMPLETE.reference())));
                 outs.add(out);
             }
@@ -354,30 +361,40 @@ public class RequestService {
         });
     }
 
-    public List<DatabaseRequestStage> getDatabaseActions(Long id) {
+    public List<DatabaseRequestStageWrapper> getDatabaseRequestStages(Long id) {
         var v = new RequestQueryBuilder();
         v.select(
                 DATABASE_STAGE.table(),
-                getColumns(DATABASE_STAGE, NAME, START, END, ERR_TYPE, ERR_MSG, ACTION_COUNT, PARENT)
+                getColumns(DATABASE_STAGE, NAME, START, END, ACTION_COUNT, ORDER, PARENT)
         ).filters(DATABASE_STAGE.column(PARENT).equal(id)).orders(DATABASE_STAGE.column(START).order());
-        return v.build().execute(ds, rs -> {
-            List<DatabaseRequestStage> actions = new ArrayList<>();
+        List<DatabaseRequestStageWrapper> stages = v.build().execute(ds, rs -> {
+            List<DatabaseRequestStageWrapper> actions = new ArrayList<>();
             while (rs.next()) {
-                var action = new DatabaseRequestStage();
-                action.setName(rs.getString(TYPE.reference()));
+                var action = new DatabaseRequestStageWrapper(
+                        rs.getLong(PARENT.reference()),
+                        rs.getLong(ORDER.reference())
+                );
+                action.setName(rs.getString(NAME.reference()));
                 action.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
-                action.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 action.setCount(ofNullable(rs.getString(ACTION_COUNT.reference())).map(str -> Arrays.stream(str.split(",")).mapToLong(Long::parseLong).toArray()).orElse(null));
                 actions.add(action);
             }
             return actions;
         });
+        if(!stages.isEmpty()) {
+            var parentIds = stages.stream().map(DatabaseRequestStageWrapper::getCdRequest).toList();
+            getExceptions(parentIds)
+                    .forEach(e -> stages.stream()
+                            .filter(s -> e.getCdRequest() == s.getCdRequest() && e.getOrder() == s.getOrder())
+                            .findFirst().ifPresent(s -> s.setException(e.getExceptionInfo()))
+                    );
+        }
+        return stages;
     }
 
     private List<ExceptionWrapper> getExceptions(List<Long> cdRequests) {
         var v = new RequestQueryBuilder();
-        v.tables(EXCEPTION.table())
         v.select(EXCEPTION.table(), getColumns(EXCEPTION, ERR_TYPE, ERR_MSG, ORDER, PARENT))
                 .filters(EXCEPTION.column(PARENT).in(cdRequests.toArray()));
         return v.build().execute(ds, rs -> {
@@ -386,8 +403,8 @@ public class RequestService {
                 exceptions.add(
                         new ExceptionWrapper(
                                 rs.getLong(PARENT.reference()),
-                                new ExceptionInfo(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())),
-                                rs.getLong(ORDER.reference())
+                                rs.getLong(ORDER.reference()),
+                                new ExceptionInfo(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()))
                         )
                 );
             }
@@ -395,7 +412,7 @@ public class RequestService {
         });
     }
 
-    public String getPropertyByFilters(TraceApiTable table, TraceApiColumn target, DBFilter filters){ // main / apissesion
+    private String getPropertyByFilters(TraceApiTable table, TraceApiColumn target, DBFilter filters){ // main / apissesion
         var v = new RequestQueryBuilder().select(table.table(), getColumns(table,target)).filters(filters);
         return v.build().execute(ds, rs -> {
             if(rs.next()){
@@ -404,6 +421,7 @@ public class RequestService {
             return null;
         });
     }
+
 
     private static TaggableColumn[] getColumns(TableDecorator table, ColumnDecorator... columns) {
         return Stream.of(columns).map(table::column).toArray(TaggableColumn[]::new);
