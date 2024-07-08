@@ -355,6 +355,7 @@ public class RequestService {
                 out.setDriverVersion(rs.getString(DRIVER.reference()));
                 out.setProductName(rs.getString(DB_NAME.reference()));
                 out.setProductVersion(rs.getString(DB_VERSION.reference()));
+                out.setActions(new ArrayList<>());
                 out.setCommands(valueOfNullabletoEnumList(SqlCommand.class, rs.getString(COMMANDS.reference())));
                 out.setCompleted("T".equals(rs.getString(COMPLETE.reference())));
                 outs.add(out);
