@@ -148,7 +148,9 @@ public class RequestDao {
                 exceptions.add(new ExceptionWrapper(id, null, new ExceptionInfo(o.getException().getType(), o.getException().getMessage())));
             }
         });
-        saveExceptions(exceptions, REST);
+        if(!exceptions.isEmpty()) {
+            saveExceptions(exceptions, REST);
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -170,7 +172,9 @@ public class RequestDao {
                 exceptions.add(new ExceptionWrapper(id, null, new ExceptionInfo(o.getException().getType(), o.getException().getMessage())));
             }
         });
-        saveExceptions(exceptions, LOCAL);
+        if(!exceptions.isEmpty()) {
+            saveExceptions(exceptions, LOCAL);
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -208,7 +212,9 @@ public class RequestDao {
                             });
                         }).toList(),
                 new int[]{VARCHAR, TIMESTAMP, TIMESTAMP, INTEGER, BIGINT});
-        saveExceptions(exceptions, SMTP);
+        if(!exceptions.isEmpty()) {
+            saveExceptions(exceptions, SMTP);
+        }
     }
 
     private void saveMailRequestMails(List<MailRequestWrapper> mailList) {
@@ -256,7 +262,9 @@ public class RequestDao {
                             });
                         }).toList(),
                 new int[]{VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, INTEGER, BIGINT});
-        saveExceptions(exceptions, FTP);
+        if(!exceptions.isEmpty()) {
+            saveExceptions(exceptions, FTP);
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -293,7 +301,9 @@ public class RequestDao {
                             });
                         }).toList(),
                 new int[]{VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, INTEGER, BIGINT});
-        saveExceptions(exceptions, LDAP);
+        if(!exceptions.isEmpty()) {
+            saveExceptions(exceptions, LDAP);
+        }
     }
     @Transactional(rollbackFor = Exception.class)
     public void saveDatabaseRequests(List<DatabaseRequestWrapper> qryList) {
@@ -335,8 +345,10 @@ public class RequestDao {
                                 return new Object[]{da.getName(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()),valueOfNullableArray(da.getCount()), id, e.getIdRequest()};
                             });
                         }).toList(),
-                new int[]{VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, INTEGER, BIGINT});
-        saveExceptions(exceptions, JDBC);
+                new int[]{VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, BIGINT, BIGINT});
+        if(!exceptions.isEmpty()) {
+            saveExceptions(exceptions, JDBC);
+        }
     }
 
     private void saveExceptions(List<ExceptionWrapper> exceptionList, RequestMask mask) {
@@ -389,8 +401,16 @@ public class RequestDao {
         return ofNullable(o).map(Object::toString).orElse(null);
     }
 
-    private static <T extends Enum<T>> String valueOfNullableList(List<T> enumList) { return ofNullable(enumList).map(list -> list.stream().map(Enum::toString).collect(Collectors.joining(","))).orElse(null);}
-    private static String  valueOfNullableArray(long[]array){ return ofNullable(array).map(arr -> LongStream.of(arr).mapToObj(Long::toString).collect(Collectors.joining(","))).orElse(null);}
+    private static <T extends Enum<T>> String valueOfNullableList(List<T> enumList) {
+        return ofNullable(enumList)
+                .map(list ->
+                        list.stream().filter(Objects::nonNull).map(Enum::name).collect(Collectors.joining(","))
+                )
+                .orElse(null);
+    }
+    private static String  valueOfNullableArray(long[]array){
+        return ofNullable(array).map(arr -> LongStream.of(arr).mapToObj(Long::toString).collect(Collectors.joining(","))).orElse(null);
+    }
 
     private static ExceptionInfo nullableException(ExceptionInfo exp) {
         return ofNullable(exp).orElseGet(() -> new ExceptionInfo(null, null));

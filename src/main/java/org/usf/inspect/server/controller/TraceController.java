@@ -50,7 +50,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping(value = "v3/trace", produces = APPLICATION_JSON_VALUE)
 public class TraceController {
 
-    private final RequestService requestService;
+    private final  RequestService   requestService;
     private final SessionQueueService queueService;
 
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
@@ -120,10 +120,7 @@ public class TraceController {
 
     @GetMapping("session/rest/{id}/parent")
     public ResponseEntity<Map<String, String>> getParentIdByChildId(@PathVariable String id){
-        return Optional.of(requestService.getSessionParent(id))
-                .filter(o -> !o.isEmpty())
-                .map(o -> ResponseEntity.ok().body(o))
-                .orElseGet(()->ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getSessionParent(id));
     }
 
     @GetMapping("session/main/{id}/tree")
@@ -161,8 +158,8 @@ public class TraceController {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getRestRequests(id, RestRequest::new));
     }
 
-    @GetMapping("session/{id}/request/runnable")
-    public ResponseEntity<List<LocalRequestWrapper>> getRunnableRequests(@PathVariable String id) {
+    @GetMapping("session/{id}/request/local")
+    public ResponseEntity<List<LocalRequestWrapper>> getLocalRequests(@PathVariable String id) {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getLocalRequests(id));
     }
 
