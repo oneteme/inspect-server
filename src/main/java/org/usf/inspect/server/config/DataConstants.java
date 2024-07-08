@@ -139,6 +139,7 @@ public final class DataConstants {
 
     public static String localRequestColumns(TraceApiColumn column) {
         return switch (column) {
+            case ID -> ID_LCL_RQT;
             case NAME -> VA_NAM;
             case LOCATION -> VA_LCT;
             case START -> DH_STR;

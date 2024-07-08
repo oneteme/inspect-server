@@ -17,9 +17,4 @@ public class InstanceMainSession extends MainSession implements InstanceSession 
     private String instanceUser;
     private String appName;
     private int mask;
-
-    @Deprecated
-	public InstanceEnvironment getApplication() {
-		throw new UnsupportedOperationException();
-	}
 }

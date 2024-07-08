@@ -103,7 +103,7 @@ public class RequestService {
     public InstanceEnvironmentWrapper getInstanceById(String id) {
         var v = new RequestQueryBuilder();
         v.select(INSTANCE.table(),
-                getColumns(INSTANCE, ID, TYPE, START, APP_NAME, VERSION, ADDRESS,
+                getColumns(INSTANCE, ID, USER, TYPE, START, APP_NAME, VERSION, ADDRESS,
                 ENVIRONEMENT, OS, RE, COLLECTOR)
         ).filters(
                 INSTANCE.column(ID).equal(id)
@@ -151,7 +151,7 @@ public class RequestService {
                 getColumns(
                         REST_SESSION, ID, API_NAME, METHOD,
                     PROTOCOL, HOST, PORT, PATH, QUERY, MEDIA, AUTH, STATUS, SIZE_IN, SIZE_OUT, CONTENT_ENCODING_IN, CONTENT_ENCODING_OUT,
-                    START, END, THREAD, ERR_TYPE, ERR_MSG, USER_AGT, MASK
+                    START, END, THREAD, ERR_TYPE, ERR_MSG, USER_AGT, MASK, CACHE_CONTROL, INSTANCE_ENV
                 )
         ).columns(getColumns(INSTANCE, APP_NAME, USER)).filters(REST_SESSION.column(INSTANCE_ENV).equal(INSTANCE.column(ID)));
         if(jsf != null) {
@@ -182,6 +182,7 @@ public class RequestService {
                 session.setName(rs.getString(API_NAME.reference()));
                 session.setUserAgent(rs.getString(USER_AGT.reference()));
                 session.setInstanceUser(rs.getString(USER.reference()));
+                session.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
                 session.setAppName(rs.getString(APP_NAME.reference()));
                 session.setCacheControl(rs.getString(CACHE_CONTROL.reference()));
                 session.setMask(rs.getInt(MASK.reference()));
@@ -212,7 +213,7 @@ public class RequestService {
         v.tables(MAIN_SESSION.table(), INSTANCE.table()).columns(
                 getColumns(
                         MAIN_SESSION, ID, NAME, START, END, TYPE, LOCATION, THREAD,
-                        ERR_TYPE, ERR_MSG, MASK
+                        ERR_TYPE, ERR_MSG, MASK, INSTANCE_ENV
                 )
         ).columns(getColumns(INSTANCE, APP_NAME, USER)).filters(MAIN_SESSION.column(INSTANCE_ENV).equal(INSTANCE.column(ID)));;
         if(jsf != null) {
@@ -232,6 +233,7 @@ public class RequestService {
                 main.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 main.setAppName(rs.getString(APP_NAME.reference()));
                 main.setInstanceUser(rs.getString(USER.reference()));
+                main.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
                 main.setMask(rs.getInt(MASK.reference()));
                 sessions.add(main);
             }
