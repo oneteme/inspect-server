@@ -381,7 +381,8 @@ public class RequestService {
             while (rs.next()) {
                 var action = new DatabaseRequestStageWrapper(
                         rs.getLong(PARENT.reference()),
-                        rs.getLong(ORDER.reference())
+                        rs.getLong(ORDER.reference()),
+                        new DatabaseRequestStage()
                 );
                 action.setName(rs.getString(NAME.reference()));
                 action.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
