@@ -186,6 +186,9 @@ public class RequestService {
                 session.setAppName(rs.getString(APP_NAME.reference()));
                 session.setCacheControl(rs.getString(CACHE_CONTROL.reference()));
                 session.setMask(rs.getInt(MASK.reference()));
+                session.setRestRequests(new ArrayList<>());
+                session.setLocalRequests(new ArrayList<>());
+                session.setDatabaseRequests(new ArrayList<>());
                 sessions.add(session);
             }
             return sessions;
@@ -234,6 +237,9 @@ public class RequestService {
                 main.setAppName(rs.getString(APP_NAME.reference()));
                 main.setInstanceUser(rs.getString(USER.reference()));
                 main.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
+                main.setRestRequests(new ArrayList<>());
+                main.setLocalRequests(new ArrayList<>());
+                main.setDatabaseRequests(new ArrayList<>());
                 main.setMask(rs.getInt(MASK.reference()));
                 sessions.add(main);
             }
