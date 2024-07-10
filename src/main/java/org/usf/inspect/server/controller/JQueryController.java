@@ -22,16 +22,29 @@ public class JQueryController {
     private final JdbcTemplate template;
 
     @GetMapping("session/main")
-    public List<DynamicModel> getSessionMain(
+    public List<DynamicModel> getMainSession(
             @RequestQueryParam(name = "main_session", defaultColumns = "count") RequestQueryBuilder query) {
         return usingSpringJdbc(query);
     }
 
     @GetMapping("session/rest")
-    public List<DynamicModel> getSessionRest(
+    public List<DynamicModel> getRestSession(
             @RequestQueryParam(name = "rest_session", defaultColumns = "count") RequestQueryBuilder query) {
         return usingSpringJdbc(query);
     }
+
+    @GetMapping("request/database")
+    public List<DynamicModel> getDatabaseRequest(
+            @RequestQueryParam(name = "database_request", defaultColumns = "count") RequestQueryBuilder query) {
+        return usingSpringJdbc(query);
+    }
+
+    @GetMapping("exception")
+    public List<DynamicModel> getException(
+            @RequestQueryParam(name = "exception", defaultColumns = "count") RequestQueryBuilder query) {
+        return usingSpringJdbc(query);
+    }
+
     @GetMapping("instance")
     public List<DynamicModel> getInstance(
             @RequestQueryParam(name = "instance") RequestQueryBuilder query) {
