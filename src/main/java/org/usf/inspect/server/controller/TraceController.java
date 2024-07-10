@@ -177,8 +177,8 @@ public class TraceController {
                 ResponseEntity.status(HttpStatus.NOT_FOUND).cacheControl(CacheControl.noCache()).body(null);
     }
 
-    @GetMapping("session/{id_session}/request/database/{id_database}/action")
-    public ResponseEntity<List<DatabaseRequestStageWrapper>> getDatabaseActions(@PathVariable(name = "id_session") String idSession,
+    @GetMapping("session/{id_session}/request/database/{id_database}/stage")
+    public ResponseEntity<List<DatabaseRequestStageWrapper>> getDatabaseRequestStages(@PathVariable(name = "id_session") String idSession,
                                                                                 @PathVariable(name = "id_database") long idDatabase){
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getDatabaseRequestStages(idDatabase));
     }

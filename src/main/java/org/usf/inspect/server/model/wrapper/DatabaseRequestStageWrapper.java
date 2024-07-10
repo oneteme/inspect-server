@@ -14,6 +14,5 @@ public class DatabaseRequestStageWrapper {
     private final long cdRequest;
     private final long order;
     @Delegate
-    private DatabaseRequestStage stage;
-
+    private final DatabaseRequestStage stage;
 }
