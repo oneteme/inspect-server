@@ -14,7 +14,6 @@ import lombok.Setter;
 @Setter
 public class InstanceMainSession extends MainSession implements InstanceSession {
     private String instanceId;
-    private String instanceUser;
     private String appName;
     private int mask;
 }

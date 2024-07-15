@@ -13,7 +13,6 @@ import lombok.Setter;
 @Setter
 public class InstanceRestSession extends RestSession implements InstanceSession {
     private String instanceId;
-    private String instanceUser;
     private String appName;
     private int mask;
 }
