@@ -42,8 +42,8 @@ public class RequestService {
     private final DataSource ds;
     private final RequestDao dao;
 
-    public void addInstanceEnvironment(List<InstanceEnvironmentWrapper> instances) {
-        dao.saveInstanceEnvironment(instances);
+    public void addInstanceEnvironment(InstanceEnvironmentWrapper instance) {
+        dao.saveInstanceEnvironment(instance);
     }
 
     public void addSessions(List<InstanceSession> sessions) {

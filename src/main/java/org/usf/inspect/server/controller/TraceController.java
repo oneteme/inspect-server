@@ -60,7 +60,7 @@ public class TraceController {
         }
         instance.setId(nextId());
         try {
-            requestService.addInstanceEnvironment(Collections.singletonList(instance));
+            requestService.addInstanceEnvironment(instance);
             return accepted().body(instance.getId());
         } catch(Exception e) {
             return status(SERVICE_UNAVAILABLE).build();
