@@ -38,20 +38,20 @@ public class RequestDao {
 
     private final JdbcTemplate template;
 
-    public void saveInstanceEnvironment(List<InstanceEnvironmentWrapper> instances) {
-        template.batchUpdate("INSERT INTO E_ENV_INS(ID_INS,VA_TYP,DH_STR,VA_APP,VA_VRS,VA_ADR,VA_ENV,VA_OS,VA_RE,VA_USR,VA_CLR) " +
-                "VALUES(?,?,?,?,?,?,?,?,?,?,?)", instances, instances.size(), (ps, o) -> {
-            ps.setString(1, o.getId());
-            ps.setString(2, o.getType() != null ? o.getType().name() : null);
-            ps.setTimestamp(3, fromNullableInstant(o.getInstant()));
-            ps.setString(4, o.getName());
-            ps.setString(5, o.getVersion());
-            ps.setString(6, o.getAddress());
-            ps.setString(7, o.getEnv());
-            ps.setString(8, o.getOs());
-            ps.setString(9, o.getRe());
-            ps.setString(10, o.getUser());
-            ps.setString(11, o.getCollector());
+    public void saveInstanceEnvironment(InstanceEnvironmentWrapper instance) {
+        template.update("INSERT INTO E_ENV_INS(ID_INS,VA_TYP,DH_STR,VA_APP,VA_VRS,VA_ADR,VA_ENV,VA_OS,VA_RE,VA_USR,VA_CLR) " +
+                "VALUES(?,?,?,?,?,?,?,?,?,?,?)", ps -> {
+            ps.setString(1, instance.getId());
+            ps.setString(2, instance.getType() != null ? instance.getType().name() : null);
+            ps.setTimestamp(3, fromNullableInstant(instance.getInstant()));
+            ps.setString(4, instance.getName());
+            ps.setString(5, instance.getVersion());
+            ps.setString(6, instance.getAddress());
+            ps.setString(7, instance.getEnv());
+            ps.setString(8, instance.getOs());
+            ps.setString(9, instance.getRe());
+            ps.setString(10, instance.getUser());
+            ps.setString(11, instance.getCollector());
         });
     }
 
