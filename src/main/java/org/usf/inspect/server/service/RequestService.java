@@ -50,7 +50,7 @@ public class RequestService {
         dao.saveSessions(sessions);
     }
 
-    public Session getMainTreeById(String id) {
+    public Session getMainTree(String id) {
         List<String> prntIds = dao.selectChildsById(id);
         List<Session> prntIncList = getRestSessionsForTree(prntIds);
         Session session = getMainSessionForTree(id);
@@ -61,7 +61,7 @@ public class RequestService {
         return prntIncList.stream().filter(r ->  r.getId().equals(id)).findFirst().orElseThrow();
     }
 
-    public Session getRestTreeById(String id) {
+    public Session getRestTree(String id) {
         List<String> prntIds = dao.selectChildsById(id);
         List<Session> prntIncList = getRestSessionsForTree(prntIds);
         createTree(prntIncList);
@@ -86,7 +86,7 @@ public class RequestService {
 
     public Map<String,String> getSessionParent(String childId){
 
-        var prnt = getPropertyByFilters(REST_REQUEST, PARENT , REST_REQUEST.column(ID).equal(childId));
+        var prnt = getPropertyByFilters(REST_REQUEST, PARENT , REST_REQUEST.column(REMOTE).equal(childId));
         if(prnt != null){
             var res = getPropertyByFilters(REST_SESSION, ID, REST_SESSION.column(ID).equal(prnt));
             if(res != null) {

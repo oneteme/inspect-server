@@ -227,7 +227,7 @@ public class RequestDao {
 
     @Transactional(rollbackFor = Exception.class)
     public void saveFtpRequests(List<FtpRequestWrapper> ftpList) {
-        var inc = new AtomicLong(selectMaxId("ID_FTP_RQT", "E_FTP_RQT"));
+        var inc = new AtomicLong(selectMaxId("E_FTP_RQT", "ID_FTP_RQT"));
 
         template.batchUpdate("INSERT INTO E_FTP_RQT(ID_FTP_RQT,VA_HST,CD_PRT,VA_PCL,VA_SRV_VRS,VA_CLT_VRS,VA_USR,DH_STR,DH_END,VA_THR,CD_PRN_SES)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?)", ftpList, ftpList.size(), (ps, o) -> {
