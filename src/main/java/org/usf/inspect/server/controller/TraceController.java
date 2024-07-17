@@ -9,7 +9,6 @@ import static org.springframework.http.ResponseEntity.status;
 import static org.usf.inspect.core.Session.nextId;
 
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -115,22 +114,31 @@ public class TraceController {
 
     @GetMapping("session/rest/{id}")
     public ResponseEntity<Session> getRestSession(@PathVariable String id) {
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getRestSession(id));
+        return Optional.of(requestService.getRestSession(id))
+                .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
+                .orElseGet(()->ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
     @GetMapping("session/rest/{id}/parent")
-    public ResponseEntity<Map<String, String>> getParentIdByChildId(@PathVariable String id){
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getSessionParent(id));
+    public ResponseEntity<Map<String, String>> getSessionParent(@PathVariable String id){
+        return Optional.of(requestService.getSessionParent(id))
+                .filter(o -> !o.isEmpty())
+                .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
+                .orElseGet(()->ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
     @GetMapping("session/main/{id}/tree")
-    public Session getMainTreebyId(@PathVariable String id){
-        return requestService.getMainTreeById(id);
+    public ResponseEntity<Session> getMainTree(@PathVariable String id){
+        return Optional.of(requestService.getMainTree(id))
+                .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
     @GetMapping("session/rest/{id}/tree")
-    public Session getRestTreebyId(@PathVariable String id){
-        return requestService.getRestTreeById(id);
+    public ResponseEntity<Session> getRestTree(@PathVariable String id){
+        return Optional.of(requestService.getRestTree(id))
+                .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
     @GetMapping("session/main")
@@ -150,7 +158,9 @@ public class TraceController {
 
     @GetMapping("session/main/{id}")
     public ResponseEntity<Session> getMainSession(@PathVariable String id) { // without tree
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getMainSession(id));
+        return Optional.of(requestService.getMainSession(id))
+                .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
     @GetMapping("session/{id}/request/rest")
@@ -171,10 +181,9 @@ public class TraceController {
     @GetMapping("session/{id_session}/request/database/{id_database}")
     public ResponseEntity<DatabaseRequestWrapper> getDatabaseRequest(@PathVariable(name = "id_session") String idSession,
                                                                      @PathVariable(name = "id_database") long idDatabase){
-        DatabaseRequestWrapper databaseRequest = requestService.getDatabaseRequest(idDatabase);
-        return databaseRequest != null ?
-                ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(databaseRequest) :
-                ResponseEntity.status(HttpStatus.NOT_FOUND).cacheControl(CacheControl.noCache()).body(null);
+        return Optional.of(requestService.getDatabaseRequest(idDatabase))
+                .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
     @GetMapping("session/{id_session}/request/database/{id_database}/stage")
