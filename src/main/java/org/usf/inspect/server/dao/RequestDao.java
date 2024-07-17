@@ -220,7 +220,7 @@ public class RequestDao {
     private void saveMailRequestMails(List<MailRequestWrapper> mailList) {
         template.batchUpdate("INSERT INTO E_SMTP_MAIL(VA_SBJ,VA_CNT_TYP,VA_FRM,VA_RCP,VA_RPL,VA_SZE,CD_SMTP_RQT) VALUES(?,?,?,?,?,?,?)",
                 mailList.stream()
-                        .flatMap(e -> e.getMails().stream().map(da -> new Object[]{da.getSubject(), da.getContentType(), String.join(", ", da.getFrom()), String.join(", ", da.getRecipients()), String.join(", ", da.getReplyTo()), da.getSize(), e.getId()}))
+                        .flatMap(e -> e.getMails().stream().map(da -> new Object[]{da.getSubject(), da.getContentType(), da.getFrom() != null ? String.join(", ", da.getFrom()) : null, da.getRecipients() != null ? String.join(", ", da.getRecipients()) : null, da.getReplyTo() != null ? String.join(", ", da.getReplyTo()) : null, da.getSize(), e.getId()}))
                         .toList(),
                 new int[]{VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, BIGINT, BIGINT});
     }
@@ -258,7 +258,7 @@ public class RequestDao {
                                 if(da.getException() != null) {
                                     exceptions.add(new ExceptionWrapper(e.getId(), id, new ExceptionInfo(da.getException().getType(), da.getException().getMessage())));
                                 }
-                                return new Object[]{da.getName(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()), String.join(", ", da.getArgs()), id, e.getId()};
+                                return new Object[]{da.getName(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()), da.getArgs() != null ? String.join(", ", da.getArgs()) : null, id, e.getId()};
                             });
                         }).toList(),
                 new int[]{VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, INTEGER, BIGINT});
@@ -297,7 +297,7 @@ public class RequestDao {
                                 if(da.getException() != null) {
                                     exceptions.add(new ExceptionWrapper(e.getId(), id, new ExceptionInfo(da.getException().getType(), da.getException().getMessage())));
                                 }
-                                return new Object[]{da.getName(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()), String.join(", ", da.getArgs()), id, e.getId()};
+                                return new Object[]{da.getName(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()), da.getArgs() != null ? String.join(", ", da.getArgs()) : null, id, e.getId()};
                             });
                         }).toList(),
                 new int[]{VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, INTEGER, BIGINT});
