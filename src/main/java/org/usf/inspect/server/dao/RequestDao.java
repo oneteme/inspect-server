@@ -288,7 +288,7 @@ public class RequestDao {
 
     private void saveLdapRequestStages(List<LdapRequestWrapper> ldapList) {
         var exceptions = new ArrayList<ExceptionWrapper>();
-        template.batchUpdate("INSERT INTO E_LDAP_STG(VA_NAM,DH_STR,DH_END,VA_ARG,CD_ORD,CD_LDAP_RQT) VALUES(?,?,?,?,?,?,?,?)",
+        template.batchUpdate("INSERT INTO E_LDAP_STG(VA_NAM,DH_STR,DH_END,VA_ARG,CD_ORD,CD_LDAP_RQT) VALUES(?,?,?,?,?,?)",
                 ldapList.stream()
                         .flatMap(e -> {
                             var inc = new AtomicLong(0);
