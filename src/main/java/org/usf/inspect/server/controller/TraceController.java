@@ -114,7 +114,7 @@ public class TraceController {
 
     @GetMapping("session/rest/{id}")
     public ResponseEntity<Session> getRestSession(@PathVariable String id) {
-        return Optional.of(requestService.getRestSession(id))
+        return Optional.ofNullable(requestService.getRestSession(id))
                 .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
                 .orElseGet(()->ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
@@ -129,14 +129,14 @@ public class TraceController {
 
     @GetMapping("session/main/{id}/tree")
     public ResponseEntity<Session> getMainTree(@PathVariable String id){
-        return Optional.of(requestService.getMainTree(id))
+        return Optional.ofNullable(requestService.getMainTree(id))
                 .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
     @GetMapping("session/rest/{id}/tree")
     public ResponseEntity<Session> getRestTree(@PathVariable String id){
-        return Optional.of(requestService.getRestTree(id))
+        return Optional.ofNullable(requestService.getRestTree(id))
                 .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
@@ -158,7 +158,7 @@ public class TraceController {
 
     @GetMapping("session/main/{id}")
     public ResponseEntity<Session> getMainSession(@PathVariable String id) { // without tree
-        return Optional.of(requestService.getMainSession(id))
+        return Optional.ofNullable(requestService.getMainSession(id))
                 .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
@@ -181,7 +181,7 @@ public class TraceController {
     @GetMapping("session/{id_session}/request/database/{id_database}")
     public ResponseEntity<DatabaseRequestWrapper> getDatabaseRequest(@PathVariable(name = "id_session") String idSession,
                                                                      @PathVariable(name = "id_database") long idDatabase){
-        return Optional.of(requestService.getDatabaseRequest(idDatabase))
+        return Optional.ofNullable(requestService.getDatabaseRequest(idDatabase))
                 .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
