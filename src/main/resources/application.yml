@@ -14,8 +14,8 @@ spring:
     driver-class-name: org.h2.Driver
     #data: classpath:data-h2.sql
     hikari:
-      maximum-pool-size: 5
       minimum-idle: 1
+      maximum-pool-size: 5
   h2:
     console:
       enabled: true
@@ -29,11 +29,11 @@ logging:
 
 inspect:
   enabled: true
-  mode: #REMOTE => log only
   dispatch:
     delay: 5
     unit: SECONDS
     buffer-max-size: -1 #inspect-server only
+# target: REMOTE => log only
 # track:
 #   jdbc-request: false
 #   rest-request: false
