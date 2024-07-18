@@ -124,8 +124,7 @@ public class RequestDao {
         var inc = new AtomicLong(selectMaxId("E_RST_RQT", "ID_RST_RQT"));
         template.batchUpdate("INSERT INTO E_RST_RQT(ID_RST_RQT,CD_RMT_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,CD_PRN_SES)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
-            var id = inc.incrementAndGet();
-            ps.setLong(1, id);
+            ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getId());
             ps.setString(3, o.getMethod());
             ps.setString(4, o.getProtocol());
@@ -145,7 +144,7 @@ public class RequestDao {
             ps.setString(18, o.getThreadName());
             ps.setString(19, o.getParentId());
             if(o.getException() != null) {
-                exceptions.add(new ExceptionWrapper(id, null, new ExceptionInfo(o.getException().getType(), o.getException().getMessage())));
+                exceptions.add(new ExceptionWrapper(inc.get(), null, new ExceptionInfo(o.getException().getType(), o.getException().getMessage())));
             }
         });
         if(!exceptions.isEmpty()) {
