@@ -2,6 +2,7 @@ package org.usf.inspect.server.model.wrapper;
 
 import java.util.function.Supplier;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.usf.inspect.core.RestRequest;
 
 import lombok.Getter;
@@ -11,7 +12,9 @@ import lombok.experimental.Delegate;
 @Getter
 @Setter
 public class RestRequestWrapper {
+
     @Delegate
+    @JsonIgnore
     private final RestRequest request;
     private final String parentId;
     private long idRequest;
