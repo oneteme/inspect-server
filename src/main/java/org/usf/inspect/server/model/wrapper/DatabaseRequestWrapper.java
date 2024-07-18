@@ -16,6 +16,7 @@ public class DatabaseRequestWrapper {
     @JsonIgnore
     private final String parentId;
     private long idRequest;
+    @JsonIgnore
     @Delegate
     private final DatabaseRequest databaseRequest;
     private boolean completed;

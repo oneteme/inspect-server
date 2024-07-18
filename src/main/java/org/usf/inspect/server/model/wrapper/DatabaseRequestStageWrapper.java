@@ -1,6 +1,7 @@
 package org.usf.inspect.server.model.wrapper;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -13,6 +14,7 @@ import org.usf.inspect.core.DatabaseRequestStage;
 public class DatabaseRequestStageWrapper {
     private final long cdRequest;
     private final long order;
+    @JsonIgnore
     @Delegate
     private final DatabaseRequestStage stage;
 }

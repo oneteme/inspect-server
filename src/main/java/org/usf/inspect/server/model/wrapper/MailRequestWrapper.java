@@ -1,5 +1,6 @@
 package org.usf.inspect.server.model.wrapper;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.usf.inspect.core.MailRequest;
 
 import lombok.Getter;
@@ -13,6 +14,7 @@ import lombok.experimental.Delegate;
 public class MailRequestWrapper {
 
     private final String parentId;
+    @JsonIgnore
     @Delegate
     private final MailRequest mailRequest;
     private long id;

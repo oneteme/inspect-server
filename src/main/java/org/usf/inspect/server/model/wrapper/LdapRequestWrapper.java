@@ -1,5 +1,6 @@
 package org.usf.inspect.server.model.wrapper;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -12,6 +13,7 @@ import org.usf.inspect.core.NamingRequest;
 public class LdapRequestWrapper {
 
     private final String parentId;
+    @JsonIgnore
     @Delegate
     private final NamingRequest ldapRequest;
     private long id;
