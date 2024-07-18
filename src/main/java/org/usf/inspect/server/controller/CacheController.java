@@ -4,10 +4,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 import java.util.Collection;
 
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.usf.inspect.core.DispatchState;
 import org.usf.inspect.server.model.InstanceSession;
 import org.usf.inspect.server.service.SessionQueueService;
 
@@ -24,5 +22,10 @@ public class CacheController {
     @GetMapping
     public Collection<InstanceSession> getCache(){
     	return queue.waitList();
+    }
+
+    @PatchMapping("state/{state}")
+    public void updateState(@PathVariable DispatchState state){
+        queue.enableSave(state);
     }
 }
