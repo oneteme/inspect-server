@@ -33,12 +33,15 @@ inspect:
     delay: 60
     unit: SECONDS
     buffer-max-size: -1 #inspect-server only
-# target: REMOTE => log only
-# track:
+  track:
+    rest-session:
+      excludes:
+        method: OPTIONS
+        path: /favicon.ico
+#   main-session: false
 #   jdbc-request: false
 #   rest-request: false
-#   main-session: false
-#   rest-session: false
+# target: REMOTE => log only
 # server:
 #   host:
 #   compress-min-size:
