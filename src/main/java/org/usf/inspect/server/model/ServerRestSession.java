@@ -1,18 +1,16 @@
 package org.usf.inspect.server.model;
 
-import org.usf.inspect.core.InstanceEnvironment;
-import org.usf.inspect.core.MainSession;
+import org.usf.inspect.core.RestSession;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 import lombok.Getter;
 import lombok.Setter;
 
-
-@JsonTypeName("main")
+@JsonTypeName("rest")
 @Getter
 @Setter
-public class InstanceMainSession extends MainSession implements InstanceSession {
+public class ServerRestSession extends RestSession implements ServerSession {
     private String instanceId;
     private String appName;
     private int mask;

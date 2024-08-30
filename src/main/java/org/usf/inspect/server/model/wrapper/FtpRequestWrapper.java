@@ -13,9 +13,10 @@ import lombok.experimental.Delegate;
 @RequiredArgsConstructor
 public class FtpRequestWrapper {
 
-    private final String parentId;
+    private long id;
+    private final String cdSession;
     @JsonIgnore
     @Delegate
     private final FtpRequest ftpRequest;
-    private long id;
+
 }

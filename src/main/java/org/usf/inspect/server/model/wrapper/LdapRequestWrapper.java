@@ -12,9 +12,10 @@ import org.usf.inspect.core.NamingRequest;
 @RequiredArgsConstructor
 public class LdapRequestWrapper {
 
+    private long id;
+
     private final String parentId;
     @JsonIgnore
     @Delegate
     private final NamingRequest ldapRequest;
-    private long id;
 }

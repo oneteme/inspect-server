@@ -47,10 +47,10 @@ public class JquerySessionFilter {
             filters.add(INSTANCE.column(USER).in(getUsers()));
         }
         if(getStart() != null) {
-            filters.add(table.column(START).greaterOrEqual(from(getStart())));
+            filters.add(table.column(START).ge(from(getStart())));
         }
         if(getEnd() != null) {
-            filters.add(table.column(END).lessThan(from(getEnd())));
+            filters.add(table.column(END).lt(from(getEnd())));
         }
         return filters;
     }

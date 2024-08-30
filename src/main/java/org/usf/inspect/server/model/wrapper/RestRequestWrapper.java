@@ -13,19 +13,19 @@ import lombok.experimental.Delegate;
 @Setter
 public class RestRequestWrapper {
 
+    private long idRequest;
+    private final String cdSession;
     @Delegate
     @JsonIgnore
     private final RestRequest request;
-    private final String parentId;
-    private long idRequest;
 
-    public RestRequestWrapper(String parentId, Supplier<? extends RestRequest> fn) {
-        this.parentId = parentId;
+    public RestRequestWrapper(String cdSession, Supplier<? extends RestRequest> fn) {
+        this.cdSession = cdSession;
         this.request = fn.get(); //delegated setters
     }
 
-    public RestRequestWrapper(String parentId, RestRequest request) {
-        this.parentId = parentId;
+    public RestRequestWrapper(String cdSession, RestRequest request) {
+        this.cdSession = cdSession;
         this.request = request; //delegated getters
     }
 }

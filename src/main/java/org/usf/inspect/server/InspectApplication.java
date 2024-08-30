@@ -7,8 +7,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.usf.inspect.server.model.InstanceMainSession;
-import org.usf.inspect.server.model.InstanceRestSession;
+import org.usf.inspect.server.model.ServerMainSession;
+import org.usf.inspect.server.model.ServerRestSession;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,7 +30,7 @@ public class InspectApplication {
 				.modules(new JavaTimeModule(), new ParameterNamesModule())
 				.build()
 			    .setSerializationInclusion(JsonInclude.Include.NON_EMPTY); // !null & !empty
-		mapper.registerSubtypes(InstanceRestSession.class, InstanceMainSession.class);
+		mapper.registerSubtypes(ServerRestSession.class, ServerMainSession.class);
 		return mapper;
 	}
 }

@@ -11,11 +11,11 @@ import lombok.experimental.Delegate;
 @Getter
 @Setter
 @RequiredArgsConstructor
-public class MailRequestWrapper {
+public class SmtpRequestWrapper {
 
-    private final String parentId;
+    private long id;
+    private final String cdSession;
     @JsonIgnore
     @Delegate
-    private final MailRequest mailRequest;
-    private long id;
+    private final MailRequest smtpRequest;
 }

@@ -11,23 +11,25 @@ import lombok.experimental.Delegate;
 
 @Setter
 @Getter
-public class DatabaseRequestWrapper {
+public class DatabaseRequestWrapper extends DatabaseRequest {
 
-    @JsonIgnore
-    private final String parentId;
-    private long idRequest;
+    private long id;
+    private boolean completed;
+
+    private final String cdSession;
+
     @JsonIgnore
     @Delegate
     private final DatabaseRequest databaseRequest;
-    private boolean completed;
 
-    public DatabaseRequestWrapper(String parentId) {
-        this.parentId = parentId;
+
+    public DatabaseRequestWrapper(String cdSession) {
+        this.cdSession = cdSession;
         this.databaseRequest = new DatabaseRequest();
     }
 
-    public DatabaseRequestWrapper(String parentId, DatabaseRequest databaseRequest) {
-        this.parentId = parentId;
+    public DatabaseRequestWrapper(String cdSession, DatabaseRequest databaseRequest) {
+        this.cdSession = cdSession;
         this.databaseRequest = databaseRequest;
     }
 }
