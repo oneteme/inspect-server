@@ -11,9 +11,10 @@ import lombok.experimental.Delegate;
 @Getter
 @Setter
 @RequiredArgsConstructor
-public class SmtpRequestWrapper {
+public class MailRequestWrapper {
 
     private long id;
+    private boolean completed;
     private final String cdSession;
     @JsonIgnore
     @Delegate

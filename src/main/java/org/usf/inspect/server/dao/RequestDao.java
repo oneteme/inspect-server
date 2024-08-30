@@ -59,10 +59,10 @@ public class RequestDao {
         filterAndSave(sessions, ServerMainSession.class, this::saveMainSessions);
         filterSubAndSave(sessions, Session::getRestRequests, (s, rest) -> new RestRequestWrapper(s.getId(), rest), this::saveRestRequests);
         filterSubAndSave(sessions, Session::getFtpRequests, (s, ftp) -> new FtpRequestWrapper(s.getId(), ftp), this::saveFtpRequests);
-        filterSubAndSave(sessions, Session::getMailRequests, (s, smtp) -> new SmtpRequestWrapper(s.getId(), smtp), this::saveMailRequests);
+        filterSubAndSave(sessions, Session::getMailRequests, (s, smtp) -> new MailRequestWrapper(s.getId(), smtp), this::saveMailRequests);
         filterSubAndSave(sessions, Session::getDatabaseRequests, (s, jdbc) -> new DatabaseRequestWrapper(s.getId(), jdbc), this::saveDatabaseRequests);
         filterSubAndSave(sessions, Session::getLocalRequests, (s, local) -> new LocalRequestWrapper(s.getId(), local), this::saveLocalRequests);
-        filterSubAndSave(sessions, Session::getLdapRequests, (s, ldap) -> new LdapRequestWrapper(s.getId(), ldap), this::saveLdapRequests);
+        filterSubAndSave(sessions, Session::getLdapRequests, (s, ldap) -> new NamingRequestWrapper(s.getId(), ldap), this::saveLdapRequests);
     }
 
     private void saveMainSessions(List<ServerMainSession> reqList) {
@@ -174,7 +174,7 @@ public class RequestDao {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void saveMailRequests(List<SmtpRequestWrapper> mailList) {
+    public void saveMailRequests(List<MailRequestWrapper> mailList) {
         var inc = new AtomicLong(selectMaxId("E_SMTP_RQT", "ID_SMTP_RQT"));
 
         template.batchUpdate("INSERT INTO E_SMTP_RQT(ID_SMTP_RQT,VA_HST,CD_PRT,VA_USR,DH_STR,DH_END,VA_THR,CD_PRN_SES)"
@@ -193,7 +193,7 @@ public class RequestDao {
         saveMailRequestMails(mailList);
     }
 
-    private void saveMailRequestStages(List<SmtpRequestWrapper> mailList) {
+    private void saveMailRequestStages(List<MailRequestWrapper> mailList) {
         var exceptions = new ArrayList<ServerException>();
         template.batchUpdate("INSERT INTO E_SMTP_STG(VA_NAM,DH_STR,DH_END,CD_ORD,CD_SMTP_RQT) VALUES(?,?,?,?,?)",
                 mailList.stream()
@@ -213,7 +213,7 @@ public class RequestDao {
         }
     }
 
-    private void saveMailRequestMails(List<SmtpRequestWrapper> mailList) {
+    private void saveMailRequestMails(List<MailRequestWrapper> mailList) {
         template.batchUpdate("INSERT INTO E_SMTP_MAIL(VA_SBJ,VA_CNT_TYP,VA_FRM,VA_RCP,VA_RPL,VA_SZE,CD_SMTP_RQT) VALUES(?,?,?,?,?,?,?)",
                 mailList.stream()
                         .flatMap(e -> e.getMails().stream().map(da -> new Object[]{da.getSubject(), da.getContentType(), da.getFrom() != null ? String.join(", ", da.getFrom()) : null, da.getRecipients() != null ? String.join(", ", da.getRecipients()) : null, da.getReplyTo() != null ? String.join(", ", da.getReplyTo()) : null, da.getSize(), e.getId()}))
@@ -264,7 +264,7 @@ public class RequestDao {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void saveLdapRequests(List<LdapRequestWrapper> ldapList) {
+    public void saveLdapRequests(List<NamingRequestWrapper> ldapList) {
         var inc = new AtomicLong(selectMaxId("E_LDAP_RQT", "ID_LDAP_RQT"));
 
         template.batchUpdate("INSERT INTO E_LDAP_RQT(ID_LDAP_RQT,VA_HST,CD_PRT,VA_USR,DH_STR,DH_END,VA_THR,CD_PRN_SES)"
@@ -276,13 +276,13 @@ public class RequestDao {
             ps.setTimestamp(5, fromNullableInstant(o.getStart()));
             ps.setTimestamp(6, fromNullableInstant(o.getEnd()));
             ps.setString(7, o.getThreadName());
-            ps.setString(8, o.getParentId());
+            ps.setString(8, o.getCdSession());
             o.setId(inc.get());
         });
         saveLdapRequestStages(ldapList);
     }
 
-    private void saveLdapRequestStages(List<LdapRequestWrapper> ldapList) {
+    private void saveLdapRequestStages(List<NamingRequestWrapper> ldapList) {
         var exceptions = new ArrayList<ServerException>();
         template.batchUpdate("INSERT INTO E_LDAP_STG(VA_NAM,DH_STR,DH_END,VA_ARG,CD_ORD,CD_LDAP_RQT) VALUES(?,?,?,?,?,?)",
                 ldapList.stream()

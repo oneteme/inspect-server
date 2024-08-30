@@ -10,11 +10,11 @@ import org.usf.inspect.core.NamingRequest;
 @Getter
 @Setter
 @RequiredArgsConstructor
-public class LdapRequestWrapper {
+public class NamingRequestWrapper {
 
     private long id;
-
-    private final String parentId;
+    private boolean completed;
+    private final String cdSession;
     @JsonIgnore
     @Delegate
     private final NamingRequest ldapRequest;
