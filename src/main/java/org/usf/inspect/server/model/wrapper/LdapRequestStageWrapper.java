@@ -6,8 +6,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Delegate;
-import org.usf.inspect.core.DatabaseRequestStage;
+import org.usf.inspect.core.NamingRequestStage;
 
-public record DatabaseRequestStageWrapper(long cdRequest, long order,
-                                          @JsonIgnore @Delegate DatabaseRequestStage stage) {
+public record LdapRequestStageWrapper(long cdRequest, long order, @JsonIgnore @Delegate NamingRequestStage stage) {
 }

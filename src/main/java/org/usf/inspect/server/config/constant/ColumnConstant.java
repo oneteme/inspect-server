@@ -1,31 +1,13 @@
-package org.usf.inspect.server.config;
-
-import static org.usf.inspect.server.config.DbFields.*;
-import static org.usf.inspect.server.config.TraceApiColumn.COMPLETE;
-import static org.usf.inspect.server.config.TraceApiColumn.END;
-import static org.usf.inspect.server.config.TraceApiColumn.ERR_MSG;
-import static org.usf.inspect.server.config.TraceApiColumn.ERR_TYPE;
-import static org.usf.inspect.server.config.TraceApiColumn.START;
-import static org.usf.inspect.server.config.TraceApiColumn.STATUS;
-import static org.usf.jquery.core.ComparisonExpression.equal;
-import static org.usf.jquery.core.ComparisonExpression.greaterOrEqual;
-import static org.usf.jquery.core.ComparisonExpression.isNotNull;
-import static org.usf.jquery.core.ComparisonExpression.lessThan;
-import static org.usf.jquery.core.DBColumn.count;
-import static org.usf.jquery.core.DBFunction.coalesce;
-import static org.usf.jquery.core.DBFunction.epoch;
-
-import org.usf.jquery.core.ComparisonExpression;
-import org.usf.jquery.core.DBColumn;
-import org.usf.jquery.core.OperationColumn;
-import org.usf.jquery.web.TableDecorator;
+package org.usf.inspect.server.config.constant;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.usf.inspect.server.config.TraceApiColumn;
+
+import static org.usf.inspect.server.config.constant.FieldConstant.*;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class DataConstants {
-	
+public class ColumnConstant {
     public static String mainSessionColumns(TraceApiColumn column) {
         return switch (column) {
             case ID -> ID_SES ;
@@ -74,7 +56,7 @@ public final class DataConstants {
             default -> null;
         };
     }
-    
+
     public static String restRequestColumns(TraceApiColumn column) {
         return switch (column) {
             case ID -> ID_RST_RQT;
@@ -175,6 +157,71 @@ public final class DataConstants {
         };
     }
 
+    public static String smtpRequestColumns(TraceApiColumn column) {
+        return switch (column) {
+            case ID -> ID_SMTP_RQT;
+            case HOST -> VA_HST;
+            case PORT -> CD_PRT;
+            case START -> DH_STR;
+            case END -> DH_END;
+            case USER -> VA_USR;
+            case THREAD -> VA_THR;
+            case PARENT -> CD_PRN_SES;
+            default -> null;
+        };
+    }
+
+    public static String smtpStageColumns(TraceApiColumn column){
+        return switch (column) {
+            case NAME -> VA_NAM;
+            case START -> DH_STR;
+            case END -> DH_END;
+            case ORDER -> CD_ORD;
+            case PARENT -> CD_SMTP_RQT;
+            default -> null;
+        };
+    }
+
+    public static String smtpMailColumns(TraceApiColumn column){
+        return switch (column) {
+            case SUBJECT -> VA_SBJ;
+            case FROM -> VA_FRM;
+            case RECIPIENTS -> VA_RCP;
+            case MEDIA -> VA_CNT_TYP;
+            case REPLY_TO -> VA_RPL;
+            case SIZE -> VA_SZE;
+            case PARENT -> CD_SMTP_RQT;
+            default -> null;
+        };
+    }
+
+    public static String ldapRequestColumns(TraceApiColumn column) {
+        return switch (column) {
+            case ID -> ID_LDAP_RQT;
+            case HOST -> VA_HST;
+            case PORT -> CD_PRT;
+            case PROTOCOL -> VA_PCL;
+            case START -> DH_STR;
+            case END -> DH_END;
+            case USER -> VA_USR;
+            case THREAD -> VA_THR;
+            case PARENT -> CD_PRN_SES;
+            default -> null;
+        };
+    }
+
+    public static String ldapStageColumns(TraceApiColumn column){
+        return switch (column) {
+            case NAME -> VA_NAM;
+            case START -> DH_STR;
+            case END -> DH_END;
+            case ARG -> VA_ARG;
+            case ORDER -> CD_ORD;
+            case PARENT -> CD_LDAP_RQT;
+            default -> null;
+        };
+    }
+
     public static String exceptionColumns(TraceApiColumn column) {
         return switch (column) {
             case TYPE -> VA_TYP;
@@ -185,6 +232,7 @@ public final class DataConstants {
             default -> null;
         };
     }
+
     public static String instanceColumns(TraceApiColumn column){
         return switch (column) {
             case ID -> ID_INS;
@@ -200,115 +248,5 @@ public final class DataConstants {
             case COLLECTOR -> VA_CLR;
             default -> null;
         };
-    }
-
-    public static DBColumn elapsedtime2(TableDecorator table) {
-        return epoch().args(table.column(END).minus(table.column(START)));
-    }
-
-    private static OperationColumn countStatusByType(TableDecorator table, ComparisonExpression op) {
-        var status = table.column(STATUS);
-        return count((status).when(op).then(status).end());
-    }
-    public static DBColumn err(TableDecorator table){ // temporary solution to be changed
-        return coalesce().args(table.column(ERR_MSG),table.column(ERR_TYPE));
-    }
-
-    public static ComparisonExpression errComp(String name){// temporary solution to be changed
-        return isNotNull();
-    }
-
-    private static OperationColumn countDbBySucces(TableDecorator table, ComparisonExpression op ){
-        var complete = table.column(COMPLETE);
-        return count((complete).when(op).then(complete).end());
-    }
-
-    public static OperationColumn countDbError(TableDecorator table){ 
-    	return countDbBySucces(table, equal('F'));
-    }
-    
-    public static OperationColumn countDbSucces (TableDecorator table){ 
-    	return countDbBySucces(table, equal('T'));
-    }
-
-    public static OperationColumn countStatus200(TableDecorator table) {
-        return countStatusByType(table, equal(200));
-    }
-
-    public static OperationColumn countStatus400(TableDecorator table) {
-        return countStatusByType(table, equal(400));
-    }
-
-    public static OperationColumn countStatus401(TableDecorator table) {
-        return countStatusByType(table, equal(401));
-    }
-
-    public static OperationColumn countStatus403(TableDecorator table) {
-        return countStatusByType(table, equal(403));
-    }
-
-    public static OperationColumn countStatus404(TableDecorator table) {
-        return countStatusByType(table, equal(404));
-    }
-
-    public static OperationColumn countStatus500(TableDecorator table) {
-        return countStatusByType(table, equal(500));
-    }
-    
-    public static OperationColumn countStatus503(TableDecorator table) {
-        return countStatusByType(table, equal(503));
-    }
-
-    public static OperationColumn countErrorStatus(TableDecorator table) {
-        return countStatusByType(table, greaterOrEqual(400));
-    }
-
-    public static OperationColumn countClientErrorStatus(TableDecorator table) {
-        return countStatusByType(table, greaterOrEqual(400).and(lessThan(500)));
-    }
-
-    public static OperationColumn countServerErrorStatus(TableDecorator table) {
-        return countStatusByType(table, greaterOrEqual(500));
-    }
-
-    public static OperationColumn countSuccesStatus(TableDecorator table) {
-        return countStatusByType(table, greaterOrEqual(200).and(lessThan(300)));
-    }
-
-    public static ComparisonExpression elapsedTimeExpressions(String name) {
-        return switch (name) {
-            case "fastest" -> lessThan(1);
-            case "fast" -> greaterOrEqual(1).and(lessThan(3));
-            case "medium" -> greaterOrEqual(3).and(lessThan(5));
-            case "slow" -> greaterOrEqual(5).and(lessThan(10));
-            case "slowest" -> greaterOrEqual(10);
-            default -> null;
-        };
-    }
-
-
-    private static OperationColumn elapsedTimeBySpeed(ComparisonExpression op, TableDecorator table) {
-        var elapsed = elapsedtime2(table);
-        return count(elapsed.when(op).then(elapsed).end());
-    }
-
-    public static OperationColumn elapsedTimeVerySlow(TableDecorator table) {
-        return elapsedTimeBySpeed(elapsedTimeExpressions("slowest"), table);
-    }
-
-    public static OperationColumn elapsedTimeSlow(TableDecorator table) {
-        return elapsedTimeBySpeed(elapsedTimeExpressions("slow"), table);
-    }
-
-    public static OperationColumn elapsedTimeMedium(TableDecorator table) {
-        return elapsedTimeBySpeed(elapsedTimeExpressions("medium"), table);
-    }
-
-    public static OperationColumn elapsedTimeFast(TableDecorator table) {
-        return elapsedTimeBySpeed(elapsedTimeExpressions("fast"), table);
-    }
-
-    public static OperationColumn elapsedTimeFastest(TableDecorator table) {
-        return elapsedTimeBySpeed(elapsedTimeExpressions("fastest"), table);
     }
 }

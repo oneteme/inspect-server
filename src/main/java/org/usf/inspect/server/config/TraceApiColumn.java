@@ -2,9 +2,13 @@ package org.usf.inspect.server.config;
 
 import static java.util.Objects.nonNull;
 
+import org.usf.inspect.server.config.constant.FilterConstant;
+import org.usf.jquery.core.ComparisonExpression;
+import org.usf.jquery.core.JDBCType;
 import org.usf.jquery.web.ColumnBuilder;
 import org.usf.jquery.web.ColumnDecorator;
 import org.usf.jquery.web.CriteriaBuilder;
+import org.usf.jquery.web.ViewDecorator;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +28,11 @@ public enum TraceApiColumn implements ColumnDecorator {
     STATUS("status"),
     SIZE_IN("sizeIn"),
     SIZE_OUT("sizeOut"),
+    SIZE("size"),
+    SUBJECT("subject"),
+    FROM("from"),
+    REPLY_TO("replyTo"),
+    RECIPIENTS("recipients"),
     CONTENT_ENCODING_IN("contentEncodingIn"),
     CONTENT_ENCODING_OUT("contentEncodingOut"),
     START("start"),
@@ -64,30 +73,30 @@ public enum TraceApiColumn implements ColumnDecorator {
     ORDER("order"),
     COLLECTOR("collector"),
     //---
-    ELAPSEDTIME("elapsedtime", DataConstants::elapsedtime2, DataConstants::elapsedTimeExpressions),
-    COUNT_SLOWEST("elapsedTimeSlowest", DataConstants::elapsedTimeVerySlow),
-    COUNT_SLOW("elapsedTimeSlow", DataConstants::elapsedTimeSlow),
-    COUNT_MEDIUM("elapsedTimeMedium", DataConstants::elapsedTimeMedium),
-    COUNT_FAST("elapsedTimeFast", DataConstants::elapsedTimeFast),
-    COUNT_FASTEST("elapsedTimeFastest", DataConstants::elapsedTimeFastest),
-    COUNT_ERROR("countErrorRows", DataConstants::countErrorStatus),
+    ELAPSEDTIME("elapsedtime", FilterConstant::elapsedtime2, CriteriaBuilder.multiArgs(FilterConstant::elapsedTimeExpressions)),
+    COUNT_SLOWEST("elapsedTimeSlowest", FilterConstant::elapsedTimeVerySlow),
+    COUNT_SLOW("elapsedTimeSlow", FilterConstant::elapsedTimeSlow),
+    COUNT_MEDIUM("elapsedTimeMedium", FilterConstant::elapsedTimeMedium),
+    COUNT_FAST("elapsedTimeFast", FilterConstant::elapsedTimeFast),
+    COUNT_FASTEST("elapsedTimeFastest", FilterConstant::elapsedTimeFastest),
+    COUNT_ERROR("countErrorRows", FilterConstant::countErrorStatus),
 
-    COUNT_ERROR_CLIENT("countClientErrorRows", DataConstants::countClientErrorStatus),
-    COUNT_ERROR_SERVER("countServerErrorRows", DataConstants::countServerErrorStatus),
-    COUNT_SUCCES("countSuccesRows", DataConstants::countSuccesStatus),
-    COUNT_200("count200", DataConstants::countStatus200), //set type improve perf
-    COUNT_400("count400", DataConstants::countStatus400),
-    COUNT_401("count401", DataConstants::countStatus401),
-    COUNT_403("count403", DataConstants::countStatus403),
-    COUNT_404("count404", DataConstants::countStatus404),
-    COUNT_500("count500", DataConstants::countStatus500),
-    COUNT_503("count503", DataConstants::countStatus503),
-    COUNT_DB_ERROR("countDbError", DataConstants::countDbError),
-    COUNT_DB_SUCCES("countDbSucces", DataConstants::countDbSucces),
-    ERR("err", DataConstants::err,DataConstants::errComp);
+    COUNT_ERROR_CLIENT("countClientErrorRows", FilterConstant::countClientErrorStatus),
+    COUNT_ERROR_SERVER("countServerErrorRows", FilterConstant::countServerErrorStatus),
+    COUNT_SUCCES("countSuccesRows", FilterConstant::countSuccesStatus),
+    COUNT_200("count200", FilterConstant::countStatus200), //set type improve perf
+    COUNT_400("count400", FilterConstant::countStatus400),
+    COUNT_401("count401", FilterConstant::countStatus401),
+    COUNT_403("count403", FilterConstant::countStatus403),
+    COUNT_404("count404", FilterConstant::countStatus404),
+    COUNT_500("count500", FilterConstant::countStatus500),
+    COUNT_503("count503", FilterConstant::countStatus503),
+    COUNT_DB_ERROR("countDbError", FilterConstant::countDbError),
+    COUNT_DB_SUCCES("countDbSucces", FilterConstant::countDbSucces),
+    ERR("err", FilterConstant::err); //isNull
     private final String out; //nullable
     private final ColumnBuilder columnTemplate;
-    private final CriteriaBuilder<String> expressionFn;
+    private final CriteriaBuilder<ComparisonExpression> expressionFn;
 
     TraceApiColumn(@NonNull String tagname) {
         this(tagname, null, null);
@@ -101,22 +110,25 @@ public enum TraceApiColumn implements ColumnDecorator {
     public String identity() {
         return this.name().toLowerCase();
     }
-
-    @Override
+    
     public String reference() {
-        return this.out;
+        return this.out; //suppose that use same ref for all view
+    }
+    
+    @Override
+    public String reference(ViewDecorator vd) {
+        return reference();
     }
 
     @Override
-    public ColumnBuilder builder() {
+    public ColumnBuilder builder(ViewDecorator vd) {
         return nonNull(columnTemplate)
                 ? columnTemplate
-                : ColumnDecorator.super.builder();
+                : ColumnDecorator.super.builder(vd);
     }
-
+    
     @Override
-    public CriteriaBuilder<String> criteria(String name) {
-
+    public CriteriaBuilder<ComparisonExpression>criteria(String name) {
         return "group".equals(name) && nonNull(expressionFn)
                 ? expressionFn
                 : ColumnDecorator.super.criteria(name);

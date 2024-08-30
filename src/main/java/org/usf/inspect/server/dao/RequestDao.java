@@ -7,9 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.ExceptionInfo;
 import org.usf.inspect.core.Session;
 import org.usf.inspect.server.RequestMask;
-import org.usf.inspect.server.model.InstanceMainSession;
-import org.usf.inspect.server.model.InstanceRestSession;
-import org.usf.inspect.server.model.InstanceSession;
+import org.usf.inspect.server.model.*;
 import org.usf.inspect.server.model.wrapper.*;
 
 import java.sql.ResultSet;
@@ -38,7 +36,7 @@ public class RequestDao {
 
     private final JdbcTemplate template;
 
-    public void saveInstanceEnvironment(InstanceEnvironmentWrapper instance) {
+    public void saveInstanceEnvironment(ServerInstanceEnvironment instance) {
         template.update("INSERT INTO E_ENV_INS(ID_INS,VA_TYP,DH_STR,VA_APP,VA_VRS,VA_ADR,VA_ENV,VA_OS,VA_RE,VA_USR,VA_CLR) " +
                 "VALUES(?,?,?,?,?,?,?,?,?,?,?)", ps -> {
             ps.setString(1, instance.getId());
@@ -56,18 +54,18 @@ public class RequestDao {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void saveSessions(List<InstanceSession> sessions) {
-        filterAndSave(sessions, InstanceRestSession.class, this::saveRestSessions);
-        filterAndSave(sessions, InstanceMainSession.class, this::saveMainSessions);
+    public void saveSessions(List<ServerSession> sessions) {
+        filterAndSave(sessions, ServerRestSession.class, this::saveRestSessions);
+        filterAndSave(sessions, ServerMainSession.class, this::saveMainSessions);
         filterSubAndSave(sessions, Session::getRestRequests, (s, rest) -> new RestRequestWrapper(s.getId(), rest), this::saveRestRequests);
         filterSubAndSave(sessions, Session::getFtpRequests, (s, ftp) -> new FtpRequestWrapper(s.getId(), ftp), this::saveFtpRequests);
-        filterSubAndSave(sessions, Session::getMailRequests, (s, smtp) -> new MailRequestWrapper(s.getId(), smtp), this::saveMailRequests);
+        filterSubAndSave(sessions, Session::getMailRequests, (s, smtp) -> new SmtpRequestWrapper(s.getId(), smtp), this::saveMailRequests);
         filterSubAndSave(sessions, Session::getDatabaseRequests, (s, jdbc) -> new DatabaseRequestWrapper(s.getId(), jdbc), this::saveDatabaseRequests);
         filterSubAndSave(sessions, Session::getLocalRequests, (s, local) -> new LocalRequestWrapper(s.getId(), local), this::saveLocalRequests);
         filterSubAndSave(sessions, Session::getLdapRequests, (s, ldap) -> new LdapRequestWrapper(s.getId(), ldap), this::saveLdapRequests);
     }
 
-    private void saveMainSessions(List<InstanceMainSession> reqList) {
+    private void saveMainSessions(List<ServerMainSession> reqList) {
         template.batchUpdate("INSERT INTO E_MAIN_SES(ID_SES,VA_NAM,VA_USR,DH_STR,DH_END,VA_TYP,VA_LCT,VA_THR,VA_ERR_TYP,VA_ERR_MSG,VA_MSK,CD_INS)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             var exp = nullableException(o.getException());
@@ -86,7 +84,7 @@ public class RequestDao {
         });
     }
 
-    private void saveRestSessions(List<InstanceRestSession> reqList) {
+    private void saveRestSessions(List<ServerRestSession> reqList) {
         template.batchUpdate("INSERT INTO E_RST_SES(ID_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,VA_ERR_TYP,VA_ERR_MSG,VA_NAM,VA_USR,VA_USR_AGT,VA_CCH_CTR,VA_MSK,CD_INS)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             var exp = nullableException(o.getException());
@@ -120,7 +118,7 @@ public class RequestDao {
 
     @Transactional(rollbackFor = Exception.class)
     public void saveRestRequests(List<RestRequestWrapper> reqList) {
-        var exceptions = new ArrayList<ExceptionWrapper>();
+        var exceptions = new ArrayList<ServerException>();
         var inc = new AtomicLong(selectMaxId("E_RST_RQT", "ID_RST_RQT"));
         template.batchUpdate("INSERT INTO E_RST_RQT(ID_RST_RQT,CD_RMT_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,CD_PRN_SES)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
@@ -142,9 +140,9 @@ public class RequestDao {
             ps.setTimestamp(16, fromNullableInstant(o.getStart()));
             ps.setTimestamp(17, fromNullableInstant(o.getEnd()));
             ps.setString(18, o.getThreadName());
-            ps.setString(19, o.getParentId());
+            ps.setString(19, o.getCdSession());
             if(o.getException() != null) {
-                exceptions.add(new ExceptionWrapper(inc.get(), null, new ExceptionInfo(o.getException().getType(), o.getException().getMessage())));
+                exceptions.add(new ServerException(inc.get(), null, new ExceptionInfo(o.getException().getType(), o.getException().getMessage())));
             }
         });
         if(!exceptions.isEmpty()) {
@@ -154,7 +152,7 @@ public class RequestDao {
 
     @Transactional(rollbackFor = Exception.class)
     public void saveLocalRequests(List<LocalRequestWrapper> stagesList){
-        var exceptions = new ArrayList<ExceptionWrapper>();
+        var exceptions = new ArrayList<ServerException>();
         var inc = new AtomicLong(selectMaxId("E_LCL_RQT", "ID_LCL_RQT"));
         template.batchUpdate("INSERT INTO E_LCL_RQT(ID_LCL_RQT,VA_NAM,VA_LCT,DH_STR,DH_END,VA_USR,VA_THR,CD_PRN_SES)"
                 + " VALUES(?,?,?,?,?,?,?,?)", stagesList,stagesList.size(),(ps,o)-> {
@@ -165,9 +163,9 @@ public class RequestDao {
             ps.setTimestamp(5,fromNullableInstant(o.getEnd()));
             ps.setString(6,o.getUser());
             ps.setString(7,o.getThreadName());
-            ps.setString(8,o.getParentId());
+            ps.setString(8,o.getCdSession());
             if(o.getException() != null) {
-                exceptions.add(new ExceptionWrapper(inc.get(), null, new ExceptionInfo(o.getException().getType(), o.getException().getMessage())));
+                exceptions.add(new ServerException(inc.get(), null, new ExceptionInfo(o.getException().getType(), o.getException().getMessage())));
             }
         });
         if(!exceptions.isEmpty()) {
@@ -176,7 +174,7 @@ public class RequestDao {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void saveMailRequests(List<MailRequestWrapper> mailList) {
+    public void saveMailRequests(List<SmtpRequestWrapper> mailList) {
         var inc = new AtomicLong(selectMaxId("E_SMTP_RQT", "ID_SMTP_RQT"));
 
         template.batchUpdate("INSERT INTO E_SMTP_RQT(ID_SMTP_RQT,VA_HST,CD_PRT,VA_USR,DH_STR,DH_END,VA_THR,CD_PRN_SES)"
@@ -188,15 +186,15 @@ public class RequestDao {
             ps.setTimestamp(5, fromNullableInstant(o.getStart()));
             ps.setTimestamp(6, fromNullableInstant(o.getEnd()));
             ps.setString(7, o.getThreadName());
-            ps.setString(8, o.getParentId());
+            ps.setString(8, o.getCdSession());
             o.setId(inc.get());
         });
         saveMailRequestStages(mailList);
         saveMailRequestMails(mailList);
     }
 
-    private void saveMailRequestStages(List<MailRequestWrapper> mailList) {
-        var exceptions = new ArrayList<ExceptionWrapper>();
+    private void saveMailRequestStages(List<SmtpRequestWrapper> mailList) {
+        var exceptions = new ArrayList<ServerException>();
         template.batchUpdate("INSERT INTO E_SMTP_STG(VA_NAM,DH_STR,DH_END,CD_ORD,CD_SMTP_RQT) VALUES(?,?,?,?,?)",
                 mailList.stream()
                         .flatMap(e -> {
@@ -204,7 +202,7 @@ public class RequestDao {
                             return e.getActions().stream().map(da -> {
                                 var id = inc.incrementAndGet();
                                 if(da.getException() != null) {
-                                    exceptions.add(new ExceptionWrapper(e.getId(), id, new ExceptionInfo(da.getException().getType(), da.getException().getMessage())));
+                                    exceptions.add(new ServerException(e.getId(), id, new ExceptionInfo(da.getException().getType(), da.getException().getMessage())));
                                 }
                                 return new Object[]{da.getName(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()), id, e.getId()};
                             });
@@ -215,7 +213,7 @@ public class RequestDao {
         }
     }
 
-    private void saveMailRequestMails(List<MailRequestWrapper> mailList) {
+    private void saveMailRequestMails(List<SmtpRequestWrapper> mailList) {
         template.batchUpdate("INSERT INTO E_SMTP_MAIL(VA_SBJ,VA_CNT_TYP,VA_FRM,VA_RCP,VA_RPL,VA_SZE,CD_SMTP_RQT) VALUES(?,?,?,?,?,?,?)",
                 mailList.stream()
                         .flatMap(e -> e.getMails().stream().map(da -> new Object[]{da.getSubject(), da.getContentType(), da.getFrom() != null ? String.join(", ", da.getFrom()) : null, da.getRecipients() != null ? String.join(", ", da.getRecipients()) : null, da.getReplyTo() != null ? String.join(", ", da.getReplyTo()) : null, da.getSize(), e.getId()}))
@@ -239,14 +237,14 @@ public class RequestDao {
             ps.setTimestamp(8, fromNullableInstant(o.getStart()));
             ps.setTimestamp(9, fromNullableInstant(o.getEnd()));
             ps.setString(10, o.getThreadName());
-            ps.setString(11, o.getParentId());
+            ps.setString(11, o.getCdSession());
             o.setId(inc.get());
         });
         saveFtpRequestStages(ftpList);
     }
 
     private void saveFtpRequestStages(List<FtpRequestWrapper> ftpList) {
-        var exceptions = new ArrayList<ExceptionWrapper>();
+        var exceptions = new ArrayList<ServerException>();
         template.batchUpdate("INSERT INTO E_FTP_STG(VA_NAM,DH_STR,DH_END,VA_ARG,CD_ORD,CD_FTP_RQT) VALUES(?,?,?,?,?,?)",
                 ftpList.stream()
                         .flatMap(e ->  {
@@ -254,7 +252,7 @@ public class RequestDao {
                             return e.getActions().stream().map(da -> {
                                 var id = inc.incrementAndGet();
                                 if(da.getException() != null) {
-                                    exceptions.add(new ExceptionWrapper(e.getId(), id, new ExceptionInfo(da.getException().getType(), da.getException().getMessage())));
+                                    exceptions.add(new ServerException(e.getId(), id, new ExceptionInfo(da.getException().getType(), da.getException().getMessage())));
                                 }
                                 return new Object[]{da.getName(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()), da.getArgs() != null ? String.join(", ", da.getArgs()) : null, id, e.getId()};
                             });
@@ -285,7 +283,7 @@ public class RequestDao {
     }
 
     private void saveLdapRequestStages(List<LdapRequestWrapper> ldapList) {
-        var exceptions = new ArrayList<ExceptionWrapper>();
+        var exceptions = new ArrayList<ServerException>();
         template.batchUpdate("INSERT INTO E_LDAP_STG(VA_NAM,DH_STR,DH_END,VA_ARG,CD_ORD,CD_LDAP_RQT) VALUES(?,?,?,?,?,?)",
                 ldapList.stream()
                         .flatMap(e -> {
@@ -293,7 +291,7 @@ public class RequestDao {
                             return e.getActions().stream().map(da -> {
                                 var id = inc.incrementAndGet();
                                 if(da.getException() != null) {
-                                    exceptions.add(new ExceptionWrapper(e.getId(), id, new ExceptionInfo(da.getException().getType(), da.getException().getMessage())));
+                                    exceptions.add(new ServerException(e.getId(), id, new ExceptionInfo(da.getException().getType(), da.getException().getMessage())));
                                 }
                                 return new Object[]{da.getName(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()), da.getArgs() != null ? String.join(", ", da.getArgs()) : null, id, e.getId()};
                             });
@@ -323,14 +321,14 @@ public class RequestDao {
             ps.setString(11, o.getProductVersion());
             ps.setString(12, valueOfNullableList(o.getCommands()));
             ps.setString(13, completed ? "T" : "F");
-            ps.setString(14, o.getParentId());
-            o.setIdRequest(inc.get());
+            ps.setString(14, o.getCdSession());
+            o.setId(inc.get());
         });
         saveDatabaseActions(qryList);
     }
 
     private void saveDatabaseActions(List<DatabaseRequestWrapper> queries) {
-        var exceptions = new ArrayList<ExceptionWrapper>();
+        var exceptions = new ArrayList<ServerException>();
         template.batchUpdate("INSERT INTO E_DTB_STG(VA_NAM,DH_STR,DH_END,VA_CNT,CD_ORD,CD_DTB_RQT) VALUES(?,?,?,?,?,?)",
                 queries.stream()
                         .flatMap(e -> {
@@ -338,9 +336,9 @@ public class RequestDao {
                             return e.getActions().stream().map(da -> {
                                 var id = inc.incrementAndGet();
                                 if(da.getException() != null) {
-                                    exceptions.add(new ExceptionWrapper(e.getIdRequest(), id, new ExceptionInfo(da.getException().getType(), da.getException().getMessage())));
+                                    exceptions.add(new ServerException(e.getId(), id, new ExceptionInfo(da.getException().getType(), da.getException().getMessage())));
                                 }
-                                return new Object[]{da.getName(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()),valueOfNullableArray(da.getCount()), id, e.getIdRequest()};
+                                return new Object[]{da.getName(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()),valueOfNullableArray(da.getCount()), id, e.getId()};
                             });
                         }).toList(),
                 new int[]{VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, BIGINT, BIGINT});
@@ -349,9 +347,9 @@ public class RequestDao {
         }
     }
 
-    private void saveExceptions(List<ExceptionWrapper> exceptionList, RequestMask mask) {
+    private void saveExceptions(List<ServerException> exceptionList, RequestMask mask) {
         template.batchUpdate("INSERT INTO E_EXC_INF(VA_TYP,VA_ERR_TYP,VA_ERR_MSG,CD_ORD,CD_RQT) VALUES(?,?,?,?,?)",
-                exceptionList.stream().map(e -> new Object[]{mask.name(), e.getExceptionInfo().getType(), e.getExceptionInfo().getMessage(), e.getOrder(), e.getCdRequest()}).toList(),
+                exceptionList.stream().map(e -> new Object[]{mask.name(), e.exceptionInfo().getType(), e.exceptionInfo().getMessage(), e.order(), e.cdRequest()}).toList(),
                 new int[]{VARCHAR, VARCHAR, VARCHAR, INTEGER, BIGINT});
     }
 

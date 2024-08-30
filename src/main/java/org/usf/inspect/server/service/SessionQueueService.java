@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.usf.inspect.core.DispatchState;
 import org.usf.inspect.core.InspectConfigurationProperties;
 import org.usf.inspect.core.ScheduledDispatchHandler;
-import org.usf.inspect.server.model.InstanceSession;
+import org.usf.inspect.server.model.ServerSession;
 
 import jakarta.annotation.PreDestroy;
 
@@ -16,22 +16,22 @@ import jakarta.annotation.PreDestroy;
 public class SessionQueueService {
 
     private final RequestService service;
-    private final ScheduledDispatchHandler<InstanceSession> dispatcher;
+    private final ScheduledDispatchHandler<ServerSession> dispatcher;
 
     public SessionQueueService(RequestService service, InspectConfigurationProperties prop) {
         this.service = service;
 		this.dispatcher = new ScheduledDispatchHandler<>(prop.getDispatch(), this::safeBackup);
     }
 
-    public boolean add(InstanceSession... sessions) {
+    public boolean add(ServerSession... sessions) {
     	return dispatcher.submit(sessions);
     }
 
-    public List<InstanceSession> waitList(){
+    public List<ServerSession> waitList(){
     	return dispatcher.peek();
     }
 
-    boolean safeBackup(boolean complete, int attempts, List<InstanceSession> sessions) {
+    boolean safeBackup(boolean complete, int attempts, List<ServerSession> sessions) {
         service.addSessions(sessions);
         return true;
     }

@@ -6,7 +6,7 @@ import java.util.Collection;
 
 import org.springframework.web.bind.annotation.*;
 import org.usf.inspect.core.DispatchState;
-import org.usf.inspect.server.model.InstanceSession;
+import org.usf.inspect.server.model.ServerSession;
 import org.usf.inspect.server.service.SessionQueueService;
 
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ public class CacheController {
     private final SessionQueueService queue;
 
     @GetMapping
-    public Collection<InstanceSession> getCache(){
+    public Collection<ServerSession> getCache(){
     	return queue.waitList();
     }
 

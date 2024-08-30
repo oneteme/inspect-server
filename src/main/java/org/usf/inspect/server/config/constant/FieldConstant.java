@@ -1,10 +1,10 @@
-package org.usf.inspect.server.config;
+package org.usf.inspect.server.config.constant;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE) //hide constructor better than throwing exception
-public final class DbFields {
+public final class FieldConstant {
    
 	public static final String ID_SES = "id_ses";
     public static final String CD_RMT_SES = "cd_rmt_ses";
@@ -12,10 +12,14 @@ public final class DbFields {
     public static final String CD_DTB_RQT = "cd_dtb_rqt";
     public static final String ID_DTB_RQT = "id_dtb_rqt";
     public static final String ID_FTP_RQT = "id_ftp_rqt";
+    public static final String ID_SMTP_RQT = "id_smtp_rqt";
     public static final String CD_FTP_RQT = "cd_ftp_rqt";
-
+    public static final String CD_SMTP_RQT = "cd_smtp_rqt";
     public static final String ID_LCL_RQT = "id_lcl_rqt";
     public static final String ID_RST_RQT = "id_rst_rqt";
+    public static final String ID_LDAP_RQT = "id_ldap_rqt";
+    public static final String CD_LDAP_RQT = "cd_ldap_rqt";
+
     public static final String ID_INS = "id_ins";
     public static final String CD_INS = "cd_ins";
     public static final String CD_RQT = "cd_rqt";
@@ -63,5 +67,10 @@ public final class DbFields {
     public static final String VA_ARG = "va_arg";
     public static final String VA_MSK = "va_msk";
     public static final String CD_ORD = "cd_ord";
+    public static final String VA_SBJ = "va_sbj";
+    public static final String VA_FRM = "va_frm";
+    public static final String VA_RCP = "va_rcp";
+    public static final String VA_RPL = "va_rpl";
+    public static final String VA_SZE = "va_sze";
 
 }
