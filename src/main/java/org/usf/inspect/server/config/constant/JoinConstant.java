@@ -18,28 +18,28 @@ public class JoinConstant {
 
     public static JoinBuilder restSessionJoins(String name) {
         return switch (name) {
-            case "j1" ->  ()-> new ViewJoin[] { innerJoin(REST_REQUEST.view(), REST_SESSION.column(ID).eq(REST_REQUEST.column(PARENT))) };
+            case "j1" -> c-> new ViewJoin[] { innerJoin(REST_REQUEST.view(), REST_SESSION.column(ID).eq(REST_REQUEST.column(PARENT))) };
             default -> null;
         };
     }
 
     public static JoinBuilder restRequestJoins(String name) {
         return switch (name) {
-            case EXCEPTION_JOIN->  ()-> new ViewJoin[] { leftJoin(EXCEPTION.view(), REST_REQUEST.column(ID).eq(EXCEPTION.column(PARENT))) };
+            case EXCEPTION_JOIN-> c-> new ViewJoin[] { leftJoin(EXCEPTION.view(), REST_REQUEST.column(ID).eq(EXCEPTION.column(PARENT))) };
             default -> null;
         };
     }
 
     public static JoinBuilder localRequestJoins(String name) {
         return switch (name) {
-            case EXCEPTION_JOIN ->  ()-> new ViewJoin[] { leftJoin(EXCEPTION.view(), LOCAL_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.LOCAL)) };
+            case EXCEPTION_JOIN -> c-> new ViewJoin[] { leftJoin(EXCEPTION.view(), LOCAL_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.LOCAL)) };
             default -> null;
         };
     }
 
     public static JoinBuilder databaseRequestJoins(String name) {
         return switch (name) {
-            case EXCEPTION_JOIN ->  ()-> new ViewJoin[] {
+            case EXCEPTION_JOIN -> c-> new ViewJoin[] {
                     leftJoin(EXCEPTION.view(), DATABASE_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.JDBC)) // Dedoublonner la requete dans le cas où ya plusieurs exception
             };
             default -> null;
@@ -48,14 +48,14 @@ public class JoinConstant {
 
     public static JoinBuilder databaseStageJoins(String name) {
         return switch (name) {
-            case EXCEPTION_JOIN ->  ()-> new ViewJoin[] { leftJoin(EXCEPTION.view(), DATABASE_STAGE.column(PARENT).eq(EXCEPTION.column(PARENT)), DATABASE_STAGE.column(ORDER).eq(EXCEPTION.column(ORDER)), EXCEPTION.column(TYPE).eq(RequestType.JDBC)) };
+            case EXCEPTION_JOIN -> c-> new ViewJoin[] { leftJoin(EXCEPTION.view(), DATABASE_STAGE.column(PARENT).eq(EXCEPTION.column(PARENT)), DATABASE_STAGE.column(ORDER).eq(EXCEPTION.column(ORDER)), EXCEPTION.column(TYPE).eq(RequestType.JDBC)) };
             default -> null;
         };
     }
 
     public static JoinBuilder ftpRequestJoins(String name) {
         return switch (name) {
-            case EXCEPTION_JOIN ->  ()-> new ViewJoin[] {
+            case EXCEPTION_JOIN -> c-> new ViewJoin[] {
                     leftJoin(EXCEPTION.view(), FTP_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.FTP)) // Dedoublonner la requete dans le cas où ya plusieurs exception
             };
             default -> null;
@@ -64,14 +64,14 @@ public class JoinConstant {
 
     public static JoinBuilder ftpStageJoins(String name) {
         return switch (name) {
-            case EXCEPTION_JOIN ->  ()-> new ViewJoin[] { leftJoin(EXCEPTION.view(), FTP_STAGE.column(PARENT).eq(EXCEPTION.column(PARENT)), FTP_STAGE.column(ORDER).eq(EXCEPTION.column(ORDER)), EXCEPTION.column(TYPE).eq(RequestType.FTP)) };
+            case EXCEPTION_JOIN -> c-> new ViewJoin[] { leftJoin(EXCEPTION.view(), FTP_STAGE.column(PARENT).eq(EXCEPTION.column(PARENT)), FTP_STAGE.column(ORDER).eq(EXCEPTION.column(ORDER)), EXCEPTION.column(TYPE).eq(RequestType.FTP)) };
             default -> null;
         };
     }
 
     public static JoinBuilder smtpRequestJoins(String name) {
         return switch (name) {
-            case EXCEPTION_JOIN ->  ()-> new ViewJoin[] {
+            case EXCEPTION_JOIN -> c-> new ViewJoin[] {
                     leftJoin(EXCEPTION.view(), SMTP_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.SMTP)) // Dedoublonner la requete dans le cas où ya plusieurs exception
             };
             default -> null;
@@ -80,14 +80,14 @@ public class JoinConstant {
 
     public static JoinBuilder smtpStageJoins(String name) {
         return switch (name) {
-            case EXCEPTION_JOIN ->  ()-> new ViewJoin[] { leftJoin(EXCEPTION.view(), SMTP_STAGE.column(PARENT).eq(EXCEPTION.column(PARENT)), SMTP_STAGE.column(ORDER).eq(EXCEPTION.column(ORDER)), EXCEPTION.column(TYPE).eq(RequestType.SMTP)) };
+            case EXCEPTION_JOIN -> c-> new ViewJoin[] { leftJoin(EXCEPTION.view(), SMTP_STAGE.column(PARENT).eq(EXCEPTION.column(PARENT)), SMTP_STAGE.column(ORDER).eq(EXCEPTION.column(ORDER)), EXCEPTION.column(TYPE).eq(RequestType.SMTP)) };
             default -> null;
         };
     }
 
     public static JoinBuilder ldapRequestJoins(String name) {
         return switch (name) {
-            case EXCEPTION_JOIN ->  ()-> new ViewJoin[] {
+            case EXCEPTION_JOIN -> c-> new ViewJoin[] {
                     leftJoin(EXCEPTION.view(), LDAP_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.LDAP)) // Dedoublonner la requete dans le cas où ya plusieurs exception
             };
             default -> null;
@@ -96,7 +96,7 @@ public class JoinConstant {
 
     public static JoinBuilder ldapStageJoins(String name) {
         return switch (name) {
-            case EXCEPTION_JOIN ->  ()-> new ViewJoin[] { leftJoin(EXCEPTION.view(), LDAP_STAGE.column(PARENT).eq(EXCEPTION.column(PARENT)), LDAP_STAGE.column(ORDER).eq(EXCEPTION.column(ORDER)), EXCEPTION.column(TYPE).eq(RequestType.LDAP)) };
+            case EXCEPTION_JOIN -> c-> new ViewJoin[] { leftJoin(EXCEPTION.view(), LDAP_STAGE.column(PARENT).eq(EXCEPTION.column(PARENT)), LDAP_STAGE.column(ORDER).eq(EXCEPTION.column(ORDER)), EXCEPTION.column(TYPE).eq(RequestType.LDAP)) };
             default -> null;
         };
     }
