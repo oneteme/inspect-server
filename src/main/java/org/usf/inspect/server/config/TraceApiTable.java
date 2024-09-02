@@ -48,7 +48,7 @@ public enum TraceApiTable implements ViewDecorator {
     	@Override
     	public JoinBuilder join(String name) {
     		if("jnr".equals(name)) {
-    			return ()-> new ViewJoin[] { innerJoin(REST_REQUEST.view(), column(ID).eq(REST_REQUEST.column(PARENT))) };
+    			return c -> new ViewJoin[] { innerJoin(REST_REQUEST.view(), column(ID).eq(REST_REQUEST.column(PARENT))) };
     		}
     		return null;
     	}
@@ -56,7 +56,7 @@ public enum TraceApiTable implements ViewDecorator {
     	@Override
     	public PartitionBuilder partition(String name) {
     		if("par".equals(name)) {
-    			return ()-> new Partition(new DBColumn[] {}, new DBOrder[] {column(START).order()});
+    			return c -> new Partition(new DBColumn[] {}, new DBOrder[] {column(START).order()});
     		}
     		return null;
     	}
