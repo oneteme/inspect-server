@@ -266,7 +266,7 @@ public class RequestService {
                 ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 //.columns(REST_REQUEST.column(PARENT).as("test"), EXCEPTION.column(PARENT).as("test2"))
-                .joins(REST_REQUEST.join(EXCEPTION_JOIN).build())
+                .joins(REST_REQUEST.join(EXCEPTION_JOIN).build(null))
                 .filters(REST_REQUEST.column(PARENT).in(cdSessions.toArray()))
                 .orders(REST_REQUEST.column(START).order());
         return v.build().execute(ds, rs -> {
@@ -306,7 +306,7 @@ public class RequestService {
                         LOCAL_REQUEST, ID, NAME, LOCATION, START, END, USER, THREAD, PARENT
                 ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
-                .joins(LOCAL_REQUEST.join(EXCEPTION_JOIN).build())
+                .joins(LOCAL_REQUEST.join(EXCEPTION_JOIN).build(null))
                 .filters(LOCAL_REQUEST.column(PARENT).in(cdSessions.toArray())).orders(LOCAL_REQUEST.column(START).order());
         return v.build().execute(ds, rs -> {
             List<LocalRequestWrapper> outs = new ArrayList<>();
@@ -347,7 +347,7 @@ public class RequestService {
                             DB_NAME, DB_VERSION, COMMANDS, COMPLETE, PARENT
                     ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
-                .joins(DATABASE_REQUEST.join(EXCEPTION_JOIN).build())
+                .joins(DATABASE_REQUEST.join(EXCEPTION_JOIN).build(null))
                 .filters(filter)
                 .orders(DATABASE_REQUEST.column(START).order());
         return v.build().execute(ds, rs -> {
@@ -381,7 +381,7 @@ public class RequestService {
                                 DATABASE_STAGE, NAME, START, END, ACTION_COUNT, ORDER, PARENT
                         ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
-                .joins(DATABASE_STAGE.join(EXCEPTION_JOIN).build())
+                .joins(DATABASE_STAGE.join(EXCEPTION_JOIN).build(null))
                 .filters(DATABASE_STAGE.column(PARENT).eq(id))
                 .orders(DATABASE_STAGE.column(START).order());
         return v.build().execute(ds, rs -> {
@@ -419,7 +419,7 @@ public class RequestService {
                     )
                 )
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
-                .joins(FTP_REQUEST.join(EXCEPTION_JOIN).build())
+                .joins(FTP_REQUEST.join(EXCEPTION_JOIN).build(null))
                 .filters(filter)
                 .orders(FTP_REQUEST.column(START).order());
         return v.build().execute(ds, rs -> {
@@ -451,7 +451,7 @@ public class RequestService {
                             FTP_STAGE, NAME, START, END, ARG, ORDER, PARENT
                     ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
-                .joins(FTP_STAGE.join(EXCEPTION_JOIN).build())
+                .joins(FTP_STAGE.join(EXCEPTION_JOIN).build(null))
                 .filters(FTP_STAGE.column(PARENT).eq(id))
                 .orders(FTP_STAGE.column(ORDER).order());
         return v.build().execute(ds, rs -> {
@@ -488,7 +488,7 @@ public class RequestService {
                             SMTP_REQUEST, ID, HOST, PORT, START, END, USER, THREAD, PARENT
                     ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
-                .joins(SMTP_REQUEST.join(EXCEPTION_JOIN).build())
+                .joins(SMTP_REQUEST.join(EXCEPTION_JOIN).build(null))
                 .filters(filter)
                 .orders(SMTP_REQUEST.column(START).order());
         return v.build().execute(ds, rs -> {
@@ -516,7 +516,7 @@ public class RequestService {
                     getColumns(SMTP_STAGE, NAME, START, END, ORDER, PARENT)
                 )
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
-                .joins(SMTP_STAGE.join(EXCEPTION_JOIN).build())
+                .joins(SMTP_STAGE.join(EXCEPTION_JOIN).build(null))
                 .filters(SMTP_STAGE.column(PARENT).eq(id))
                 .orders(SMTP_STAGE.column(ORDER).order());
         return v.build().execute(ds, rs -> {
@@ -574,7 +574,7 @@ public class RequestService {
                             LDAP_REQUEST, ID, HOST, PORT, PROTOCOL, START, END, USER, THREAD, PARENT
                     ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
-                .joins(LDAP_REQUEST.join(EXCEPTION_JOIN).build())
+                .joins(LDAP_REQUEST.join(EXCEPTION_JOIN).build(null))
                 .filters(filter)
                 .orders(LDAP_REQUEST.column(START).order());
         return v.build().execute(ds, rs -> {
@@ -604,7 +604,7 @@ public class RequestService {
                             LDAP_STAGE, NAME, START, END, ARG, ORDER, PARENT
                     ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
-                .joins(LDAP_REQUEST.join(EXCEPTION_JOIN).build())
+                .joins(LDAP_REQUEST.join(EXCEPTION_JOIN).build(null))
                 .filters(LDAP_STAGE.column(PARENT).eq(id))
                 .orders(LDAP_STAGE.column(ORDER).order());
         return v.build().execute(ds, rs -> {
