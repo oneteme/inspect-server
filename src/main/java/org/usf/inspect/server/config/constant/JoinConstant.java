@@ -17,7 +17,7 @@ public class JoinConstant {
 
     public static JoinBuilder restSessionJoins(String name) {
         return switch (name) {
-            case "j1" -> c-> new ViewJoin[] { innerJoin(REST_REQUEST.view(), REST_SESSION.column(ID).eq(REST_REQUEST.column(PARENT))) };
+            case "dependencies" -> c-> new ViewJoin[] { innerJoin(REST_REQUEST.view(), REST_SESSION.column(ID).eq(REST_REQUEST.column(PARENT))) };
             default -> null;
         };
     }
