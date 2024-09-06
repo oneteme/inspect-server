@@ -62,7 +62,7 @@ public enum TraceApiTable implements ViewDecorator {
     	}
     },
 //  REST_SESSION2(DataConstants::restSessionColumns),
-    MAIN_SESSION(ColumnConstant::mainSessionColumns),
+    MAIN_SESSION(ColumnConstant::mainSessionColumns, JoinConstant::mainSessionJoins),
     DATABASE_REQUEST(ColumnConstant::databaseRequestColumns, JoinConstant::databaseRequestJoins),
     DATABASE_STAGE(ColumnConstant::databaseStageColumns, JoinConstant::databaseStageJoins),
 	FTP_REQUEST(ColumnConstant::ftpRequestColumns, JoinConstant::ftpRequestJoins),
@@ -74,7 +74,7 @@ public enum TraceApiTable implements ViewDecorator {
 	LDAP_STAGE(ColumnConstant::ldapStageColumns, JoinConstant::ldapStageJoins),
 
     LOCAL_REQUEST(ColumnConstant::localRequestColumns, JoinConstant::localRequestJoins),
-    EXCEPTION(ColumnConstant::exceptionColumns),
+    EXCEPTION(ColumnConstant::exceptionColumns, JoinConstant::exceptionJoins),
     INSTANCE(ColumnConstant::instanceColumns);
 
     @NonNull
