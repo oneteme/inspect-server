@@ -14,11 +14,7 @@ import static org.usf.jquery.core.ViewJoin.*;
 public class JoinConstant {
     public static final String EXCEPTION_JOIN = "exception";
     public static final String INSTANCE_JOIN = "instance";
-    public static final String REST_REQUEST_TO_REST_SESSION = "rest_request_to_rest_session";
-    public static final String DATABASE_TO_REST_SESSION = "database_to_rest_session";
-    public static final String FTP_TO_REST_SESSION = "ftp_to_rest_session";
-    public static final String SMTP_TO_REST_SESSION = "smtp_to_rest_session";
-    public static final String LDAP_TO_REST_SESSION = "ldap_to_rest_session";
+    public static final String REST_SESSION_JOIN = "rest_session";
     public static final String REST_REQUEST_JOIN = "rest_request";
     public static final String LOCAL_REQUEST_JOIN = "local_request";
     public static final String DATABASE_REQUEST_JOIN = "database_request";
@@ -50,7 +46,7 @@ public class JoinConstant {
         return switch (name) {
             case EXCEPTION_JOIN ->
                     c -> new ViewJoin[]{leftJoin(EXCEPTION.view(), REST_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)))};
-            case REST_REQUEST_TO_REST_SESSION ->
+            case REST_SESSION_JOIN ->
                     c -> new ViewJoin[]{leftJoin(REST_SESSION.view(), REST_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
             default -> null;
         };
@@ -69,7 +65,7 @@ public class JoinConstant {
             case EXCEPTION_JOIN -> c -> new ViewJoin[]{
                     leftJoin(EXCEPTION.view(), DATABASE_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.JDBC.name())) // Dedoublonner la requete dans le cas où ya plusieurs exception
             };
-            case DATABASE_TO_REST_SESSION ->
+            case REST_SESSION_JOIN ->
                     c -> new ViewJoin[]{leftJoin(REST_SESSION.view(), DATABASE_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
             default -> null;
         };
@@ -88,7 +84,7 @@ public class JoinConstant {
             case EXCEPTION_JOIN -> c -> new ViewJoin[]{
                     leftJoin(EXCEPTION.view(), FTP_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.FTP.name())) // Dedoublonner la requete dans le cas où ya plusieurs exception
             };
-            case FTP_TO_REST_SESSION ->
+            case REST_SESSION_JOIN ->
                     c -> new ViewJoin[]{leftJoin(REST_SESSION.view(), FTP_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
             default -> null;
         };
@@ -107,7 +103,7 @@ public class JoinConstant {
             case EXCEPTION_JOIN -> c -> new ViewJoin[]{
                     leftJoin(EXCEPTION.view(), SMTP_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.SMTP.name())) // Dedoublonner la requete dans le cas où ya plusieurs exception
             };
-            case SMTP_TO_REST_SESSION ->
+            case REST_SESSION_JOIN ->
                     c -> new ViewJoin[]{leftJoin(REST_SESSION.view(), SMTP_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
             default -> null;
         };
@@ -126,7 +122,7 @@ public class JoinConstant {
             case EXCEPTION_JOIN -> c -> new ViewJoin[]{
                     leftJoin(EXCEPTION.view(), LDAP_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.LDAP.name())) // Dedoublonner la requete dans le cas où ya plusieurs exception
             };
-            case LDAP_TO_REST_SESSION ->
+            case REST_SESSION_JOIN ->
                     c -> new ViewJoin[]{leftJoin(REST_SESSION.view(), LDAP_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
             default -> null;
         };
@@ -154,18 +150,6 @@ public class JoinConstant {
                     c -> new ViewJoin[]{leftJoin(SMTP_REQUEST.view(), SMTP_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.SMTP.name()))};
             case LDAP_REQUEST_JOIN ->
                     c -> new ViewJoin[]{leftJoin(LDAP_REQUEST.view(), LDAP_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.LDAP.name()))};
-            case REST_REQUEST_TO_REST_SESSION ->
-                    c -> new ViewJoin[]{ leftJoin(REST_SESSION.view(), REST_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
-            case DATABASE_TO_REST_SESSION ->
-                    c -> new ViewJoin[]{ leftJoin(REST_SESSION.view(), DATABASE_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
-            case FTP_TO_REST_SESSION ->
-                    c -> new ViewJoin[]{ leftJoin(REST_SESSION.view(), FTP_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
-            case SMTP_TO_REST_SESSION ->
-                    c -> new ViewJoin[]{ leftJoin(REST_SESSION.view(), SMTP_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
-            case LDAP_TO_REST_SESSION ->
-                    c -> new ViewJoin[]{ leftJoin(REST_SESSION.view(), LDAP_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
-            case INSTANCE_JOIN ->
-                    c   -> new ViewJoin[]{innerJoin(INSTANCE.view(), REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)))};
             default -> null;
         };
     }
