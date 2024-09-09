@@ -7,17 +7,17 @@ import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
-import org.usf.jquery.core.RequestQueryBuilder;
+import org.usf.jquery.core.QueryBuilder;
+import org.usf.jquery.web.RequestParameterResolver;
 import org.usf.jquery.web.RequestQueryParam;
-import org.usf.jquery.web.RequestQueryParamResolver;
 
 public class CommonRequestQueryResolver implements HandlerMethodArgumentResolver {
 
-    private final RequestQueryParamResolver resolver = new RequestQueryParamResolver();
+    private final RequestParameterResolver resolver = new RequestParameterResolver();
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
-        return RequestQueryBuilder.class.isAssignableFrom(parameter.getNestedParameterType())
+        return QueryBuilder.class.isAssignableFrom(parameter.getNestedParameterType())
                 && parameter.hasParameterAnnotation(RequestQueryParam.class);
     }
 

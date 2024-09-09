@@ -34,13 +34,13 @@ public enum TraceApiTable implements ViewDecorator {
     	@Override
     	public ViewBuilder builder() {
     		return ()->
-    			new RequestQueryBuilder().columns(allColumns(REST_SESSION.view())).asView();
+    			new QueryBuilder().columns(allColumns(REST_SESSION.view())).asView();
     	}
 
     	@Override
     	public CriteriaBuilder<DBFilter> criteria(String name) {
     		if("crt".equals(name)) {
-    			return (c,v)-> column(PORT).gt(parseInt(v[0])).or(column(HOST).like("usf"));
+    			return v-> column(PORT).gt(parseInt(v[0])).or(column(HOST).like("usf"));
     		}
     		return null;
     	}
@@ -48,7 +48,7 @@ public enum TraceApiTable implements ViewDecorator {
     	@Override
     	public JoinBuilder join(String name) {
     		if("jnr".equals(name)) {
-    			return c -> new ViewJoin[] { innerJoin(REST_REQUEST.view(), column(ID).eq(REST_REQUEST.column(PARENT))) };
+    			return ()-> new ViewJoin[] { innerJoin(REST_REQUEST.view(), column(ID).eq(REST_REQUEST.column(PARENT))) };
     		}
     		return null;
     	}
@@ -56,7 +56,7 @@ public enum TraceApiTable implements ViewDecorator {
     	@Override
     	public PartitionBuilder partition(String name) {
     		if("par".equals(name)) {
-    			return c -> new Partition(new DBColumn[] {}, new DBOrder[] {column(START).order()});
+    			return ()-> new Partition(new DBColumn[] {}, new DBOrder[] {column(START).order()});
     		}
     		return null;
     	}

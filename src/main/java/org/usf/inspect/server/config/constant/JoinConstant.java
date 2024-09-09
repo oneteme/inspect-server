@@ -1,14 +1,34 @@
 package org.usf.inspect.server.config.constant;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import static org.usf.inspect.server.config.TraceApiColumn.ID;
+import static org.usf.inspect.server.config.TraceApiColumn.INSTANCE_ENV;
+import static org.usf.inspect.server.config.TraceApiColumn.ORDER;
+import static org.usf.inspect.server.config.TraceApiColumn.PARENT;
+import static org.usf.inspect.server.config.TraceApiColumn.STATUS;
+import static org.usf.inspect.server.config.TraceApiColumn.TYPE;
+import static org.usf.inspect.server.config.TraceApiTable.DATABASE_REQUEST;
+import static org.usf.inspect.server.config.TraceApiTable.DATABASE_STAGE;
+import static org.usf.inspect.server.config.TraceApiTable.EXCEPTION;
+import static org.usf.inspect.server.config.TraceApiTable.FTP_REQUEST;
+import static org.usf.inspect.server.config.TraceApiTable.FTP_STAGE;
+import static org.usf.inspect.server.config.TraceApiTable.INSTANCE;
+import static org.usf.inspect.server.config.TraceApiTable.LDAP_REQUEST;
+import static org.usf.inspect.server.config.TraceApiTable.LDAP_STAGE;
+import static org.usf.inspect.server.config.TraceApiTable.LOCAL_REQUEST;
+import static org.usf.inspect.server.config.TraceApiTable.MAIN_SESSION;
+import static org.usf.inspect.server.config.TraceApiTable.REST_REQUEST;
+import static org.usf.inspect.server.config.TraceApiTable.REST_SESSION;
+import static org.usf.inspect.server.config.TraceApiTable.SMTP_REQUEST;
+import static org.usf.inspect.server.config.TraceApiTable.SMTP_STAGE;
+import static org.usf.jquery.core.ViewJoin.innerJoin;
+import static org.usf.jquery.core.ViewJoin.leftJoin;
+
 import org.usf.inspect.server.RequestType;
 import org.usf.jquery.core.ViewJoin;
 import org.usf.jquery.web.JoinBuilder;
 
-import static org.usf.inspect.server.config.TraceApiColumn.*;
-import static org.usf.inspect.server.config.TraceApiTable.*;
-import static org.usf.jquery.core.ViewJoin.*;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class JoinConstant {
@@ -27,7 +47,7 @@ public class JoinConstant {
     public static JoinBuilder mainSessionJoins(String name) {
         return switch (name) {
             case INSTANCE_JOIN ->
-                    c -> new ViewJoin[]{innerJoin(INSTANCE.view(), MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)))};
+                    () -> new ViewJoin[]{innerJoin(INSTANCE.view(), MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)))};
             default -> null;
         };
     }
@@ -35,9 +55,9 @@ public class JoinConstant {
     public static JoinBuilder restSessionJoins(String name) {
         return switch (name) {
             case "dependencies" ->
-                    c -> new ViewJoin[]{innerJoin(REST_REQUEST.view(), REST_SESSION.column(ID).eq(REST_REQUEST.column(PARENT)))};
+                    () -> new ViewJoin[]{innerJoin(REST_REQUEST.view(), REST_SESSION.column(ID).eq(REST_REQUEST.column(PARENT)))};
             case INSTANCE_JOIN ->
-                    c -> new ViewJoin[]{innerJoin(INSTANCE.view(), REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)))};
+                    () -> new ViewJoin[]{innerJoin(INSTANCE.view(), REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)))};
             default -> null;
         };
     }
@@ -45,9 +65,9 @@ public class JoinConstant {
     public static JoinBuilder restRequestJoins(String name) {
         return switch (name) {
             case EXCEPTION_JOIN ->
-                    c -> new ViewJoin[]{leftJoin(EXCEPTION.view(), REST_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)))};
+                    ()-> new ViewJoin[]{leftJoin(EXCEPTION.view(), REST_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)))};
             case REST_SESSION_JOIN ->
-                    c -> new ViewJoin[]{leftJoin(REST_SESSION.view(), REST_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
+                    ()-> new ViewJoin[]{leftJoin(REST_SESSION.view(), REST_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
             default -> null;
         };
     }
@@ -55,18 +75,18 @@ public class JoinConstant {
     public static JoinBuilder localRequestJoins(String name) {
         return switch (name) {
             case EXCEPTION_JOIN ->
-                    c -> new ViewJoin[]{leftJoin(EXCEPTION.view(), LOCAL_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.LOCAL.name()))};
+                    ()-> new ViewJoin[]{leftJoin(EXCEPTION.view(), LOCAL_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.LOCAL.name()))};
             default -> null;
         };
     }
 
     public static JoinBuilder databaseRequestJoins(String name) {
         return switch (name) {
-            case EXCEPTION_JOIN -> c -> new ViewJoin[]{
+            case EXCEPTION_JOIN -> ()-> new ViewJoin[]{
                     leftJoin(EXCEPTION.view(), DATABASE_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.JDBC.name())) // Dedoublonner la requete dans le cas où ya plusieurs exception
             };
             case REST_SESSION_JOIN ->
-                    c -> new ViewJoin[]{leftJoin(REST_SESSION.view(), DATABASE_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
+                    ()-> new ViewJoin[]{leftJoin(REST_SESSION.view(), DATABASE_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
             default -> null;
         };
     }
@@ -74,18 +94,18 @@ public class JoinConstant {
     public static JoinBuilder databaseStageJoins(String name) {
         return switch (name) {
             case EXCEPTION_JOIN ->
-                    c -> new ViewJoin[]{leftJoin(EXCEPTION.view(), DATABASE_STAGE.column(PARENT).eq(EXCEPTION.column(PARENT)), DATABASE_STAGE.column(ORDER).eq(EXCEPTION.column(ORDER)), EXCEPTION.column(TYPE).eq(RequestType.JDBC.name()))};
+                    ()-> new ViewJoin[]{leftJoin(EXCEPTION.view(), DATABASE_STAGE.column(PARENT).eq(EXCEPTION.column(PARENT)), DATABASE_STAGE.column(ORDER).eq(EXCEPTION.column(ORDER)), EXCEPTION.column(TYPE).eq(RequestType.JDBC.name()))};
             default -> null;
         };
     }
 
     public static JoinBuilder ftpRequestJoins(String name) {
         return switch (name) {
-            case EXCEPTION_JOIN -> c -> new ViewJoin[]{
+            case EXCEPTION_JOIN -> ()-> new ViewJoin[]{
                     leftJoin(EXCEPTION.view(), FTP_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.FTP.name())) // Dedoublonner la requete dans le cas où ya plusieurs exception
             };
             case REST_SESSION_JOIN ->
-                    c -> new ViewJoin[]{leftJoin(REST_SESSION.view(), FTP_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
+                    ()-> new ViewJoin[]{leftJoin(REST_SESSION.view(), FTP_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
             default -> null;
         };
     }
@@ -93,18 +113,18 @@ public class JoinConstant {
     public static JoinBuilder ftpStageJoins(String name) {
         return switch (name) {
             case EXCEPTION_JOIN ->
-                    c -> new ViewJoin[]{leftJoin(EXCEPTION.view(), FTP_STAGE.column(PARENT).eq(EXCEPTION.column(PARENT)), FTP_STAGE.column(ORDER).eq(EXCEPTION.column(ORDER)), EXCEPTION.column(TYPE).eq(RequestType.FTP.name()))};
+                    ()-> new ViewJoin[]{leftJoin(EXCEPTION.view(), FTP_STAGE.column(PARENT).eq(EXCEPTION.column(PARENT)), FTP_STAGE.column(ORDER).eq(EXCEPTION.column(ORDER)), EXCEPTION.column(TYPE).eq(RequestType.FTP.name()))};
              default -> null;
         };
     }
 
     public static JoinBuilder smtpRequestJoins(String name) {
         return switch (name) {
-            case EXCEPTION_JOIN -> c -> new ViewJoin[]{
+            case EXCEPTION_JOIN -> ()-> new ViewJoin[]{
                     leftJoin(EXCEPTION.view(), SMTP_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.SMTP.name())) // Dedoublonner la requete dans le cas où ya plusieurs exception
             };
             case REST_SESSION_JOIN ->
-                    c -> new ViewJoin[]{leftJoin(REST_SESSION.view(), SMTP_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
+                    ()-> new ViewJoin[]{leftJoin(REST_SESSION.view(), SMTP_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
             default -> null;
         };
     }
@@ -112,18 +132,18 @@ public class JoinConstant {
     public static JoinBuilder smtpStageJoins(String name) {
         return switch (name) {
             case EXCEPTION_JOIN ->
-                    c -> new ViewJoin[]{leftJoin(EXCEPTION.view(), SMTP_STAGE.column(PARENT).eq(EXCEPTION.column(PARENT)), SMTP_STAGE.column(ORDER).eq(EXCEPTION.column(ORDER)), EXCEPTION.column(TYPE).eq(RequestType.SMTP.name()))};
+                    ()-> new ViewJoin[]{leftJoin(EXCEPTION.view(), SMTP_STAGE.column(PARENT).eq(EXCEPTION.column(PARENT)), SMTP_STAGE.column(ORDER).eq(EXCEPTION.column(ORDER)), EXCEPTION.column(TYPE).eq(RequestType.SMTP.name()))};
             default -> null;
         };
     }
 
     public static JoinBuilder ldapRequestJoins(String name) {
         return switch (name) {
-            case EXCEPTION_JOIN -> c -> new ViewJoin[]{
+            case EXCEPTION_JOIN -> ()-> new ViewJoin[]{
                     leftJoin(EXCEPTION.view(), LDAP_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.LDAP.name())) // Dedoublonner la requete dans le cas où ya plusieurs exception
             };
             case REST_SESSION_JOIN ->
-                    c -> new ViewJoin[]{leftJoin(REST_SESSION.view(), LDAP_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
+                    ()-> new ViewJoin[]{leftJoin(REST_SESSION.view(), LDAP_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
             default -> null;
         };
     }
@@ -131,7 +151,7 @@ public class JoinConstant {
     public static JoinBuilder ldapStageJoins(String name) {
         return switch (name) {
             case EXCEPTION_JOIN ->
-                    c -> new ViewJoin[]{leftJoin(EXCEPTION.view(), LDAP_STAGE.column(PARENT).eq(EXCEPTION.column(PARENT)), LDAP_STAGE.column(ORDER).eq(EXCEPTION.column(ORDER)), EXCEPTION.column(TYPE).eq(RequestType.LDAP.name()))};
+                    ()-> new ViewJoin[]{leftJoin(EXCEPTION.view(), LDAP_STAGE.column(PARENT).eq(EXCEPTION.column(PARENT)), LDAP_STAGE.column(ORDER).eq(EXCEPTION.column(ORDER)), EXCEPTION.column(TYPE).eq(RequestType.LDAP.name()))};
             default -> null;
         };
     }
@@ -139,17 +159,17 @@ public class JoinConstant {
     public static JoinBuilder exceptionJoins(String name) {
         return switch (name) {
             case REST_REQUEST_JOIN ->
-                    c -> new ViewJoin[]{leftJoin(REST_REQUEST.view(), REST_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.REST.name()), REST_REQUEST.column(STATUS).eq(0))};
+                    ()-> new ViewJoin[]{leftJoin(REST_REQUEST.view(), REST_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.REST.name()), REST_REQUEST.column(STATUS).eq(0))};
             case LOCAL_REQUEST_JOIN ->
-                    c -> new ViewJoin[]{leftJoin(LOCAL_REQUEST.view(), LOCAL_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.LOCAL.name()))};
+                    ()-> new ViewJoin[]{leftJoin(LOCAL_REQUEST.view(), LOCAL_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.LOCAL.name()))};
             case DATABASE_REQUEST_JOIN ->
-                    c -> new ViewJoin[]{leftJoin(DATABASE_REQUEST.view(), DATABASE_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.JDBC.name()))};
+                    ()-> new ViewJoin[]{leftJoin(DATABASE_REQUEST.view(), DATABASE_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.JDBC.name()))};
             case FTP_REQUEST_JOIN ->
-                    c -> new ViewJoin[]{leftJoin(FTP_REQUEST.view(), FTP_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.FTP.name()))};
+                    ()-> new ViewJoin[]{leftJoin(FTP_REQUEST.view(), FTP_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.FTP.name()))};
             case SMTP_REQUEST_JOIN ->
-                    c -> new ViewJoin[]{leftJoin(SMTP_REQUEST.view(), SMTP_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.SMTP.name()))};
+                    ()-> new ViewJoin[]{leftJoin(SMTP_REQUEST.view(), SMTP_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.SMTP.name()))};
             case LDAP_REQUEST_JOIN ->
-                    c -> new ViewJoin[]{leftJoin(LDAP_REQUEST.view(), LDAP_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.LDAP.name()))};
+                    ()-> new ViewJoin[]{leftJoin(LDAP_REQUEST.view(), LDAP_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.LDAP.name()))};
             default -> null;
         };
     }

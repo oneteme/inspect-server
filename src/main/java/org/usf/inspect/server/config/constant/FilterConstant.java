@@ -1,18 +1,22 @@
 package org.usf.inspect.server.config.constant;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import static org.usf.inspect.server.config.TraceApiColumn.COMPLETE;
+import static org.usf.inspect.server.config.TraceApiColumn.END;
+import static org.usf.inspect.server.config.TraceApiColumn.ERR_MSG;
+import static org.usf.inspect.server.config.TraceApiColumn.ERR_TYPE;
+import static org.usf.inspect.server.config.TraceApiColumn.START;
+import static org.usf.inspect.server.config.TraceApiColumn.STATUS;
+import static org.usf.jquery.core.ComparisonExpression.eq;
+import static org.usf.jquery.core.ComparisonExpression.ge;
+import static org.usf.jquery.core.ComparisonExpression.lt;
+
 import org.usf.jquery.core.ComparisonExpression;
 import org.usf.jquery.core.DBColumn;
 import org.usf.jquery.core.OperationColumn;
-import org.usf.jquery.core.QueryContext;
 import org.usf.jquery.web.ViewDecorator;
 
-import static org.usf.inspect.server.config.TraceApiColumn.*;
-import static org.usf.inspect.server.config.TraceApiColumn.COMPLETE;
-import static org.usf.jquery.core.ComparisonExpression.*;
-import static org.usf.jquery.core.Operator.coalesce;
-import static org.usf.jquery.core.Operator.epoch;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FilterConstant {
@@ -23,7 +27,7 @@ public class FilterConstant {
 
     private static OperationColumn countStatusByType(ViewDecorator table, ComparisonExpression op) {
         var status = table.column(STATUS);
-        return (status).when(op).then(status).end().count();
+        return (status).whenCase().when(op, status).end().count();
     }
     public static DBColumn err(ViewDecorator table){ // temporary solution to be changed
         return table.column(ERR_MSG).coalesce(table.column(ERR_TYPE));
@@ -32,7 +36,7 @@ public class FilterConstant {
 
     private static OperationColumn countDbBySucces(ViewDecorator table, ComparisonExpression op ){
         var complete = table.column(COMPLETE);
-        return (complete).when(op).then(complete).end().count();
+        return (complete).whenCase().when(op, complete).end().count();
     }
 
     public static OperationColumn countDbError(ViewDecorator table){
@@ -87,7 +91,7 @@ public class FilterConstant {
         return countStatusByType(table, ge(200).and(lt(300)));
     }
 
-    public static ComparisonExpression elapsedTimeExpressions(QueryContext ctx, String name) {
+    public static ComparisonExpression elapsedTimeExpressions(String name) {
         return switch (name) {
             case "fastest" -> lt(1);
             case "fast" -> ge(1).and(lt(3));
@@ -100,26 +104,26 @@ public class FilterConstant {
 
     private static OperationColumn elapsedTimeBySpeed(ComparisonExpression op, ViewDecorator table) {
         var elapsed = elapsedtime2(table);
-        return elapsed.when(op).then(elapsed).end().count();
+        return elapsed.whenCase().when(op, elapsed).end().count();
     }
 
     public static OperationColumn elapsedTimeVerySlow(ViewDecorator table) {
-        return elapsedTimeBySpeed(elapsedTimeExpressions(null,"slowest"), table);
+        return elapsedTimeBySpeed(elapsedTimeExpressions("slowest"), table);
     }
 
     public static OperationColumn elapsedTimeSlow(ViewDecorator table) {
-        return elapsedTimeBySpeed(elapsedTimeExpressions(null,"slow"), table);
+        return elapsedTimeBySpeed(elapsedTimeExpressions("slow"), table);
     }
 
     public static OperationColumn elapsedTimeMedium(ViewDecorator table) {
-        return elapsedTimeBySpeed(elapsedTimeExpressions(null,"medium"), table);
+        return elapsedTimeBySpeed(elapsedTimeExpressions("medium"), table);
     }
 
     public static OperationColumn elapsedTimeFast(ViewDecorator table) {
-        return elapsedTimeBySpeed(elapsedTimeExpressions(null,"fast"), table);
+        return elapsedTimeBySpeed(elapsedTimeExpressions("fast"), table);
     }
 
     public static OperationColumn elapsedTimeFastest(ViewDecorator table) {
-        return elapsedTimeBySpeed(elapsedTimeExpressions(null,"fastest"), table);
+        return elapsedTimeBySpeed(elapsedTimeExpressions("fastest"), table);
     }
 }
