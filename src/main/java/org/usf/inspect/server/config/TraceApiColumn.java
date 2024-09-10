@@ -4,7 +4,6 @@ import static java.util.Objects.nonNull;
 
 import org.usf.inspect.server.config.constant.FilterConstant;
 import org.usf.jquery.core.ComparisonExpression;
-import org.usf.jquery.core.JDBCType;
 import org.usf.jquery.web.ColumnBuilder;
 import org.usf.jquery.web.ColumnDecorator;
 import org.usf.jquery.web.CriteriaBuilder;
@@ -94,6 +93,7 @@ public enum TraceApiColumn implements ColumnDecorator {
     COUNT_DB_ERROR("countDbError", FilterConstant::countDbError),
     COUNT_DB_SUCCES("countDbSucces", FilterConstant::countDbSucces),
     ERR("err", FilterConstant::err); //isNull
+	
     private final String out; //nullable
     private final ColumnBuilder columnTemplate;
     private final CriteriaBuilder<ComparisonExpression> expressionFn;
