@@ -27,7 +27,7 @@ public class FilterConstant {
 
     private static OperationColumn countStatusByType(ViewDecorator table, ComparisonExpression op) {
         var status = table.column(STATUS);
-        return (status).whenCase().when(op, status).end().count();
+        return (status).beginCase().when(op, status).end().count();
     }
     public static DBColumn err(ViewDecorator table){ // temporary solution to be changed
         return table.column(ERR_MSG).coalesce(table.column(ERR_TYPE));
@@ -36,7 +36,7 @@ public class FilterConstant {
 
     private static OperationColumn countDbBySucces(ViewDecorator table, ComparisonExpression op ){
         var complete = table.column(COMPLETE);
-        return (complete).whenCase().when(op, complete).end().count();
+        return (complete).beginCase().when(op, complete).end().count();
     }
 
     public static OperationColumn countDbError(ViewDecorator table){
@@ -104,7 +104,7 @@ public class FilterConstant {
 
     private static OperationColumn elapsedTimeBySpeed(ComparisonExpression op, ViewDecorator table) {
         var elapsed = elapsedtime2(table);
-        return elapsed.whenCase().when(op, elapsed).end().count();
+        return elapsed.beginCase().when(op, elapsed).end().count();
     }
 
     public static OperationColumn elapsedTimeVerySlow(ViewDecorator table) {
