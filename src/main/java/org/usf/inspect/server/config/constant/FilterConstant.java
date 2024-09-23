@@ -1,14 +1,7 @@
 package org.usf.inspect.server.config.constant;
 
-import static org.usf.inspect.server.config.TraceApiColumn.COMPLETE;
-import static org.usf.inspect.server.config.TraceApiColumn.END;
-import static org.usf.inspect.server.config.TraceApiColumn.ERR_MSG;
-import static org.usf.inspect.server.config.TraceApiColumn.ERR_TYPE;
-import static org.usf.inspect.server.config.TraceApiColumn.START;
-import static org.usf.inspect.server.config.TraceApiColumn.STATUS;
-import static org.usf.jquery.core.ComparisonExpression.eq;
-import static org.usf.jquery.core.ComparisonExpression.ge;
-import static org.usf.jquery.core.ComparisonExpression.lt;
+import static org.usf.inspect.server.config.TraceApiColumn.*;
+import static org.usf.jquery.core.ComparisonExpression.*;
 
 import org.usf.jquery.core.ComparisonExpression;
 import org.usf.jquery.core.DBColumn;
@@ -29,6 +22,11 @@ public class FilterConstant {
         var status = table.column(STATUS);
         return (status).beginCase().when(op, status).end().count();
     }
+
+    public static OperationColumn countExceptions(ViewDecorator table){
+        return table.column(ERR_TYPE).beginCase().when(isNotNull(),1).orElse(0).sum();
+    }
+
     public static DBColumn err(ViewDecorator table){ // temporary solution to be changed
         return table.column(ERR_MSG).coalesce(table.column(ERR_TYPE));
     }
@@ -90,7 +88,6 @@ public class FilterConstant {
     public static OperationColumn countSuccesStatus(ViewDecorator table) {
         return countStatusByType(table, ge(200).and(lt(300)));
     }
-
     public static ComparisonExpression elapsedTimeExpressions(String name) {
         return switch (name) {
             case "fastest" -> lt(1);

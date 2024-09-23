@@ -5,7 +5,6 @@ import static org.usf.inspect.server.config.TraceApiColumn.ID;
 import static org.usf.inspect.server.config.TraceApiColumn.INSTANCE_ENV;
 import static org.usf.inspect.server.config.TraceApiColumn.ORDER;
 import static org.usf.inspect.server.config.TraceApiColumn.PARENT;
-import static org.usf.inspect.server.config.TraceApiColumn.STATUS;
 import static org.usf.inspect.server.config.TraceApiColumn.TYPE;
 import static org.usf.inspect.server.config.TraceApiTable.DATABASE_REQUEST;
 import static org.usf.inspect.server.config.TraceApiTable.DATABASE_STAGE;
@@ -25,8 +24,6 @@ import static org.usf.jquery.core.ViewJoin.innerJoin;
 import static org.usf.jquery.core.ViewJoin.leftJoin;
 
 import org.usf.inspect.server.RequestType;
-import org.usf.jquery.core.DBFilter;
-import org.usf.jquery.core.DBView;
 import org.usf.jquery.core.ViewJoin;
 import org.usf.jquery.web.JoinBuilder;
 
@@ -37,6 +34,7 @@ import lombok.NoArgsConstructor;
 public class JoinConstant {
     public static final String EXCEPTION_JOIN = "exception";
     public static final String INSTANCE_JOIN = "instance";
+    public static final String MAIN_SESSION_JOIN ="main_session";
     public static final String REST_SESSION_JOIN = "rest_session";
     public static final String REST_REQUEST_JOIN = "rest_request";
     public static final String LOCAL_REQUEST_JOIN = "local_request";
@@ -68,9 +66,11 @@ public class JoinConstant {
     public static JoinBuilder restRequestJoins(String name) {
         return switch (name) {
             case EXCEPTION_JOIN ->
-                    ()-> new ViewJoin[]{leftJoin(EXCEPTION.view(), REST_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)))};
+                    ()-> new ViewJoin[]{leftJoin(EXCEPTION.view(), REST_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.REST.name()))};
             case REST_SESSION_JOIN ->
                     ()-> new ViewJoin[]{leftJoin(REST_SESSION.view(), REST_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
+            case MAIN_SESSION_JOIN ->
+                    ()-> new ViewJoin[]{leftJoin(MAIN_SESSION.view(), REST_REQUEST.column(PARENT).eq(MAIN_SESSION.column(ID)))};
             default -> null;
         };
     }
@@ -90,6 +90,8 @@ public class JoinConstant {
             };
             case REST_SESSION_JOIN ->
                     ()-> new ViewJoin[]{leftJoin(REST_SESSION.view(), DATABASE_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
+            case MAIN_SESSION_JOIN ->
+                    ()-> new ViewJoin[]{leftJoin(MAIN_SESSION.view(), DATABASE_REQUEST.column(PARENT).eq(MAIN_SESSION.column(ID)))};
             default -> null;
         };
     }
@@ -109,6 +111,8 @@ public class JoinConstant {
             };
             case REST_SESSION_JOIN ->
                     ()-> new ViewJoin[]{leftJoin(REST_SESSION.view(), FTP_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
+            case MAIN_SESSION_JOIN ->
+                    ()-> new ViewJoin[]{leftJoin(MAIN_SESSION.view(), FTP_REQUEST.column(PARENT).eq(MAIN_SESSION.column(ID)))};
             default -> null;
         };
     }
@@ -128,6 +132,8 @@ public class JoinConstant {
             };
             case REST_SESSION_JOIN ->
                     ()-> new ViewJoin[]{leftJoin(REST_SESSION.view(), SMTP_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
+            case MAIN_SESSION_JOIN ->
+                    ()-> new ViewJoin[]{leftJoin(MAIN_SESSION.view(), SMTP_REQUEST.column(PARENT).eq(MAIN_SESSION.column(ID)))};
             default -> null;
         };
     }
@@ -147,6 +153,8 @@ public class JoinConstant {
             };
             case REST_SESSION_JOIN ->
                     ()-> new ViewJoin[]{leftJoin(REST_SESSION.view(), LDAP_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
+            case MAIN_SESSION_JOIN ->
+                    ()-> new ViewJoin[]{leftJoin(MAIN_SESSION.view(), LDAP_REQUEST.column(PARENT).eq(MAIN_SESSION.column(ID)))};
             default -> null;
         };
     }
@@ -162,7 +170,7 @@ public class JoinConstant {
     public static JoinBuilder exceptionJoins(String name) {
         return switch (name) {
             case REST_REQUEST_JOIN ->
-                    ()-> new ViewJoin[]{leftJoin(REST_REQUEST.view(), REST_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(REST.name()), REST_REQUEST.column(STATUS).eq(0))};
+                    ()-> new ViewJoin[]{leftJoin(REST_REQUEST.view(), REST_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(REST.name()))};
             case LOCAL_REQUEST_JOIN ->
                     ()-> new ViewJoin[]{leftJoin(LOCAL_REQUEST.view(), LOCAL_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(LOCAL.name()))};
             case DATABASE_REQUEST_JOIN ->
