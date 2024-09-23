@@ -34,9 +34,33 @@ public class JQueryController {
         return usingSpringJdbc(query);
     }
 
+    @GetMapping("request/rest")
+    public List<DynamicModel> getRestRequest(
+            @RequestQueryParam(view = "rest_request",defaultColumns = "count") QueryBuilder query) {
+        return usingSpringJdbc(query);
+    }
+
     @GetMapping("request/database")
     public List<DynamicModel> getDatabaseRequest(
             @RequestQueryParam(view = "database_request", defaultColumns = "count") QueryBuilder query) {
+        return usingSpringJdbc(query);
+    }
+
+    @GetMapping("request/ftp")
+    public List<DynamicModel> getFtpRequest(
+            @RequestQueryParam(view = "ftp_request", defaultColumns = "count") QueryBuilder query) {
+        return usingSpringJdbc(query);
+    }
+
+    @GetMapping("request/smtp")
+    public List<DynamicModel> getSmtpRequest(
+            @RequestQueryParam(view= "smtp_request", defaultColumns = "count") QueryBuilder query) {
+        return usingSpringJdbc(query);
+    }
+
+    @GetMapping("request/ldap")
+    public List<DynamicModel> getLdapRequest(
+            @RequestQueryParam(view = "ldap_request", defaultColumns = "count") QueryBuilder query){
         return usingSpringJdbc(query);
     }
 

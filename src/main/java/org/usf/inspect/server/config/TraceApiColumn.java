@@ -92,7 +92,8 @@ public enum TraceApiColumn implements ColumnDecorator {
     COUNT_503("count503", FilterConstant::countStatus503),
     COUNT_DB_ERROR("countDbError", FilterConstant::countDbError),
     COUNT_DB_SUCCES("countDbSucces", FilterConstant::countDbSucces),
-    ERR("err", FilterConstant::err); //isNull
+    ERR("err", FilterConstant::err),
+    COUNT_EXCEPTION("countException", FilterConstant::countExceptions); //isNull
 	
     private final String out; //nullable
     private final ColumnBuilder columnTemplate;
