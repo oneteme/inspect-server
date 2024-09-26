@@ -30,12 +30,12 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
     private final String[] ports;
     private final String[] medias;
     private final String[] auths;
-    private final String[] status;
+    private final Integer[] status;
     private final String[] apiNames;
     private final String path;
     private final String query;
 
-    public JqueryRequestSessionFilter(String[] ids, String[] appNames, String[] environments, String[] users, Instant start, Instant end, String[] methods, String[] protocols, String[] hosts, String[] ports, String[] medias, String[] auths, String[] status, String[] apiNames, String path, String query) {
+    public JqueryRequestSessionFilter(String[] ids, String[] appNames, String[] environments, String[] users, Instant start, Instant end, String[] methods, String[] protocols, String[] hosts, String[] ports, String[] medias, String[] auths, Integer[] status, String[] apiNames, String path, String query) {
         super(ids, appNames, environments, users, start, end);
         this.methods = methods;
         this.protocols = protocols;

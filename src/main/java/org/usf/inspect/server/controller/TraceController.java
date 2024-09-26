@@ -100,7 +100,7 @@ public class TraceController {
             @RequestParam(required = false, name = "query") String query,
             @RequestParam(required = false, name = "media") String[] medias,
             @RequestParam(required = false, name = "auth") String[] auths,
-            @RequestParam(required = false, name = "status") String[] status,
+            @RequestParam(required = false, name = "status") Integer[] status,
             @RequestParam(required = false, name = "start") Instant start,
             @RequestParam(required = false, name = "end") Instant end,
             @RequestParam(required = false, name = "apiname") String[] apiNames,
