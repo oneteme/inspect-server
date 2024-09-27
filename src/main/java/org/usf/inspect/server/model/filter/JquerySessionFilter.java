@@ -44,7 +44,7 @@ public class JquerySessionFilter {
             filters.add(INSTANCE.column(ENVIRONEMENT).in(getEnvironments()));
         }
         if(!isEmpty(getUsers())) {
-            filters.add(INSTANCE.column(USER).in(getUsers()));
+            filters.add(table.column(USER).in(getUsers()));
         }
         if(getStart() != null) {
             filters.add(table.column(START).ge(from(getStart())));

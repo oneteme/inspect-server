@@ -109,7 +109,7 @@ public class TraceController {
             @RequestParam(required = false, name = "env") String[] environments) throws SQLException {
 
         JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, appNames, environments, users, start, end, methods, protocols, hosts, ports, medias, auths, status, apiNames, path, query);
-        return requestService.getRestSessions(jsf);
+        return requestService.getRestSessionsForSearch(jsf);
     }
 
     @GetMapping("session/rest/{id}")
@@ -149,11 +149,12 @@ public class TraceController {
             @RequestParam(required = false, name = "location") String location,
             @RequestParam(required = false, name = "start") Instant start,
             @RequestParam(required = false, name = "end") Instant end,
-            @RequestParam(required = false, name = "user") String[] users
+            @RequestParam(required = false, name = "user") String[] users,
+            @RequestParam(required = false, name = "appname") String[] appNames
     ) throws SQLException {
 
-        JqueryMainSessionFilter fc = new JqueryMainSessionFilter(null, null, environments, users, start, end, names, launchModes, location);
-        return requestService.getMainSessions(fc);
+        JqueryMainSessionFilter fc = new JqueryMainSessionFilter(null, appNames, environments, users, start, end, names, launchModes, location);
+        return requestService.getMainSessionsForSearch(fc);
     }
 
     @GetMapping("session/main/{id}")
