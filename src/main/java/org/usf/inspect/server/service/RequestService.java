@@ -242,13 +242,54 @@ public class RequestService {
         return sessions;
     }
 
+    @Deprecated
+    public List<Session> getRestSessionsForSearch(JqueryRequestSessionFilter jsf) throws SQLException {
+        var v = new QueryBuilder()
+                .columns(
+                        getColumns(
+                                REST_SESSION, ID, API_NAME, METHOD,
+                                PROTOCOL, PORT, PATH, QUERY, STATUS, SIZE_IN, SIZE_OUT,
+                                START, END, USER
+                        ))
+                .columns(getColumns(INSTANCE, APP_NAME))
+                .filters(REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
+        if(jsf != null) {
+            v.filters(jsf.filters(REST_SESSION).toArray(DBFilter[]::new));
+        }
+        return v.build().execute(ds, rs -> {
+            List<Session> sessions = new ArrayList<>();
+            while (rs.next()) {
+                ServerRestSession session = new ServerRestSession();
+                session.setId(rs.getString(ID.reference()));
+                session.setMethod(rs.getString(METHOD.reference()));
+                session.setProtocol(rs.getString(PROTOCOL.reference()));
+                session.setPort(rs.getInt(PORT.reference()));
+                session.setPath(rs.getString(PATH.reference()));
+                session.setQuery(rs.getString(QUERY.reference()));
+                session.setStatus(rs.getInt(STATUS.reference()));
+                session.setInDataSize(rs.getLong(SIZE_IN.reference()));
+                session.setOutDataSize(rs.getLong(SIZE_OUT.reference()));
+                session.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
+                session.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                session.setName(rs.getString(API_NAME.reference()));
+                session.setUser(rs.getString(USER.reference()));
+                session.setAppName(rs.getString(APP_NAME.reference()));
+                session.setRestRequests(new ArrayList<>());
+                session.setLocalRequests(new ArrayList<>());
+                session.setDatabaseRequests(new ArrayList<>());
+                sessions.add(session);
+            }
+            return sessions;
+        });
+    }
+
     public List<Session> getRestSessions(JqueryRequestSessionFilter jsf) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(
                             REST_SESSION, ID, API_NAME, METHOD,
                             PROTOCOL, HOST, PORT, PATH, QUERY, MEDIA, AUTH, STATUS, SIZE_IN, SIZE_OUT, CONTENT_ENCODING_IN, CONTENT_ENCODING_OUT,
-                            START, END, THREAD, ERR_TYPE, ERR_MSG, USER_AGT, MASK, USER, CACHE_CONTROL, INSTANCE_ENV
+                            START, END, THREAD, ERR_TYPE, ERR_MSG, MASK, USER, USER_AGT, CACHE_CONTROL, INSTANCE_ENV
                     ))
                 .columns(getColumns(INSTANCE, APP_NAME))
                 .filters(REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
@@ -257,6 +298,7 @@ public class RequestService {
         }
         return v.build().execute(ds, rs -> {
             List<Session> sessions = new ArrayList<>();
+            ColumnDecorator[] columns = {USER_AGT};
             while (rs.next()) {
                 ServerRestSession session = new ServerRestSession();
                 session.setId(rs.getString(ID.reference()));
@@ -310,6 +352,40 @@ public class RequestService {
     public Session getMainSession(String id) throws SQLException{
         JqueryMainSessionFilter jsf = new JqueryMainSessionFilter(Collections.singletonList(id).toArray(String[]::new));
         return requireSingle(getMainSessions(jsf));
+    }
+
+    @Deprecated
+    public List<Session> getMainSessionsForSearch(JqueryMainSessionFilter jsf) throws SQLException {
+        var v = new QueryBuilder()
+                .columns(
+                        getColumns(
+                                MAIN_SESSION, ID, NAME, START, END, LOCATION, TYPE,
+                                USER
+                        ))
+                .columns(getColumns(INSTANCE, APP_NAME))
+                .filters(MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));;
+        if(jsf != null) {
+            v.filters(jsf.filters(MAIN_SESSION).toArray(DBFilter[]::new));
+        }
+        return v.build().execute(ds, rs -> {
+            List<Session> sessions = new ArrayList<>();
+            while(rs.next()) {
+                ServerMainSession main = new ServerMainSession();
+                main.setId(rs.getString(ID.reference())); // add value of nullable
+                main.setName(rs.getString(NAME.reference()));
+                main.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
+                main.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                main.setLocation(rs.getString(LOCATION.reference()));
+                main.setAppName(rs.getString(APP_NAME.reference()));
+                main.setUser(rs.getString(USER.reference()));
+                main.setType(rs.getString(TYPE.reference()));
+                main.setRestRequests(new ArrayList<>());
+                main.setLocalRequests(new ArrayList<>());
+                main.setDatabaseRequests(new ArrayList<>());
+                sessions.add(main);
+            }
+            return sessions;
+        });
     }
 
     public List<Session> getMainSessions(JqueryMainSessionFilter jsf) throws SQLException {
