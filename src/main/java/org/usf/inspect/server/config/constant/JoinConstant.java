@@ -43,12 +43,12 @@ public class JoinConstant {
     public static final String SMTP_REQUEST_JOIN = "smtp_request";
     public static final String LDAP_REQUEST_JOIN = "ldap_request";
 
-  //  public static final String
-
     public static JoinBuilder mainSessionJoins(String name) {
         return switch (name) {
             case INSTANCE_JOIN ->
                     () -> new ViewJoin[]{innerJoin(INSTANCE.view(), MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)))};
+            case REST_REQUEST_JOIN ->
+                    () -> new ViewJoin[]{innerJoin(REST_REQUEST.view(), MAIN_SESSION.column(ID).eq(REST_REQUEST.column(PARENT)))};
             default -> null;
         };
     }
