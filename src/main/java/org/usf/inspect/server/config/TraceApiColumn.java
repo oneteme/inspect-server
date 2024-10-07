@@ -82,6 +82,7 @@ public enum TraceApiColumn implements ColumnDecorator {
 
     COUNT_ERROR_CLIENT("countClientErrorRows", FilterConstant::countClientErrorStatus),
     COUNT_ERROR_SERVER("countServerErrorRows", FilterConstant::countServerErrorStatus),
+    COUNT_UNAVAILABLE_SERVER("countServerUnavailableRows", FilterConstant::countServerUnavailableStatus),
     COUNT_SUCCES("countSuccesRows", FilterConstant::countSuccesStatus),
     COUNT_200("count200", FilterConstant::countStatus200), //set type improve perf
     COUNT_400("count400", FilterConstant::countStatus400),

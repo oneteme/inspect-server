@@ -85,6 +85,10 @@ public class FilterConstant {
         return countStatusByType(table, ge(500));
     }
 
+    public static OperationColumn countServerUnavailableStatus(ViewDecorator table) {
+        return countStatusByType(table, eq(0));
+    }
+
     public static OperationColumn countSuccesStatus(ViewDecorator table) {
         return countStatusByType(table, ge(200).and(lt(300)));
     }
