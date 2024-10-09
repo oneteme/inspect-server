@@ -435,11 +435,9 @@ public class RequestService {
         var v = new QueryBuilder()
                 .columns(getColumns(
                         REST_REQUEST, ID, PROTOCOL, HOST, PORT, PATH, QUERY, METHOD, STATUS, SIZE_IN,
-                        SIZE_OUT, CONTENT_ENCODING_IN, CONTENT_ENCODING_OUT, START, END, THREAD, REMOTE, PARENT
+                        SIZE_OUT, CONTENT_ENCODING_IN, CONTENT_ENCODING_OUT, START, END, THREAD, COMPLETE, REMOTE, PARENT
                 ))
-                .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 //.columns(REST_REQUEST.column(PARENT).as("test"), EXCEPTION.column(PARENT).as("test2"))
-                .joins(REST_REQUEST.join(EXCEPTION_JOIN).build())
                 .filters(REST_REQUEST.column(PARENT).in(cdSessions.toArray()))
                 .orders(REST_REQUEST.column(START).order());
         return v.build().execute(ds, rs -> {
@@ -462,7 +460,7 @@ public class RequestService {
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setThreadName(rs.getString(THREAD.reference()));
-                out.setException(new ExceptionInfo(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+                out.setCompleted(rs.getString(COMPLETE.reference()).equals("T"));
                 outs.add(out);
             }
             return outs;
@@ -476,11 +474,10 @@ public class RequestService {
     private List<LocalRequestWrapper> getLocalRequests(List<String> cdSessions) throws SQLException{
         var v = new QueryBuilder()
                 .columns(getColumns(
-                        LOCAL_REQUEST, ID, NAME, LOCATION, START, END, USER, THREAD, PARENT
+                        LOCAL_REQUEST, ID, NAME, LOCATION, START, END, USER, THREAD, COMPLETE, PARENT
                 ))
-                .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
-                .joins(LOCAL_REQUEST.join(EXCEPTION_JOIN).build())
-                .filters(LOCAL_REQUEST.column(PARENT).in(cdSessions.toArray())).orders(LOCAL_REQUEST.column(START).order());
+                .filters(LOCAL_REQUEST.column(PARENT).in(cdSessions.toArray()))
+                .orders(LOCAL_REQUEST.column(START).order());
         return v.build().execute(ds, rs -> {
             List<LocalRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
@@ -492,7 +489,7 @@ public class RequestService {
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setUser(rs.getString(USER.reference()));
                 out.setThreadName(rs.getString(THREAD.reference()));
-                out.setException(new ExceptionInfo(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+                out.setCompleted(rs.getString(COMPLETE.reference()).equals("T"));
                 outs.add(out);
             }
             return outs;
@@ -519,8 +516,6 @@ public class RequestService {
                             DATABASE_REQUEST, ID, HOST, PORT, DB, START, END, USER, THREAD, DRIVER,
                             DB_NAME, DB_VERSION, COMMANDS, COMPLETE, PARENT
                     ))
-                .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
-                .joins(DATABASE_REQUEST.join(EXCEPTION_JOIN).build())
                 .filters(filter)
                 .orders(DATABASE_REQUEST.column(START).order());
         return v.build().execute(ds, rs -> {
@@ -540,7 +535,7 @@ public class RequestService {
                 out.setProductVersion(rs.getString(DB_VERSION.reference()));
                 out.setActions(new ArrayList<>());
                 out.setCommands(valueOfNullabletoEnumList(SqlCommand.class, rs.getString(COMMANDS.reference())));
-                out.setCompleted(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())) == null);
+                out.setCompleted(rs.getString(COMPLETE.reference()).equals("T"));
                 outs.add(out);
             }
             return outs;
@@ -588,11 +583,9 @@ public class RequestService {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(
-                            FTP_REQUEST, ID, HOST, PORT, PROTOCOL, SERVER_VERSION, CLIENT_VERSION, START, END, USER, THREAD, PARENT
+                            FTP_REQUEST, ID, HOST, PORT, PROTOCOL, SERVER_VERSION, CLIENT_VERSION, START, END, USER, THREAD, COMPLETE, PARENT
                     )
                 )
-                .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
-                .joins(FTP_REQUEST.join(EXCEPTION_JOIN).build())
                 .filters(filter)
                 .orders(FTP_REQUEST.column(START).order());
         return v.build().execute(ds, rs -> {
@@ -610,7 +603,7 @@ public class RequestService {
                 out.setUser(rs.getString(USER.reference()));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setActions(new ArrayList<>());
-                out.setCompleted(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())) == null);
+                out.setCompleted(rs.getString(COMPLETE.reference()).equals("T"));
                 outs.add(out);
             }
             return outs;
@@ -658,10 +651,8 @@ public class RequestService {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(
-                            SMTP_REQUEST, ID, HOST, PORT, START, END, USER, THREAD, PARENT
+                            SMTP_REQUEST, ID, HOST, PORT, START, END, USER, THREAD, COMPLETE, PARENT
                     ))
-                .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
-                .joins(SMTP_REQUEST.join(EXCEPTION_JOIN).build())
                 .filters(filter)
                 .orders(SMTP_REQUEST.column(START).order());
         return v.build().execute(ds, rs -> {
@@ -676,7 +667,7 @@ public class RequestService {
                 out.setUser(rs.getString(USER.reference()));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setActions(new ArrayList<>());
-                out.setCompleted(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())) == null);
+                out.setCompleted(rs.getString(COMPLETE.reference()).equals("T"));
                 outs.add(out);
             }
             return outs;
@@ -744,10 +735,8 @@ public class RequestService {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(
-                            LDAP_REQUEST, ID, HOST, PORT, PROTOCOL, START, END, USER, THREAD, PARENT
+                            LDAP_REQUEST, ID, HOST, PORT, PROTOCOL, START, END, USER, THREAD, COMPLETE, PARENT
                     ))
-                .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
-                .joins(LDAP_REQUEST.join(EXCEPTION_JOIN).build())
                 .filters(filter)
                 .orders(LDAP_REQUEST.column(START).order());
         return v.build().execute(ds, rs -> {
@@ -763,7 +752,7 @@ public class RequestService {
                 out.setUser(rs.getString(USER.reference()));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setActions(new ArrayList<>());
-                out.setCompleted(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())) == null);
+                out.setCompleted(rs.getString(COMPLETE.reference()).equals("T"));
                 outs.add(out);
             }
             return outs;

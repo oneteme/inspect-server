@@ -14,6 +14,8 @@ import lombok.experimental.Delegate;
 public class RestRequestWrapper {
 
     private long idRequest;
+    private boolean completed;
+
     private final String cdSession;
     @Delegate
     @JsonIgnore
