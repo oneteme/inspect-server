@@ -177,8 +177,9 @@ public class RequestDao {
     public void saveMailRequests(List<MailRequestWrapper> mailList) {
         var inc = new AtomicLong(selectMaxId("E_SMTP_RQT", "ID_SMTP_RQT"));
 
-        template.batchUpdate("INSERT INTO E_SMTP_RQT(ID_SMTP_RQT,VA_HST,CD_PRT,VA_USR,DH_STR,DH_END,VA_THR,CD_PRN_SES)"
-                + " VALUES(?,?,?,?,?,?,?,?)", mailList, mailList.size(), (ps, o) -> {
+        template.batchUpdate("INSERT INTO E_SMTP_RQT(ID_SMTP_RQT,VA_HST,CD_PRT,VA_USR,DH_STR,DH_END,VA_THR,VA_CPT,CD_PRN_SES)"
+                + " VALUES(?,?,?,?,?,?,?,?,?)", mailList, mailList.size(), (ps, o) -> {
+            var completed = o.getActions().stream().allMatch(a-> isNull(a.getException()));
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getHost());
             ps.setInt(3, o.getPort());
@@ -186,7 +187,8 @@ public class RequestDao {
             ps.setTimestamp(5, fromNullableInstant(o.getStart()));
             ps.setTimestamp(6, fromNullableInstant(o.getEnd()));
             ps.setString(7, o.getThreadName());
-            ps.setString(8, o.getCdSession());
+            ps.setString(8, completed ? "T" : "F");
+            ps.setString(9, o.getCdSession());
             o.setId(inc.get());
         });
         saveMailRequestStages(mailList);
@@ -225,8 +227,9 @@ public class RequestDao {
     public void saveFtpRequests(List<FtpRequestWrapper> ftpList) {
         var inc = new AtomicLong(selectMaxId("E_FTP_RQT", "ID_FTP_RQT"));
 
-        template.batchUpdate("INSERT INTO E_FTP_RQT(ID_FTP_RQT,VA_HST,CD_PRT,VA_PCL,VA_SRV_VRS,VA_CLT_VRS,VA_USR,DH_STR,DH_END,VA_THR,CD_PRN_SES)"
-                + " VALUES(?,?,?,?,?,?,?,?,?,?,?)", ftpList, ftpList.size(), (ps, o) -> {
+        template.batchUpdate("INSERT INTO E_FTP_RQT(ID_FTP_RQT,VA_HST,CD_PRT,VA_PCL,VA_SRV_VRS,VA_CLT_VRS,VA_USR,DH_STR,DH_END,VA_THR,VA_CPT,CD_PRN_SES)"
+                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", ftpList, ftpList.size(), (ps, o) -> {
+            var completed = o.getActions().stream().allMatch(a-> isNull(a.getException()));
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getHost());
             ps.setInt(3, o.getPort());
@@ -237,7 +240,8 @@ public class RequestDao {
             ps.setTimestamp(8, fromNullableInstant(o.getStart()));
             ps.setTimestamp(9, fromNullableInstant(o.getEnd()));
             ps.setString(10, o.getThreadName());
-            ps.setString(11, o.getCdSession());
+            ps.setString(11, completed ? "T" : "F");
+            ps.setString(12, o.getCdSession());
             o.setId(inc.get());
         });
         saveFtpRequestStages(ftpList);
@@ -267,16 +271,19 @@ public class RequestDao {
     public void saveLdapRequests(List<NamingRequestWrapper> ldapList) {
         var inc = new AtomicLong(selectMaxId("E_LDAP_RQT", "ID_LDAP_RQT"));
 
-        template.batchUpdate("INSERT INTO E_LDAP_RQT(ID_LDAP_RQT,VA_HST,CD_PRT,VA_USR,DH_STR,DH_END,VA_THR,CD_PRN_SES)"
-                + " VALUES(?,?,?,?,?,?,?,?)", ldapList, ldapList.size(), (ps, o) -> {
+        template.batchUpdate("INSERT INTO E_LDAP_RQT(ID_LDAP_RQT,VA_HST,CD_PRT,VA_PCL,VA_USR,DH_STR,DH_END,VA_THR,VA_CPT,CD_PRN_SES)"
+                + " VALUES(?,?,?,?,?,?,?,?,?,?)", ldapList, ldapList.size(), (ps, o) -> {
+            var completed = o.getActions().stream().allMatch(a-> isNull(a.getException()));
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getHost());
             ps.setInt(3, o.getPort());
-            ps.setString(4, o.getUser());
-            ps.setTimestamp(5, fromNullableInstant(o.getStart()));
-            ps.setTimestamp(6, fromNullableInstant(o.getEnd()));
-            ps.setString(7, o.getThreadName());
-            ps.setString(8, o.getCdSession());
+            ps.setString(4, o.getProtocol());
+            ps.setString(5, o.getUser());
+            ps.setTimestamp(6, fromNullableInstant(o.getStart()));
+            ps.setTimestamp(7, fromNullableInstant(o.getEnd()));
+            ps.setString(8, o.getThreadName());
+            ps.setString(9, completed ? "T" : "F");
+            ps.setString(10, o.getCdSession());
             o.setId(inc.get());
         });
         saveLdapRequestStages(ldapList);
