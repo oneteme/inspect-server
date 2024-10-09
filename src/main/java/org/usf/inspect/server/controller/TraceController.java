@@ -18,6 +18,7 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -60,17 +61,20 @@ public class TraceController {
     
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<String> addInstanceEnvironment(HttpServletRequest hsr, @RequestBody ServerInstanceEnvironment instance) {
+    	if(isNull(instance)) { //require name !?
+    		return status(BAD_REQUEST).build();
+    	}
         if(instance.getType() == InstanceType.CLIENT) {
             instance = instance.withAddress(hsr.getRemoteAddr());
         }
         instance.setId(nextId());
         try {
             requestService.addInstance(instance);
-            return ok(instance.getId());
         } catch(Exception e) {
         	log.error("trace instance", e);
     		return status(INTERNAL_SERVER_ERROR).build();
         }
+        return ok(instance.getId());
     }
 
     @GetMapping("instance/{id}")
@@ -95,12 +99,12 @@ public class TraceController {
 	            }
 	            s.setInstanceId(id);
 	        }
-	        return (queueService.addSessions(sessions) ? accepted() : status(SERVICE_UNAVAILABLE)).build();
     	}
     	catch (Exception e) {
         	log.error("trace session", e);
     		return status(INTERNAL_SERVER_ERROR).build();
     	}
+        return (queueService.addSessions(sessions) ? accepted() : status(SERVICE_UNAVAILABLE)).build();
     }
 
     @GetMapping("session/rest")
