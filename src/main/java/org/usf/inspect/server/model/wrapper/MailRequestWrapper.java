@@ -15,6 +15,7 @@ public class MailRequestWrapper {
 
     private long id;
     private boolean completed;
+
     private final String cdSession;
     @JsonIgnore
     @Delegate

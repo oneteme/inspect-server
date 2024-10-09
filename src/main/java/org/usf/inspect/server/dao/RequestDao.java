@@ -117,8 +117,9 @@ public class RequestDao {
     public void saveRestRequests(List<RestRequestWrapper> reqList) {
         var exceptions = new ArrayList<ServerException>();
         var inc = new AtomicLong(selectMaxId("E_RST_RQT", "ID_RST_RQT"));
-        template.batchUpdate("INSERT INTO E_RST_RQT(ID_RST_RQT,CD_RMT_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,CD_PRN_SES)"
-                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
+        template.batchUpdate("INSERT INTO E_RST_RQT(ID_RST_RQT,CD_RMT_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,VA_CPT,CD_PRN_SES)"
+                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
+            var completed = isNull(o.getException());
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getId());
             ps.setString(3, o.getMethod());
@@ -137,7 +138,8 @@ public class RequestDao {
             ps.setTimestamp(16, fromNullableInstant(o.getStart()));
             ps.setTimestamp(17, fromNullableInstant(o.getEnd()));
             ps.setString(18, o.getThreadName());
-            ps.setString(19, o.getCdSession());
+            ps.setString(19, completed ? "T" : "F");
+            ps.setString(20, o.getCdSession());
             if(o.getException() != null) {
                 exceptions.add(new ServerException(inc.get(), null, new ExceptionInfo(o.getException().getType(), o.getException().getMessage())));
             }
@@ -150,8 +152,9 @@ public class RequestDao {
     public void saveLocalRequests(List<LocalRequestWrapper> stagesList){
         var exceptions = new ArrayList<ServerException>();
         var inc = new AtomicLong(selectMaxId("E_LCL_RQT", "ID_LCL_RQT"));
-        template.batchUpdate("INSERT INTO E_LCL_RQT(ID_LCL_RQT,VA_NAM,VA_LCT,DH_STR,DH_END,VA_USR,VA_THR,CD_PRN_SES)"
-                + " VALUES(?,?,?,?,?,?,?,?)", stagesList,stagesList.size(),(ps,o)-> {
+        template.batchUpdate("INSERT INTO E_LCL_RQT(ID_LCL_RQT,VA_NAM,VA_LCT,DH_STR,DH_END,VA_USR,VA_THR,VA_CPT,CD_PRN_SES)"
+                + " VALUES(?,?,?,?,?,?,?,?,?)", stagesList,stagesList.size(),(ps,o)-> {
+            var completed = isNull(o.getException());
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2,o.getName());
             ps.setString(3,o.getLocation());
@@ -159,7 +162,8 @@ public class RequestDao {
             ps.setTimestamp(5,fromNullableInstant(o.getEnd()));
             ps.setString(6,o.getUser());
             ps.setString(7,o.getThreadName());
-            ps.setString(8,o.getCdSession());
+            ps.setString(8, completed ? "T" : "F");
+            ps.setString(9,o.getCdSession());
             if(o.getException() != null) {
                 exceptions.add(new ServerException(inc.get(), null, new ExceptionInfo(o.getException().getType(), o.getException().getMessage())));
             }

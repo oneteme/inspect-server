@@ -61,7 +61,6 @@ CREATE TABLE IF NOT EXISTS E_RST_RQT ( --E_RST_RQT
 	DH_STR TIMESTAMP(6),   --DH_STR
 	DH_END TIMESTAMP(6),   --DH_END
 	VA_THR VARCHAR,   --VA_THR
-    VA_CPT CHAR,
 	CD_PRN_SES VARCHAR, -- Parent -- index
 	CD_RMT_SES VARCHAR -- NUll  --CD_RMT_SES : remote session -- index
 );
