@@ -18,7 +18,6 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -70,11 +69,11 @@ public class TraceController {
         instance.setId(nextId());
         try {
             requestService.addInstance(instance);
+            return ok(instance.getId());
         } catch(Exception e) {
         	log.error("trace instance", e);
     		return status(INTERNAL_SERVER_ERROR).build();
         }
-        return ok(instance.getId());
     }
 
     @GetMapping("instance/{id}")
@@ -99,12 +98,12 @@ public class TraceController {
 	            }
 	            s.setInstanceId(id);
 	        }
+	        return (queueService.addSessions(sessions) ? accepted() : status(SERVICE_UNAVAILABLE)).build();
     	}
     	catch (Exception e) {
         	log.error("trace session", e);
     		return status(INTERNAL_SERVER_ERROR).build();
     	}
-        return (queueService.addSessions(sessions) ? accepted() : status(SERVICE_UNAVAILABLE)).build();
     }
 
     @GetMapping("session/rest")
