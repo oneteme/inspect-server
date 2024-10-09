@@ -3,7 +3,6 @@ package org.usf.inspect.server.dao;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.ExceptionInfo;
 import org.usf.inspect.core.Session;
 import org.usf.inspect.server.RequestMask;
@@ -53,7 +52,6 @@ public class RequestDao {
         });
     }
 
-    @Transactional(rollbackFor = Exception.class)
     public void saveSessions(List<ServerSession> sessions) {
         filterAndSave(sessions, ServerRestSession.class, this::saveRestSessions);
         filterAndSave(sessions, ServerMainSession.class, this::saveMainSessions);
@@ -116,7 +114,6 @@ public class RequestDao {
         });
     }
 
-    @Transactional(rollbackFor = Exception.class)
     public void saveRestRequests(List<RestRequestWrapper> reqList) {
         var exceptions = new ArrayList<ServerException>();
         var inc = new AtomicLong(selectMaxId("E_RST_RQT", "ID_RST_RQT"));
@@ -150,7 +147,6 @@ public class RequestDao {
         }
     }
 
-    @Transactional(rollbackFor = Exception.class)
     public void saveLocalRequests(List<LocalRequestWrapper> stagesList){
         var exceptions = new ArrayList<ServerException>();
         var inc = new AtomicLong(selectMaxId("E_LCL_RQT", "ID_LCL_RQT"));
@@ -173,7 +169,6 @@ public class RequestDao {
         }
     }
 
-    @Transactional(rollbackFor = Exception.class)
     public void saveMailRequests(List<MailRequestWrapper> mailList) {
         var inc = new AtomicLong(selectMaxId("E_SMTP_RQT", "ID_SMTP_RQT"));
 
@@ -221,7 +216,6 @@ public class RequestDao {
                 new int[]{VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, BIGINT, BIGINT});
     }
 
-    @Transactional(rollbackFor = Exception.class)
     public void saveFtpRequests(List<FtpRequestWrapper> ftpList) {
         var inc = new AtomicLong(selectMaxId("E_FTP_RQT", "ID_FTP_RQT"));
 
@@ -263,7 +257,6 @@ public class RequestDao {
         }
     }
 
-    @Transactional(rollbackFor = Exception.class)
     public void saveLdapRequests(List<NamingRequestWrapper> ldapList) {
         var inc = new AtomicLong(selectMaxId("E_LDAP_RQT", "ID_LDAP_RQT"));
 
@@ -301,7 +294,7 @@ public class RequestDao {
             saveExceptions(exceptions, LDAP);
         }
     }
-    @Transactional(rollbackFor = Exception.class)
+
     public void saveDatabaseRequests(List<DatabaseRequestWrapper> qryList) {
         var inc = new AtomicLong(selectMaxId("E_DTB_RQT", "ID_DTB_RQT"));
 
