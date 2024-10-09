@@ -91,6 +91,7 @@ import java.util.stream.Stream;
 import javax.sql.DataSource;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.DatabaseRequestStage;
 import org.usf.inspect.core.ExceptionInfo;
 import org.usf.inspect.core.FtpRequest;
@@ -140,6 +141,7 @@ public class RequestService {
         dao.saveInstanceEnvironment(instance);
     }
 
+    @Transactional(rollbackFor = Throwable.class)
     public void addSessions(List<ServerSession> sessions) {
         dao.saveSessions(sessions);
     }
