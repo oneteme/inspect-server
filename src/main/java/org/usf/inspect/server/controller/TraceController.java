@@ -11,7 +11,9 @@ import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 import static org.springframework.http.ResponseEntity.accepted;
 import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.http.ResponseEntity.status;
+import static org.usf.inspect.core.InstanceType.CLIENT;
 import static org.usf.inspect.core.Session.nextId;
+import static org.usf.jquery.core.Utils.isBlank;
 import static org.usf.jquery.core.Utils.isEmpty;
 
 import java.sql.SQLException;
@@ -60,10 +62,10 @@ public class TraceController {
     
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<String> addInstanceEnvironment(HttpServletRequest hsr, @RequestBody ServerInstanceEnvironment instance) {
-    	if(isNull(instance)) { //require name !?
+    	if(isNull(instance) || isBlank(instance.getName())) {
     		return status(BAD_REQUEST).build();
     	}
-        if(instance.getType() == InstanceType.CLIENT) {
+        if(instance.getType() == CLIENT) {
             instance = instance.withAddress(hsr.getRemoteAddr());
         }
         instance.setId(nextId());
@@ -88,6 +90,7 @@ public class TraceController {
     	}
     	try {
 	        for(ServerSession s : sessions) {
+	            s.setInstanceId(id);
 	            if(isNull(s.getId())) {
 	                if(s instanceof ServerMainSession) {
 	                    s.setId(nextId()); // safe id set for web collectors
@@ -96,7 +99,6 @@ public class TraceController {
 	                    log.warn("RestSesstion.id is null : {}", s);
 	                }
 	            }
-	            s.setInstanceId(id);
 	        }
 	        return (queueService.addSessions(sessions) ? accepted() : status(SERVICE_UNAVAILABLE)).build();
     	}

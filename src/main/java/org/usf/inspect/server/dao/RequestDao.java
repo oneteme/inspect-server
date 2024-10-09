@@ -20,13 +20,13 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
 import static java.sql.Types.*;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.joining;
 import static org.usf.inspect.server.RequestMask.*;
 
 @Repository
@@ -403,13 +403,11 @@ public class RequestDao {
 
     private static <T extends Enum<T>> String valueOfNullableList(List<T> enumList) {
         return ofNullable(enumList)
-                .map(list ->
-                        list.stream().filter(Objects::nonNull).map(Enum::name).collect(Collectors.joining(","))
-                )
+                .map(list -> list.stream().filter(Objects::nonNull).map(Enum::name).collect(joining(",")))
                 .orElse(null);
     }
     private static String  valueOfNullableArray(long[]array){
-        return ofNullable(array).map(arr -> LongStream.of(arr).mapToObj(Long::toString).collect(Collectors.joining(","))).orElse(null);
+        return ofNullable(array).map(arr -> LongStream.of(arr).mapToObj(Long::toString).collect(joining(","))).orElse(null);
     }
 
     private static ExceptionInfo nullableException(ExceptionInfo exp) {
