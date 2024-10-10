@@ -16,6 +16,7 @@ import org.springframework.web.client.RestTemplate;
 import org.usf.inspect.core.DispatchState;
 import org.usf.inspect.server.dao.RequestDao;
 import org.usf.inspect.server.model.ServerSession;
+import org.usf.inspect.server.service.RequestService;
 import org.usf.inspect.server.service.SessionQueueService;
 
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 public class CacheController {
 
     private final ObjectMapper mapper;
-    private final RequestDao dao;
+    private final RequestService service;
     private final SessionQueueService queue;
 
     RestTemplate defaultRestTemplate() {
@@ -53,7 +54,7 @@ public class CacheController {
         var rt = defaultRestTemplate();
         var ses = rt.getForObject(host + "/cache", ServerSession[].class);
         if(ses != null && ses.length > 0) {
-            dao.saveSessions(Arrays.asList(ses));
+            service.addSessions(Arrays.asList(ses));
             return ses.length;
         }
         return 0;
