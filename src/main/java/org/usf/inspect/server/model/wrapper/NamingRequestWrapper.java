@@ -13,7 +13,7 @@ import org.usf.inspect.core.NamingRequest;
 public class NamingRequestWrapper {
 
     private long id;
-    private boolean completed;
+    private boolean status;
 
     private final String cdSession;
     @JsonIgnore

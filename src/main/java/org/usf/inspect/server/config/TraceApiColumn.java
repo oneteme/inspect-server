@@ -58,7 +58,6 @@ public enum TraceApiColumn implements ColumnDecorator {
     DRIVER("driver"),
     DB_NAME("dbName"),
     DB_VERSION("dbVersion"),
-    COMPLETE("complete"),
     COMMANDS("commands"),
     ACTION_COUNT("actionCount"),
     ARG("arg"),
@@ -91,8 +90,8 @@ public enum TraceApiColumn implements ColumnDecorator {
     COUNT_404("count404", FilterConstant::countStatus404),
     COUNT_500("count500", FilterConstant::countStatus500),
     COUNT_503("count503", FilterConstant::countStatus503),
-    COUNT_DB_ERROR("countDbError", FilterConstant::countDbError),
-    COUNT_DB_SUCCES("countDbSucces", FilterConstant::countDbSucces),
+    COUNT_REQUEST_ERROR("countRequestError", FilterConstant::countError),
+    COUNT_REQUEST_SUCCESS("countRequestSuccess", FilterConstant::countSuccess),
     ERR("err", FilterConstant::err),
     COUNT_EXCEPTION("countException", FilterConstant::countExceptions); //isNull
 	
