@@ -14,7 +14,7 @@ import lombok.experimental.Delegate;
 public class MailRequestWrapper {
 
     private long id;
-    private boolean completed;
+    private boolean status;
 
     private final String cdSession;
     @JsonIgnore

@@ -117,7 +117,7 @@ public class RequestDao {
     public void saveRestRequests(List<RestRequestWrapper> reqList) {
         var exceptions = new ArrayList<ServerException>();
         var inc = new AtomicLong(selectMaxId("E_RST_RQT", "ID_RST_RQT"));
-        template.batchUpdate("INSERT INTO E_RST_RQT(ID_RST_RQT,CD_RMT_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,VA_CPT,CD_PRN_SES)"
+        template.batchUpdate("INSERT INTO E_RST_RQT(ID_RST_RQT,CD_RMT_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,CD_PRN_SES)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             var completed = isNull(o.getException());
             ps.setLong(1, inc.incrementAndGet());
@@ -138,7 +138,6 @@ public class RequestDao {
             ps.setTimestamp(16, fromNullableInstant(o.getStart()));
             ps.setTimestamp(17, fromNullableInstant(o.getEnd()));
             ps.setString(18, o.getThreadName());
-            ps.setString(19, completed ? "T" : "F");
             ps.setString(20, o.getCdSession());
             if(o.getException() != null) {
                 exceptions.add(new ServerException(inc.get(), null, new ExceptionInfo(o.getException().getType(), o.getException().getMessage())));
@@ -152,7 +151,7 @@ public class RequestDao {
     public void saveLocalRequests(List<LocalRequestWrapper> stagesList){
         var exceptions = new ArrayList<ServerException>();
         var inc = new AtomicLong(selectMaxId("E_LCL_RQT", "ID_LCL_RQT"));
-        template.batchUpdate("INSERT INTO E_LCL_RQT(ID_LCL_RQT,VA_NAM,VA_LCT,DH_STR,DH_END,VA_USR,VA_THR,VA_CPT,CD_PRN_SES)"
+        template.batchUpdate("INSERT INTO E_LCL_RQT(ID_LCL_RQT,VA_NAM,VA_LCT,DH_STR,DH_END,VA_USR,VA_THR,VA_STT,CD_PRN_SES)"
                 + " VALUES(?,?,?,?,?,?,?,?,?)", stagesList,stagesList.size(),(ps,o)-> {
             var completed = isNull(o.getException());
             ps.setLong(1, inc.incrementAndGet());
@@ -162,7 +161,7 @@ public class RequestDao {
             ps.setTimestamp(5,fromNullableInstant(o.getEnd()));
             ps.setString(6,o.getUser());
             ps.setString(7,o.getThreadName());
-            ps.setString(8, completed ? "T" : "F");
+            ps.setBoolean(8, completed);
             ps.setString(9,o.getCdSession());
             if(o.getException() != null) {
                 exceptions.add(new ServerException(inc.get(), null, new ExceptionInfo(o.getException().getType(), o.getException().getMessage())));
@@ -176,7 +175,7 @@ public class RequestDao {
     public void saveMailRequests(List<MailRequestWrapper> mailList) {
         var inc = new AtomicLong(selectMaxId("E_SMTP_RQT", "ID_SMTP_RQT"));
 
-        template.batchUpdate("INSERT INTO E_SMTP_RQT(ID_SMTP_RQT,VA_HST,CD_PRT,VA_USR,DH_STR,DH_END,VA_THR,VA_CPT,CD_PRN_SES)"
+        template.batchUpdate("INSERT INTO E_SMTP_RQT(ID_SMTP_RQT,VA_HST,CD_PRT,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)"
                 + " VALUES(?,?,?,?,?,?,?,?,?)", mailList, mailList.size(), (ps, o) -> {
             var completed = o.getActions().stream().allMatch(a-> isNull(a.getException()));
             ps.setLong(1, inc.incrementAndGet());
@@ -186,7 +185,7 @@ public class RequestDao {
             ps.setTimestamp(5, fromNullableInstant(o.getStart()));
             ps.setTimestamp(6, fromNullableInstant(o.getEnd()));
             ps.setString(7, o.getThreadName());
-            ps.setString(8, completed ? "T" : "F");
+            ps.setBoolean(8, completed);
             ps.setString(9, o.getCdSession());
             o.setId(inc.get());
         });
@@ -225,7 +224,7 @@ public class RequestDao {
     public void saveFtpRequests(List<FtpRequestWrapper> ftpList) {
         var inc = new AtomicLong(selectMaxId("E_FTP_RQT", "ID_FTP_RQT"));
 
-        template.batchUpdate("INSERT INTO E_FTP_RQT(ID_FTP_RQT,VA_HST,CD_PRT,VA_PCL,VA_SRV_VRS,VA_CLT_VRS,VA_USR,DH_STR,DH_END,VA_THR,VA_CPT,CD_PRN_SES)"
+        template.batchUpdate("INSERT INTO E_FTP_RQT(ID_FTP_RQT,VA_HST,CD_PRT,VA_PCL,VA_SRV_VRS,VA_CLT_VRS,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", ftpList, ftpList.size(), (ps, o) -> {
             var completed = o.getActions().stream().allMatch(a-> isNull(a.getException()));
             ps.setLong(1, inc.incrementAndGet());
@@ -238,7 +237,7 @@ public class RequestDao {
             ps.setTimestamp(8, fromNullableInstant(o.getStart()));
             ps.setTimestamp(9, fromNullableInstant(o.getEnd()));
             ps.setString(10, o.getThreadName());
-            ps.setString(11, completed ? "T" : "F");
+            ps.setBoolean(11, completed);
             ps.setString(12, o.getCdSession());
             o.setId(inc.get());
         });
@@ -268,7 +267,7 @@ public class RequestDao {
     public void saveLdapRequests(List<NamingRequestWrapper> ldapList) {
         var inc = new AtomicLong(selectMaxId("E_LDAP_RQT", "ID_LDAP_RQT"));
 
-        template.batchUpdate("INSERT INTO E_LDAP_RQT(ID_LDAP_RQT,VA_HST,CD_PRT,VA_PCL,VA_USR,DH_STR,DH_END,VA_THR,VA_CPT,CD_PRN_SES)"
+        template.batchUpdate("INSERT INTO E_LDAP_RQT(ID_LDAP_RQT,VA_HST,CD_PRT,VA_PCL,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?)", ldapList, ldapList.size(), (ps, o) -> {
             var completed = o.getActions().stream().allMatch(a-> isNull(a.getException()));
             ps.setLong(1, inc.incrementAndGet());
@@ -279,7 +278,7 @@ public class RequestDao {
             ps.setTimestamp(6, fromNullableInstant(o.getStart()));
             ps.setTimestamp(7, fromNullableInstant(o.getEnd()));
             ps.setString(8, o.getThreadName());
-            ps.setString(9, completed ? "T" : "F");
+            ps.setBoolean(9, completed);
             ps.setString(10, o.getCdSession());
             o.setId(inc.get());
         });
@@ -309,7 +308,7 @@ public class RequestDao {
     public void saveDatabaseRequests(List<DatabaseRequestWrapper> qryList) {
         var inc = new AtomicLong(selectMaxId("E_DTB_RQT", "ID_DTB_RQT"));
 
-        template.batchUpdate("INSERT INTO E_DTB_RQT(ID_DTB_RQT,VA_HST,CD_PRT,VA_NAM,DH_STR,DH_END,VA_USR,VA_THR,VA_DRV,VA_PRD_NAM,VA_PRD_VRS,VA_CMD,VA_CPT,CD_PRN_SES)"
+        template.batchUpdate("INSERT INTO E_DTB_RQT(ID_DTB_RQT,VA_HST,CD_PRT,VA_NAM,DH_STR,DH_END,VA_USR,VA_THR,VA_DRV,VA_PRD_NAM,VA_PRD_VRS,VA_CMD,VA_STT,CD_PRN_SES)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)", qryList, qryList.size(), (ps, o) -> {
             var completed = o.getActions().stream().allMatch(a-> isNull(a.getException()));
             ps.setLong(1, inc.incrementAndGet());
@@ -324,7 +323,7 @@ public class RequestDao {
             ps.setString(10, o.getProductName());
             ps.setString(11, o.getProductVersion());
             ps.setString(12, valueOfNullableList(o.getCommands()));
-            ps.setString(13, completed ? "T" : "F");
+            ps.setBoolean(13, completed);
             ps.setString(14, o.getCdSession());
             o.setId(inc.get());
         });
