@@ -26,12 +26,9 @@ import org.usf.inspect.server.service.SessionQueueService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import lombok.RequiredArgsConstructor;
-
 @CrossOrigin
 @RestController
 @RequestMapping(value = "cache", produces = APPLICATION_JSON_VALUE)
-@RequiredArgsConstructor
 public class CacheController {
 
     private final RequestService service;
