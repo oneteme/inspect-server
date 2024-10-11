@@ -23,7 +23,7 @@ public class SessionQueueService {
 		this.dispatcher = new ScheduledDispatchHandler<>(prop.getDispatch(), this::saveSessions);
     }
 
-    public boolean addSessions(ServerSession... sessions) {
+    public boolean addSessions(ServerSession[] sessions) {
     	return dispatcher.submit(sessions);
     }
 
