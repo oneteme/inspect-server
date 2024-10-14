@@ -1,43 +1,55 @@
 package org.usf.inspect.server.controller;
 
-import static java.time.Duration.ofSeconds;
+import static java.util.Arrays.asList;
+import static java.util.Objects.nonNull;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.usf.inspect.core.DispatchState.DISABLE;
 
-import java.util.Arrays;
 import java.util.Collection;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.usf.inspect.core.DispatchState;
-import org.usf.inspect.server.dao.RequestDao;
 import org.usf.inspect.server.model.ServerSession;
 import org.usf.inspect.server.service.RequestService;
 import org.usf.inspect.server.service.SessionQueueService;
 
-import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @CrossOrigin
 @RestController
 @RequestMapping(value = "cache", produces = APPLICATION_JSON_VALUE)
-@RequiredArgsConstructor
 public class CacheController {
 
-    private final ObjectMapper mapper;
     private final RequestService service;
     private final SessionQueueService queue;
+    private final RestTemplate template;
+    
+    @Value("${spring.profiles.active}")
+    private String activeProfile;
 
-    RestTemplate defaultRestTemplate() {
-        var json = new MappingJackson2HttpMessageConverter(mapper);
-        var plain = new StringHttpMessageConverter(); //for instanceID
-        var rt = new RestTemplateBuilder().messageConverters(json, plain)
-                .defaultHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE);
-        return rt.build();
-    }
+	public CacheController(ObjectMapper mapper, RequestService service, SessionQueueService queue) {
+		this.service = service;
+		this.queue = queue;
+		this.template = new RestTemplateBuilder()
+				.messageConverters(new MappingJackson2HttpMessageConverter(mapper))
+                .defaultHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
+                .build();
+	}
 
     @GetMapping
     public Collection<ServerSession> getCache(){
@@ -49,14 +61,20 @@ public class CacheController {
         queue.enableSave(state);
     }
 
-    @PostMapping()
-    public int addSession(@RequestParam(name = "host") String host) {
-        var rt = defaultRestTemplate();
-        var ses = rt.getForObject(host + "/cache", ServerSession[].class);
-        if(ses != null && ses.length > 0) {
-            service.addSessions(Arrays.asList(ses));
-            return ses.length;
-        }
-        return 0;
+    @PostMapping("{env}/import")
+    public int importSession(@PathVariable String env, @RequestParam String host) {
+    	if(activeProfile.equals(env)) {
+	    	template.patchForObject(host + "/state/"+ DISABLE, null, Void.class); //stop adding session first on remote server
+	        var arr = template.getForObject(host + "/cache", ServerSession[].class); //import sessions from remote server cache
+	        if(nonNull(arr) && arr.length > 0) {
+	            var cnt = service.addSessions(asList(arr)); //save sessions on database (local.env == remote.env)
+	            if(cnt != arr.length) {
+	            	log.warn("{} sessions was imported, but {} sessions was saved");
+	            }
+	            return arr.length;
+	        }
+	        return 0;
+    	}
+    	throw new IllegalArgumentException("mismatch env " + env);
     }
 }

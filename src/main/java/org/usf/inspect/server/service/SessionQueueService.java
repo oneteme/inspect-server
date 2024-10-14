@@ -23,7 +23,7 @@ public class SessionQueueService {
 		this.dispatcher = new ScheduledDispatchHandler<>(prop.getDispatch(), this::saveSessions);
     }
 
-    public boolean addSessions(ServerSession... sessions) {
+    public boolean addSessions(ServerSession[] sessions) {
     	return dispatcher.submit(sessions);
     }
 
@@ -41,7 +41,7 @@ public class SessionQueueService {
     }
     
     @PreDestroy
-    void destroy() throws InterruptedException {
+    void destroy() {
 		dispatcher.complete();
 	}
 }
