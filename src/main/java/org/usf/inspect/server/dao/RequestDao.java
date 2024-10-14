@@ -308,23 +308,24 @@ public class RequestDao {
     public void saveDatabaseRequests(List<DatabaseRequestWrapper> qryList) {
         var inc = new AtomicLong(selectMaxId("E_DTB_RQT", "ID_DTB_RQT"));
 
-        template.batchUpdate("INSERT INTO E_DTB_RQT(ID_DTB_RQT,VA_HST,CD_PRT,VA_NAM,DH_STR,DH_END,VA_USR,VA_THR,VA_DRV,VA_PRD_NAM,VA_PRD_VRS,VA_CMD,VA_STT,CD_PRN_SES)"
-                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)", qryList, qryList.size(), (ps, o) -> {
+        template.batchUpdate("INSERT INTO E_DTB_RQT(ID_DTB_RQT,VA_HST,CD_PRT,VA_NAM,VA_SCH,DH_STR,DH_END,VA_USR,VA_THR,VA_DRV,VA_PRD_NAM,VA_PRD_VRS,VA_CMD,VA_STT,CD_PRN_SES)"
+                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", qryList, qryList.size(), (ps, o) -> {
             var completed = o.getActions().stream().allMatch(a-> isNull(a.getException()));
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getHost());
             ps.setInt(3, o.getPort());
             ps.setString(4, o.getName());
-            ps.setTimestamp(5, fromNullableInstant(o.getStart()));
-            ps.setTimestamp(6, fromNullableInstant(o.getEnd()));
-            ps.setString(7, o.getUser());
-            ps.setString(8, o.getThreadName());
-            ps.setString(9, o.getDriverVersion());
-            ps.setString(10, o.getProductName());
-            ps.setString(11, o.getProductVersion());
-            ps.setString(12, valueOfNullableList(o.getCommands()));
-            ps.setBoolean(13, completed);
-            ps.setString(14, o.getCdSession());
+            ps.setString(5, o.getSchema());
+            ps.setTimestamp(6, fromNullableInstant(o.getStart()));
+            ps.setTimestamp(7, fromNullableInstant(o.getEnd()));
+            ps.setString(8, o.getUser());
+            ps.setString(9, o.getThreadName());
+            ps.setString(10, o.getDriverVersion());
+            ps.setString(11, o.getProductName());
+            ps.setString(12, o.getProductVersion());
+            ps.setString(13, valueOfNullableList(o.getCommands()));
+            ps.setBoolean(14, completed);
+            ps.setString(15, o.getCdSession());
             o.setId(inc.get());
         });
         saveDatabaseActions(qryList);
