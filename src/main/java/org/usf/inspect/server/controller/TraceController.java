@@ -49,9 +49,9 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @CrossOrigin
-@RequiredArgsConstructor
 @RestController
 @RequestMapping(value = "v3/trace", produces = APPLICATION_JSON_VALUE)
+@RequiredArgsConstructor
 public class TraceController {
 
     private final RequestService requestService;

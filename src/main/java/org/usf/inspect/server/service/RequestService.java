@@ -48,6 +48,7 @@ import org.usf.inspect.core.NamingRequestStage;
 import org.usf.inspect.core.RestRequest;
 import org.usf.inspect.core.RestSession;
 import org.usf.inspect.core.Session;
+import org.usf.inspect.core.TraceableStage;
 import org.usf.inspect.jdbc.SqlCommand;
 import org.usf.inspect.server.config.TraceApiColumn;
 import org.usf.inspect.server.config.TraceApiTable;
@@ -81,9 +82,10 @@ public class RequestService {
         dao.saveInstanceEnvironment(instance);
     }
 
+    @TraceableStage
     @Transactional(rollbackFor = Throwable.class)
-    public void addSessions(List<ServerSession> sessions) {
-        dao.saveSessions(sessions);
+    public long addSessions(List<ServerSession> sessions) {
+        return dao.saveSessions(sessions);
     }
 
     public Session getMainTree(String id) throws SQLException {

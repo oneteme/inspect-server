@@ -59,12 +59,12 @@
 		<dependency>
 			<groupId>io.github.oneteme</groupId>
 			<artifactId>inspect-core</artifactId>
-			<version>0.0.4</version>
+			<version>0.0.7</version>
 		</dependency>
 		<dependency>
 			<groupId>io.github.oneteme</groupId>
 			<artifactId>jquery</artifactId>
-			<version>4.0.0-SNAPSHOT</version>
+			<version>4.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
