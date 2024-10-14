@@ -57,6 +57,8 @@ public class JoinConstant {
         return switch (name) {
             case "dependencies" ->
                     () -> new ViewJoin[]{innerJoin(REST_REQUEST.view(), REST_SESSION.column(ID).eq(REST_REQUEST.column(PARENT)))};
+            case DATABASE_REQUEST_JOIN ->
+                    () -> new ViewJoin[]{innerJoin(DATABASE_REQUEST.view(), REST_SESSION.column(ID).eq(DATABASE_REQUEST.column(PARENT)))};
             case INSTANCE_JOIN ->
                     () -> new ViewJoin[]{innerJoin(INSTANCE.view(), REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)))};
             default -> null;
