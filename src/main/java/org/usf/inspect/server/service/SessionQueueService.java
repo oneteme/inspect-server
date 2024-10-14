@@ -20,10 +20,10 @@ public class SessionQueueService {
 
     public SessionQueueService(RequestService service, InspectConfigurationProperties prop) {
         this.service = service;
-		this.dispatcher = new ScheduledDispatchHandler<>(prop.getDispatch(), this::safeBackup);
+		this.dispatcher = new ScheduledDispatchHandler<>(prop.getDispatch(), this::saveSessions);
     }
 
-    public boolean add(ServerSession... sessions) {
+    public boolean addSessions(ServerSession[] sessions) {
     	return dispatcher.submit(sessions);
     }
 
@@ -31,7 +31,7 @@ public class SessionQueueService {
     	return dispatcher.peek();
     }
 
-    boolean safeBackup(boolean complete, int attempts, List<ServerSession> sessions) {
+    boolean saveSessions(boolean complete, int attempts, List<ServerSession> sessions) {
         service.addSessions(sessions);
         return true;
     }
@@ -41,7 +41,7 @@ public class SessionQueueService {
     }
     
     @PreDestroy
-    void destroy() throws InterruptedException {
+    void destroy() {
 		dispatcher.complete();
 	}
 }

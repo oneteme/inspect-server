@@ -32,17 +32,12 @@ public class FilterConstant {
     }
 
 
-    private static OperationColumn countDbBySucces(ViewDecorator table, ComparisonExpression op ){
-        var complete = table.column(COMPLETE);
-        return (complete).beginCase().when(op, complete).end().count();
+    public static OperationColumn countError(ViewDecorator table){
+        return countStatusByType(table, eq(false));
     }
 
-    public static OperationColumn countDbError(ViewDecorator table){
-        return countDbBySucces(table, eq('F'));
-    }
-
-    public static OperationColumn countDbSucces (ViewDecorator table){
-        return countDbBySucces(table, eq('T'));
+    public static OperationColumn countSuccess(ViewDecorator table){
+        return countStatusByType(table, eq(true));
     }
 
     public static OperationColumn countStatus200(ViewDecorator table) {
@@ -83,6 +78,10 @@ public class FilterConstant {
 
     public static OperationColumn countServerErrorStatus(ViewDecorator table) {
         return countStatusByType(table, ge(500));
+    }
+
+    public static OperationColumn countServerUnavailableStatus(ViewDecorator table) {
+        return countStatusByType(table, eq(0));
     }
 
     public static OperationColumn countSuccesStatus(ViewDecorator table) {

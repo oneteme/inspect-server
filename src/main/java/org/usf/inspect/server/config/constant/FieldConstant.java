@@ -33,6 +33,7 @@ public final class FieldConstant {
     public static final String VA_CNT_TYP = "va_cnt_typ";
     public static final String VA_ATH_SCH = "va_ath_sch";
     public static final String CD_STT = "cd_stt";
+    public static final String VA_STT = "va_stt";
     public static final String VA_I_SZE = "va_i_sze";
     public static final String VA_O_SZE = "va_o_sze";
     public static final String VA_I_CNT_ENC = "va_i_cnt_enc";
@@ -56,7 +57,6 @@ public final class FieldConstant {
     public static final String VA_PRD_NAM = "va_prd_nam";
     public static final String VA_PRD_VRS = "va_prd_vrs";
     public static final String VA_CMD = "va_cmd";
-    public static final String VA_CPT = "va_cpt";
     public static final String VA_CNT = "va_cnt";
     public static final String VA_ERR_TYP = "va_err_typ";
     public static final String VA_ERR_MSG = "va_err_msg";

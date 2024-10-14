@@ -94,6 +94,7 @@ public class ColumnConstant {
             case START -> DH_STR;
             case END -> DH_END;
             case THREAD -> VA_THR;
+            case STATUS -> VA_STT;
             case PARENT -> CD_PRN_SES;
             default -> null;
         };
@@ -113,7 +114,7 @@ public class ColumnConstant {
             case DB_NAME -> VA_PRD_NAM;
             case DB_VERSION -> VA_PRD_VRS;
             case COMMANDS -> VA_CMD;
-            case COMPLETE -> VA_CPT;
+            case STATUS -> VA_STT;
             case PARENT -> CD_PRN_SES;
             default -> null;
         };
@@ -128,6 +129,7 @@ public class ColumnConstant {
             case END -> DH_END;
             case USER -> VA_USR;
             case THREAD -> VA_THR;
+            case STATUS -> VA_STT;
             case PARENT -> CD_PRN_SES;
             default -> null;
         };
@@ -166,6 +168,7 @@ public class ColumnConstant {
             case END -> DH_END;
             case USER -> VA_USR;
             case THREAD -> VA_THR;
+            case STATUS -> VA_STT;
             case PARENT -> CD_PRN_SES;
             default -> null;
         };
@@ -205,6 +208,7 @@ public class ColumnConstant {
             case END -> DH_END;
             case USER -> VA_USR;
             case THREAD -> VA_THR;
+            case STATUS -> VA_STT;
             case PARENT -> CD_PRN_SES;
             default -> null;
         };

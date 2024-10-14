@@ -12,7 +12,8 @@ import lombok.experimental.Delegate;
 public class FtpRequestWrapper extends  FtpRequest{
 
     private long id;
-    private boolean completed;
+    private boolean status;
+
     private final String cdSession;
     @JsonIgnore
     @Delegate

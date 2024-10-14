@@ -15,6 +15,7 @@ import org.usf.inspect.server.model.Exchange;
 public class RestRequestWrapper extends Exchange {
 
     private long idRequest;
+
     private final String cdSession;
     @Delegate
     @JsonIgnore

@@ -3,7 +3,6 @@ package org.usf.inspect.server.dao;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.ExceptionInfo;
 import org.usf.inspect.core.Session;
 import org.usf.inspect.server.RequestMask;
@@ -21,13 +20,13 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
 import static java.sql.Types.*;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.joining;
 import static org.usf.inspect.server.RequestMask.*;
 
 @Repository
@@ -53,7 +52,6 @@ public class RequestDao {
         });
     }
 
-    @Transactional(rollbackFor = Exception.class)
     public void saveSessions(List<ServerSession> sessions) {
         filterAndSave(sessions, ServerRestSession.class, this::saveRestSessions);
         filterAndSave(sessions, ServerMainSession.class, this::saveMainSessions);
@@ -116,12 +114,12 @@ public class RequestDao {
         });
     }
 
-    @Transactional(rollbackFor = Exception.class)
     public void saveRestRequests(List<RestRequestWrapper> reqList) {
         var exceptions = new ArrayList<ServerException>();
         var inc = new AtomicLong(selectMaxId("E_RST_RQT", "ID_RST_RQT"));
         template.batchUpdate("INSERT INTO E_RST_RQT(ID_RST_RQT,CD_RMT_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,CD_PRN_SES)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
+            var completed = isNull(o.getException());
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getId());
             ps.setString(3, o.getMethod());
@@ -150,12 +148,12 @@ public class RequestDao {
         }
     }
 
-    @Transactional(rollbackFor = Exception.class)
     public void saveLocalRequests(List<LocalRequestWrapper> stagesList){
         var exceptions = new ArrayList<ServerException>();
         var inc = new AtomicLong(selectMaxId("E_LCL_RQT", "ID_LCL_RQT"));
-        template.batchUpdate("INSERT INTO E_LCL_RQT(ID_LCL_RQT,VA_NAM,VA_LCT,DH_STR,DH_END,VA_USR,VA_THR,CD_PRN_SES)"
-                + " VALUES(?,?,?,?,?,?,?,?)", stagesList,stagesList.size(),(ps,o)-> {
+        template.batchUpdate("INSERT INTO E_LCL_RQT(ID_LCL_RQT,VA_NAM,VA_LCT,DH_STR,DH_END,VA_USR,VA_THR,VA_STT,CD_PRN_SES)"
+                + " VALUES(?,?,?,?,?,?,?,?,?)", stagesList,stagesList.size(),(ps,o)-> {
+            var completed = isNull(o.getException());
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2,o.getName());
             ps.setString(3,o.getLocation());
@@ -163,7 +161,8 @@ public class RequestDao {
             ps.setTimestamp(5,fromNullableInstant(o.getEnd()));
             ps.setString(6,o.getUser());
             ps.setString(7,o.getThreadName());
-            ps.setString(8,o.getCdSession());
+            ps.setBoolean(8, completed);
+            ps.setString(9,o.getCdSession());
             if(o.getException() != null) {
                 exceptions.add(new ServerException(inc.get(), null, new ExceptionInfo(o.getException().getType(), o.getException().getMessage())));
             }
@@ -173,12 +172,12 @@ public class RequestDao {
         }
     }
 
-    @Transactional(rollbackFor = Exception.class)
     public void saveMailRequests(List<MailRequestWrapper> mailList) {
         var inc = new AtomicLong(selectMaxId("E_SMTP_RQT", "ID_SMTP_RQT"));
 
-        template.batchUpdate("INSERT INTO E_SMTP_RQT(ID_SMTP_RQT,VA_HST,CD_PRT,VA_USR,DH_STR,DH_END,VA_THR,CD_PRN_SES)"
-                + " VALUES(?,?,?,?,?,?,?,?)", mailList, mailList.size(), (ps, o) -> {
+        template.batchUpdate("INSERT INTO E_SMTP_RQT(ID_SMTP_RQT,VA_HST,CD_PRT,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)"
+                + " VALUES(?,?,?,?,?,?,?,?,?)", mailList, mailList.size(), (ps, o) -> {
+            var completed = o.getActions().stream().allMatch(a-> isNull(a.getException()));
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getHost());
             ps.setInt(3, o.getPort());
@@ -186,7 +185,8 @@ public class RequestDao {
             ps.setTimestamp(5, fromNullableInstant(o.getStart()));
             ps.setTimestamp(6, fromNullableInstant(o.getEnd()));
             ps.setString(7, o.getThreadName());
-            ps.setString(8, o.getCdSession());
+            ps.setBoolean(8, completed);
+            ps.setString(9, o.getCdSession());
             o.setId(inc.get());
         });
         saveMailRequestStages(mailList);
@@ -221,12 +221,12 @@ public class RequestDao {
                 new int[]{VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, BIGINT, BIGINT});
     }
 
-    @Transactional(rollbackFor = Exception.class)
     public void saveFtpRequests(List<FtpRequestWrapper> ftpList) {
         var inc = new AtomicLong(selectMaxId("E_FTP_RQT", "ID_FTP_RQT"));
 
-        template.batchUpdate("INSERT INTO E_FTP_RQT(ID_FTP_RQT,VA_HST,CD_PRT,VA_PCL,VA_SRV_VRS,VA_CLT_VRS,VA_USR,DH_STR,DH_END,VA_THR,CD_PRN_SES)"
-                + " VALUES(?,?,?,?,?,?,?,?,?,?,?)", ftpList, ftpList.size(), (ps, o) -> {
+        template.batchUpdate("INSERT INTO E_FTP_RQT(ID_FTP_RQT,VA_HST,CD_PRT,VA_PCL,VA_SRV_VRS,VA_CLT_VRS,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)"
+                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", ftpList, ftpList.size(), (ps, o) -> {
+            var completed = o.getActions().stream().allMatch(a-> isNull(a.getException()));
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getHost());
             ps.setInt(3, o.getPort());
@@ -237,7 +237,8 @@ public class RequestDao {
             ps.setTimestamp(8, fromNullableInstant(o.getStart()));
             ps.setTimestamp(9, fromNullableInstant(o.getEnd()));
             ps.setString(10, o.getThreadName());
-            ps.setString(11, o.getCdSession());
+            ps.setBoolean(11, completed);
+            ps.setString(12, o.getCdSession());
             o.setId(inc.get());
         });
         saveFtpRequestStages(ftpList);
@@ -263,20 +264,22 @@ public class RequestDao {
         }
     }
 
-    @Transactional(rollbackFor = Exception.class)
     public void saveLdapRequests(List<NamingRequestWrapper> ldapList) {
         var inc = new AtomicLong(selectMaxId("E_LDAP_RQT", "ID_LDAP_RQT"));
 
-        template.batchUpdate("INSERT INTO E_LDAP_RQT(ID_LDAP_RQT,VA_HST,CD_PRT,VA_USR,DH_STR,DH_END,VA_THR,CD_PRN_SES)"
-                + " VALUES(?,?,?,?,?,?,?,?)", ldapList, ldapList.size(), (ps, o) -> {
+        template.batchUpdate("INSERT INTO E_LDAP_RQT(ID_LDAP_RQT,VA_HST,CD_PRT,VA_PCL,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)"
+                + " VALUES(?,?,?,?,?,?,?,?,?,?)", ldapList, ldapList.size(), (ps, o) -> {
+            var completed = o.getActions().stream().allMatch(a-> isNull(a.getException()));
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getHost());
             ps.setInt(3, o.getPort());
-            ps.setString(4, o.getUser());
-            ps.setTimestamp(5, fromNullableInstant(o.getStart()));
-            ps.setTimestamp(6, fromNullableInstant(o.getEnd()));
-            ps.setString(7, o.getThreadName());
-            ps.setString(8, o.getCdSession());
+            ps.setString(4, o.getProtocol());
+            ps.setString(5, o.getUser());
+            ps.setTimestamp(6, fromNullableInstant(o.getStart()));
+            ps.setTimestamp(7, fromNullableInstant(o.getEnd()));
+            ps.setString(8, o.getThreadName());
+            ps.setBoolean(9, completed);
+            ps.setString(10, o.getCdSession());
             o.setId(inc.get());
         });
         saveLdapRequestStages(ldapList);
@@ -301,11 +304,11 @@ public class RequestDao {
             saveExceptions(exceptions, LDAP);
         }
     }
-    @Transactional(rollbackFor = Exception.class)
+
     public void saveDatabaseRequests(List<DatabaseRequestWrapper> qryList) {
         var inc = new AtomicLong(selectMaxId("E_DTB_RQT", "ID_DTB_RQT"));
 
-        template.batchUpdate("INSERT INTO E_DTB_RQT(ID_DTB_RQT,VA_HST,CD_PRT,VA_NAM,DH_STR,DH_END,VA_USR,VA_THR,VA_DRV,VA_PRD_NAM,VA_PRD_VRS,VA_CMD,VA_CPT,CD_PRN_SES)"
+        template.batchUpdate("INSERT INTO E_DTB_RQT(ID_DTB_RQT,VA_HST,CD_PRT,VA_NAM,DH_STR,DH_END,VA_USR,VA_THR,VA_DRV,VA_PRD_NAM,VA_PRD_VRS,VA_CMD,VA_STT,CD_PRN_SES)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)", qryList, qryList.size(), (ps, o) -> {
             var completed = o.getActions().stream().allMatch(a-> isNull(a.getException()));
             ps.setLong(1, inc.incrementAndGet());
@@ -320,7 +323,7 @@ public class RequestDao {
             ps.setString(10, o.getProductName());
             ps.setString(11, o.getProductVersion());
             ps.setString(12, valueOfNullableList(o.getCommands()));
-            ps.setString(13, completed ? "T" : "F");
+            ps.setBoolean(13, completed);
             ps.setString(14, o.getCdSession());
             o.setId(inc.get());
         });
@@ -399,13 +402,11 @@ public class RequestDao {
 
     private static <T extends Enum<T>> String valueOfNullableList(List<T> enumList) {
         return ofNullable(enumList)
-                .map(list ->
-                        list.stream().filter(Objects::nonNull).map(Enum::name).collect(Collectors.joining(","))
-                )
+                .map(list -> list.stream().filter(Objects::nonNull).map(Enum::name).collect(joining(",")))
                 .orElse(null);
     }
     private static String  valueOfNullableArray(long[]array){
-        return ofNullable(array).map(arr -> LongStream.of(arr).mapToObj(Long::toString).collect(Collectors.joining(","))).orElse(null);
+        return ofNullable(array).map(arr -> LongStream.of(arr).mapToObj(Long::toString).collect(joining(","))).orElse(null);
     }
 
     private static ExceptionInfo nullableException(ExceptionInfo exp) {
