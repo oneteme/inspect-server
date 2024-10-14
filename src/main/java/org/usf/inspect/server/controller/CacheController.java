@@ -8,6 +8,7 @@ import static org.usf.inspect.core.DispatchState.DISABLE;
 
 import java.util.Collection;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -34,6 +35,9 @@ public class CacheController {
     private final RequestService service;
     private final SessionQueueService queue;
     private final RestTemplate template;
+    
+    @Value("${spring.profiles.active}")
+    private String activeProfile;
 
 	public CacheController(ObjectMapper mapper, RequestService service, SessionQueueService queue) {
 		this.service = service;
@@ -54,14 +58,17 @@ public class CacheController {
         queue.enableSave(state);
     }
 
-    @PostMapping("import")
-    public int addSession(@RequestParam(name = "host") String host) {
-    	template.patchForObject(host + "/state/"+ DISABLE, null, Void.class); //stop adding session first on remote server
-        var arr = template.getForObject(host + "/cache", ServerSession[].class); //import sessions from remote server cache
-        if(nonNull(arr) && arr.length > 0) {
-            service.addSessions(asList(arr)); //save sessions on database (local.env == remote.env)
-            return arr.length;
-        }
-        return 0;
+    @PostMapping("{env}/import")
+    public int importSession(@PathVariable String env, @RequestParam String host) {
+    	if(activeProfile.equals(env)) {
+	    	template.patchForObject(host + "/state/"+ DISABLE, null, Void.class); //stop adding session first on remote server
+	        var arr = template.getForObject(host + "/cache", ServerSession[].class); //import sessions from remote server cache
+	        if(nonNull(arr) && arr.length > 0) {
+	            service.addSessions(asList(arr)); //save sessions on database (local.env == remote.env)
+	            return arr.length;
+	        }
+	        return 0;
+    	}
+    	throw new IllegalArgumentException("mismatch env " + env);
     }
 }
