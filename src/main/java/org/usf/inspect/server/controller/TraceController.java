@@ -36,10 +36,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.usf.inspect.core.*;
-import org.usf.inspect.server.model.ServerInstanceEnvironment;
-import org.usf.inspect.server.model.ServerMainSession;
-import org.usf.inspect.server.model.ServerRestSession;
-import org.usf.inspect.server.model.ServerSession;
+import org.usf.inspect.server.model.*;
 import org.usf.inspect.server.model.filter.JqueryMainSessionFilter;
 import org.usf.inspect.server.model.filter.JqueryRequestSessionFilter;
 import org.usf.inspect.server.model.wrapper.*;
@@ -280,5 +277,10 @@ public class TraceController {
         return Optional.ofNullable(requestService.getLdapRequestStages(idLdap))
                 .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    }
+
+    @GetMapping("architecture")
+    public List<Architecture> getArchitecture(@RequestParam(required = false, name = "env") String[] environments) throws SQLException {
+        return requestService.createArchitecture();
     }
 }

@@ -39,6 +39,7 @@ public final class FieldConstant {
     public static final String VA_I_CNT_ENC = "va_i_cnt_enc";
     public static final String VA_O_CNT_ENC = "va_o_cnt_enc";
     public static final String VA_NAM = "va_nam";
+    public static final String VA_SCH = "va_sch";
     public static final String DH_STR = "dh_str";
     public static final String DH_END = "dh_end";
     public static final String VA_USR = "va_usr";

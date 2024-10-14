@@ -106,6 +106,7 @@ public class ColumnConstant {
             case HOST -> VA_HST;
             case PORT -> CD_PRT;
             case DB -> VA_NAM;
+            case SCHEMA -> VA_SCH;
             case START -> DH_STR;
             case END -> DH_END;
             case USER -> VA_USR;

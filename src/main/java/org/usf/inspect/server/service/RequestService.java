@@ -5,58 +5,7 @@ import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static org.usf.inspect.server.Utils.requireSingle;
-import static org.usf.inspect.server.config.TraceApiColumn.ACTION_COUNT;
-import static org.usf.inspect.server.config.TraceApiColumn.ADDRESS;
-import static org.usf.inspect.server.config.TraceApiColumn.API_NAME;
-import static org.usf.inspect.server.config.TraceApiColumn.APP_NAME;
-import static org.usf.inspect.server.config.TraceApiColumn.ARG;
-import static org.usf.inspect.server.config.TraceApiColumn.AUTH;
-import static org.usf.inspect.server.config.TraceApiColumn.CACHE_CONTROL;
-import static org.usf.inspect.server.config.TraceApiColumn.CLIENT_VERSION;
-import static org.usf.inspect.server.config.TraceApiColumn.COLLECTOR;
-import static org.usf.inspect.server.config.TraceApiColumn.COMMANDS;
-import static org.usf.inspect.server.config.TraceApiColumn.CONTENT_ENCODING_IN;
-import static org.usf.inspect.server.config.TraceApiColumn.CONTENT_ENCODING_OUT;
-import static org.usf.inspect.server.config.TraceApiColumn.DB;
-import static org.usf.inspect.server.config.TraceApiColumn.DB_NAME;
-import static org.usf.inspect.server.config.TraceApiColumn.DB_VERSION;
-import static org.usf.inspect.server.config.TraceApiColumn.DRIVER;
-import static org.usf.inspect.server.config.TraceApiColumn.END;
-import static org.usf.inspect.server.config.TraceApiColumn.ENVIRONEMENT;
-import static org.usf.inspect.server.config.TraceApiColumn.ERR_MSG;
-import static org.usf.inspect.server.config.TraceApiColumn.ERR_TYPE;
-import static org.usf.inspect.server.config.TraceApiColumn.FROM;
-import static org.usf.inspect.server.config.TraceApiColumn.HOST;
-import static org.usf.inspect.server.config.TraceApiColumn.ID;
-import static org.usf.inspect.server.config.TraceApiColumn.INSTANCE_ENV;
-import static org.usf.inspect.server.config.TraceApiColumn.LOCATION;
-import static org.usf.inspect.server.config.TraceApiColumn.MASK;
-import static org.usf.inspect.server.config.TraceApiColumn.MEDIA;
-import static org.usf.inspect.server.config.TraceApiColumn.METHOD;
-import static org.usf.inspect.server.config.TraceApiColumn.NAME;
-import static org.usf.inspect.server.config.TraceApiColumn.ORDER;
-import static org.usf.inspect.server.config.TraceApiColumn.OS;
-import static org.usf.inspect.server.config.TraceApiColumn.PARENT;
-import static org.usf.inspect.server.config.TraceApiColumn.PATH;
-import static org.usf.inspect.server.config.TraceApiColumn.PORT;
-import static org.usf.inspect.server.config.TraceApiColumn.PROTOCOL;
-import static org.usf.inspect.server.config.TraceApiColumn.QUERY;
-import static org.usf.inspect.server.config.TraceApiColumn.RE;
-import static org.usf.inspect.server.config.TraceApiColumn.RECIPIENTS;
-import static org.usf.inspect.server.config.TraceApiColumn.REMOTE;
-import static org.usf.inspect.server.config.TraceApiColumn.REPLY_TO;
-import static org.usf.inspect.server.config.TraceApiColumn.SERVER_VERSION;
-import static org.usf.inspect.server.config.TraceApiColumn.SIZE;
-import static org.usf.inspect.server.config.TraceApiColumn.SIZE_IN;
-import static org.usf.inspect.server.config.TraceApiColumn.SIZE_OUT;
-import static org.usf.inspect.server.config.TraceApiColumn.START;
-import static org.usf.inspect.server.config.TraceApiColumn.STATUS;
-import static org.usf.inspect.server.config.TraceApiColumn.SUBJECT;
-import static org.usf.inspect.server.config.TraceApiColumn.THREAD;
-import static org.usf.inspect.server.config.TraceApiColumn.TYPE;
-import static org.usf.inspect.server.config.TraceApiColumn.USER;
-import static org.usf.inspect.server.config.TraceApiColumn.USER_AGT;
-import static org.usf.inspect.server.config.TraceApiColumn.VERSION;
+import static org.usf.inspect.server.config.TraceApiColumn.*;
 import static org.usf.inspect.server.config.TraceApiTable.DATABASE_REQUEST;
 import static org.usf.inspect.server.config.TraceApiTable.DATABASE_STAGE;
 import static org.usf.inspect.server.config.TraceApiTable.EXCEPTION;
@@ -72,19 +21,14 @@ import static org.usf.inspect.server.config.TraceApiTable.REST_SESSION;
 import static org.usf.inspect.server.config.TraceApiTable.SMTP_MAIL;
 import static org.usf.inspect.server.config.TraceApiTable.SMTP_REQUEST;
 import static org.usf.inspect.server.config.TraceApiTable.SMTP_STAGE;
-import static org.usf.inspect.server.config.constant.JoinConstant.EXCEPTION_JOIN;
+import static org.usf.inspect.server.config.constant.JoinConstant.*;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.sql.DataSource;
@@ -108,11 +52,7 @@ import org.usf.inspect.jdbc.SqlCommand;
 import org.usf.inspect.server.config.TraceApiColumn;
 import org.usf.inspect.server.config.TraceApiTable;
 import org.usf.inspect.server.dao.RequestDao;
-import org.usf.inspect.server.model.Exchange;
-import org.usf.inspect.server.model.ServerInstanceEnvironment;
-import org.usf.inspect.server.model.ServerMainSession;
-import org.usf.inspect.server.model.ServerRestSession;
-import org.usf.inspect.server.model.ServerSession;
+import org.usf.inspect.server.model.*;
 import org.usf.inspect.server.model.filter.JqueryMainSessionFilter;
 import org.usf.inspect.server.model.filter.JqueryRequestSessionFilter;
 import org.usf.inspect.server.model.wrapper.DatabaseRequestWrapper;
@@ -121,6 +61,7 @@ import org.usf.inspect.server.model.wrapper.LocalRequestWrapper;
 import org.usf.inspect.server.model.wrapper.MailRequestWrapper;
 import org.usf.inspect.server.model.wrapper.NamingRequestWrapper;
 import org.usf.inspect.server.model.wrapper.RestRequestWrapper;
+import org.usf.jquery.core.DBColumn;
 import org.usf.jquery.core.DBFilter;
 import org.usf.jquery.core.NamedColumn;
 import org.usf.jquery.core.QueryBuilder;
@@ -177,6 +118,28 @@ public class RequestService {
                     }
                 })
         );
+    }
+
+    public List<Architecture> createArchitecture() throws SQLException {
+        var v = new QueryBuilder()
+                .columns(getColumns(INSTANCE, APP_NAME))
+                .columns(getColumns(DATABASE_REQUEST, DB, SCHEMA))
+                .columns(DBColumn.constant("JDBC").as("type"))
+                .distinct()
+                .joins(REST_SESSION.join(DATABASE_REQUEST_JOIN).build())
+                .joins(REST_SESSION.join(INSTANCE_JOIN).build())
+                .filters(DATABASE_REQUEST.column(DB).notNull().or(DATABASE_REQUEST.column(SCHEMA).notNull()));
+        return v.build().execute(ds, rs -> {
+            Map<String, List<Architecture>> map = new HashMap<>();
+            while(rs.next()) {
+                var key = rs.getString(APP_NAME.reference());
+                if(!map.containsKey(key)) {
+                    map.put(key, new ArrayList<>());
+                }
+                map.get(key).add(new Architecture(rs.getString(DB.reference()), rs.getString(SCHEMA.reference()), rs.getString("type"), null));
+            }
+            return map.entrySet().stream().map(entry -> new Architecture(entry.getKey(), null, null, entry.getValue())).toList();
+        });
     }
 
     public Map<String,String> getSessionParent(String childId) throws SQLException{

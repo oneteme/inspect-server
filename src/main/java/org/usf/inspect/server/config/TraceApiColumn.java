@@ -55,6 +55,7 @@ public enum TraceApiColumn implements ColumnDecorator {
     ERR_TYPE("errorType"),
     ERR_MSG("errorMessage"),
     DB("db"),
+    SCHEMA("schema"),
     DRIVER("driver"),
     DB_NAME("dbName"),
     DB_VERSION("dbVersion"),
