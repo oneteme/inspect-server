@@ -41,7 +41,7 @@ public class SessionQueueService {
     }
     
     @PreDestroy
-    void destroy() throws InterruptedException {
+    void destroy() {
 		dispatcher.complete();
 	}
 }
