@@ -143,8 +143,8 @@ public class RequestService {
 
     @TraceableStage
     @Transactional(rollbackFor = Throwable.class)
-    public void addSessions(List<ServerSession> sessions) {
-        dao.saveSessions(sessions);
+    public long addSessions(List<ServerSession> sessions) {
+        return dao.saveSessions(sessions);
     }
 
     public Session getMainTree(String id) throws SQLException {
