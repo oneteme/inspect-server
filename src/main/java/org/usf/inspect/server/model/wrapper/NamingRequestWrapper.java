@@ -13,7 +13,8 @@ import org.usf.inspect.core.NamingRequest;
 public class NamingRequestWrapper extends  NamingRequest {
 
     private long id;
-    private boolean completed;
+    private boolean status;
+
     private final String cdSession;
     @JsonIgnore
     @Delegate

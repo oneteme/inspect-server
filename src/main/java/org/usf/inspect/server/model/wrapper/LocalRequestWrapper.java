@@ -12,6 +12,8 @@ import lombok.experimental.Delegate;
 public class LocalRequestWrapper extends LocalRequest {
 
     private long id;
+    private boolean status;
+
     private final String cdSession;
     @JsonIgnore
     @Delegate

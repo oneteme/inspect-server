@@ -1,12 +1,20 @@
 package org.usf.inspect.server.controller;
 
 import static java.util.Objects.isNull;
+import static java.util.concurrent.TimeUnit.DAYS;
+import static org.springframework.http.CacheControl.maxAge;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 import static org.springframework.http.ResponseEntity.accepted;
+import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.http.ResponseEntity.status;
+import static org.usf.inspect.core.InstanceType.CLIENT;
 import static org.usf.inspect.core.Session.nextId;
+import static org.usf.jquery.core.Utils.isBlank;
+import static org.usf.jquery.core.Utils.isEmpty;
 
 import java.sql.SQLException;
 import java.time.Instant;
@@ -44,50 +52,60 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @CrossOrigin
-@RequiredArgsConstructor
 @RestController
 @RequestMapping(value = "v3/trace", produces = APPLICATION_JSON_VALUE)
+@RequiredArgsConstructor
 public class TraceController {
 
-    private final  RequestService   requestService;
+    private final RequestService requestService;
     private final SessionQueueService queueService;
-
+    
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<String> addInstanceEnvironment(HttpServletRequest hsr, @RequestBody ServerInstanceEnvironment instance) {
-        if(instance.getType() == InstanceType.CLIENT) {
+    	if(isNull(instance) || isBlank(instance.getName())) {
+    		return status(BAD_REQUEST).build();
+    	}
+        if(instance.getType() == CLIENT) {
             instance = instance.withAddress(hsr.getRemoteAddr());
         }
         instance.setId(nextId());
         try {
             requestService.addInstance(instance);
-            return accepted().body(instance.getId());
+            return ok(instance.getId());
         } catch(Exception e) {
-            return status(SERVICE_UNAVAILABLE).build();
+        	log.error("trace instance", e);
+    		return status(INTERNAL_SERVER_ERROR).build();
         }
     }
 
     @GetMapping("instance/{id}")
     public ResponseEntity<ServerInstanceEnvironment> getInstance(@PathVariable String id) throws SQLException {
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getInstance(id));
+        return ok().cacheControl(maxAge(1, DAYS)).body(requestService.getInstance(id));
     }
 
     @PutMapping("instance/{id}/session")
-    public ResponseEntity<Void> addSessions(@PathVariable String id,
-                                            @RequestBody ServerSession[] sessions) {
-        for(ServerSession s : sessions) {
-            if(isNull(s.getId())) {
-                if(s instanceof ServerMainSession) {
-                    s.setId(nextId()); // safe id set for web collectors
-                }
-                else if(s instanceof ServerRestSession) {
-                    log.warn("ApiSesstion id is null : {}", s);
-                }
-            }
-            s.setInstanceId(id);
-        }
-        return queueService.add(sessions)
-                ? accepted().build()
-                : status(SERVICE_UNAVAILABLE).build();
+    public ResponseEntity<Void> addSessions(@PathVariable String id, @RequestBody ServerSession[] sessions) {
+    	if(isEmpty(sessions)) {
+    		return status(BAD_REQUEST).build();
+    	}
+    	try {
+	        for(ServerSession s : sessions) {
+	            s.setInstanceId(id);
+	            if(isNull(s.getId())) {
+	                if(s instanceof ServerMainSession) {
+	                    s.setId(nextId()); // safe id set for web collectors
+	                }
+	                else if(s instanceof ServerRestSession) {
+	                    log.warn("RestSesstion.id is null : {}", s);
+	                }
+	            }
+	        }
+	        return (queueService.addSessions(sessions) ? accepted() : status(SERVICE_UNAVAILABLE)).build();
+    	}
+    	catch (Exception e) {
+        	log.error("trace session", e);
+    		return status(INTERNAL_SERVER_ERROR).build();
+    	}
     }
 
     @GetMapping("session/rest")
