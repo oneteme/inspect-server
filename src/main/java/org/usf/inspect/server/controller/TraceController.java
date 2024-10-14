@@ -4,11 +4,11 @@ import static java.util.Objects.isNull;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static org.springframework.http.CacheControl.maxAge;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 import static org.springframework.http.ResponseEntity.accepted;
+import static org.springframework.http.ResponseEntity.internalServerError;
 import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.http.ResponseEntity.status;
 import static org.usf.inspect.core.InstanceType.CLIENT;
@@ -74,7 +74,7 @@ public class TraceController {
             return ok(instance.getId());
         } catch(Exception e) {
         	log.error("trace instance", e);
-    		return status(INTERNAL_SERVER_ERROR).build();
+    		return internalServerError().build();
         }
     }
 
@@ -104,7 +104,7 @@ public class TraceController {
     	}
     	catch (Exception e) {
         	log.error("trace session", e);
-    		return status(INTERNAL_SERVER_ERROR).build();
+    		return internalServerError().build();
     	}
     }
 

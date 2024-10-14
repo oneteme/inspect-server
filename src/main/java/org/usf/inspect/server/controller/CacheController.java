@@ -1,15 +1,20 @@
 package org.usf.inspect.server.controller;
 
+import static java.lang.Thread.currentThread;
 import static java.util.Arrays.asList;
 import static java.util.Objects.nonNull;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
+import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.springframework.http.ResponseEntity.ok;
+import static org.springframework.http.ResponseEntity.status;
 import static org.usf.inspect.core.DispatchState.DISABLE;
 
 import java.util.Collection;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -57,8 +62,15 @@ public class CacheController {
     }
 
     @PatchMapping("state/{state}")
-    public void updateState(@PathVariable DispatchState state){
-        queue.enableSave(state);
+    public ResponseEntity<Void> updateState(@PathVariable DispatchState state){
+    	try {
+    		queue.enableSave(state);
+    		return ok().build();
+    	}
+    	catch (InterruptedException e) {
+    		currentThread().interrupt();
+    		return status(SERVICE_UNAVAILABLE).build();
+    	}
     }
 
     @PostMapping("{env}/import")
