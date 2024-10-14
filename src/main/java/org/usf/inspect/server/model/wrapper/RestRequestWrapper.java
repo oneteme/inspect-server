@@ -8,10 +8,11 @@ import org.usf.inspect.core.RestRequest;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;
+import org.usf.inspect.server.model.Exchange;
 
 @Getter
 @Setter
-public class RestRequestWrapper {
+public class RestRequestWrapper extends Exchange {
 
     private long idRequest;
     private final String cdSession;

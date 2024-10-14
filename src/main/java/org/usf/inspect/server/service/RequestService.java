@@ -1,5 +1,5 @@
 package org.usf.inspect.server.service;
-
+import static org.usf.inspect.server.RequestType.*;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
@@ -78,32 +78,14 @@ import static org.usf.inspect.server.config.constant.JoinConstant.EXCEPTION_JOIN
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import javax.sql.DataSource;
 
 import org.springframework.stereotype.Service;
-import org.usf.inspect.core.DatabaseRequestStage;
-import org.usf.inspect.core.ExceptionInfo;
-import org.usf.inspect.core.FtpRequest;
-import org.usf.inspect.core.FtpRequestStage;
-import org.usf.inspect.core.InstanceType;
-import org.usf.inspect.core.Mail;
-import org.usf.inspect.core.MailRequest;
-import org.usf.inspect.core.MailRequestStage;
-import org.usf.inspect.core.NamingRequest;
-import org.usf.inspect.core.NamingRequestStage;
-import org.usf.inspect.core.RestRequest;
-import org.usf.inspect.core.RestSession;
-import org.usf.inspect.core.Session;
+import org.usf.inspect.core.*;
 import org.usf.inspect.jdbc.SqlCommand;
 import org.usf.inspect.server.config.TraceApiColumn;
 import org.usf.inspect.server.config.TraceApiTable;
@@ -171,7 +153,7 @@ public class RequestService {
                                 .findFirst();
                         if (opt.isPresent()) {
                             var ex = (Exchange) opt.get();
-                            ex.setRemoteTrace((RestSession) prntA);
+                             ex.setRemoteTrace((RestSession) prntA);
                         }
                     }
                 })
@@ -232,12 +214,11 @@ public class RequestService {
         if (!sessions.isEmpty()) {
             var reqMap = sessions.stream().collect(toMap(Session::getId, identity()));
             var parentIds = reqMap.keySet().stream().toList();
-            getRestRequests(parentIds, Exchange::new).forEach(r -> reqMap.get(r.getCdSession()).append(r.getRequest()));
-            getLocalRequests(parentIds).forEach(r -> reqMap.get(r.getCdSession()).append(r.getStage()));
-            getDatabaseRequests(parentIds).forEach(q -> reqMap.get(q.getCdSession()).append(q.getDatabaseRequest()));
-            getFtpRequests(parentIds).forEach(q -> reqMap.get(q.getCdSession()).append(q.getFtpRequest()));
-            getSmtpRequests(parentIds).forEach(q -> reqMap.get(q.getCdSession()).append(q.getSmtpRequest()));
-            getLdapRequests(parentIds).forEach(q -> reqMap.get(q.getCdSession()).append(q.getLdapRequest()));
+            getRestRequests(parentIds, Exchange::new).forEach(r -> reqMap.get(r.getCdSession()).append(r));
+            getDatabaseRequests(parentIds).forEach(q -> reqMap.get(q.getCdSession()).append(q));
+            getFtpRequests(parentIds).forEach(q -> reqMap.get(q.getCdSession()).append(q));
+            getSmtpRequests(parentIds).forEach(q -> reqMap.get(q.getCdSession()).append(q));
+            getLdapRequests(parentIds).forEach(q -> reqMap.get(q.getCdSession()).append(q));
         }
         return sessions;
     }
@@ -291,7 +272,7 @@ public class RequestService {
                             PROTOCOL, HOST, PORT, PATH, QUERY, MEDIA, AUTH, STATUS, SIZE_IN, SIZE_OUT, CONTENT_ENCODING_IN, CONTENT_ENCODING_OUT,
                             START, END, THREAD, ERR_TYPE, ERR_MSG, MASK, USER, USER_AGT, CACHE_CONTROL, INSTANCE_ENV
                     ))
-                .columns(getColumns(INSTANCE, APP_NAME))
+                .columns(getColumns(INSTANCE, APP_NAME, OS, RE, ADDRESS))
                 .filters(REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
         if(jsf != null) {
             v.filters(jsf.filters(REST_SESSION).toArray(DBFilter[]::new));
@@ -325,10 +306,16 @@ public class RequestService {
                 session.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
                 session.setAppName(rs.getString(APP_NAME.reference()));
                 session.setCacheControl(rs.getString(CACHE_CONTROL.reference()));
+                session.setOs(rs.getString(OS.reference()));
+                session.setRe(rs.getString(RE.reference()));
+                session.setAddress(rs.getString(ADDRESS.reference()));
                 session.setMask(rs.getInt(MASK.reference()));
                 session.setRestRequests(new ArrayList<>());
                 session.setLocalRequests(new ArrayList<>());
                 session.setDatabaseRequests(new ArrayList<>());
+                session.setFtpRequests(new ArrayList<>());
+                session.setMailRequests(new ArrayList<>());
+                session.setLdapRequests(new ArrayList<>());
                 sessions.add(session);
             }
             return sessions;
@@ -340,11 +327,11 @@ public class RequestService {
         Session session = requireSingle(getMainSessions(jsf));
         if (session != null) {
             getRestRequests(session.getId(), Exchange::new).forEach(r -> session.append(r.getRequest()));
-            getLocalRequests(session.getId()).forEach(r -> session.append(r.getStage()));
-            getDatabaseRequests(session.getId()).forEach(d -> session.append(d.getDatabaseRequest()));
+            getLocalRequests(session.getId()).forEach(session::append);
+            getDatabaseRequests(session.getId()).forEach(session::append);
             getFtpRequests(session.getId()).forEach(q -> session.append(q.getFtpRequest()));
             getSmtpRequests(session.getId()).forEach(q -> session.append(q.getSmtpRequest()));
-            getLdapRequests(session.getId()).forEach(q -> session.append(q.getLdapRequest()));
+            getLdapRequests(session.getId()).forEach(session::append);
         }
         return session;
     }
@@ -432,7 +419,7 @@ public class RequestService {
     private List<RestRequestWrapper> getRestRequests(List<String> cdSessions, Supplier<? extends RestRequest> fn) throws SQLException { //use criteria
         var v = new QueryBuilder()
                 .columns(getColumns(
-                        REST_REQUEST, ID, PROTOCOL, HOST, PORT, PATH, QUERY, METHOD, STATUS, SIZE_IN,
+                        REST_REQUEST, ID, PROTOCOL, AUTH, HOST, PORT, PATH, QUERY, METHOD, STATUS, SIZE_IN,
                         SIZE_OUT, CONTENT_ENCODING_IN, CONTENT_ENCODING_OUT, START, END, THREAD, REMOTE, PARENT
                 ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
@@ -460,10 +447,28 @@ public class RequestService {
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setThreadName(rs.getString(THREAD.reference()));
+                out.setAuthScheme(rs.getString(AUTH.reference()));
                 out.setException(new ExceptionInfo(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 outs.add(out);
             }
             return outs;
+        });
+    }
+
+    public Map<Long, ExceptionInfo> getRestRequestExceptions(Long[] ids) throws SQLException{
+        return this.getSubRequestExceptions(EXCEPTION.column(PARENT).in(ids).and(EXCEPTION.column(TYPE).eq(REST.name())));
+    }
+
+    public Map<Long, ExceptionInfo> getSubRequestExceptions(DBFilter filter) throws SQLException{
+        var v = new QueryBuilder()
+                .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG, PARENT))
+                .filters(filter);
+        return v.build().execute(ds, rs -> {
+            Map<Long,ExceptionInfo> actionsMap= new HashMap<>();
+            while (rs.next()) {
+                actionsMap.put(rs.getLong(PARENT.reference()),new ExceptionInfo(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+            }
+            return actionsMap;
         });
     }
 
@@ -544,6 +549,30 @@ public class RequestService {
             return outs;
         });
     }
+    public Map<Long,Integer>  getDatabaseRequestStageRowCount(Long[] ids) throws SQLException {
+        return getDatabaseRequestStageRowCount(DATABASE_STAGE.column(PARENT).in(ids));
+    }
+
+    public Map<Long, Integer> getDatabaseRequestStageRowCount(DBFilter filter) throws SQLException{
+        var v = new QueryBuilder()
+                .columns(
+                        getColumns(
+                                DATABASE_STAGE, ACTION_COUNT, PARENT
+                        ))
+                .filters(filter);
+        return v.build().execute(ds, rs -> {
+            Map<Long,Integer> actionsMap= new HashMap<>();
+            while (rs.next()) {
+                actionsMap.put(rs.getLong(PARENT.reference()), rs.getInt(ACTION_COUNT.reference()));
+            }
+            return actionsMap;
+        });
+    }
+
+    public Map<Long, ExceptionInfo> getDatabaseRequestExceptions(Long[] ids) throws SQLException{
+        return this.getSubRequestExceptions(EXCEPTION.column(PARENT).in(ids).and(EXCEPTION.column(TYPE).eq(JDBC.name())));
+    }
+
 
     public List<DatabaseRequestStage> getDatabaseRequestStages(Long id) throws SQLException {
         var v = new QueryBuilder()
@@ -596,7 +625,7 @@ public class RequestService {
         return v.build().execute(ds, rs -> {
             List<FtpRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
-                FtpRequestWrapper out = new FtpRequestWrapper(rs.getString(PARENT.reference()), new FtpRequest());
+                FtpRequestWrapper out = new FtpRequestWrapper(rs.getString(PARENT.reference()));
                 out.setId(rs.getLong(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setPort(rs.getInt(PORT.reference()));
@@ -614,6 +643,33 @@ public class RequestService {
             return outs;
         });
     }
+    public Map<Long, List<String>> getFtpRequestStages(Long[] ids ) throws SQLException{
+        return getFtpRequestStages(FTP_STAGE.column(PARENT).in(ids));
+    }
+
+    public Map<Long, List<String>> getFtpRequestStages(DBFilter filter) throws  SQLException {
+        var v = new QueryBuilder()
+                .columns(
+                        getColumns(
+                                FTP_STAGE, NAME, PARENT
+                        ))
+                .filters(filter.and(FTP_STAGE.column(NAME).notIn("CONNECTION","DISCONNECTION")));
+        return v.build().execute(ds, rs -> {
+            Map<Long,List<String>> actionsMap= new HashMap<>();
+            while (rs.next()) {
+                if(!actionsMap.containsKey(rs.getLong(PARENT.reference()))){
+                    actionsMap.put(rs.getLong(PARENT.reference()), new ArrayList<>());
+                }
+                actionsMap.get(rs.getLong(PARENT.reference())).add(rs.getString(NAME.reference()));
+            }
+            return actionsMap;
+        });
+    }
+
+    public Map<Long, ExceptionInfo> getFtpRequestExceptions(Long[] ids) throws SQLException{
+        return this.getSubRequestExceptions(EXCEPTION.column(PARENT).in(ids).and(EXCEPTION.column(TYPE).eq(FTP.name())));
+    }
+
 
     public List<FtpRequestStage> getFtpRequestStages(long id) throws SQLException {
         var v = new QueryBuilder()
@@ -704,6 +760,51 @@ public class RequestService {
         });
     }
 
+    public Map<Long, List<String >> getSmtpRequestStages(Long[] ids) throws SQLException{
+        return this.getSmtpRequestStages(SMTP_STAGE.column(PARENT).in(ids));
+    }
+
+    public Map<Long, List<String>>  getSmtpRequestStages( DBFilter filter) throws SQLException{
+        var v = new QueryBuilder()
+                .columns(
+                        getColumns(SMTP_STAGE, NAME, PARENT)
+                )
+                .filters(filter.and(SMTP_STAGE.column(NAME).notIn("CONNECTION","DISCONNECTION")));
+        return v.build().execute(ds, rs -> {
+            Map<Long,List<String>> actionsMap= new HashMap<>();
+            while (rs.next()) {
+                if(!actionsMap.containsKey(rs.getLong(PARENT.reference()))){
+                    actionsMap.put(rs.getLong(PARENT.reference()), new ArrayList<>());
+                }
+                actionsMap.get(rs.getLong(PARENT.reference())).add(rs.getString(NAME.reference()));
+            }
+            return actionsMap;
+        });
+    }
+
+    public Map<Long, Integer> getSmtpRequestStageRowCount( Long[] ids) throws SQLException{
+        return this.getSmtpRequestStageRowCount(SMTP_MAIL.column(PARENT).in(ids));
+    }
+
+    public Map<Long, Integer> getSmtpRequestStageRowCount( DBFilter filter) throws SQLException{
+        var v = new QueryBuilder()
+                .columns(SMTP_MAIL.column(PARENT).count().as("count"))
+                .columns(SMTP_MAIL.column(PARENT))
+                .filters(filter);
+        return v.build().execute(ds, rs -> {
+            Map<Long,Integer> actionsMap= new HashMap<>();
+            while (rs.next()) {
+                actionsMap.put(rs.getLong(PARENT.reference()), rs.getInt("count"));
+            }
+            return actionsMap;
+        });
+    }
+
+    public Map<Long, ExceptionInfo> getSmtpRequestExceptions(Long[] ids) throws SQLException{
+        return this.getSubRequestExceptions(EXCEPTION.column(PARENT).in(ids).and(EXCEPTION.column(TYPE).eq(SMTP.name())));
+    }
+
+
     public List<Mail> getSmtpRequestMails(long id) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
@@ -791,6 +892,34 @@ public class RequestService {
             return actions;
         });
     }
+
+    public Map<Long, List<String>> getLdapRequestStages(Long[] ids ) throws SQLException{
+        return getLdapRequestStages(LDAP_STAGE.column(PARENT).in(ids));
+    }
+
+    public Map<Long, List<String>> getLdapRequestStages(DBFilter filter) throws SQLException {
+        var v = new QueryBuilder()
+                .columns(
+                        getColumns(
+                                LDAP_STAGE, NAME, PARENT
+                        ))
+                .filters(filter.and(LDAP_STAGE.column(NAME).notIn("CONNECTION","DISCONNECTION")));
+        return v.build().execute(ds, rs -> {
+            Map<Long,List<String>> actionsMap= new HashMap<>();
+            while (rs.next()) {
+                if(!actionsMap.containsKey(rs.getLong(PARENT.reference()))){
+                    actionsMap.put(rs.getLong(PARENT.reference()), new ArrayList<>());
+                }
+                actionsMap.get(rs.getLong(PARENT.reference())).add(rs.getString(NAME.reference()));
+            }
+            return actionsMap;
+        });
+    }
+
+    public Map<Long, ExceptionInfo> getLdapRequestExceptions(Long[] ids) throws SQLException{
+        return this.getSubRequestExceptions(EXCEPTION.column(PARENT).in(ids).and(EXCEPTION.column(TYPE).eq(LDAP.name())));
+    }
+
 
     private String getPropertyByFilters(TraceApiTable table, TraceApiColumn target, DBFilter filters) throws SQLException { // main / apissesion
         var v = new QueryBuilder().columns(getColumns(table,target)).filters(filters);

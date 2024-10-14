@@ -10,7 +10,7 @@ import org.usf.inspect.core.NamingRequest;
 @Getter
 @Setter
 @RequiredArgsConstructor
-public class NamingRequestWrapper {
+public class NamingRequestWrapper extends  NamingRequest {
 
     private long id;
     private boolean completed;
