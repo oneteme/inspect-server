@@ -27,6 +27,9 @@ import org.usf.inspect.server.service.SessionQueueService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @CrossOrigin
 @RestController
 @RequestMapping(value = "cache", produces = APPLICATION_JSON_VALUE)
@@ -64,7 +67,10 @@ public class CacheController {
 	    	template.patchForObject(host + "/state/"+ DISABLE, null, Void.class); //stop adding session first on remote server
 	        var arr = template.getForObject(host + "/cache", ServerSession[].class); //import sessions from remote server cache
 	        if(nonNull(arr) && arr.length > 0) {
-	            service.addSessions(asList(arr)); //save sessions on database (local.env == remote.env)
+	            var cnt = service.addSessions(asList(arr)); //save sessions on database (local.env == remote.env)
+	            if(cnt != arr.length) {
+	            	log.warn("{} sessions was imported, but {} sessions was saved");
+	            }
 	            return arr.length;
 	        }
 	        return 0;
