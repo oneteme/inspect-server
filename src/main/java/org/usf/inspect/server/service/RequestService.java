@@ -1,5 +1,6 @@
 package org.usf.inspect.server.service;
 
+import static java.sql.Timestamp.from;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
@@ -122,7 +123,7 @@ public class RequestService {
         );
     }
 
-    public List<Architecture> createArchitecture() throws SQLException {
+    public List<Architecture> createArchitecture(Instant start, Instant end, String[] env) throws SQLException {
         var v = new QueryBuilder()
                 .columns(getColumns(INSTANCE, APP_NAME))
                 .columns(getColumns(DATABASE_REQUEST, DB, SCHEMA))
@@ -130,7 +131,10 @@ public class RequestService {
                 .distinct()
                 .joins(REST_SESSION.join(DATABASE_REQUEST_JOIN).build())
                 .joins(REST_SESSION.join(INSTANCE_JOIN).build())
-                .filters(DATABASE_REQUEST.column(DB).notNull().or(DATABASE_REQUEST.column(SCHEMA).notNull()));
+                .filters(DATABASE_REQUEST.column(DB).notNull().or(DATABASE_REQUEST.column(SCHEMA).notNull()))
+                .filters(REST_SESSION.column(START).ge(from(start)))
+                .filters(REST_SESSION.column(END).lt(from(end)))
+                .filters(INSTANCE.column(ENVIRONEMENT).in(env));
         return v.build().execute(ds, rs -> {
             Map<String, List<Architecture>> map = new HashMap<>();
             while(rs.next()) {

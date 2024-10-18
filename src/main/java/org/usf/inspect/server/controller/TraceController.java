@@ -280,7 +280,11 @@ public class TraceController {
     }
 
     @GetMapping("architecture")
-    public List<Architecture> getArchitecture(@RequestParam(required = false, name = "env") String[] environments) throws SQLException {
-        return requestService.createArchitecture();
+    public List<Architecture> getArchitecture(
+            @RequestParam(required = false, name = "start") Instant start,
+            @RequestParam(required = false, name = "end") Instant end,
+            @RequestParam(required = false, name = "env") String[] environments
+    ) throws SQLException {
+        return requestService.createArchitecture(start, end, environments);
     }
 }
