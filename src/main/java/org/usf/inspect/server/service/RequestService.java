@@ -116,12 +116,7 @@ import org.usf.inspect.server.model.ServerRestSession;
 import org.usf.inspect.server.model.ServerSession;
 import org.usf.inspect.server.model.filter.JqueryMainSessionFilter;
 import org.usf.inspect.server.model.filter.JqueryRequestSessionFilter;
-import org.usf.inspect.server.model.wrapper.DatabaseRequestWrapper;
-import org.usf.inspect.server.model.wrapper.FtpRequestWrapper;
-import org.usf.inspect.server.model.wrapper.LocalRequestWrapper;
-import org.usf.inspect.server.model.wrapper.MailRequestWrapper;
-import org.usf.inspect.server.model.wrapper.NamingRequestWrapper;
-import org.usf.inspect.server.model.wrapper.RestRequestWrapper;
+import org.usf.inspect.server.model.wrapper.*;
 import org.usf.jquery.core.DBFilter;
 import org.usf.jquery.core.NamedColumn;
 import org.usf.jquery.core.QueryBuilder;
@@ -332,6 +327,9 @@ public class RequestService {
                 session.setRestRequests(new ArrayList<>());
                 session.setLocalRequests(new ArrayList<>());
                 session.setDatabaseRequests(new ArrayList<>());
+                session.setFtpRequests(new ArrayList<>());
+                session.setMailRequests(new ArrayList<>());
+                session.setLdapRequests(new ArrayList<>());
                 sessions.add(session);
             }
             return sessions;
@@ -421,6 +419,9 @@ public class RequestService {
                 main.setRestRequests(new ArrayList<>());
                 main.setLocalRequests(new ArrayList<>());
                 main.setDatabaseRequests(new ArrayList<>());
+                main.setFtpRequests(new ArrayList<>());
+                main.setMailRequests(new ArrayList<>());
+                main.setLdapRequests(new ArrayList<>());
                 main.setMask(rs.getInt(MASK.reference()));
                 sessions.add(main);
             }
@@ -542,7 +543,7 @@ public class RequestService {
         });
     }
 
-    public List<DatabaseRequestStage> getDatabaseRequestStages(Long id) throws SQLException {
+    public List<DatabaseRequestStageWrapper> getDatabaseRequestStages(Long id) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
                         getColumns(
@@ -553,14 +554,15 @@ public class RequestService {
                 .filters(DATABASE_STAGE.column(PARENT).eq(id))
                 .orders(DATABASE_STAGE.column(START).order());
         return v.build().execute(ds, rs -> {
-            List<DatabaseRequestStage> actions = new ArrayList<>();
+            List<DatabaseRequestStageWrapper> actions = new ArrayList<>();
             while (rs.next()) {
-                var action = new DatabaseRequestStage();
+                var action = new DatabaseRequestStageWrapper(new DatabaseRequestStage());
                 action.setName(rs.getString(NAME.reference()));
                 action.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 action.setCount(ofNullable(rs.getString(ACTION_COUNT.reference())).map(str -> Arrays.stream(str.split(",")).mapToLong(Long::parseLong).toArray()).orElse(null));
                 action.setException(new ExceptionInfo(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+                action.setOrder(rs.getInt(ORDER.reference()));
                 actions.add(action);
             }
             return actions;
@@ -610,7 +612,7 @@ public class RequestService {
         });
     }
 
-    public List<FtpRequestStage> getFtpRequestStages(long id) throws SQLException {
+    public List<FtpRequestStageWrapper> getFtpRequestStages(long id) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(
@@ -621,14 +623,15 @@ public class RequestService {
                 .filters(FTP_STAGE.column(PARENT).eq(id))
                 .orders(FTP_STAGE.column(ORDER).order());
         return v.build().execute(ds, rs -> {
-            List<FtpRequestStage> actions = new ArrayList<>();
+            List<FtpRequestStageWrapper> actions = new ArrayList<>();
             while (rs.next()) {
-                var action = new FtpRequestStage();
+                var action = new FtpRequestStageWrapper(new FtpRequestStage());
                 action.setName(rs.getString(NAME.reference()));
                 action.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 action.setArgs(ofNullable(rs.getString(ARG.reference())).map(str -> Arrays.stream(str.split(",")).toArray(String[]::new)).orElse(null));
                 action.setException(new ExceptionInfo(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+                action.setOrder(rs.getInt(ORDER.reference()));
                 actions.add(action);
             }
             return actions;
@@ -674,7 +677,7 @@ public class RequestService {
         });
     }
 
-    public List<MailRequestStage> getSmtpRequestStages(long id) throws SQLException {
+    public List<MailRequestStageWrapper> getSmtpRequestStages(long id) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(SMTP_STAGE, NAME, START, END, ORDER, PARENT)
@@ -684,13 +687,14 @@ public class RequestService {
                 .filters(SMTP_STAGE.column(PARENT).eq(id))
                 .orders(SMTP_STAGE.column(ORDER).order());
         return v.build().execute(ds, rs -> {
-            List<MailRequestStage> actions = new ArrayList<>();
+            List<MailRequestStageWrapper> actions = new ArrayList<>();
             while (rs.next()) {
-                var action = new MailRequestStage();
+                var action = new MailRequestStageWrapper(new MailRequestStage());
                 action.setName(rs.getString(NAME.reference()));
                 action.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 action.setException(new ExceptionInfo(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+                action.setOrder(rs.getInt(ORDER.reference()));
                 actions.add(action);
             }
             return actions;
@@ -759,7 +763,7 @@ public class RequestService {
         });
     }
 
-    public List<NamingRequestStage> getLdapRequestStages(Long id) throws SQLException {
+    public List<NamingRequestStageWrapper> getLdapRequestStages(Long id) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(
@@ -770,13 +774,14 @@ public class RequestService {
                 .filters(LDAP_STAGE.column(PARENT).eq(id))
                 .orders(LDAP_STAGE.column(ORDER).order());
         return v.build().execute(ds, rs -> {
-            List<NamingRequestStage> actions = new ArrayList<>();
+            List<NamingRequestStageWrapper> actions = new ArrayList<>();
             while (rs.next()) {
-                var action = new NamingRequestStage();
+                var action = new NamingRequestStageWrapper(new NamingRequestStage());
                 action.setName(rs.getString(NAME.reference()));
                 action.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 action.setException(new ExceptionInfo(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+                action.setOrder(rs.getInt(ORDER.reference()));
                 actions.add(action);
             }
             return actions;
