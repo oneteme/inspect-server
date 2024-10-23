@@ -4,11 +4,11 @@ import static java.util.Objects.isNull;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static org.springframework.http.CacheControl.maxAge;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 import static org.springframework.http.ResponseEntity.accepted;
+import static org.springframework.http.ResponseEntity.internalServerError;
 import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.http.ResponseEntity.status;
 import static org.usf.inspect.core.InstanceType.CLIENT;
@@ -71,7 +71,7 @@ public class TraceController {
             return ok(instance.getId());
         } catch(Exception e) {
         	log.error("trace instance", e);
-    		return status(INTERNAL_SERVER_ERROR).build();
+    		return internalServerError().build();
         }
     }
 
@@ -101,7 +101,7 @@ public class TraceController {
     	}
     	catch (Exception e) {
         	log.error("trace session", e);
-    		return status(INTERNAL_SERVER_ERROR).build();
+    		return internalServerError().build();
     	}
     }
 
@@ -203,8 +203,8 @@ public class TraceController {
     }
 
     @GetMapping("session/{id_session}/request/database/{id_database}/stage")
-    public ResponseEntity<List<DatabaseRequestStage>> getDatabaseRequestStages(@PathVariable(name = "id_session") String idSession,
-                                                                                @PathVariable(name = "id_database") long idDatabase) throws SQLException {
+    public ResponseEntity<List<DatabaseRequestStageWrapper>> getDatabaseRequestStages(@PathVariable(name = "id_session") String idSession,
+                                                                                    @PathVariable(name = "id_database") long idDatabase) throws SQLException {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getDatabaseRequestStages(idDatabase));
     }
 
@@ -222,7 +222,7 @@ public class TraceController {
     }
 
     @GetMapping("session/{id_session}/request/ftp/{id_ftp}/stage")
-    public ResponseEntity<List<FtpRequestStage>> getFtpRequestStages(@PathVariable(name = "id_session") String idSession,
+    public ResponseEntity<List<FtpRequestStageWrapper>> getFtpRequestStages(@PathVariable(name = "id_session") String idSession,
                                                                             @PathVariable(name = "id_ftp") long idFtp) throws SQLException {
         return Optional.ofNullable(requestService.getFtpRequestStages(idFtp))
                 .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
@@ -243,7 +243,7 @@ public class TraceController {
     }
 
     @GetMapping("session/{id_session}/request/smtp/{id_smtp}/stage")
-    public ResponseEntity<List<MailRequestStage>> getSmtpRequestStages(@PathVariable(name = "id_session") String idSession,
+    public ResponseEntity<List<MailRequestStageWrapper>> getSmtpRequestStages(@PathVariable(name = "id_session") String idSession,
                                                                               @PathVariable(name = "id_smtp") long idSmtp) throws SQLException {
         return Optional.ofNullable(requestService.getSmtpRequestStages(idSmtp))
                 .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
@@ -272,7 +272,7 @@ public class TraceController {
     }
 
     @GetMapping("session/{id_session}/request/ldap/{id_ldap}/stage")
-    public ResponseEntity<List<NamingRequestStage>> getLdapRequestStages(@PathVariable(name = "id_session") String idSession,
+    public ResponseEntity<List<NamingRequestStageWrapper>> getLdapRequestStages(@PathVariable(name = "id_session") String idSession,
                                                                          @PathVariable(name = "id_ldap") long idLdap) throws SQLException {
         return Optional.ofNullable(requestService.getLdapRequestStages(idLdap))
                 .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
