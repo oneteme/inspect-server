@@ -1,6 +1,8 @@
 package org.usf.inspect.server.service;
 
 import static java.sql.Timestamp.from;
+import static java.sql.Types.*;
+import static java.sql.Types.BIGINT;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
@@ -24,6 +26,7 @@ import static org.usf.inspect.server.config.TraceApiTable.SMTP_REQUEST;
 import static org.usf.inspect.server.config.TraceApiTable.SMTP_STAGE;
 import static org.usf.inspect.server.config.constant.JoinConstant.*;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -34,6 +37,7 @@ import java.util.stream.Stream;
 
 import javax.sql.DataSource;
 
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.DatabaseRequestStage;
@@ -71,6 +75,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class RequestService {
 
+    private final JdbcTemplate template;
     private final DataSource ds;
     private final RequestDao dao;
 
@@ -121,7 +126,7 @@ public class RequestService {
     public List<Architecture> createArchitecture(Instant start, Instant end, String[] env) throws SQLException {
         var v = new QueryBuilder()
                 .columns(getColumns(INSTANCE, APP_NAME))
-                .columns(getColumns(DATABASE_REQUEST, DB, SCHEMA))
+                .columns(DATABASE_REQUEST.column(DB).as("name"), DATABASE_REQUEST.column(SCHEMA).as("schema"))
                 .columns(DBColumn.constant("JDBC").as("type"))
                 .distinct()
                 .joins(REST_SESSION.join(DATABASE_REQUEST_JOIN).build())
@@ -130,7 +135,57 @@ public class RequestService {
                 .filters(REST_SESSION.column(START).ge(from(start)))
                 .filters(REST_SESSION.column(END).lt(from(end)))
                 .filters(INSTANCE.column(ENVIRONEMENT).in(env));
-        return v.build().execute(ds, rs -> {
+        var v2 = new QueryBuilder()
+                .columns(getColumns(INSTANCE, APP_NAME))
+                .columns(FTP_REQUEST.column(HOST).as("name"))
+                .columns(DBColumn.constant(null).as("schema"))
+                .columns(DBColumn.constant("FTP").as("type"))
+                .distinct()
+                .joins(REST_SESSION.join(FTP_REQUEST_JOIN).build())
+                .joins(REST_SESSION.join(INSTANCE_JOIN).build())
+                .filters(FTP_REQUEST.column(HOST).notNull())
+                .filters(REST_SESSION.column(START).ge(from(start)))
+                .filters(REST_SESSION.column(END).lt(from(end)))
+                .filters(INSTANCE.column(ENVIRONEMENT).in(env));
+        var v3 = new QueryBuilder()
+                .columns(getColumns(INSTANCE, APP_NAME))
+                .columns(SMTP_REQUEST.column(HOST).as("name"))
+                .columns(DBColumn.constant(null).as("schema"))
+                .columns(DBColumn.constant("SMTP").as("type"))
+                .distinct()
+                .joins(REST_SESSION.join(SMTP_REQUEST_JOIN).build())
+                .joins(REST_SESSION.join(INSTANCE_JOIN).build())
+                .filters(SMTP_REQUEST.column(HOST).notNull())
+                .filters(REST_SESSION.column(START).ge(from(start)))
+                .filters(REST_SESSION.column(END).lt(from(end)))
+                .filters(INSTANCE.column(ENVIRONEMENT).in(env));
+        var v4 = new QueryBuilder()
+                .columns(getColumns(INSTANCE, APP_NAME))
+                .columns(LDAP_REQUEST.column(HOST).as("name"))
+                .columns(DBColumn.constant(null).as("schema"))
+                .columns(DBColumn.constant("LDAP").as("type"))
+                .distinct()
+                .joins(REST_SESSION.join(LDAP_REQUEST_JOIN).build())
+                .joins(REST_SESSION.join(INSTANCE_JOIN).build())
+                .filters(LDAP_REQUEST.column(HOST).notNull())
+                .filters(REST_SESSION.column(START).ge(from(start)))
+                .filters(REST_SESSION.column(END).lt(from(end)))
+                .filters(INSTANCE.column(ENVIRONEMENT).in(env));
+        var v5 = v.toString() + " UNION " + v2.toString() + " UNION " + v3.toString() + " UNION " + v4.toString();
+        Object[] args = new Object[]{from(start), from(end), String.join(",", env), from(start), from(end), String.join(",", env), from(start), from(end), String.join(",", env), from(start), from(end), String.join(",", env)};
+        int[] argTypes = new int[]{TIMESTAMP, TIMESTAMP, VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR};
+        return template.query(v5, args, argTypes, (ResultSet rs) -> {
+            Map<String, List<Architecture>> map = new HashMap<>();
+            while(rs.next()) {
+                var key = rs.getString(APP_NAME.reference());
+                if(!map.containsKey(key)) {
+                    map.put(key, new ArrayList<>());
+                }
+                map.get(key).add(new Architecture(rs.getString("name"), rs.getString("schema"), rs.getString("type"), null));
+            }
+            return map.entrySet().stream().map(entry -> new Architecture(entry.getKey(), null, null, entry.getValue())).toList();
+        });
+        /*return v.build().execute(ds, rs -> {
             Map<String, List<Architecture>> map = new HashMap<>();
             while(rs.next()) {
                 var key = rs.getString(APP_NAME.reference());
@@ -140,7 +195,11 @@ public class RequestService {
                 map.get(key).add(new Architecture(rs.getString(DB.reference()), rs.getString(SCHEMA.reference()), rs.getString("type"), null));
             }
             return map.entrySet().stream().map(entry -> new Architecture(entry.getKey(), null, null, entry.getValue())).toList();
-        });
+        });*/
+    }
+
+    private static Timestamp fromNullableInstant(Instant instant) {
+        return ofNullable(instant).map(Timestamp::from).orElse(null);
     }
 
     public Map<String,String> getSessionParent(String childId) throws SQLException{

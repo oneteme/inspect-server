@@ -59,6 +59,12 @@ public class JoinConstant {
                     () -> new ViewJoin[]{innerJoin(REST_REQUEST.view(), REST_SESSION.column(ID).eq(REST_REQUEST.column(PARENT)))};
             case DATABASE_REQUEST_JOIN ->
                     () -> new ViewJoin[]{innerJoin(DATABASE_REQUEST.view(), REST_SESSION.column(ID).eq(DATABASE_REQUEST.column(PARENT)))};
+            case FTP_REQUEST_JOIN ->
+                    () -> new ViewJoin[]{innerJoin(FTP_REQUEST.view(), REST_SESSION.column(ID).eq(FTP_REQUEST.column(PARENT)))};
+            case SMTP_REQUEST_JOIN ->
+                    () -> new ViewJoin[]{innerJoin(SMTP_REQUEST.view(), REST_SESSION.column(ID).eq(SMTP_REQUEST.column(PARENT)))};
+            case LDAP_REQUEST_JOIN ->
+                    () -> new ViewJoin[]{innerJoin(LDAP_REQUEST.view(), REST_SESSION.column(ID).eq(LDAP_REQUEST.column(PARENT)))};
             case INSTANCE_JOIN ->
                     () -> new ViewJoin[]{innerJoin(INSTANCE.view(), REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)))};
             default -> null;
