@@ -187,6 +187,11 @@ public class TraceController {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getRestRequests(idSession, RestRequest::new));
     }
 
+    @GetMapping("session/request/rest/exception")
+    public ResponseEntity<Map<Long, ExceptionInfo>> getRestRequestExceptions(@RequestParam(required = true, name = "ids") Long[] idRequestList) throws SQLException {
+        return ResponseEntity.ok().body(requestService.getRestRequestExceptions(idRequestList));
+    }
+
     @GetMapping("session/{id_session}/request/local")
     public ResponseEntity<List<LocalRequestWrapper>> getLocalRequests(@PathVariable(name = "id_session") String idSession) throws SQLException {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getLocalRequests(idSession));
@@ -211,6 +216,16 @@ public class TraceController {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getDatabaseRequestStages(idDatabase));
     }
 
+    @GetMapping("session/request/database/stages/count")
+    public ResponseEntity<Map<Long,Integer> > getDatabaseRequestStagesRowCount(@RequestParam(required = true, name = "ids") Long[] idDatabaseList) throws SQLException {
+        return ResponseEntity.ok().body(requestService.getDatabaseRequestStageRowCount(idDatabaseList));
+    }
+
+    @GetMapping("session/request/database/exception")
+    public ResponseEntity<Map<Long, ExceptionInfo>> getDatabaseRequestExceptions(@RequestParam(required = true, name = "ids") Long[] idDatabaseList) throws SQLException {
+        return ResponseEntity.ok().body(requestService.getDatabaseRequestExceptions(idDatabaseList));
+    }
+
     @GetMapping("session/{id_session}/request/ftp")
     public ResponseEntity<List<FtpRequestWrapper>> getFtpRequests(@PathVariable(name = "id_session") String idSession) throws SQLException {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getFtpRequests(idSession));
@@ -232,6 +247,15 @@ public class TraceController {
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
+    @GetMapping("session/request/ftp/stages")
+    public ResponseEntity<Map<Long,List<String>> > getFtpRequestStages(@RequestParam(required = true, name = "ids") Long[] idFtpList) throws SQLException {
+        return ResponseEntity.ok().body(requestService.getFtpRequestStages(idFtpList));
+    }
+
+    @GetMapping("session/request/ftp/exception")
+    public ResponseEntity<Map<Long, ExceptionInfo>> getFtpRequestExceptions(@RequestParam(required = true, name = "ids") Long[] idFtpList) throws SQLException {
+        return ResponseEntity.ok().body(requestService.getFtpRequestExceptions(idFtpList));
+    }
     @GetMapping("session/{id_session}/request/smtp")
     public ResponseEntity<List<MailRequestWrapper>> getSmtpRequests(@PathVariable(name = "id_session") String idSession) throws SQLException {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getSmtpRequests(idSession));
@@ -261,6 +285,21 @@ public class TraceController {
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
+    @GetMapping("session/request/smtp/stages")
+    public ResponseEntity<Map<Long,List<String>> > getSmtpRequestStages(@RequestParam(required = true, name = "ids") Long[] idFtpList) throws SQLException {
+        return ResponseEntity.ok().body(requestService.getSmtpRequestStages(idFtpList));
+    }
+
+    @GetMapping("session/request/smtp/stages/count")
+    public ResponseEntity<Map<Long,Integer> > getSmtpRequestStagesRowCount(@RequestParam(required = true, name = "ids") Long[] idDatabaseList) throws SQLException {
+        return ResponseEntity.ok().body(requestService.getSmtpRequestStageRowCount(idDatabaseList));
+    }
+
+    @GetMapping("session/request/smtp/exception")
+    public ResponseEntity<Map<Long, ExceptionInfo>> getSmtpRequestExceptions(@RequestParam(required = true, name = "ids") Long[] idSmtpList) throws SQLException {
+        return ResponseEntity.ok().body(requestService.getSmtpRequestExceptions(idSmtpList));
+    }
+
     @GetMapping("session/{id_session}/request/ldap")
     public ResponseEntity<List<NamingRequestWrapper>> getLdapRequests(@PathVariable(name = "id_session") String idSession) throws SQLException {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getLdapRequests(idSession));
@@ -280,5 +319,15 @@ public class TraceController {
         return Optional.ofNullable(requestService.getLdapRequestStages(idLdap))
                 .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    }
+
+    @GetMapping("session/request/ldap/stages")
+    public ResponseEntity<Map<Long,List<String>> > getLdapRequestStages(@RequestParam(required = true, name = "ids") Long[] idFtpList) throws SQLException {
+        return ResponseEntity.ok().body(requestService.getLdapRequestStages(idFtpList));
+    }
+
+    @GetMapping("session/request/ldap/exception")
+    public ResponseEntity<Map<Long, ExceptionInfo>> getLdapRequestExceptions(@RequestParam(required = true, name = "ids") Long[] idLdapList) throws SQLException {
+        return ResponseEntity.ok().body(requestService.getLdapRequestExceptions(idLdapList));
     }
 }
