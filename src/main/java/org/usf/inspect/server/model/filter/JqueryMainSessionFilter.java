@@ -1,8 +1,6 @@
 package org.usf.inspect.server.model.filter;
 
-import static org.usf.inspect.server.config.TraceApiColumn.METHOD;
-import static org.usf.inspect.server.config.TraceApiColumn.NAME;
-import static org.usf.inspect.server.config.TraceApiColumn.TYPE;
+import static org.usf.inspect.server.config.TraceApiColumn.*;
 import static org.usf.jquery.core.Utils.isEmpty;
 
 import java.time.Instant;
@@ -41,7 +39,7 @@ public class JqueryMainSessionFilter extends JquerySessionFilter {
             filters.add(table.column(TYPE).in(getLaunchModes()));
         }
         if(getLocation() != null) {
-            filters.add(table.column(METHOD).like(getLocation()));
+            filters.add(table.column(LOCATION).contentLike(getLocation()));
         }
         return filters;
     }

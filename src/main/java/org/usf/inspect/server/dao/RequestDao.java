@@ -20,7 +20,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.ToIntFunction;
+import java.util.stream.IntStream;
 import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 import static java.sql.Types.*;
 import static java.util.Objects.isNull;
@@ -52,19 +55,20 @@ public class RequestDao {
         });
     }
 
-    public void saveSessions(List<ServerSession> sessions) {
-        filterAndSave(sessions, ServerRestSession.class, this::saveRestSessions);
-        filterAndSave(sessions, ServerMainSession.class, this::saveMainSessions);
+    public long saveSessions(List<ServerSession> sessions) {
+        var rs = filterAndSave(sessions, ServerRestSession.class, this::saveRestSessions);
+        var ms = filterAndSave(sessions, ServerMainSession.class, this::saveMainSessions);
         filterSubAndSave(sessions, Session::getRestRequests, (s, rest) -> new RestRequestWrapper(s.getId(), rest), this::saveRestRequests);
         filterSubAndSave(sessions, Session::getFtpRequests, (s, ftp) -> new FtpRequestWrapper(s.getId(), ftp), this::saveFtpRequests);
         filterSubAndSave(sessions, Session::getMailRequests, (s, smtp) -> new MailRequestWrapper(s.getId(), smtp), this::saveMailRequests);
         filterSubAndSave(sessions, Session::getDatabaseRequests, (s, jdbc) -> new DatabaseRequestWrapper(s.getId(), jdbc), this::saveDatabaseRequests);
         filterSubAndSave(sessions, Session::getLocalRequests, (s, local) -> new LocalRequestWrapper(s.getId(), local), this::saveLocalRequests);
         filterSubAndSave(sessions, Session::getLdapRequests, (s, ldap) -> new NamingRequestWrapper(s.getId(), ldap), this::saveLdapRequests);
+        return rs + ms;
     }
 
-    private void saveMainSessions(List<ServerMainSession> reqList) {
-        template.batchUpdate("INSERT INTO E_MAIN_SES(ID_SES,VA_NAM,VA_USR,DH_STR,DH_END,VA_TYP,VA_LCT,VA_THR,VA_ERR_TYP,VA_ERR_MSG,VA_MSK,CD_INS)"
+    private int saveMainSessions(List<ServerMainSession> reqList) {
+    	 var arr = template.batchUpdate("INSERT INTO E_MAIN_SES(ID_SES,VA_NAM,VA_USR,DH_STR,DH_END,VA_TYP,VA_LCT,VA_THR,VA_ERR_TYP,VA_ERR_MSG,VA_MSK,CD_INS)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             var exp = nullableException(o.getException());
             ps.setString(1, o.getId());
@@ -80,10 +84,11 @@ public class RequestDao {
             ps.setInt(11, mask(o));
             ps.setString(12, o.getInstanceId());
         });
+        return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
 
-    private void saveRestSessions(List<ServerRestSession> reqList) {
-        template.batchUpdate("INSERT INTO E_RST_SES(ID_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,VA_ERR_TYP,VA_ERR_MSG,VA_NAM,VA_USR,VA_USR_AGT,VA_CCH_CTR,VA_MSK,CD_INS)"
+    private int saveRestSessions(List<ServerRestSession> reqList) {
+        var arr = template.batchUpdate("INSERT INTO E_RST_SES(ID_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,VA_ERR_TYP,VA_ERR_MSG,VA_NAM,VA_USR,VA_USR_AGT,VA_CCH_CTR,VA_MSK,CD_INS)"
                 + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
             var exp = nullableException(o.getException());
             ps.setString(1, o.getId());
@@ -112,6 +117,7 @@ public class RequestDao {
             ps.setInt(24, mask(o));
             ps.setString(25, o.getInstanceId());
         });
+        return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
 
     public void saveRestRequests(List<RestRequestWrapper> reqList) {
@@ -308,23 +314,24 @@ public class RequestDao {
     public void saveDatabaseRequests(List<DatabaseRequestWrapper> qryList) {
         var inc = new AtomicLong(selectMaxId("E_DTB_RQT", "ID_DTB_RQT"));
 
-        template.batchUpdate("INSERT INTO E_DTB_RQT(ID_DTB_RQT,VA_HST,CD_PRT,VA_NAM,DH_STR,DH_END,VA_USR,VA_THR,VA_DRV,VA_PRD_NAM,VA_PRD_VRS,VA_CMD,VA_STT,CD_PRN_SES)"
-                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)", qryList, qryList.size(), (ps, o) -> {
+        template.batchUpdate("INSERT INTO E_DTB_RQT(ID_DTB_RQT,VA_HST,CD_PRT,VA_NAM,VA_SCH,DH_STR,DH_END,VA_USR,VA_THR,VA_DRV,VA_PRD_NAM,VA_PRD_VRS,VA_CMD,VA_STT,CD_PRN_SES)"
+                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", qryList, qryList.size(), (ps, o) -> {
             var completed = o.getActions().stream().allMatch(a-> isNull(a.getException()));
             ps.setLong(1, inc.incrementAndGet());
             ps.setString(2, o.getHost());
             ps.setInt(3, o.getPort());
             ps.setString(4, o.getName());
-            ps.setTimestamp(5, fromNullableInstant(o.getStart()));
-            ps.setTimestamp(6, fromNullableInstant(o.getEnd()));
-            ps.setString(7, o.getUser());
-            ps.setString(8, o.getThreadName());
-            ps.setString(9, o.getDriverVersion());
-            ps.setString(10, o.getProductName());
-            ps.setString(11, o.getProductVersion());
-            ps.setString(12, valueOfNullableList(o.getCommands()));
-            ps.setBoolean(13, completed);
-            ps.setString(14, o.getCdSession());
+            ps.setString(5, o.getSchema());
+            ps.setTimestamp(6, fromNullableInstant(o.getStart()));
+            ps.setTimestamp(7, fromNullableInstant(o.getEnd()));
+            ps.setString(8, o.getUser());
+            ps.setString(9, o.getThreadName());
+            ps.setString(10, o.getDriverVersion());
+            ps.setString(11, o.getProductName());
+            ps.setString(12, o.getProductVersion());
+            ps.setString(13, valueOfNullableList(o.getCommands()));
+            ps.setBoolean(14, completed);
+            ps.setString(15, o.getCdSession());
             o.setId(inc.get());
         });
         saveDatabaseActions(qryList);
@@ -372,14 +379,12 @@ public class RequestDao {
         return template.query(query, (ResultSet rs, int rowNum) -> (rs.getString("chld")), id).stream().filter(Objects::nonNull).toList();
     }
 
-    private static <T, U extends T> void filterAndSave(Collection<T> c, Class<U> classe, Consumer<List<U>> saveFn) {
+    private static <T, U extends T> long filterAndSave(Collection<T> c, Class<U> classe, ToIntFunction<List<U>> saveFn) {
         var list = c.stream()
                 .filter(classe::isInstance)
                 .map(classe::cast)
                 .toList();
-        if (!list.isEmpty()) {
-            saveFn.accept(list);
-        }
+        return list.isEmpty() ? 0 : saveFn.applyAsInt(list);
     }
 
     private static <T, U, R> void filterSubAndSave(Collection<T> c, Function<T, Collection<U>> accessor, BiFunction<T, U, R> mapper, Consumer<List<R>> saveFn) {
