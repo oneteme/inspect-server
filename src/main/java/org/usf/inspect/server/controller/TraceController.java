@@ -148,14 +148,14 @@ public class TraceController {
     @GetMapping("session/main/{id}/tree")
     public ResponseEntity<Session> getMainTree(@PathVariable String id) throws SQLException {
         return Optional.ofNullable(requestService.getMainTree(id))
-                .map(o -> ResponseEntity.ok().body(o))
+                .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
     @GetMapping("session/rest/{id}/tree")
     public ResponseEntity<Session> getRestTree(@PathVariable String id) throws SQLException {
         return Optional.ofNullable(requestService.getRestTree(id))
-                .map(o -> ResponseEntity.ok().body(o))
+                .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
