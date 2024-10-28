@@ -282,7 +282,6 @@ public class RequestService {
         }
         return v.build().execute(ds, rs -> {
             List<Session> sessions = new ArrayList<>();
-            ColumnDecorator[] columns = {USER_AGT};
             while (rs.next()) {
                 ServerRestSession session = new ServerRestSession();
                 session.setId(rs.getString(ID.reference()));
@@ -329,11 +328,11 @@ public class RequestService {
         JqueryMainSessionFilter jsf = new JqueryMainSessionFilter(Collections.singletonList(id).toArray(String[]::new));
         Session session = requireSingle(getMainSessions(jsf));
         if (session != null) {
-            getRestRequests(session.getId(), Exchange::new).forEach(r -> session.append(r.getRequest()));
+            getRestRequests(session.getId(), Exchange::new).forEach(session::append);
             getLocalRequests(session.getId()).forEach(session::append);
             getDatabaseRequests(session.getId()).forEach(session::append);
-            getFtpRequests(session.getId()).forEach(q -> session.append(q.getFtpRequest()));
-            getSmtpRequests(session.getId()).forEach(q -> session.append(q.getSmtpRequest()));
+            getFtpRequests(session.getId()).forEach(session::append);
+            getSmtpRequests(session.getId()).forEach(session::append);
             getLdapRequests(session.getId()).forEach(session::append);
         }
         return session;
@@ -353,7 +352,7 @@ public class RequestService {
                                 USER
                         ))
                 .columns(getColumns(INSTANCE, APP_NAME))
-                .filters(MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));;
+                .filters(MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
         if(jsf != null) {
             v.filters(jsf.filters(MAIN_SESSION).toArray(DBFilter[]::new));
         }
@@ -385,8 +384,8 @@ public class RequestService {
                             MAIN_SESSION, ID, NAME, START, END, TYPE, LOCATION, THREAD,
                             ERR_TYPE, ERR_MSG, MASK, USER, INSTANCE_ENV
                     ))
-                .columns(getColumns(INSTANCE, APP_NAME))
-                .filters(MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));;
+                .columns(getColumns(INSTANCE, APP_NAME, OS, RE, ADDRESS))
+                .filters(MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
         if(jsf != null) {
             v.filters(jsf.filters(MAIN_SESSION).toArray(DBFilter[]::new));
         }
@@ -403,6 +402,9 @@ public class RequestService {
                 main.setThreadName(rs.getString(THREAD.reference()));
                 main.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 main.setAppName(rs.getString(APP_NAME.reference()));
+                main.setOs(rs.getString(OS.reference()));
+                main.setRe(rs.getString(RE.reference()));
+                main.setAddress(rs.getString(ADDRESS.reference()));
                 main.setUser(rs.getString(USER.reference()));
                 main.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
                 main.setRestRequests(new ArrayList<>());
