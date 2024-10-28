@@ -28,7 +28,11 @@ public class SessionQueueService {
     }
 
     public List<ServerSession> waitList(){
-    	return dispatcher.peek();
+    	return dispatcher.peek().toList();
+    }
+    
+    public int waitListSize(){
+    	return (int) dispatcher.peek().count();
     }
 
     boolean saveSessions(boolean complete, int attempts, List<ServerSession> sessions) {
@@ -36,7 +40,7 @@ public class SessionQueueService {
         return true;
     }
     
-    public void enableSave(DispatchState state) {
+    public void enableSave(DispatchState state) throws InterruptedException {
     	dispatcher.updateState(state);
     }
     
