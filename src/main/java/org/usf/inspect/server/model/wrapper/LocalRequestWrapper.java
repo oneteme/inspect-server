@@ -9,7 +9,7 @@ import lombok.experimental.Delegate;
 
 @Getter
 @Setter
-public class LocalRequestWrapper {
+public class LocalRequestWrapper extends LocalRequest {
 
     private long id;
     private boolean status;

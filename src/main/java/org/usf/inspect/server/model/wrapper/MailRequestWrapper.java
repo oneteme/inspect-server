@@ -11,7 +11,7 @@ import lombok.experimental.Delegate;
 @Getter
 @Setter
 @RequiredArgsConstructor
-public class MailRequestWrapper {
+public class MailRequestWrapper extends MailRequest {
 
     private long id;
     private boolean status;
