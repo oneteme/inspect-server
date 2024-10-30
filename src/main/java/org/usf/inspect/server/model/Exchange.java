@@ -5,6 +5,9 @@ import org.usf.inspect.core.RestSession;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.usf.inspect.server.model.wrapper.RestRequestWrapper;
+
+import java.util.function.Supplier;
 
 /**
  * 
@@ -13,8 +16,8 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public final class Exchange extends RestRequest {
+public  class Exchange extends RestRequest{
 	
 	private RestSession remoteTrace;
-	
+
 }
