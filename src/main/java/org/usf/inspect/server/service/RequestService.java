@@ -183,7 +183,7 @@ public class RequestService {
                 }
                 map.get(key).add(new Architecture(rs.getString("name"), rs.getString("schema"), rs.getString("type"), null));
             }
-            return map.entrySet().stream().map(entry -> new Architecture(entry.getKey(), null, null, entry.getValue())).toList();
+            return map.entrySet().stream().map(entry -> new Architecture(entry.getKey(), null, "REST", entry.getValue())).toList();
         });
         /*return v.build().execute(ds, rs -> {
             Map<String, List<Architecture>> map = new HashMap<>();
