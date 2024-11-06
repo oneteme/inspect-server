@@ -69,7 +69,7 @@ public class TraceController {
         try {
             requestService.addInstance(instance);
             return ok(instance.getId());
-        } catch(Exception e) {
+        } catch(Throwable e) { //exception + error
         	log.error("trace instance", e);
     		return internalServerError().build();
         }
@@ -99,7 +99,7 @@ public class TraceController {
 	        }
 	        return (queueService.addSessions(sessions) ? accepted() : status(SERVICE_UNAVAILABLE)).build();
     	}
-    	catch (Exception e) {
+    	catch (Throwable e) { //exception + error
         	log.error("trace session", e);
     		return internalServerError().build();
     	}
