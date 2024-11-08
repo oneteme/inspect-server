@@ -562,7 +562,7 @@ public class RequestService {
                 .columns(
                     getColumns(
                             DATABASE_REQUEST, ID, HOST, PORT, DB, START, END, USER, THREAD, DRIVER,
-                            DB_NAME, DB_VERSION, COMMANDS, STATUS, PARENT
+                            DB_NAME, DB_VERSION, COMMANDS, STATUS,SCHEMA, PARENT
                     ))
                 .filters(filter)
                 .orders(DATABASE_REQUEST.column(START).order());
@@ -584,6 +584,7 @@ public class RequestService {
                 out.setActions(new ArrayList<>());
                 out.setCommands(valueOfNullabletoEnumList(SqlCommand.class, rs.getString(COMMANDS.reference())));
                 out.setStatus(rs.getBoolean(STATUS.reference()));
+                out.setSchema(rs.getString(SCHEMA.reference()));
                 outs.add(out);
             }
             return outs;
