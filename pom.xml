@@ -3,12 +3,12 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	
-	<groupId>io.github.oneteme.traceapi</groupId>
-	<artifactId>traceapi-server</artifactId>
-	<version>0.0.4-SNAPSHOT</version>
+	<groupId>io.github.oneteme</groupId>
+	<artifactId>inspect-server</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
-	<name>traceapi-server</name>
-	<description>traceapi-server</description>
+	<name>inspect-server</name>
+	<description>INtegrated System Performance Evaluation and Communication Tracking server</description>
 	<url>https://oneteme.github.io/</url>
 	<developers>
 		<developer>
@@ -19,21 +19,21 @@
 		</developer>
 	</developers>
 	<scm>
-		<url>https://github.com/oneteme/traceapi-server</url>
+		<url>https://github.com/oneteme/inspect-server</url>
 	</scm>
 	<licenses>
 		<license>
 			<name>Apache License 2.0</name>
-			<url>https://github.com/oneteme/traceapi-server/blob/main/LICENSE</url>
+			<url>https://github.com/oneteme/inspect-server/blob/main/LICENSE</url>
 		</license>
 	</licenses>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.2.4.RELEASE</version>
+        <version>3.2.0</version>
 	</parent>
 	<properties>
-		<java.version>11</java.version>
+		<java.version>17</java.version>
 		<sonar.organization>jarvis</sonar.organization>
 		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
 	</properties>
@@ -42,7 +42,6 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-  		<version>1.18.22</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -58,14 +57,14 @@
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
-			<groupId>io.github.oneteme.traceapi</groupId>
-			<artifactId>traceapi-core</artifactId>
-			<version>0.0.16-SNAPSHOT</version>
+			<groupId>io.github.oneteme</groupId>
+			<artifactId>inspect-core</artifactId>
+			<version>0.0.12</version>
 		</dependency>
 		<dependency>
 			<groupId>io.github.oneteme</groupId>
 			<artifactId>jquery</artifactId>
-			<version>3.0.0</version>
+			<version>4.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

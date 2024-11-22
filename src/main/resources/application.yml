@@ -6,13 +6,16 @@ server:
     min-response-size: 1MB
 spring:
   application:
-    name: traceapi
+    name: inspect
   datasource:
     url: jdbc:h2:mem:testdb;DATABASE_TO_LOWER=TRUE;
     username: sa
     password:
     driver-class-name: org.h2.Driver
     #data: classpath:data-h2.sql
+    hikari:
+      minimum-idle: 1
+      maximum-pool-size: 5
   h2:
     console:
       enabled: true
@@ -20,8 +23,25 @@ spring:
 
 logging:
   level:
+    org.usf.jquery: DEBUG
+    org.usf.inspect: DEBUG
     org.springframework.jdbc.core: DEBUG
 
-trace:
-  delay: 60
-  unit: SECONDS
+inspect:
+  enabled: true
+  dispatch:
+    delay: 60
+    unit: SECONDS
+    buffer-max-size: -1 #inspect-server only
+  track:
+    rest-session:
+      excludes:
+        method: OPTIONS
+        path: /favicon.ico
+#   main-session: false
+#   jdbc-request: false
+#   rest-request: false
+# target: REMOTE => log only
+# server:
+#   host:
+#   compress-min-size:
