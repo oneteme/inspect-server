@@ -914,7 +914,7 @@ public class RequestService {
                             LDAP_STAGE, NAME, START, END, ARG, ORDER, PARENT
                     ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
-                .joins(LDAP_REQUEST.join(EXCEPTION_JOIN).build())
+                .joins(LDAP_STAGE.join(EXCEPTION_JOIN).build())
                 .filters(LDAP_STAGE.column(PARENT).eq(id))
                 .orders(LDAP_STAGE.column(ORDER).order());
         return v.build().execute(ds, rs -> {
