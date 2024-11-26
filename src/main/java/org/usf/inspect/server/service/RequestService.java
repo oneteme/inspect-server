@@ -387,7 +387,7 @@ public class RequestService {
                 .columns(
                         getColumns(
                                 MAIN_SESSION, ID, NAME, START, END, LOCATION, TYPE,
-                                USER
+                                USER,ERR_TYPE, ERR_MSG
                         ))
                 .columns(getColumns(INSTANCE, APP_NAME))
                 .filters(MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
@@ -406,6 +406,7 @@ public class RequestService {
                 main.setAppName(rs.getString(APP_NAME.reference()));
                 main.setUser(rs.getString(USER.reference()));
                 main.setType(rs.getString(TYPE.reference()));
+                main.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 main.setRestRequests(new ArrayList<>());
                 main.setLocalRequests(new ArrayList<>());
                 main.setDatabaseRequests(new ArrayList<>());
