@@ -247,12 +247,12 @@ public class RequestService {
 
     public Session getRestSession(String id) throws SQLException{
         JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(Collections.singletonList(id).toArray(String[]::new));
-        return requireSingle(getRestSessions(jsf));
+        return requireSingle(getRestSessions(jsf, false));
     }
 
     public List<Session> getRestSessionsForTree(List<String> ids) throws SQLException {
         JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(ids.toArray(String[]::new));
-        List<Session> sessions = getRestSessions(jsf);
+        List<Session> sessions = getRestSessions(jsf, true);
         if (!sessions.isEmpty()) {
             var reqMap = sessions.stream().collect(toMap(Session::getId, identity()));
             var parentIds = reqMap.keySet().stream().toList();
@@ -306,16 +306,17 @@ public class RequestService {
         });
     }
 
-    public List<Session> getRestSessions(JqueryRequestSessionFilter jsf) throws SQLException {
+    public List<Session> getRestSessions(JqueryRequestSessionFilter jsf, boolean lazy) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(
                             REST_SESSION, ID, API_NAME, METHOD,
                             PROTOCOL, HOST, PORT, PATH, QUERY, MEDIA, AUTH, STATUS, SIZE_IN, SIZE_OUT, CONTENT_ENCODING_IN, CONTENT_ENCODING_OUT,
                             START, END, THREAD, ERR_TYPE, ERR_MSG, MASK, USER, USER_AGT, CACHE_CONTROL, INSTANCE_ENV
-                    ))
-                .columns(getColumns(INSTANCE, APP_NAME, OS, RE, ADDRESS))
-                .filters(REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
+                    ));
+        if(lazy) {
+            v.columns(getColumns(INSTANCE, APP_NAME, OS, RE, ADDRESS)).filters(REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
+        }
         if(jsf != null) {
             v.filters(jsf.filters(REST_SESSION).toArray(DBFilter[]::new));
         }
@@ -345,11 +346,13 @@ public class RequestService {
                 session.setUserAgent(rs.getString(USER_AGT.reference()));
                 session.setUser(rs.getString(USER.reference()));
                 session.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
-                session.setAppName(rs.getString(APP_NAME.reference()));
                 session.setCacheControl(rs.getString(CACHE_CONTROL.reference()));
-                session.setOs(rs.getString(OS.reference()));
-                session.setRe(rs.getString(RE.reference()));
-                session.setAddress(rs.getString(ADDRESS.reference()));
+                if(lazy) {
+                    session.setOs(rs.getString(OS.reference()));
+                    session.setRe(rs.getString(RE.reference()));
+                    session.setAddress(rs.getString(ADDRESS.reference()));
+                    session.setAppName(rs.getString(APP_NAME.reference()));
+                }
                 session.setMask(rs.getInt(MASK.reference()));
                 session.setRestRequests(new ArrayList<>());
                 session.setLocalRequests(new ArrayList<>());
