@@ -368,7 +368,7 @@ public class RequestService {
 
     public Session getMainSessionForTree(String id) throws SQLException {
         JqueryMainSessionFilter jsf = new JqueryMainSessionFilter(Collections.singletonList(id).toArray(String[]::new));
-        Session session = requireSingle(getMainSessions(jsf));
+        Session session = requireSingle(getMainSessions(jsf, true));
         if (session != null) {
             getRestRequests(session.getId(), Exchange::new).forEach(session::append);
             getDatabaseRequests(session.getId()).forEach(session::append);
@@ -381,7 +381,7 @@ public class RequestService {
 
     public Session getMainSession(String id) throws SQLException{
         JqueryMainSessionFilter jsf = new JqueryMainSessionFilter(Collections.singletonList(id).toArray(String[]::new));
-        return requireSingle(getMainSessions(jsf));
+        return requireSingle(getMainSessions(jsf, false));
     }
 
     @Deprecated
@@ -419,15 +419,17 @@ public class RequestService {
         });
     }
 
-    public List<Session> getMainSessions(JqueryMainSessionFilter jsf) throws SQLException {
+    public List<Session> getMainSessions(JqueryMainSessionFilter jsf, boolean lazy) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(
                             MAIN_SESSION, ID, NAME, START, END, TYPE, LOCATION, THREAD,
                             ERR_TYPE, ERR_MSG, MASK, USER, INSTANCE_ENV
-                    ))
-                .columns(getColumns(INSTANCE, APP_NAME, OS, RE, ADDRESS))
-                .filters(MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
+                    ));
+        if(lazy) {
+            v.columns(getColumns(INSTANCE, APP_NAME, OS, RE, ADDRESS)).filters(MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));;
+        }
+
         if(jsf != null) {
             v.filters(jsf.filters(MAIN_SESSION).toArray(DBFilter[]::new));
         }
@@ -443,10 +445,12 @@ public class RequestService {
                 main.setLocation(rs.getString(LOCATION.reference()));
                 main.setThreadName(rs.getString(THREAD.reference()));
                 main.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
-                main.setAppName(rs.getString(APP_NAME.reference()));
-                main.setOs(rs.getString(OS.reference()));
-                main.setRe(rs.getString(RE.reference()));
-                main.setAddress(rs.getString(ADDRESS.reference()));
+                if(lazy) {
+                    main.setAppName(rs.getString(APP_NAME.reference()));
+                    main.setOs(rs.getString(OS.reference()));
+                    main.setRe(rs.getString(RE.reference()));
+                    main.setAddress(rs.getString(ADDRESS.reference()));
+                }
                 main.setUser(rs.getString(USER.reference()));
                 main.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
                 main.setRestRequests(new ArrayList<>());
