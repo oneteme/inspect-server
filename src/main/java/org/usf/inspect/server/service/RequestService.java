@@ -145,7 +145,7 @@ public class RequestService {
         var v5 = v.toString() + " UNION " + v2.toString() + " UNION " + v3.toString() + " UNION " + v4.toString();
         Object[] args = new Object[]{from(start), from(end), String.join(",", env), from(start), from(end), String.join(",", env), from(start), from(end), String.join(",", env), from(start), from(end), String.join(",", env)};
         int[] argTypes = new int[]{TIMESTAMP, TIMESTAMP, VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR};
-        return template.query(v5, args, argTypes, (ResultSet rs) -> {
+        return template.query(v5, args, argTypes, rs -> {
             Map<String, List<Architecture>> map = new HashMap<>();
             while(rs.next()) {
                 var key = rs.getString(APP_NAME.reference());
