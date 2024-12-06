@@ -4,6 +4,7 @@ import static java.lang.Thread.currentThread;
 import static java.util.Arrays.asList;
 import static java.util.Objects.nonNull;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.ResponseEntity.ok;
@@ -47,6 +48,8 @@ public class CacheController {
     @Value("${spring.profiles.active}")
     private String activeProfile;
 
+	private String host = null;
+
 	public CacheController(ObjectMapper mapper, RequestService service, SessionQueueService queue) {
 		this.service = service;
 		this.queue = queue;
@@ -57,11 +60,15 @@ public class CacheController {
 	}
 
     @GetMapping
-    public Collection<ServerSession> getCache(){
-    	return queue.waitList();
+    public ResponseEntity<Collection<ServerSession>> getCache(){
+		try {
+			return ok(queue.waitList());
+		} catch (IllegalAccessException e) {
+			return status(FORBIDDEN).build();
+		}
     }
 
-    @PatchMapping("state/{state}")
+    @PostMapping("state/{state}")
     public ResponseEntity<Void> updateState(@PathVariable DispatchState state){
     	try {
     		queue.enableSave(state);
@@ -74,19 +81,19 @@ public class CacheController {
     }
 
     @PostMapping("{env}/import")
-    public int importSession(@PathVariable String env, @RequestParam String host) {
-    	if(activeProfile.equals(env)) {
-	    	template.patchForObject(host + "/state/"+ DISABLE, null, Void.class); //stop adding session first on remote server
+    public int importSession(@PathVariable String env) {
+    	if(activeProfile.equals(env) && host != null) {
+	    	template.postForLocation(host + "/cache/state/"+ DISABLE, null); //stop adding session first on remote server
 	        var arr = template.getForObject(host + "/cache", ServerSession[].class); //import sessions from remote server cache
 	        if(nonNull(arr) && arr.length > 0) {
 	            var cnt = service.addSessions(asList(arr)); //save sessions on database (local.env == remote.env)
 	            if(cnt != arr.length) {
-	            	log.warn("{} sessions was imported, but {} sessions was saved");
+	            	log.warn("{} sessions was imported, but {} sessions was saved", arr.length, cnt);
 	            }
 	            return arr.length;
 	        }
 	        return 0;
     	}
-    	throw new IllegalArgumentException("mismatch env " + env);
+    	throw new IllegalArgumentException(String.format("mismatch env (actual : %s, expected : %s)", activeProfile, env));
     }
 }
