@@ -27,11 +27,11 @@ public class SessionQueueService {
     	return dispatcher.submit(sessions);
     }
 
-    public List<ServerSession> waitList(){
+    public List<ServerSession> waitList() throws IllegalAccessException {
     	return dispatcher.peek().toList();
     }
     
-    public int waitListSize(){
+    public int waitListSize() throws IllegalAccessException {
     	return (int) dispatcher.peek().count();
     }
 
