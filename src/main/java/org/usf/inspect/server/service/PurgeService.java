@@ -1,12 +1,16 @@
 package org.usf.inspect.server.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.java.Log;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.usf.inspect.core.ExceptionInfo;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.List;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static java.util.Optional.ofNullable;
 
@@ -15,7 +19,7 @@ import static java.util.Optional.ofNullable;
 public class PurgeService {
 
     private final JdbcTemplate template;
-
+    private static final Logger logger = Logger.getLogger(PurgeService.class.getName());
 
 
     /*
@@ -30,23 +34,54 @@ public class PurgeService {
        //                            %s
         //                           %s
         String query = """
-                        with deleted_instances as(
-                            select eei.id_ins, 'instance' as va_typ
-                            from e_env_ins eei
-                            where dh_str < ? 
-                            and va_env = ?
+                   with deleted_instances as(
+                       select eei.id_ins as id, 'e_env_ins' as va_typ
+                       from e_env_ins eei
+                       where dh_str < ?
+                       and va_env = ?
+                   ),
+                   deleted_rest_sessions as(
+                      select id_ses as id, 'r' as va_typ
+                      from e_rst_ses ers
+                      where ers.cd_ins in (select id from deleted_instances)
+                      and ers.dh_str < ?
+                      union
+                      select id_ses as id, 's' as va_typ
+                      from e_main_ses ems
+                      where ems.cd_ins in (select id_ins from deleted_instances)
+                      and ems.dh_str < ?
+                  )
+                   select * from deleted_instances
+                   union
+                   select * from deleted_rest_sessions
+                   union
+                   select * from deleted_rest_requests;
+                """;//.formatted(appNameCondition,versionCondition);
 
-                        )
-                        select * from deleted_instances;
-                     """;//.formatted(appNameCondition,versionCondition);
-        System.out.println(appName);
-        System.out.println(version);
-        System.out.println(query);
         // set parametre dynamicly
-        template.query( query,
-                        new Object[]{fromNullableInstant(before),env/*,appName,version*/}, (rs -> {
+        logger.log(Level.INFO,"+ Purging old Data, parameters in entry");
+        logger.log(Level.INFO,"    - Environment: "+env);
+        logger.log(Level.INFO,"    - Start: "+before);
 
+        Map<String, List<String>> removedIds  =  template.query(query,
+                        new Object[]{fromNullableInstant(before),env,fromNullableInstant(before)/*,appName,version*/}, (rs -> {
+                            Map<String, List<String>> ids = new HashMap<>();
+                            while (rs.next()) {
+                                if(!ids.containsKey(rs.getString("va_typ"))){
+                                    ids.put(rs.getString("va_typ"),new ArrayList<>());
+                                }
+                                ids.get(rs.getString("va_typ")).add(rs.getString("id"));
+                            }
+                            return ids;
                 }));
+        logger.log(Level.INFO,"removing "+removedIds.get("e_env_ins").size()+" from table 'e_env_ins'");
+
+        var instanceQuery = "delete from e_env_ins where id_ins in ("+  (!removedIds.get("e_env_ins").isEmpty()? String.join(", ", "?".repeat(removedIds.get("e_env_ins").size())): "") +")";
+
+
+
+        template.update(instanceQuery, removedIds.get("e_env_ins").toArray());
+
         return true;
     }
 
@@ -56,6 +91,8 @@ public class PurgeService {
 
 }
 
+        /*var restSessionQuery = "delete from e_rst_ses where id_ses in ("+ (removedIds.containsKey("e_rst_ses") && !removedIds.get("e_rst_ses").isEmpty()? String.join(", ", "?".repeat(removedIds.get("e_rst_ses").size())) +")" : "") +")";
+        Object[] params  = removedIds.values().stream().flatMap(List::stream).toArray();*/
 
 // script to use
 /*
