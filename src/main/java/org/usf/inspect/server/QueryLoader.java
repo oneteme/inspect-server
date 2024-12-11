@@ -13,164 +13,95 @@ public class QueryLoader {
 
     public static List<Query> loadQueries (String env, List<String> appName, Instant before, List<String> version) {
 
-        //String appNameCondition =  (appName != null && !appName.isEmpty())? "and va_app in("+ String.join(", ", "?".repeat(appName.size())) +")" : "";
+        // String appNameCondition =  (appName != null && !appName.isEmpty())? "and va_app in("+ String.join(", ", "?".repeat(appName.size())) +")" : "";
         // String versionCondition =  (version != null && !version.isEmpty())? "and va_vrs in("+ String.join(", ", "?".repeat(version.size())) +")" : "";
 
         List<Query> queries = new ArrayList<>();
 
-        //create temp table
+        //create session temp table
         queries.add(new Query(
                 """
-                        create  temporary table IF NOT EXISTs  temp_table(
+                        create  temporary table IF NOT EXISTs  temp_session_table(
                         id varchar(255),
-                        va_typ varchar(255)
+                        va_typ char(1)
                         );
                         """)
         );
 
-        //fill temp table
+        //create request temp table
+        queries.add(new Query(
+                """
+                        create  temporary table IF NOT EXISTs  temp_request_table(
+                        id int
+                        );
+                        """
+        ));
+
+        //fill temp session temp table
         queries.add(new Query(
                 """
                         with deleted_instances as(
-                          select eei.id_ins as id, '0' as va_typ
+                          select eei.id_ins as id, 'i' as va_typ
                           from e_env_ins eei
                           where dh_str < ?
                           and va_env = ?
-                        ),
-                                                
-                        deleted_sessions as(
-                         select id_ses as id, '1a' as va_typ
-                         from e_rst_ses ers
-                         where ers.cd_ins in (select id from deleted_instances)
-                         and ers.dh_str < ?
-                         union
-                         select id_ses as id, '1a' as va_typ
-                         from e_main_ses ems
-                         where ems.cd_ins in (select id from deleted_instances)
-                         and ems.dh_str <  ?
-                        ),
-                                                
-                        deleted_rest_requests as (
-                         select cast(id_rst_rqt as varchar) as id, '2a' as va_typ
-                         from e_rst_rqt err
-                         where err.cd_prn_ses in (select id from deleted_sessions)
-                         and err.dh_str <  ?
-                        ),
-                                                
-                        deleted_db_requests as(
-                        select cast( id_dtb_rqt as varchar) as id, '2b' as va_typ
-                        from e_dtb_rqt edr
-                        where edr.cd_prn_ses in (select id from deleted_sessions)
-                        and edr.dh_str <   ?
-                        ),
-                                                
-                        deleted_ftp_requests as (
-                        select cast(id_ftp_rqt as varchar) as id, '2c' as va_typ
-                        from e_ftp_rqt efr
-                        where efr.cd_prn_ses in (select id from deleted_sessions)
-                        and efr.dh_str <  ?
-                        ),
-                                                
-                        deleted_smtp_requests as (
-                        select cast(id_smtp_rqt as varchar) as id, '2d' as va_typ
-                        from e_smtp_rqt esr
-                        where esr.cd_prn_ses in (select id from deleted_sessions)
-                        and esr.dh_str <  ?
-                        ),
-                                                
-                        deleted_ldap_requests as (
-                        select cast(id_ldap_rqt as varchar) as id, '2e' as va_typ
-                        from e_ldap_rqt elr
-                        where elr.cd_prn_ses in (select id  from deleted_sessions)
-                        and elr.dh_str <  ?
-                        ),
-                                                
-                        deleted_local_requests as (
-                        select cast(id_lcl_rqt as varchar) as id, '2f' as va_typ
-                        from e_lcl_rqt elr
-                        where elr.cd_prn_ses in (select id from deleted_sessions)
-                        and elr.dh_str <  ?
-                        )insert into temp_table select * from deleted_instances
-                        union
-                        select * from deleted_sessions
-                        union
-                        select * from deleted_rest_requests
-                        union
-                        select * from deleted_db_requests
-                        union
-                        select * from deleted_ftp_requests
-                        union
-                        select * from deleted_smtp_requests
-                        union
-                        select * from deleted_ldap_requests
-                        union
-                        select * from deleted_local_requests;
-                        """
-
-        ,new Object[]{fromNullableInstant(before),
-                env,
-                fromNullableInstant(before),
-                //appName
-                //version,
-                fromNullableInstant(before),
-                fromNullableInstant(before),
-                fromNullableInstant(before),
-                fromNullableInstant(before),
-                fromNullableInstant(before),
-                fromNullableInstant(before),
-                fromNullableInstant(before)}));
+                        ) insert into temp_session_table
+                           select id_ses as id, 'r' as va_typ
+                           from e_rst_ses ers
+                           where ers.cd_ins in (select id from deleted_instances)
+                           and ers.dh_str < ?
+                           union
+                           select id_ses as id, 'm' as va_typ
+                           from e_main_ses ems
+                           where ems.cd_ins in (select id from deleted_instances)
+                           and ems.dh_str < ?
+                           union
+                           select * from deleted_instances;
+                         """,new Object[]{fromNullableInstant(before),env,fromNullableInstant(before),fromNullableInstant(before)}));
+        //fill temp request table
+        queries.add(new Query(
+                """
+                    insert into temp_request_table %s
+                """.formatted(createRequestQuery("id_rst_rqt","e_rst_rqt")
+        )));
 
         // delete rest exception
         queries.add(new Query(
                 """
                         delete from e_exc_inf
-                        where cd_rqt in (select cast(id as int) from temp_table where va_typ ='2a')
+                        where cd_rqt in (select cast(id as int) from temp_request_table)
                         and va_typ = 'REST';
                         """
         ));
+
+        // delete rest request
+        queries.add(new Query(
+                """
+                        delete from e_rst_rqt
+                        where id_rst_rqt in (select id from temp_request_table);
+                        """
+        ));
+
+        // empty temp_request_table
+        queries.add(new Query(
+                """
+                        delete from temp_request_table;
+                        """
+        ));
+        //---------------------
+        //fill temp request table
+        queries.add(new Query(
+                """
+                    insert into temp_request_table %s
+                """.formatted(createRequestQuery("id_dtb_rqt","e_dtb_rqt")
+        )));
 
         // delete jdbc exception
         queries.add(new Query(
                 """
                         delete from e_exc_inf
-                        where cd_rqt in (select cast(id as int) from temp_table where va_typ ='2b')
+                        where cd_rqt in (select id from temp_request_table)
                         and va_typ = 'JDBC';
-                        """
-        ));
-
-        // delete ftp exception
-        queries.add(new Query(
-                """
-                        delete from e_exc_inf
-                        where cd_rqt in (select cast(id as int) from temp_table where va_typ ='2c')
-                        and va_typ = 'FTP';
-                        """
-        ));
-
-        // delete smtp exception
-        queries.add(new Query(
-                """
-                        delete from e_exc_inf
-                        where cd_rqt in (select cast(id as int) from temp_table where va_typ ='2d')
-                        and va_typ = 'SMTP';
-                        """
-        ));
-
-        // delete ldap exception
-        queries.add(new Query(
-                """
-                        delete from e_exc_inf
-                        where cd_rqt in (select cast(id as int) from temp_table where va_typ ='2e')
-                        and va_typ = 'LDAP';
-                        """
-        ));
-
-        // delete ldap exception
-        queries.add(new Query(
-                """
-                        delete from e_exc_inf
-                        where cd_rqt in (select cast(id as int) from temp_table where va_typ ='2f')
-                        and va_typ = 'LOCAL';
                         """
         ));
 
@@ -178,34 +109,122 @@ public class QueryLoader {
         queries.add(new Query(
                 """
                         delete from e_dtb_stg
-                        where cd_dtb_rqt in  (select cast(id as int) from temp_table where va_typ ='2b')
-                        and dh_str < ?;
+                        where cd_dtb_rqt in  (select id from temp_request_table)
+                        """));
+
+        // delete db request
+        queries.add(new Query(
+                """
+                        delete from e_dtb_rqt
+                        where id_dtb_rqt in (select id from temp_request_table);
                         """
-        ,new Object[]{fromNullableInstant(before)}));
+        ));
+
+        // empty temp_request_table
+        queries.add(new Query(
+                """
+                        delete from temp_request_table;
+                        """
+        ));
+        //---------------------
+        //fill temp request table
+        queries.add(new Query(
+                """
+                    insert into temp_request_table %s
+                """.formatted(createRequestQuery("id_ftp_rqt","e_ftp_rqt")
+        )));
+
+        // delete ftp exception
+        queries.add(new Query(
+                """
+                        delete from e_exc_inf
+                        where cd_rqt in (select id from temp_request_table)
+                        and va_typ = 'FTP';
+                        """
+        ));
 
         // delete ftp stage
         queries.add(new Query(
                 """
                         delete from e_ftp_stg
-                        where cd_ftp_rqt in (select cast(id as int) from temp_table where va_typ ='2c')
-                        and dh_str < ?;
+                        where cd_ftp_rqt in (select id from temp_request_table)
                         """
-        ,new Object[]{fromNullableInstant(before)}));
+        ));
+
+        // delete ftp request
+        queries.add(new Query(
+                """
+                        delete from e_ftp_rqt
+                        where id_ftp_rqt in (select id from temp_request_table);
+                        """
+        ));
+
+        // empty temp_request_table
+        queries.add(new Query(
+                """
+                        delete from temp_request_table;
+                        """
+        ));
+        //---------------------
+        //fill temp request table
+        queries.add(new Query(
+                """
+                    insert into temp_request_table %s
+                """.formatted(createRequestQuery("id_smtp_rqt","e_smtp_rqt")
+        )));
+
+        // delete smtp exception
+        queries.add(new Query(
+                """
+                        delete from e_exc_inf
+                        where cd_rqt in (select id from temp_request_table)
+                        and va_typ = 'SMTP';
+                        """
+        ));
 
         // delete smtp stage
         queries.add(new Query(
                 """
                         delete from e_smtp_stg
-                        where cd_smtp_rqt in (select cast(id as int) from temp_table where va_typ ='2d')
-                        and dh_str < ?;
-                        """
-        ,new Object[]{fromNullableInstant(before)}));
+                        where cd_smtp_rqt in (select id from temp_request_table)
+                        """));
 
         // delete smtp mail
         queries.add(new Query(
                 """
                         delete from e_smtp_mail
-                        where cd_smtp_rqt in (select cast(id as int) from temp_table where va_typ ='2d');
+                        where cd_smtp_rqt in (select id from temp_request_table);
+                        """
+        ));
+
+        // delete smtp request
+        queries.add(new Query(
+                """
+                        delete from e_smtp_rqt
+                        where id_smtp_rqt in (select id from temp_request_table);
+                        """
+        ));
+
+        // empty temp_request_table
+        queries.add(new Query(
+                """
+                        delete from temp_request_table;
+                        """
+        ));
+        //---------------------
+        //fill temp request table
+        queries.add(new Query(
+                """
+                    insert into temp_request_table %s
+                """.formatted(createRequestQuery("id_ldap_rqt","e_ldap_rqt")
+        )));
+
+        // delete ldap exception
+        queries.add(new Query(
+                """
+                        delete from e_exc_inf
+                        where cd_rqt in (select id from temp_request_table)
+                        and va_typ = 'LDAP';
                         """
         ));
 
@@ -213,69 +232,60 @@ public class QueryLoader {
         queries.add(new Query(
                 """
                         delete from e_ldap_stg
-                        where cd_ldap_rqt in (select cast(id as int) from temp_table where va_typ ='2e')
-                        and dh_str < ?;
-                        """
-        ,new Object[]{fromNullableInstant(before)}));
-
-        // delete rest request
-        queries.add(new Query(
-                """
-                        delete from e_rst_rqt
-                        where id_rst_rqt in (select cast(id as int) from temp_table where va_typ ='2a');
+                        where cd_ldap_rqt in (select id from temp_request_table)
                         """
         ));
-
-
-        // delete db request
-        queries.add(new Query(
-                """
-                        delete from e_dtb_rqt
-                        where id_dtb_rqt in (select cast(id as int) from temp_table where va_typ ='2b');
-                        """
-        ));
-
-
-        // delete ftp request
-        queries.add(new Query(
-                """
-                        delete from e_ftp_rqt
-                        where id_ftp_rqt in (select cast(id as int) from temp_table where va_typ ='2c');
-                        """
-        ));
-
-
-        // delete smtp request
-        queries.add(new Query(
-                """
-                        delete from e_smtp_rqt
-                        where id_smtp_rqt in (select cast(id as int) from temp_table where va_typ ='2d');
-                        """
-        ));
-
 
         // delete ldap request
         queries.add(new Query(
                 """
                         delete from e_ldap_rqt
-                        where id_ldap_rqt in (select cast(id as int) from temp_table where va_typ ='2e');
+                        where id_ldap_rqt in (select id from temp_request_table);
                         """
         ));
+        // empty temp_request_table
+        queries.add(new Query(
+                """
+                        delete from temp_request_table;
+                        """
+        ));
+        //---------------------
+        //fill temp request table
+        queries.add(new Query(
+                """
+                    insert into temp_request_table %s
+                """.formatted(createRequestQuery("id_lcl_rqt","e_lcl_rqt")
+        )));
 
+        // delete local exception
+        queries.add(new Query(
+                """
+                        delete from e_exc_inf
+                        where cd_rqt in (select id from temp_request_table)
+                        and va_typ = 'LOCAL';
+                        """
+        ));
 
         // delete local request
         queries.add(new Query(
                 """
                         delete from e_lcl_rqt
-                        where id_lcl_rqt in (select cast(id as int) from temp_table where va_typ ='2f');
+                        where id_lcl_rqt in (select id from temp_request_table);
                         """
         ));
 
+        //drop temp request table
+        queries.add(new Query(
+                """
+                      drop table temp_request_table;
+                        """
+        ));
+        //----------------
         // delete rest session
         queries.add(new Query(
                 """
                         delete from e_rst_ses
-                        where id_ses in (select id from temp_table where va_typ ='1a');
+                        where id_ses in (select id from temp_session_table where va_typ ='r');
                         """
         ));
 
@@ -283,7 +293,7 @@ public class QueryLoader {
         queries.add(new Query(
                 """
                         delete from e_main_ses
-                        where id_ses in (select id from temp_table where va_typ ='1b');
+                        where id_ses in (select id from temp_session_table where va_typ ='m');
                         """
         ));
 
@@ -291,24 +301,28 @@ public class QueryLoader {
         queries.add(new Query(
                 """
                         delete from e_env_ins
-                        where id_ins in (select id from temp_table where va_typ ='0');
+                        where id_ins in (select id from temp_session_table where va_typ ='i');
                         """
         ));
 
         //delete temp table
         queries.add(new Query(
                 """
-                        drop table if exists temp_table;
+                        drop table if exists temp_session_table;
                         """
         ));
-
-
-
-
         return queries;
     }
 
     private static Timestamp fromNullableInstant(Instant instant) {
         return ofNullable(instant).map(Timestamp::from).orElse(null);
+    }
+
+    private static String createRequestQuery(String column, String table){
+        return """
+                     select %s as id
+                     from %s
+                     where cd_prn_ses in (select id from temp_session_table)
+                """.formatted(column,table);
     }
 }
