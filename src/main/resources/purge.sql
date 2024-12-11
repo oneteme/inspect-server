@@ -141,9 +141,11 @@ where id_lcl_rqt in (select cast(id as int) from temp_table where va_typ ='2f');
 
 delete from e_rst_ses
 where id_ses in (select id from temp_table where va_typ ='1a');
--
+
 delete from e_main_ses
 where id_ses in (select id from temp_table where va_typ ='1b');
 
 delete from e_env_ins
 where id_ins in (select id from temp_table where va_typ ='0');
+
+delete table if exists temp_table;
