@@ -127,6 +127,14 @@ public class TraceController {
         return requestService.getRestSessionsForSearch(jsf);
     }
 
+    public List<Session> getSessionsForDump(
+            @RequestParam(name = "appname") String appName,
+            @RequestParam(name = "start") Instant start,
+            @RequestParam(name = "end") Instant end
+    ) {
+        return requestService.getRestSessionsForSearch(jsf);
+    }
+
     @GetMapping("session/rest/{id}")
     public ResponseEntity<Session> getRestSession(@PathVariable String id) throws SQLException {
         return Optional.ofNullable(requestService.getRestSession(id))
