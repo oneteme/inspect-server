@@ -4,8 +4,7 @@ import org.usf.inspect.server.model.Query;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static java.util.Optional.ofNullable;
 
@@ -13,11 +12,23 @@ public class QueryLoader {
 
     public static List<Query> loadQueries (String env, List<String> appName, Instant before, List<String> version) {
 
-        // String appNameCondition =  (appName != null && !appName.isEmpty())? "and va_app in("+ String.join(", ", "?".repeat(appName.size())) +")" : "";
-        // String versionCondition =  (version != null && !version.isEmpty())? "and va_vrs in("+ String.join(", ", "?".repeat(version.size())) +")" : "";
+        List<Object> cteParams = new ArrayList<>(Arrays.asList(fromNullableInstant(before),env));
+        String appNameCondition = "";
+        String versionCondition = "";
+        if(appName != null && !appName.isEmpty()){
+            appNameCondition = "and va_app in ("+ String.join(", ", Collections.nCopies(appName.size(),"?")) +")";
+            cteParams.addAll(appName);
+        }
+
+        if(version != null && !version.isEmpty()) {
+            versionCondition = "and va_vrs in ("+ String.join(", ", Collections.nCopies(version.size(),"?")) +")";
+            cteParams.addAll(version);
+        }
+        cteParams.add(fromNullableInstant(before));
+        cteParams.add(fromNullableInstant(before));
+
 
         List<Query> queries = new ArrayList<>();
-
         //create session temp table
         queries.add(new Query(
                 """
@@ -45,6 +56,8 @@ public class QueryLoader {
                           from e_env_ins eei
                           where dh_str < ?
                           and va_env = ?
+                          %s
+                          %s
                         ) insert into temp_session_table
                            select id_ses as id, 'r' as va_typ
                            from e_rst_ses ers
@@ -57,7 +70,7 @@ public class QueryLoader {
                            and ems.dh_str < ?
                            union
                            select * from deleted_instances;
-                         """,new Object[]{fromNullableInstant(before),env,fromNullableInstant(before),fromNullableInstant(before)}));
+                         """.formatted(appNameCondition, versionCondition),cteParams.toArray()));
         //fill temp request table
         queries.add(new Query(
                 """
@@ -277,7 +290,7 @@ public class QueryLoader {
         //drop temp request table
         queries.add(new Query(
                 """
-                      drop table temp_request_table;
+                      drop table if exists temp_request_table;
                         """
         ));
         //----------------
