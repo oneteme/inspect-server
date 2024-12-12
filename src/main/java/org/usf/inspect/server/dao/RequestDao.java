@@ -28,7 +28,6 @@ import java.util.stream.Stream;
 import static java.sql.Types.*;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
-import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.joining;
 import static org.usf.inspect.server.RequestMask.*;
 
@@ -39,8 +38,9 @@ public class RequestDao {
     private final JdbcTemplate template;
 
     public void saveInstanceEnvironment(ServerInstanceEnvironment instance) {
-        template.update("INSERT INTO E_ENV_INS(ID_INS,VA_TYP,DH_STR,VA_APP,VA_VRS,VA_ADR,VA_ENV,VA_OS,VA_RE,VA_USR,VA_CLR) " +
-                "VALUES(?,?,?,?,?,?,?,?,?,?,?)", ps -> {
+        template.update("""
+INSERT INTO E_ENV_INS(ID_INS,VA_TYP,DH_STR,VA_APP,VA_VRS,VA_ADR,VA_ENV,VA_OS,VA_RE,VA_USR,VA_CLR)
+VALUES(?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             ps.setString(1, instance.getId());
             ps.setString(2, instance.getType() != null ? instance.getType().name() : null);
             ps.setTimestamp(3, fromNullableInstant(instance.getInstant()));
@@ -68,9 +68,10 @@ public class RequestDao {
     }
 
     private int saveMainSessions(List<ServerMainSession> reqList) {
-    	 var arr = template.batchUpdate("INSERT INTO E_MAIN_SES(ID_SES,VA_NAM,VA_USR,DH_STR,DH_END,VA_TYP,VA_LCT,VA_THR,VA_ERR_TYP,VA_ERR_MSG,VA_MSK,CD_INS)"
-                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
-            var exp = nullableException(o.getException());
+    	 var arr = template.batchUpdate("""
+INSERT INTO E_MAIN_SES(ID_SES,VA_NAM,VA_USR,DH_STR,DH_END,VA_TYP,VA_LCT,VA_THR,VA_ERR_TYP,VA_ERR_MSG,VA_MSK,CD_INS)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", reqList, reqList.size(), (ps, o) -> {
+            var exp = o.getException();
             ps.setString(1, o.getId());
             ps.setString(2, o.getName());
             ps.setString(3, o.getUser());
@@ -79,8 +80,8 @@ public class RequestDao {
             ps.setString(6, valueOfNullable(o.getType()));
             ps.setString(7, o.getLocation());
             ps.setString(8, o.getThreadName());
-            ps.setString(9, exp.getType());
-            ps.setString(10, exp.getMessage());
+            ps.setString(9, nonNull(exp) ? exp.getType() : null);
+            ps.setString(10, nonNull(exp) ? exp.getMessage() : null);
             ps.setInt(11, mask(o));
             ps.setString(12, o.getInstanceId());
         });
@@ -88,9 +89,10 @@ public class RequestDao {
     }
 
     private int saveRestSessions(List<ServerRestSession> reqList) {
-        var arr = template.batchUpdate("INSERT INTO E_RST_SES(ID_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,VA_ERR_TYP,VA_ERR_MSG,VA_NAM,VA_USR,VA_USR_AGT,VA_CCH_CTR,VA_MSK,CD_INS)"
-                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
-            var exp = nullableException(o.getException());
+        var arr = template.batchUpdate("""
+INSERT INTO E_RST_SES(ID_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,VA_ERR_TYP,VA_ERR_MSG,VA_NAM,VA_USR,VA_USR_AGT,VA_CCH_CTR,VA_MSK,CD_INS)"
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", reqList, reqList.size(), (ps, o) -> {
+            var exp = o.getException();
             ps.setString(1, o.getId());
             ps.setString(2, o.getMethod());
             ps.setString(3, o.getProtocol());
@@ -108,8 +110,8 @@ public class RequestDao {
             ps.setTimestamp(15, fromNullableInstant(o.getStart()));
             ps.setTimestamp(16, fromNullableInstant(o.getEnd()));
             ps.setString(17, o.getThreadName());
-            ps.setString(18, exp.getType());
-            ps.setString(19, exp.getMessage());
+            ps.setString(18, nonNull(exp) ? exp.getType() : null);
+            ps.setString(19, nonNull(exp) ? exp.getMessage() : null);
             ps.setString(20, o.getName());
             ps.setString(21, o.getUser());
             ps.setString(22, o.getUserAgent());
@@ -399,23 +401,26 @@ public class RequestDao {
     }
 
     private static Timestamp fromNullableInstant(Instant instant) {
-        return ofNullable(instant).map(Timestamp::from).orElse(null);
+        return nonNull(instant) ? Timestamp.from(instant) : null;
     }
 
-    private static String valueOfNullable(Object o) {
-        return ofNullable(o).map(Object::toString).orElse(null);
+    private static String valueOfNullable(Object o) {// do not use Objects::toString
+        return nonNull(o) ? o.toString() : null;
     }
 
     private static <T extends Enum<T>> String valueOfNullableList(List<T> enumList) {
-        return ofNullable(enumList)
-                .map(list -> list.stream().filter(Objects::nonNull).map(Enum::name).collect(joining(",")))
-                .orElse(null);
+        return nonNull(enumList)
+                ? enumList.stream().filter(Objects::nonNull).map(Enum::name).collect(joining(","))
+                : null;
     }
+    
     private static String  valueOfNullableArray(long[]array){
-        return ofNullable(array).map(arr -> LongStream.of(arr).mapToObj(Long::toString).collect(joining(","))).orElse(null);
+        return nonNull(array)
+        		? LongStream.of(array).mapToObj(Long::toString).collect(joining(","))
+				: null;
     }
 
-    private static ExceptionInfo nullableException(ExceptionInfo exp) {
-        return ofNullable(exp).orElseGet(() -> new ExceptionInfo(null, null));
+    private static ExceptionInfo nullableException(ExceptionInfo exp) { //remove this
+        return nonNull(exp) ? exp : new ExceptionInfo(null, null);
     }
 }
