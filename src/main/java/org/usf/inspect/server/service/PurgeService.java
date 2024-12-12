@@ -1,32 +1,16 @@
 package org.usf.inspect.server.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.java.Log;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.usf.inspect.core.ExceptionInfo;
 import org.usf.inspect.server.QueryLoader;
 import org.usf.inspect.server.model.Query;
-
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
-import static java.util.Optional.ofNullable;
 
 @Service
 @RequiredArgsConstructor
@@ -41,14 +25,16 @@ public class PurgeService {
         logger.log(Level.INFO, "+ Purging old Data, parameters in entry");
         logger.log(Level.INFO, "\t- Environment: " + env);
         logger.log(Level.INFO, "\t- Start: " + before);
-
         List<Query> queries = QueryLoader.loadQueries(env,appName,before,version);
-        for(Query query: queries){
-            template.update(query.getSql(),query.getParams());
-
+        try{
+            for(Query query: queries){
+                template.update(query.getSql(),query.getParams());
+            }
+            return true;
+        }catch(DataAccessException e ){
+            System.out.println("erreur sql"+e);
         }
-
-        return true; // return temp_table count(*)/table
+        return false;
     }
 
 }
