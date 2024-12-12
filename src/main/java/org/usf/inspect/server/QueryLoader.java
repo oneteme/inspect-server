@@ -11,7 +11,9 @@ public class QueryLoader {
 
     public static List<Query> loadQueries (@NonNull String env, List<String> appName, @NonNull Instant before, List<String> version) {
 
-        List<Object> cteParams = new ArrayList<>(Arrays.asList(Timestamp.from(before),env));
+        List<Object> cteParams = new ArrayList<>();
+        cteParams.add(Timestamp.from(before));
+        cteParams.add(env);
         String appNameCondition = "";
         if(appName != null && !appName.isEmpty()){
             appNameCondition = "and va_app in ("+ nArg(appName.size()) +")";
