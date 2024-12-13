@@ -32,12 +32,12 @@ public class QueryLoader {
         List<Query> queries = new ArrayList<>();
         //create session temp table
         queries.add(new Query(
-                "create  temporary table IF NOT EXISTs  temp_session_table( id varchar(255), va_typ char(1) );")
+                "create  temporary table IF NOT EXISTs temp_session_table( id varchar(255), va_typ char(1) );")
         );
 
         //create request temp table
         queries.add(new Query(
-                "create  temporary table IF NOT EXISTs  temp_request_table( id int);"
+                "create  temporary table IF NOT EXISTs temp_request_table( id int);"
         ));
 
         //fill temp session temp table
@@ -224,9 +224,8 @@ select * from deleted_instances;
 
     private static String createRequestQuery(String column, String table){
         return """
-                     select %s as id
-                     from %s
-                     where cd_prn_ses in (select id from temp_session_table)
-                """.formatted(column,table);
+ select %s as id
+ from %s
+ where cd_prn_ses in (select id from temp_session_table)""".formatted(column,table);
     }
 }

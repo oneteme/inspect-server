@@ -1,7 +1,6 @@
 package org.usf.inspect.server.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,22 +18,18 @@ public class PurgeService {
     private final JdbcTemplate template;
     private static final Logger logger = Logger.getLogger(PurgeService.class.getName());
 
-    @Transactional
+    @Transactional(rollbackFor = Throwable.class)
     public boolean purgeData(String env, List<String> appName, Instant before, List<String> version) {
 
         logger.log(Level.INFO, "+ Purging old Data, parameters in entry");
         logger.log(Level.INFO, "\t- Environment: " + env);
         logger.log(Level.INFO, "\t- Start: " + before);
         List<Query> queries = QueryLoader.loadQueries(env,appName,before,version);
-        try{
-            for(Query query: queries){
-                template.update(query.getSql(),query.getParams());
-            }
-            return true;
-        }catch(DataAccessException e ){
-            System.out.println("erreur sql"+e);
+
+        for(Query query: queries){
+            template.update(query.getSql(),query.getParams());
         }
-        return false;
+        return true;
     }
 
 }
