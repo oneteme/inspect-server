@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.usf.inspect.server.RequestMask;
 import org.usf.inspect.server.model.object.*;
@@ -13,6 +13,7 @@ import java.sql.*;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -26,6 +27,8 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.joining;
 import static org.usf.inspect.server.RequestMask.*;
+import static org.usf.inspect.server.Utils.isEmpty;
+import static org.usf.inspect.server.dao.TreeIterator.treeIterator;
 
 @Repository
 @RequiredArgsConstructor
@@ -90,7 +93,7 @@ public class RequestDao {
                     INSERT INTO E_RST_SES(ID_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,VA_ERR_TYP,VA_ERR_MSG,VA_NAM,VA_USR,VA_USR_AGT,VA_CCH_CTR,VA_MSK,CD_INS)
                     VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", reqList, reqList.size(), (ps, o) -> {
             var exp = o.getException();
-            ps.setString(1, o.getId()); ps.getConnection()
+            ps.setString(1, o.getId());
             ps.setString(2, o.getMethod());
             ps.setString(3, o.getProtocol());
             ps.setString(4, o.getHost());
@@ -120,63 +123,61 @@ public class RequestDao {
     }
 
     interface BatchParameterSetter {
-        int setParameters(PreparedStatement ps) throws SQLException;
+        void setParameters(PreparedStatement ps) throws SQLException;
     }
-
-    private void executeBatch(String sql, BatchParameterSetter batch) {
-        var cnx = DataSourceUtils.getConnection(template.getDataSource());
-        try(var ps = cnx.prepareStatement(sql)){
-            var idx = batch.setParameters(ps);
-            log.debug(sql + ", batch size {}", idx == 0 ? 0 : IntStream.of(ps.executeBatch()).sum());
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+    
+    private <T> Integer executeBatch(String sql, Iterator<T> it, ParameterizedPreparedStatementSetter<T> pss) {
+    	return template.execute(sql, (PreparedStatement ps)->{
+    		var n = 0;
+    		while(it.hasNext()) {
+				pss.setValues(ps, it.next());
+				ps.addBatch();
+				++n;
+    		}
+    		if(n > 0) {
+    			n = IntStream.of(ps.executeBatch()).sum();
+    		}
+    		log.debug(sql + ", batch size {} => ", n);
+    		return n;
+    	});
     }
 
     public void saveRestRequests(List<Session> sessions) {
-        var exceptions = new ArrayList<ExceptionInfo>();
-        var inc = new AtomicLong(selectMaxId("E_RST_RQT", "ID_RST_RQT"));
-        String sql = """
+    	if(sessions.stream().anyMatch(s-> !isEmpty(s.getRestRequests()))){ //avoid exec select max
+	        var exp = new ArrayList<ExceptionInfo>();
+	        var inc = new AtomicLong(selectMaxId("E_RST_RQT", "ID_RST_RQT"));
+	        executeBatch("""
 INSERT INTO E_RST_RQT(ID_RST_RQT,CD_RMT_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,CD_PRN_SES)
-VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""";
-        executeBatch(sql, ps-> {
-            var size = 0;
-            for (var session : sessions) {
-                if (session.getRestRequests() != null) {
-                    for (var request : session.getRestRequests()) {
-                        ps.setLong(1, inc.incrementAndGet());
-                        ps.setString(2, request.getId());
-                        ps.setString(3, request.getMethod());
-                        ps.setString(4, request.getProtocol());
-                        ps.setString(5, request.getHost());
-                        ps.setInt(6, request.getPort());
-                        ps.setString(7, request.getPath());
-                        ps.setString(8, request.getQuery());
-                        ps.setString(9, request.getContentType());
-                        ps.setString(10, request.getAuthScheme());
-                        ps.setInt(11, request.getStatus());
-                        ps.setLong(12, request.getInDataSize());
-                        ps.setLong(13, request.getOutDataSize());
-                        ps.setString(14, request.getInContentEncoding());
-                        ps.setString(15, request.getOutContentEncoding());
-                        ps.setTimestamp(16, fromNullableInstant(request.getStart()));
-                        ps.setTimestamp(17, fromNullableInstant(request.getEnd()));
-                        ps.setString(18, request.getThreadName());
-                        ps.setString(19, request.getCdSession());
-                        if (request.getException() != null) {
-                            request.getException().setIdRequest(inc.get());
-                            exceptions.add(request.getException());
-                        }
-                        ps.addBatch();
-                        size++;
-                    }
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getRestRequests), (ps, req)-> {
+                ps.setLong(1, inc.incrementAndGet());
+                ps.setString(2, req.getId());
+                ps.setString(3, req.getMethod());
+                ps.setString(4, req.getProtocol());
+                ps.setString(5, req.getHost());
+                ps.setInt(6, req.getPort());
+                ps.setString(7, req.getPath());
+                ps.setString(8, req.getQuery());
+                ps.setString(9, req.getContentType());
+                ps.setString(10, req.getAuthScheme());
+                ps.setInt(11, req.getStatus());
+                ps.setLong(12, req.getInDataSize());
+                ps.setLong(13, req.getOutDataSize());
+                ps.setString(14, req.getInContentEncoding());
+                ps.setString(15, req.getOutContentEncoding());
+                ps.setTimestamp(16, fromNullableInstant(req.getStart()));
+                ps.setTimestamp(17, fromNullableInstant(req.getEnd()));
+                ps.setString(18, req.getThreadName());
+                ps.setString(19, req.getCdSession());
+                ps.addBatch();
+                if (req.getException() != null) {
+                    req.getException().setIdRequest(inc.get());
+                    exp.add(req.getException());
                 }
-            }
-            return size;
-        });
-        if(!exceptions.isEmpty()) {
-            saveExceptions(exceptions, REST);
-        }
+	        });
+	        if(!exp.isEmpty()) {
+	            saveExceptions(exp, REST);
+	        }
+    	}
     }
 
     public void saveLocalRequests(List<Session> sessions){
