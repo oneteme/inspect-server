@@ -1,31 +1,27 @@
 package org.usf.inspect.server.dao;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Repository;
-import org.usf.inspect.core.ExceptionInfo;
-import org.usf.inspect.core.Session;
 import org.usf.inspect.server.RequestMask;
-import org.usf.inspect.server.model.*;
-import org.usf.inspect.server.model.wrapper.*;
+import org.usf.inspect.server.model.object.*;
 
-import java.sql.ResultSet;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.ToIntFunction;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
-import static java.sql.Types.*;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.joining;
@@ -33,14 +29,15 @@ import static org.usf.inspect.server.RequestMask.*;
 
 @Repository
 @RequiredArgsConstructor
+@Slf4j
 public class RequestDao {
 
     private final JdbcTemplate template;
 
-    public void saveInstanceEnvironment(ServerInstanceEnvironment instance) {
+    public void saveInstanceEnvironment(InstanceEnvironment instance) {
         template.update("""
-INSERT INTO E_ENV_INS(ID_INS,VA_TYP,DH_STR,VA_APP,VA_VRS,VA_ADR,VA_ENV,VA_OS,VA_RE,VA_USR,VA_CLR)
-VALUES(?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
+                INSERT INTO E_ENV_INS(ID_INS,VA_TYP,DH_STR,VA_APP,VA_VRS,VA_ADR,VA_ENV,VA_OS,VA_RE,VA_USR,VA_CLR)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             ps.setString(1, instance.getId());
             ps.setString(2, instance.getType() != null ? instance.getType().name() : null);
             ps.setTimestamp(3, fromNullableInstant(instance.getInstant()));
@@ -55,22 +52,22 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
         });
     }
 
-    public long saveSessions(List<ServerSession> sessions) {
-        var rs = filterAndSave(sessions, ServerRestSession.class, this::saveRestSessions);
-        var ms = filterAndSave(sessions, ServerMainSession.class, this::saveMainSessions);
-        filterSubAndSave(sessions, Session::getRestRequests, (s, rest) -> new RestRequestWrapper(s.getId(), rest), this::saveRestRequests);
-        filterSubAndSave(sessions, Session::getFtpRequests, (s, ftp) -> new FtpRequestWrapper(s.getId(), ftp), this::saveFtpRequests);
-        filterSubAndSave(sessions, Session::getMailRequests, (s, smtp) -> new MailRequestWrapper(s.getId(), smtp), this::saveMailRequests);
-        filterSubAndSave(sessions, Session::getDatabaseRequests, (s, jdbc) -> new DatabaseRequestWrapper(s.getId(), jdbc), this::saveDatabaseRequests);
-        filterSubAndSave(sessions, Session::getLocalRequests, (s, local) -> new LocalRequestWrapper(s.getId(), local), this::saveLocalRequests);
-        filterSubAndSave(sessions, Session::getLdapRequests, (s, ldap) -> new NamingRequestWrapper(s.getId(), ldap), this::saveLdapRequests);
+    public long saveSessions(List<Session> sessions) {
+        var rs = filterAndSave(sessions, RestSession.class, this::saveRestSessions);
+        var ms = filterAndSave(sessions, MainSession.class, this::saveMainSessions);
+        saveRestRequests(sessions);
+        saveLocalRequests(sessions);
+        saveMailRequests(sessions);
+        saveDatabaseRequests(sessions);
+        saveFtpRequests(sessions);
+        saveLdapRequests(sessions);
         return rs + ms;
     }
 
-    private int saveMainSessions(List<ServerMainSession> reqList) {
+    private int saveMainSessions(List<MainSession> reqList) {
     	 var arr = template.batchUpdate("""
-INSERT INTO E_MAIN_SES(ID_SES,VA_NAM,VA_USR,DH_STR,DH_END,VA_TYP,VA_LCT,VA_THR,VA_ERR_TYP,VA_ERR_MSG,VA_MSK,CD_INS)
-VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", reqList, reqList.size(), (ps, o) -> {
+                     INSERT INTO E_MAIN_SES(ID_SES,VA_NAM,VA_USR,DH_STR,DH_END,VA_TYP,VA_LCT,VA_THR,VA_ERR_TYP,VA_ERR_MSG,VA_MSK,CD_INS)
+                     VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", reqList, reqList.size(), (ps, o) -> {
             var exp = o.getException();
             ps.setString(1, o.getId());
             ps.setString(2, o.getName());
@@ -88,12 +85,12 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", reqList, reqList.size(), (ps, o) -> {
         return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
 
-    private int saveRestSessions(List<ServerRestSession> reqList) {
+    private int saveRestSessions(List<RestSession> reqList) {
         var arr = template.batchUpdate("""
-INSERT INTO E_RST_SES(ID_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,VA_ERR_TYP,VA_ERR_MSG,VA_NAM,VA_USR,VA_USR_AGT,VA_CCH_CTR,VA_MSK,CD_INS)"
-VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", reqList, reqList.size(), (ps, o) -> {
+                    INSERT INTO E_RST_SES(ID_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,VA_ERR_TYP,VA_ERR_MSG,VA_NAM,VA_USR,VA_USR_AGT,VA_CCH_CTR,VA_MSK,CD_INS)
+                    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", reqList, reqList.size(), (ps, o) -> {
             var exp = o.getException();
-            ps.setString(1, o.getId());
+            ps.setString(1, o.getId()); ps.getConnection()
             ps.setString(2, o.getMethod());
             ps.setString(3, o.getProtocol());
             ps.setString(4, o.getHost());
@@ -122,248 +119,530 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", reqList, reqList.s
         return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
 
-    public void saveRestRequests(List<RestRequestWrapper> reqList) {
-        var exceptions = new ArrayList<ServerException>();
+    interface BatchParameterSetter {
+        int setParameters(PreparedStatement ps) throws SQLException;
+    }
+
+    private void executeBatch(String sql, BatchParameterSetter batch) {
+        var cnx = DataSourceUtils.getConnection(template.getDataSource());
+        try(var ps = cnx.prepareStatement(sql)){
+            var idx = batch.setParameters(ps);
+            log.debug(sql + ", batch size {}", idx == 0 ? 0 : IntStream.of(ps.executeBatch()).sum());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void saveRestRequests(List<Session> sessions) {
+        var exceptions = new ArrayList<ExceptionInfo>();
         var inc = new AtomicLong(selectMaxId("E_RST_RQT", "ID_RST_RQT"));
-        template.batchUpdate("INSERT INTO E_RST_RQT(ID_RST_RQT,CD_RMT_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,CD_PRN_SES)"
-                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", reqList, reqList.size(), (ps, o) -> {
-            var completed = isNull(o.getException());
-            ps.setLong(1, inc.incrementAndGet());
-            ps.setString(2, o.getId());
-            ps.setString(3, o.getMethod());
-            ps.setString(4, o.getProtocol());
-            ps.setString(5, o.getHost());
-            ps.setInt(6, o.getPort());
-            ps.setString(7, o.getPath());
-            ps.setString(8, o.getQuery());
-            ps.setString(9, o.getContentType());
-            ps.setString(10, o.getAuthScheme());
-            ps.setInt(11, o.getStatus());
-            ps.setLong(12, o.getInDataSize());
-            ps.setLong(13, o.getOutDataSize());
-            ps.setString(14, o.getInContentEncoding());
-            ps.setString(15, o.getOutContentEncoding());
-            ps.setTimestamp(16, fromNullableInstant(o.getStart()));
-            ps.setTimestamp(17, fromNullableInstant(o.getEnd()));
-            ps.setString(18, o.getThreadName());
-            ps.setString(19, o.getCdSession());
-            if(o.getException() != null) {
-                exceptions.add(new ServerException(inc.get(), null, new ExceptionInfo(o.getException().getType(), o.getException().getMessage())));
+        String sql = """
+INSERT INTO E_RST_RQT(ID_RST_RQT,CD_RMT_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,CD_PRN_SES)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""";
+        executeBatch(sql, ps-> {
+            var size = 0;
+            for (var session : sessions) {
+                if (session.getRestRequests() != null) {
+                    for (var request : session.getRestRequests()) {
+                        ps.setLong(1, inc.incrementAndGet());
+                        ps.setString(2, request.getId());
+                        ps.setString(3, request.getMethod());
+                        ps.setString(4, request.getProtocol());
+                        ps.setString(5, request.getHost());
+                        ps.setInt(6, request.getPort());
+                        ps.setString(7, request.getPath());
+                        ps.setString(8, request.getQuery());
+                        ps.setString(9, request.getContentType());
+                        ps.setString(10, request.getAuthScheme());
+                        ps.setInt(11, request.getStatus());
+                        ps.setLong(12, request.getInDataSize());
+                        ps.setLong(13, request.getOutDataSize());
+                        ps.setString(14, request.getInContentEncoding());
+                        ps.setString(15, request.getOutContentEncoding());
+                        ps.setTimestamp(16, fromNullableInstant(request.getStart()));
+                        ps.setTimestamp(17, fromNullableInstant(request.getEnd()));
+                        ps.setString(18, request.getThreadName());
+                        ps.setString(19, request.getCdSession());
+                        if (request.getException() != null) {
+                            request.getException().setIdRequest(inc.get());
+                            exceptions.add(request.getException());
+                        }
+                        ps.addBatch();
+                        size++;
+                    }
+                }
             }
+            return size;
         });
         if(!exceptions.isEmpty()) {
             saveExceptions(exceptions, REST);
         }
     }
 
-    public void saveLocalRequests(List<LocalRequestWrapper> stagesList){
-        var exceptions = new ArrayList<ServerException>();
+    public void saveLocalRequests(List<Session> sessions){
+        var exceptions = new ArrayList<ExceptionInfo>();
         var inc = new AtomicLong(selectMaxId("E_LCL_RQT", "ID_LCL_RQT"));
-        template.batchUpdate("INSERT INTO E_LCL_RQT(ID_LCL_RQT,VA_NAM,VA_LCT,DH_STR,DH_END,VA_USR,VA_THR,VA_STT,CD_PRN_SES)"
-                + " VALUES(?,?,?,?,?,?,?,?,?)", stagesList,stagesList.size(),(ps,o)-> {
-            var completed = isNull(o.getException());
-            ps.setLong(1, inc.incrementAndGet());
-            ps.setString(2,o.getName());
-            ps.setString(3,o.getLocation());
-            ps.setTimestamp(4,fromNullableInstant(o.getStart()));
-            ps.setTimestamp(5,fromNullableInstant(o.getEnd()));
-            ps.setString(6,o.getUser());
-            ps.setString(7,o.getThreadName());
-            ps.setBoolean(8, completed);
-            ps.setString(9,o.getCdSession());
-            if(o.getException() != null) {
-                exceptions.add(new ServerException(inc.get(), null, new ExceptionInfo(o.getException().getType(), o.getException().getMessage())));
+        template.batchUpdate("""
+                INSERT INTO E_LCL_RQT(ID_LCL_RQT,VA_NAM,VA_LCT,DH_STR,DH_END,VA_USR,VA_THR,VA_STT,CD_PRN_SES)
+                VALUES(?,?,?,?,?,?,?,?,?)""", new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                for (Session session: sessions) {
+                    if(session.getLocalRequests() != null) {
+                        for (LocalRequest request: session.getLocalRequests()) {
+                            var completed = isNull(request.getException());
+                            ps.setLong(1, inc.incrementAndGet());
+                            ps.setString(2,request.getName());
+                            ps.setString(3,request.getLocation());
+                            ps.setTimestamp(4,fromNullableInstant(request.getStart()));
+                            ps.setTimestamp(5,fromNullableInstant(request.getEnd()));
+                            ps.setString(6,request.getUser());
+                            ps.setString(7,request.getThreadName());
+                            ps.setBoolean(8, completed);
+                            ps.setString(9,request.getCdSession());
+
+                            if(request.getException() != null) {
+                                request.getException().setIdRequest(inc.get());
+                                exceptions.add(request.getException());
+                            }
+
+                            ps.addBatch();
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public int getBatchSize() {
+                var size  = 0;
+                for (Session session : sessions) {
+                    size += session.getLocalRequests() != null ? session.getLocalRequests().size() : 0;
+                }
+                return size;
             }
         });
+
         if(!exceptions.isEmpty()) {
             saveExceptions(exceptions, LOCAL);
         }
     }
 
-    public void saveMailRequests(List<MailRequestWrapper> mailList) {
+    public void saveMailRequests(List<Session> sessions) {
         var inc = new AtomicLong(selectMaxId("E_SMTP_RQT", "ID_SMTP_RQT"));
+        template.batchUpdate("""
+                INSERT INTO E_SMTP_RQT(ID_SMTP_RQT,VA_HST,CD_PRT,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)
+                VALUES(?,?,?,?,?,?,?,?,?)""", new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                for (Session session: sessions) {
+                    if(session.getMailRequests() != null) {
+                        for (MailRequest request : session.getMailRequests()) {
+                            var completed = request.getActions() == null || request.getActions().stream().allMatch(a-> isNull(a.getException()));
+                            ps.setLong(1, inc.incrementAndGet());
+                            ps.setString(2, request.getHost());
+                            ps.setInt(3, request.getPort());
+                            ps.setString(4, request.getUser());
+                            ps.setTimestamp(5, fromNullableInstant(request.getStart()));
+                            ps.setTimestamp(6, fromNullableInstant(request.getEnd()));
+                            ps.setString(7, request.getThreadName());
+                            ps.setBoolean(8, completed);
+                            ps.setString(9, request.getCdSession());
+                            request.setId(inc.get());
+                            ps.addBatch();
+                        }
+                    }
+                }
+            }
 
-        template.batchUpdate("INSERT INTO E_SMTP_RQT(ID_SMTP_RQT,VA_HST,CD_PRT,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)"
-                + " VALUES(?,?,?,?,?,?,?,?,?)", mailList, mailList.size(), (ps, o) -> {
-            var completed = o.getActions().stream().allMatch(a-> isNull(a.getException()));
-            ps.setLong(1, inc.incrementAndGet());
-            ps.setString(2, o.getHost());
-            ps.setInt(3, o.getPort());
-            ps.setString(4, o.getUser());
-            ps.setTimestamp(5, fromNullableInstant(o.getStart()));
-            ps.setTimestamp(6, fromNullableInstant(o.getEnd()));
-            ps.setString(7, o.getThreadName());
-            ps.setBoolean(8, completed);
-            ps.setString(9, o.getCdSession());
-            o.setId(inc.get());
+            @Override
+            public int getBatchSize() {
+                var size  = 0;
+                for (Session session : sessions) {
+                    size += session.getMailRequests() != null ? session.getMailRequests().size() : 0;
+                }
+                return size;
+            }
         });
-        saveMailRequestStages(mailList);
-        saveMailRequestMails(mailList);
+        saveMailRequestStages(sessions);
+        saveMailRequestMails(sessions);
     }
 
-    private void saveMailRequestStages(List<MailRequestWrapper> mailList) {
-        var exceptions = new ArrayList<ServerException>();
+    private void saveMailRequestStages(List<Session> sessions) {
+        var exceptions = new ArrayList<ExceptionInfo>();
         template.batchUpdate("INSERT INTO E_SMTP_STG(VA_NAM,DH_STR,DH_END,CD_ORD,CD_SMTP_RQT) VALUES(?,?,?,?,?)",
-                mailList.stream()
-                        .flatMap(e -> {
-                            var inc = new AtomicLong(0);
-                            return e.getActions().stream().map(da -> {
-                                var id = inc.incrementAndGet();
-                                if(da.getException() != null) {
-                                    exceptions.add(new ServerException(e.getId(), id, new ExceptionInfo(da.getException().getType(), da.getException().getMessage())));
+                new BatchPreparedStatementSetter() {
+                    @Override
+                    public void setValues(PreparedStatement ps, int i) throws SQLException {
+                        for (Session session: sessions) {
+                            if(session.getMailRequests() != null) {
+                                for (MailRequest request : session.getMailRequests()) {
+                                    if(request.getActions() != null) {
+                                        var inc = new AtomicInteger(0);
+                                        for (MailRequestStage stage: request.getActions()) {
+                                            ps.setString(1, stage.getName());
+                                            ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
+                                            ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
+                                            ps.setInt(3, inc.incrementAndGet());
+                                            ps.setLong(4, request.getId());
+                                            if(stage.getException() != null) {
+                                                stage.getException().setIdRequest(request.getId());
+                                                stage.getException().setOrder(inc.get());
+                                                exceptions.add(stage.getException());
+                                            }
+                                            ps.addBatch();
+                                        }
+                                    }
                                 }
-                                return new Object[]{da.getName(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()), id, e.getId()};
-                            });
-                        }).toList(),
-                new int[]{VARCHAR, TIMESTAMP, TIMESTAMP, INTEGER, BIGINT});
+                            }
+                        }
+                    }
+
+                    @Override
+                    public int getBatchSize() {
+                        var size  = 0;
+                        for (Session session : sessions) {
+                            if(session.getMailRequests() != null) {
+                                for (MailRequest request : session.getMailRequests()) {
+                                    size += request.getActions() != null ? request.getActions().size() : 0;
+                                }
+                            }
+
+                        }
+                        return size;
+                    }
+                });
+
         if(!exceptions.isEmpty()) {
             saveExceptions(exceptions, SMTP);
         }
     }
 
-    private void saveMailRequestMails(List<MailRequestWrapper> mailList) {
+    private void saveMailRequestMails(List<Session> sessions) {
         template.batchUpdate("INSERT INTO E_SMTP_MAIL(VA_SBJ,VA_CNT_TYP,VA_FRM,VA_RCP,VA_RPL,VA_SZE,CD_SMTP_RQT) VALUES(?,?,?,?,?,?,?)",
-                mailList.stream()
-                        .filter(e -> e.getMails() != null)
-                        .flatMap(e -> e.getMails().stream().filter(Objects::nonNull).map(da -> new Object[]{da.getSubject(), da.getContentType(), da.getFrom() != null ? String.join(", ", da.getFrom()) : null, da.getRecipients() != null ? String.join(", ", da.getRecipients()) : null, da.getReplyTo() != null ? String.join(", ", da.getReplyTo()) : null, da.getSize(), e.getId()}))
-                        .toList(),
-                new int[]{VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, BIGINT, BIGINT});
-    }
-
-    public void saveFtpRequests(List<FtpRequestWrapper> ftpList) {
-        var inc = new AtomicLong(selectMaxId("E_FTP_RQT", "ID_FTP_RQT"));
-
-        template.batchUpdate("INSERT INTO E_FTP_RQT(ID_FTP_RQT,VA_HST,CD_PRT,VA_PCL,VA_SRV_VRS,VA_CLT_VRS,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)"
-                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", ftpList, ftpList.size(), (ps, o) -> {
-            var completed = o.getActions().stream().allMatch(a-> isNull(a.getException()));
-            ps.setLong(1, inc.incrementAndGet());
-            ps.setString(2, o.getHost());
-            ps.setInt(3, o.getPort());
-            ps.setString(4, o.getProtocol());
-            ps.setString(5, o.getServerVersion());
-            ps.setString(6, o.getClientVersion());
-            ps.setString(7, o.getUser());
-            ps.setTimestamp(8, fromNullableInstant(o.getStart()));
-            ps.setTimestamp(9, fromNullableInstant(o.getEnd()));
-            ps.setString(10, o.getThreadName());
-            ps.setBoolean(11, completed);
-            ps.setString(12, o.getCdSession());
-            o.setId(inc.get());
-        });
-        saveFtpRequestStages(ftpList);
-    }
-
-    private void saveFtpRequestStages(List<FtpRequestWrapper> ftpList) {
-        var exceptions = new ArrayList<ServerException>();
-        template.batchUpdate("INSERT INTO E_FTP_STG(VA_NAM,DH_STR,DH_END,VA_ARG,CD_ORD,CD_FTP_RQT) VALUES(?,?,?,?,?,?)",
-                ftpList.stream()
-                        .flatMap(e ->  {
-                            var inc = new AtomicLong(0);
-                            return e.getActions().stream().map(da -> {
-                                var id = inc.incrementAndGet();
-                                if(da.getException() != null) {
-                                    exceptions.add(new ServerException(e.getId(), id, new ExceptionInfo(da.getException().getType(), da.getException().getMessage())));
+                new BatchPreparedStatementSetter() {
+                    @Override
+                    public void setValues(PreparedStatement ps, int i) throws SQLException {
+                        for (Session session: sessions) {
+                            if(session.getMailRequests() != null) {
+                                for (MailRequest request : session.getMailRequests()) {
+                                    if(request.getMails() != null) {
+                                        for (Mail mail: request.getMails()) {
+                                            ps.setString(1, mail.getSubject());
+                                            ps.setString(2, mail.getContentType());
+                                            ps.setString(3, mail.getFrom() != null ? String.join(", ", mail.getFrom()) : null);
+                                            ps.setString(4, mail.getRecipients() != null ? String.join(", ", mail.getRecipients()) : null);
+                                            ps.setString(5, mail.getReplyTo() != null ? String.join(", ", mail.getReplyTo()) : null);
+                                            ps.setInt(6,mail.getSize());
+                                            ps.setLong(7, mail.getIdRequest());
+                                            ps.addBatch();
+                                        }
+                                    }
                                 }
-                                return new Object[]{da.getName(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()), da.getArgs() != null ? String.join(", ", da.getArgs()) : null, id, e.getId()};
-                            });
-                        }).toList(),
-                new int[]{VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, INTEGER, BIGINT});
+                            }
+                        }
+                    }
+
+                    @Override
+                    public int getBatchSize() {
+                        var size  = 0;
+                        for (Session session : sessions) {
+                            if(session.getMailRequests() != null) {
+                                for (MailRequest request : session.getMailRequests()) {
+                                    size += request.getMails() != null ? request.getMails().size() : 0;
+                                }
+                            }
+                        }
+                        return size;
+                    }
+                });
+
+    }
+
+    private void saveExceptions(List<ExceptionInfo> exceptionList, RequestMask mask) {
+        template.batchUpdate("INSERT INTO E_EXC_INF(VA_TYP,VA_ERR_TYP,VA_ERR_MSG,CD_ORD,CD_RQT) VALUES(?,?,?,?,?)",
+                exceptionList,
+                exceptionList.size(),
+                (ps, o) -> {
+                    ps.setString(1, mask.name());
+                    ps.setString(2, o.getType());
+                    ps.setString(3, o.getMessage());
+                    ps.setInt(4, o.getOrder());
+                    ps.setLong(5, o.getIdRequest());
+                });
+    }
+
+    public void saveFtpRequests(List<Session> sessions){
+        var inc = new AtomicLong(selectMaxId("E_FTP_RQT", "ID_FTP_RQT"));
+        template.batchUpdate("""
+                INSERT INTO E_FTP_RQT(ID_FTP_RQT,VA_HST,CD_PRT,VA_PCL,VA_SRV_VRS,VA_CLT_VRS,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                for (Session session: sessions) {
+                    if(session.getFtpRequests() != null) {
+                        for (FtpRequest request : session.getFtpRequests()) {
+                            var completed = request.getActions() == null || request.getActions().stream().allMatch(a -> isNull(a.getException()));
+                            ps.setLong(1, inc.incrementAndGet());
+                            ps.setString(2, request.getHost());
+                            ps.setInt(3, request.getPort());
+                            ps.setString(4, request.getProtocol());
+                            ps.setString(5, request.getServerVersion());
+                            ps.setString(6, request.getClientVersion());
+                            ps.setString(7, request.getUser());
+                            ps.setTimestamp(8, fromNullableInstant(request.getStart()));
+                            ps.setTimestamp(9, fromNullableInstant(request.getEnd()));
+                            ps.setString(10, request.getThreadName());
+                            ps.setBoolean(11, completed);
+                            ps.setString(12, request.getCdSession());
+                            request.setId(inc.get());
+                            ps.addBatch();
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public int getBatchSize() {
+                var size  = 0;
+                for (Session session : sessions) {
+                    size += session.getFtpRequests() != null ? session.getFtpRequests().size() : 0;
+                }
+                return size;
+            }
+        });
+        saveFtpRequestStages(sessions);
+    }
+
+    private void saveFtpRequestStages(List<Session> sessions) {
+        var exceptions = new ArrayList<ExceptionInfo>();
+        template.batchUpdate("INSERT INTO E_FTP_STG(VA_NAM,DH_STR,DH_END,VA_ARG,CD_ORD,CD_FTP_RQT) VALUES(?,?,?,?,?,?)",
+                new BatchPreparedStatementSetter() {
+                    @Override
+                    public void setValues(PreparedStatement ps, int i) throws SQLException {
+                        for(Session session: sessions) {
+                            if(session.getFtpRequests() != null) {
+                                for (FtpRequest request : session.getFtpRequests()) {
+                                    if(request.getActions() != null) {
+                                        var inc = new AtomicInteger(0);
+                                        for(FtpRequestStage stage : request.getActions()) {
+                                            ps.setString(1, stage.getName());
+                                            ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
+                                            ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
+                                            ps.setString(4, stage.getArgs() != null ? String.join(", ", stage.getArgs()) : null);
+                                            ps.setInt(5, inc.incrementAndGet());
+                                            ps.setLong(6, request.getId());
+                                            if(stage.getException() != null) {
+                                                stage.getException().setIdRequest(request.getId());
+                                                stage.getException().setOrder(inc.get());
+                                                exceptions.add(stage.getException());
+                                            }
+                                            ps.addBatch();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    @Override
+                    public int getBatchSize() {
+                        var size  = 0;
+                        for (Session session : sessions) {
+                            if(session.getFtpRequests() != null) {
+                                for (FtpRequest request : session.getFtpRequests()) {
+                                    size += request.getActions() != null ? request.getActions().size() : 0;
+                                }
+                            }
+                        }
+                        return size;
+                    }
+                });
         if(!exceptions.isEmpty()) {
             saveExceptions(exceptions, FTP);
         }
     }
 
-    public void saveLdapRequests(List<NamingRequestWrapper> ldapList) {
+    public void saveLdapRequests(List<Session> sessions) {
         var inc = new AtomicLong(selectMaxId("E_LDAP_RQT", "ID_LDAP_RQT"));
+        template.batchUpdate("""
+                    INSERT INTO E_LDAP_RQT(ID_LDAP_RQT,VA_HST,CD_PRT,VA_PCL,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)
+                    VALUES(?,?,?,?,?,?,?,?,?,?)""",  new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                for(Session session: sessions) {
+                    if(session.getLdapRequests() != null) {
+                        for (NamingRequest request : session.getLdapRequests()) {
+                            var completed = request.getActions().stream().allMatch(a-> isNull(a.getException()));
+                            ps.setLong(1, inc.incrementAndGet());
+                            ps.setString(2, request.getHost());
+                            ps.setInt(3, request.getPort());
+                            ps.setString(4, request.getProtocol());
+                            ps.setString(5, request.getUser());
+                            ps.setTimestamp(6, fromNullableInstant(request.getStart()));
+                            ps.setTimestamp(7, fromNullableInstant(request.getEnd()));
+                            ps.setString(8, request.getThreadName());
+                            ps.setBoolean(9, completed);
+                            ps.setString(10, request.getCdSession());
+                            request.setId(inc.get());
+                            ps.addBatch();
+                        }
+                    }
+                }
+            }
 
-        template.batchUpdate("INSERT INTO E_LDAP_RQT(ID_LDAP_RQT,VA_HST,CD_PRT,VA_PCL,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)"
-                + " VALUES(?,?,?,?,?,?,?,?,?,?)", ldapList, ldapList.size(), (ps, o) -> {
-            var completed = o.getActions().stream().allMatch(a-> isNull(a.getException()));
-            ps.setLong(1, inc.incrementAndGet());
-            ps.setString(2, o.getHost());
-            ps.setInt(3, o.getPort());
-            ps.setString(4, o.getProtocol());
-            ps.setString(5, o.getUser());
-            ps.setTimestamp(6, fromNullableInstant(o.getStart()));
-            ps.setTimestamp(7, fromNullableInstant(o.getEnd()));
-            ps.setString(8, o.getThreadName());
-            ps.setBoolean(9, completed);
-            ps.setString(10, o.getCdSession());
-            o.setId(inc.get());
+            @Override
+            public int getBatchSize() {
+                var size  = 0;
+                for (Session session : sessions) {
+                    size += session.getLdapRequests() != null ? session.getLdapRequests().size() : 0;
+                }
+                return size;
+            }
         });
-        saveLdapRequestStages(ldapList);
+        saveLdapRequestStages(sessions);
     }
 
-    private void saveLdapRequestStages(List<NamingRequestWrapper> ldapList) {
-        var exceptions = new ArrayList<ServerException>();
-        template.batchUpdate("INSERT INTO E_LDAP_STG(VA_NAM,DH_STR,DH_END,VA_ARG,CD_ORD,CD_LDAP_RQT) VALUES(?,?,?,?,?,?)",
-                ldapList.stream()
-                        .flatMap(e -> {
-                            var inc = new AtomicLong(0);
-                            return e.getActions().stream().map(da -> {
-                                var id = inc.incrementAndGet();
-                                if(da.getException() != null) {
-                                    exceptions.add(new ServerException(e.getId(), id, new ExceptionInfo(da.getException().getType(), da.getException().getMessage())));
+    private void saveLdapRequestStages(List<Session> sessions) {
+        var exceptions = new ArrayList<ExceptionInfo>();
+        template.batchUpdate("INSERT INTO E_LDAP_STG(VA_NAM,DH_STR,DH_END,VA_ARG,CD_ORD,CD_LDAP_RQT) VALUES(?,?,?,?,?,?)", new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                for(Session session: sessions) {
+                    if(session.getLdapRequests() != null) {
+                        for (NamingRequest request : session.getLdapRequests()) {
+                            if(request.getActions() != null) {
+                                var inc = new AtomicInteger(0);
+                                for (NamingRequestStage stage : request.getActions()) {
+                                    ps.setString(1, stage.getName());
+                                    ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
+                                    ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
+                                    ps.setString(4, stage.getArgs() != null ? String.join(", ", stage.getArgs()) : null);
+                                    ps.setInt(5, inc.incrementAndGet());
+                                    ps.setLong(6, request.getId());
+                                    if(stage.getException() != null) {
+                                        stage.getException().setIdRequest(request.getId());
+                                        stage.getException().setOrder(inc.get());
+                                        exceptions.add(stage.getException());
+                                    }
+                                    ps.addBatch();
                                 }
-                                return new Object[]{da.getName(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()), da.getArgs() != null ? String.join(", ", da.getArgs()) : null, id, e.getId()};
-                            });
-                        }).toList(),
-                new int[]{VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, INTEGER, BIGINT});
+                            }
+
+                        }
+                    }
+
+                }
+            }
+
+            @Override
+            public int getBatchSize() {
+                var size  = 0;
+                for (Session session : sessions) {
+                    if(session.getLdapRequests() != null) {
+                        for (NamingRequest request : session.getLdapRequests()) {
+                            size += request.getActions() != null ? request.getActions().size() : 0;
+                        }
+                    }
+                }
+                return size;
+            }
+        });
         if(!exceptions.isEmpty()) {
             saveExceptions(exceptions, LDAP);
         }
     }
 
-    public void saveDatabaseRequests(List<DatabaseRequestWrapper> qryList) {
+    public void saveDatabaseRequests(List<Session> sessions) {
         var inc = new AtomicLong(selectMaxId("E_DTB_RQT", "ID_DTB_RQT"));
+        template.batchUpdate("""
+                INSERT INTO E_DTB_RQT(ID_DTB_RQT,VA_HST,CD_PRT,VA_NAM,VA_SCH,DH_STR,DH_END,VA_USR,VA_THR,VA_DRV,VA_PRD_NAM,VA_PRD_VRS,VA_CMD,VA_STT,CD_PRN_SES)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                for(Session session: sessions) {
+                    if(session.getDatabaseRequests() != null) {
+                        for (DatabaseRequest request : session.getDatabaseRequests()) {
+                            var completed = request.getActions().stream().allMatch(a-> isNull(a.getException()));
+                            ps.setLong(1, inc.incrementAndGet());
+                            ps.setString(2, request.getHost());
+                            ps.setInt(3, request.getPort());
+                            ps.setString(4, request.getName());
+                            ps.setString(5, request.getSchema());
+                            ps.setTimestamp(6, fromNullableInstant(request.getStart()));
+                            ps.setTimestamp(7, fromNullableInstant(request.getEnd()));
+                            ps.setString(8, request.getUser());
+                            ps.setString(9, request.getThreadName());
+                            ps.setString(10, request.getDriverVersion());
+                            ps.setString(11, request.getProductName());
+                            ps.setString(12, request.getProductVersion());
+                            ps.setString(13, valueOfNullableList(request.getCommands()));
+                            ps.setBoolean(14, completed);
+                            ps.setString(15, request.getCdSession());
+                            request.setId(inc.get());
+                            ps.addBatch();
+                        }
+                    }
+                }
+            }
 
-        template.batchUpdate("INSERT INTO E_DTB_RQT(ID_DTB_RQT,VA_HST,CD_PRT,VA_NAM,VA_SCH,DH_STR,DH_END,VA_USR,VA_THR,VA_DRV,VA_PRD_NAM,VA_PRD_VRS,VA_CMD,VA_STT,CD_PRN_SES)"
-                + " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", qryList, qryList.size(), (ps, o) -> {
-            var completed = o.getActions().stream().allMatch(a-> isNull(a.getException()));
-            ps.setLong(1, inc.incrementAndGet());
-            ps.setString(2, o.getHost());
-            ps.setInt(3, o.getPort());
-            ps.setString(4, o.getName());
-            ps.setString(5, o.getSchema());
-            ps.setTimestamp(6, fromNullableInstant(o.getStart()));
-            ps.setTimestamp(7, fromNullableInstant(o.getEnd()));
-            ps.setString(8, o.getUser());
-            ps.setString(9, o.getThreadName());
-            ps.setString(10, o.getDriverVersion());
-            ps.setString(11, o.getProductName());
-            ps.setString(12, o.getProductVersion());
-            ps.setString(13, valueOfNullableList(o.getCommands()));
-            ps.setBoolean(14, completed);
-            ps.setString(15, o.getCdSession());
-            o.setId(inc.get());
+            @Override
+            public int getBatchSize() {
+                var size  = 0;
+                for (Session session : sessions) {
+                    size += session.getDatabaseRequests() != null ? session.getDatabaseRequests().size() : 0;
+                }
+                return size;
+            }
         });
-        saveDatabaseActions(qryList);
+        saveDatabaseActions(sessions);
     }
 
-    private void saveDatabaseActions(List<DatabaseRequestWrapper> queries) {
-        var exceptions = new ArrayList<ServerException>();
-        template.batchUpdate("INSERT INTO E_DTB_STG(VA_NAM,DH_STR,DH_END,VA_CNT,CD_ORD,CD_DTB_RQT) VALUES(?,?,?,?,?,?)",
-                queries.stream()
-                        .flatMap(e -> {
-                            var inc = new AtomicLong(0);
-                            return e.getActions().stream().map(da -> {
-                                var id = inc.incrementAndGet();
-                                if(da.getException() != null) {
-                                    exceptions.add(new ServerException(e.getId(), id, new ExceptionInfo(da.getException().getType(), da.getException().getMessage())));
+    private void saveDatabaseActions(List<Session> sessions) {
+        var exceptions = new ArrayList<ExceptionInfo>();
+        template.batchUpdate("INSERT INTO E_DTB_STG(VA_NAM,DH_STR,DH_END,VA_CNT,CD_ORD,CD_DTB_RQT) VALUES(?,?,?,?,?,?)", new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                for(Session session: sessions) {
+                    if(session.getDatabaseRequests() != null) {
+                        for (DatabaseRequest request : session.getDatabaseRequests()) {
+                            if(request.getActions() != null) {
+                                var inc = new AtomicInteger(0);
+                                for (DatabaseRequestStage stage : request.getActions()) {
+                                    ps.setString(1, stage.getName());
+                                    ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
+                                    ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
+                                    ps.setString(4, valueOfNullableArray(stage.getCount()));
+                                    ps.setInt(5, inc.incrementAndGet());
+                                    ps.setLong(6, request.getId());
+                                    if(stage.getException() != null) {
+                                        stage.getException().setIdRequest(request.getId());
+                                        stage.getException().setOrder(inc.get());
+                                        exceptions.add(stage.getException());
+                                    }
+                                    ps.addBatch();
                                 }
-                                return new Object[]{da.getName(), fromNullableInstant(da.getStart()), fromNullableInstant(da.getEnd()),valueOfNullableArray(da.getCount()), id, e.getId()};
-                            });
-                        }).toList(),
-                new int[]{VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, BIGINT, BIGINT});
+                            }
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public int getBatchSize() {
+                var size  = 0;
+                for (Session session : sessions) {
+                    if(session.getDatabaseRequests() != null) {
+                        for (DatabaseRequest request : session.getDatabaseRequests()) {
+                            size += request.getActions() != null ? request.getActions().size() : 0;
+                        }
+                    }
+                }
+                return size;
+            }
+        });
         if(!exceptions.isEmpty()) {
             saveExceptions(exceptions, JDBC);
         }
-    }
-
-    private void saveExceptions(List<ServerException> exceptionList, RequestMask mask) {
-        template.batchUpdate("INSERT INTO E_EXC_INF(VA_TYP,VA_ERR_TYP,VA_ERR_MSG,CD_ORD,CD_RQT) VALUES(?,?,?,?,?)",
-                exceptionList.stream().map(e -> new Object[]{mask.name(), e.exceptionInfo().getType(), e.exceptionInfo().getMessage(), e.order(), e.cdRequest()}).toList(),
-                new int[]{VARCHAR, VARCHAR, VARCHAR, INTEGER, BIGINT});
     }
 
     // TODO use RequestQueryBuilder
@@ -390,16 +669,6 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", reqList, reqList.s
         return list.isEmpty() ? 0 : saveFn.applyAsInt(list);
     }
 
-    private static <T, U, R> void filterSubAndSave(Collection<T> c, Function<T, Collection<U>> accessor, BiFunction<T, U, R> mapper, Consumer<List<R>> saveFn) {
-        var list = c.stream()
-                .filter(o -> nonNull(accessor.apply(o)))
-                .flatMap(o -> accessor.apply(o).stream().map(s -> mapper.apply(o, s)))
-                .toList();
-        if (!list.isEmpty()) {
-            saveFn.accept(list);
-        }
-    }
-
     private static Timestamp fromNullableInstant(Instant instant) {
         return nonNull(instant) ? Timestamp.from(instant) : null;
     }
@@ -418,9 +687,5 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", reqList, reqList.s
         return nonNull(array)
         		? LongStream.of(array).mapToObj(Long::toString).collect(joining(","))
 				: null;
-    }
-
-    private static ExceptionInfo nullableException(ExceptionInfo exp) { //remove this
-        return nonNull(exp) ? exp : new ExceptionInfo(null, null);
     }
 }

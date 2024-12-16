@@ -1,19 +1,19 @@
 package org.usf.inspect.server;
 
-import static org.springframework.http.converter.json.Jackson2ObjectMapperBuilder.json;
-
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsontype.NamedType;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.usf.inspect.server.model.ServerMainSession;
-import org.usf.inspect.server.model.ServerRestSession;
+import org.usf.inspect.server.model.object.MainSession;
+import org.usf.inspect.server.model.object.RestSession;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import static org.springframework.http.converter.json.Jackson2ObjectMapperBuilder.json;
 
 @SpringBootApplication
 @EnableTransactionManagement
@@ -30,7 +30,7 @@ public class InspectApplication {
 				.modules(new JavaTimeModule(), new ParameterNamesModule())
 				.build()
 			    .setSerializationInclusion(JsonInclude.Include.NON_EMPTY); // !null & !empty
-		mapper.registerSubtypes(ServerRestSession.class, ServerMainSession.class);
+		mapper.registerSubtypes(new NamedType(MainSession.class, "main"), new NamedType(RestSession.class, "rest"));
 		return mapper;
 	}
 }

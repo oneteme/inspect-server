@@ -11,6 +11,7 @@ import org.usf.inspect.core.NamingRequestStage;
 @Setter
 @RequiredArgsConstructor
 public class NamingRequestStageWrapper {
+    private long id;
     private int order;
 
     @JsonIgnore
