@@ -55,6 +55,13 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     public long saveSessions(List<Session> sessions) {
         var rs = filterAndSave(sessions, RestSession.class, this::saveRestSessions);
         var ms = filterAndSave(sessions, MainSession.class, this::saveMainSessions);
+        for(var s : sessions) {
+        	if(s.getDatabaseRequests() != null) {
+        		for(var r : s.getDatabaseRequests()) {
+        			r.setCdSession(s.getId());
+        		}
+        	}
+        }
         saveRestRequests(sessions);
         saveLocalRequests(sessions);
         saveMailRequests(sessions);

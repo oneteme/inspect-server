@@ -52,23 +52,13 @@ public class CacheController {
 
     @GetMapping
     public ResponseEntity<Collection<Session>> getCache(){
-		try {
-			return ok(queue.waitList());
-		} catch (IllegalAccessException e) {
-			return status(FORBIDDEN).build();
-		}
+		return ok(queue.waitList());
     }
 
     @PostMapping("state/{state}")
     public ResponseEntity<Void> updateState(@PathVariable DispatchState state){
-    	try {
-    		queue.enableSave(state);
-    		return ok().build();
-    	}
-    	catch (InterruptedException e) {
-    		currentThread().interrupt();
-    		return status(SERVICE_UNAVAILABLE).build();
-    	}
+		queue.enableSave(state);
+		return ok().build();
     }
 
     @PostMapping("{env}/import")
