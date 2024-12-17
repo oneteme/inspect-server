@@ -1,4 +1,4 @@
-package org.usf.inspect.server.dao;
+package org.usf.inspect.server;
 
 import static org.usf.inspect.server.Utils.isEmpty;
 
