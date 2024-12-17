@@ -1,5 +1,20 @@
 package org.usf.inspect.server.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
+import org.usf.inspect.core.DispatchState;
+import org.usf.inspect.server.model.object.Session;
+import org.usf.inspect.server.service.RequestService;
+import org.usf.inspect.server.service.SessionQueueService;
+
+import java.util.Collection;
+
 import static java.lang.Thread.currentThread;
 import static java.util.Arrays.asList;
 import static java.util.Objects.nonNull;
@@ -10,30 +25,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.http.ResponseEntity.status;
 import static org.usf.inspect.core.DispatchState.DISABLE;
-
-import java.util.Collection;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
-import org.usf.inspect.core.DispatchState;
-import org.usf.inspect.server.model.ServerSession;
-import org.usf.inspect.server.service.RequestService;
-import org.usf.inspect.server.service.SessionQueueService;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @CrossOrigin
@@ -60,7 +51,7 @@ public class CacheController {
 	}
 
     @GetMapping
-    public ResponseEntity<Collection<ServerSession>> getCache(){
+    public ResponseEntity<Collection<Session>> getCache(){
 		try {
 			return ok(queue.waitList());
 		} catch (IllegalAccessException e) {
@@ -84,7 +75,7 @@ public class CacheController {
     public int importSession(@PathVariable String env) {
     	if(activeProfile.equals(env) && host != null) {
 	    	template.postForLocation(host + "/cache/state/"+ DISABLE, null); //stop adding session first on remote server
-	        var arr = template.getForObject(host + "/cache", ServerSession[].class); //import sessions from remote server cache
+	        var arr = template.getForObject(host + "/cache", Session[].class); //import sessions from remote server cache
 	        if(nonNull(arr) && arr.length > 0) {
 	            var cnt = service.addSessions(asList(arr)); //save sessions on database (local.env == remote.env)
 	            if(cnt != arr.length) {

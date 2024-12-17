@@ -11,6 +11,7 @@ import org.usf.inspect.core.MailRequestStage;
 @Setter
 @RequiredArgsConstructor
 public class MailRequestStageWrapper {
+    private long id;
     private int order;
 
     @JsonIgnore
