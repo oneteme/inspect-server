@@ -13,5 +13,5 @@ public final class Mail {
     private String[] replyTo;
     private int size;
 
-    private long idRequest;
+    private long id;
 }

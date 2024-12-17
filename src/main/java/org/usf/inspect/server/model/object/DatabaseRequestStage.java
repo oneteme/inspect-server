@@ -8,6 +8,6 @@ import lombok.Setter;
 public final class DatabaseRequestStage extends RequestStage {
     private long[] count;
 
-    private long idRequest;
+    private long id;
     private int order;
 }
