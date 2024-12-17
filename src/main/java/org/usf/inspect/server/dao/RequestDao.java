@@ -137,7 +137,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(
     		if(n > 0) {
     			n = IntStream.of(ps.executeBatch()).sum();
     		}
-    		log.debug(sql + ", {} rows inserted", n);
+    		log.debug(sql + "| {} rows inserted", n);
     		return n;
     	});
     }
