@@ -121,10 +121,6 @@ public class RequestDao {
         });
         return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
-
-    interface BatchParameterSetter {
-        void setParameters(PreparedStatement ps) throws SQLException;
-    }
     
     private <T> Integer executeBatch(String sql, Iterator<T> it, ParameterizedPreparedStatementSetter<T> pss) {
     	return template.execute(sql, (PreparedStatement ps)->{
