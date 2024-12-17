@@ -1,9 +1,9 @@
-package org.usf.inspect.server.dao;
+package org.usf.inspect.server;
 
 import static java.util.Arrays.asList;
 import static java.util.function.Function.identity;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.usf.inspect.server.dao.TreeIterator.treeIterator;
+import static org.usf.inspect.server.TreeIterator.treeIterator;
 
 import org.junit.jupiter.api.Test;
 

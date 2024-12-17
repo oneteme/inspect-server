@@ -27,8 +27,8 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.joining;
 import static org.usf.inspect.server.RequestMask.*;
+import static org.usf.inspect.server.TreeIterator.treeIterator;
 import static org.usf.inspect.server.Utils.isEmpty;
-import static org.usf.inspect.server.dao.TreeIterator.treeIterator;
 
 @Repository
 @RequiredArgsConstructor
