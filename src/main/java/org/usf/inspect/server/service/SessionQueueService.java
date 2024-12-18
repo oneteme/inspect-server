@@ -26,11 +26,11 @@ public class SessionQueueService {
     	return dispatcher.submit(sessions);
     }
 
-    public List<Session> waitList() throws IllegalAccessException {
+    public List<Session> waitList() {
     	return dispatcher.peek().toList();
     }
     
-    public int waitListSize() throws IllegalAccessException {
+    public int waitListSize() {
     	return (int) dispatcher.peek().count();
     }
 
@@ -39,7 +39,7 @@ public class SessionQueueService {
         return true;
     }
     
-    public void enableSave(DispatchState state) throws InterruptedException {
+    public void enableSave(DispatchState state) {
     	dispatcher.updateState(state);
     }
     
