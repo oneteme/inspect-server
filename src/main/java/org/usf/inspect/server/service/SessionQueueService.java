@@ -42,7 +42,11 @@ public class SessionQueueService {
     public void enableSave(DispatchState state) {
     	dispatcher.updateState(state);
     }
-    
+
+    public DispatchState getState() {
+        return dispatcher.getState();
+    }
+
     @PreDestroy
     void destroy() {
 		dispatcher.complete();
