@@ -271,6 +271,9 @@ VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getMailRequests), 
                 stage.setId(request.getId());
                 stage.setOrder(inc.incrementAndGet());
             }
+            for(Mail mail: request.getMails()) {
+                mail.setId(request.getId());
+            }
         }
     }
 
