@@ -55,13 +55,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     public long saveSessions(List<Session> sessions) {
         var rs = filterAndSave(sessions, RestSession.class, this::saveRestSessions);
         var ms = filterAndSave(sessions, MainSession.class, this::saveMainSessions);
-        for(var s : sessions) {
-        	if(s.getDatabaseRequests() != null) {
-        		for(var r : s.getDatabaseRequests()) {
-        			r.setCdSession(s.getId());
-        		}
-        	}
-        }
+        updateSessions(sessions);
         saveRestRequests(sessions);
         saveLocalRequests(sessions);
         saveMailRequests(sessions);
@@ -69,6 +63,41 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
         saveFtpRequests(sessions);
         saveLdapRequests(sessions);
         return rs + ms;
+    }
+
+    private static void updateSessions(List<Session> sessions) {
+        for(var s : sessions) {
+            if(s.getRestRequests() != null) {
+                for(var r : s.getRestRequests()) {
+                    r.setCdSession(s.getId());
+                }
+            }
+            if(s.getLocalRequests() != null) {
+                for(var r : s.getLocalRequests()) {
+                    r.setCdSession(s.getId());
+                }
+            }
+            if(s.getMailRequests() != null) {
+                for(var r : s.getMailRequests()) {
+                    r.setCdSession(s.getId());
+                }
+            }
+            if(s.getFtpRequests() != null) {
+                for(var r : s.getFtpRequests()) {
+                    r.setCdSession(s.getId());
+                }
+            }
+            if(s.getLdapRequests() != null) {
+                for(var r : s.getLdapRequests()) {
+                    r.setCdSession(s.getId());
+                }
+            }
+            if(s.getDatabaseRequests() != null) {
+                for(var r : s.getDatabaseRequests()) {
+                    r.setCdSession(s.getId());
+                }
+            }
+        }
     }
 
     private int saveMainSessions(List<MainSession> sessions) {
