@@ -3,7 +3,7 @@ package org.usf.inspect.server;
 import static org.usf.inspect.server.Utils.isEmpty;
 
 import lombok.RequiredArgsConstructor;
-import org.usf.inspect.server.model.object.Session;
+import org.usf.inspect.server.model.Session;
 
 /**
  * 

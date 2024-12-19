@@ -7,11 +7,10 @@ import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.usf.inspect.server.model.Architecture;
-import org.usf.inspect.server.model.ServerInstanceEnvironment;
+import org.usf.inspect.core.DispatchState;
+import org.usf.inspect.server.model.*;
 import org.usf.inspect.server.model.filter.JqueryMainSessionFilter;
 import org.usf.inspect.server.model.filter.JqueryRequestSessionFilter;
-import org.usf.inspect.server.model.object.*;
 import org.usf.inspect.server.service.RequestService;
 import org.usf.inspect.server.service.SessionQueueService;
 
@@ -68,7 +67,7 @@ public class TraceController {
     }
 
     @GetMapping("instance/{id}")
-    public ResponseEntity<ServerInstanceEnvironment> getInstance(@PathVariable String id) throws SQLException {
+    public ResponseEntity<InstanceEnvironment> getInstance(@PathVariable String id) throws SQLException {
         return ok().cacheControl(maxAge(1, DAYS)).body(requestService.getInstance(id));
     }
 

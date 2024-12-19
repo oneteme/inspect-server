@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import org.usf.inspect.core.DispatchState;
 import org.usf.inspect.core.InspectConfigurationProperties;
 import org.usf.inspect.core.ScheduledDispatchHandler;
-import org.usf.inspect.server.model.object.Session;
+import org.usf.inspect.server.model.Session;
 
 import java.util.List;
 

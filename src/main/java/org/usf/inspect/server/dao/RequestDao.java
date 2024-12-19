@@ -6,7 +6,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.usf.inspect.server.RequestMask;
-import org.usf.inspect.server.model.object.*;
+import org.usf.inspect.server.model.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -378,8 +378,8 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getFtpReques
         if(sessions.stream().anyMatch(s-> !isEmpty(s.getLdapRequests()))){
             var inc = new AtomicLong(selectMaxId("E_LDAP_RQT", "ID_LDAP_RQT"));
             executeBatch("""
-    INSERT INTO E_LDAP_RQT(ID_LDAP_RQT,VA_HST,CD_PRT,VA_PCL,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)
-    VALUES(?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getLdapRequests), (ps, req)-> {
+INSERT INTO E_LDAP_RQT(ID_LDAP_RQT,VA_HST,CD_PRT,VA_PCL,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)
+VALUES(?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getLdapRequests), (ps, req)-> {
                 var completed = req.getActions().stream().allMatch(a-> isNull(a.getException()));
                 req.setId(inc.incrementAndGet());
                 ps.setLong(1, req.getId());
@@ -432,8 +432,8 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getFtpReques
         if(sessions.stream().anyMatch(s-> !isEmpty(s.getDatabaseRequests()))){
             var inc = new AtomicLong(selectMaxId("E_DTB_RQT", "ID_DTB_RQT"));
             executeBatch("""
-    INSERT INTO E_DTB_RQT(ID_DTB_RQT,VA_HST,CD_PRT,VA_NAM,VA_SCH,DH_STR,DH_END,VA_USR,VA_THR,VA_DRV,VA_PRD_NAM,VA_PRD_VRS,VA_CMD,VA_STT,CD_PRN_SES)
-    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getDatabaseRequests), (ps, req)-> {
+INSERT INTO E_DTB_RQT(ID_DTB_RQT,VA_HST,CD_PRT,VA_NAM,VA_SCH,DH_STR,DH_END,VA_USR,VA_THR,VA_DRV,VA_PRD_NAM,VA_PRD_VRS,VA_CMD,VA_STT,CD_PRN_SES)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getDatabaseRequests), (ps, req)-> {
                 var completed = req.getActions().stream().allMatch(a-> isNull(a.getException()));
                 req.setId(inc.incrementAndGet());
                 ps.setLong(1, req.getId());
@@ -485,6 +485,16 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getFtpReques
         if(!exceptions.isEmpty()) {
             saveExceptions(exceptions, JDBC);
         }
+    }
+
+    public void saveExceptions(List<Session> sessions) {
+        executeBatch("INSERT INTO E_EXC_INF(VA_TYP,VA_ERR_TYP,VA_ERR_MSG,CD_ORD,CD_RQT) VALUES(?,?,?,?,?)", treeIterator(sessions,  Session::getDatabaseRequests, DatabaseRequest::getActions), (ps, stage)-> {
+            ps.setString(1, JDBC.name());
+            ps.setString(2, stage.getException().getType());
+            ps.setString(3, stage.getException().getMessage());
+            ps.setInt(4, stage.getOrder());
+            ps.setLong(5, stage.getId());
+        });
     }
 
     // TODO use RequestQueryBuilder
