@@ -1,17 +1,17 @@
-package org.usf.inspect.server.model.object;
+package org.usf.inspect.server.model;
 
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
 
-@Setter
 @Getter
-public class MailRequest extends SessionStage {
+@Setter
+public class NamingRequest extends SessionStage {
+    private String protocol;
     private String host;
     private int port;
-    private List<MailRequestStage> actions;
-    private List<Mail> mails;
+    private List<NamingRequestStage> actions;
 
     private long id;
     private String cdSession;

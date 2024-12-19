@@ -1,4 +1,4 @@
-package org.usf.inspect.server.model.object;
+package org.usf.inspect.server.model;
 
 import lombok.*;
 import org.usf.inspect.core.InstanceType;
