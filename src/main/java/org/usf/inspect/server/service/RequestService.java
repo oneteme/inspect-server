@@ -13,7 +13,6 @@ import org.usf.inspect.server.dao.RequestDao;
 import org.usf.inspect.server.model.*;
 import org.usf.inspect.server.model.filter.JqueryMainSessionFilter;
 import org.usf.inspect.server.model.filter.JqueryRequestSessionFilter;
-import org.usf.inspect.server.model.object.*;
 import org.usf.jquery.core.DBColumn;
 import org.usf.jquery.core.DBFilter;
 import org.usf.jquery.core.NamedColumn;
@@ -22,7 +21,6 @@ import org.usf.jquery.web.ColumnDecorator;
 import org.usf.jquery.web.ViewDecorator;
 
 import javax.sql.DataSource;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -174,7 +172,7 @@ public class RequestService {
         return Collections.emptyMap();
     }
 
-    public ServerInstanceEnvironment getInstance(String id) throws SQLException {
+    public InstanceEnvironment getInstance(String id) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
                         getColumns(
@@ -184,8 +182,7 @@ public class RequestService {
                 .filters(INSTANCE.column(ID).eq(id));
         return v.build().execute(ds, rs -> {
             if(rs.next()) {
-                return new ServerInstanceEnvironment(
-                        rs.getString(ID.reference()),
+                var instanceEnvironment = new InstanceEnvironment(
                         rs.getString(APP_NAME.reference()),
                         rs.getString(VERSION.reference()),
                         rs.getString(ADDRESS.reference()),
@@ -196,6 +193,8 @@ public class RequestService {
                         InstanceType.valueOf(rs.getString(TYPE.reference())),
                         fromNullableTimestamp(rs.getTimestamp(START.reference())),
                         rs.getString(COLLECTOR.reference()));
+                instanceEnvironment.setId(rs.getString(ID.reference()));
+                return instanceEnvironment;
             }
             return null;
         });
