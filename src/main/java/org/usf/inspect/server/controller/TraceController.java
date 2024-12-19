@@ -7,7 +7,6 @@ import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.usf.inspect.core.DispatchState;
 import org.usf.inspect.server.model.Architecture;
 import org.usf.inspect.server.model.ServerInstanceEnvironment;
 import org.usf.inspect.server.model.filter.JqueryMainSessionFilter;
@@ -31,6 +30,7 @@ import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 import static org.springframework.http.ResponseEntity.*;
+import static org.usf.inspect.core.DispatchState.DISABLE;
 import static org.usf.inspect.core.InstanceType.CLIENT;
 import static org.usf.inspect.core.Session.nextId;
 import static org.usf.jquery.core.Utils.isBlank;
@@ -48,14 +48,12 @@ public class TraceController {
     
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<String> addInstanceEnvironment(HttpServletRequest hsr, @RequestBody InstanceEnvironment instance) {
-    	if(queueService.getState() == DispatchState.DISABLE) {
-            return ResponseEntity.status(SERVICE_UNAVAILABLE).build();
+    	if(queueService.getState() == DISABLE) {
+            return status(SERVICE_UNAVAILABLE).build();
         }
-
         if(isNull(instance) || isBlank(instance.getName())) {
     		return status(BAD_REQUEST).build();
     	}
-
         if(instance.getType() == CLIENT) {
             instance = instance.withAddress(hsr.getRemoteAddr());
         }
