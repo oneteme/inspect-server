@@ -171,7 +171,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(
     		if(n % BATCH_SIZE != 0) {
     			rows += IntStream.of(ps.executeBatch()).sum();
     		}
-    		log.debug("{} batch added, {} rows inserted", rows);
+    		log.debug("{} batch added, {} rows inserted", n, rows);
     		return n;
     	});
     }
