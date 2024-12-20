@@ -34,7 +34,7 @@ public class RequestDao {
 
     private final JdbcTemplate template;
     
-    private static final int BATCH_SIZE = 5_000;
+    private static final int BATCH_SIZE = 1_000;
 
     public void saveInstanceEnvironment(InstanceEnvironment instance) {
         template.update("""
@@ -159,8 +159,8 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(
     
     private <T> Integer executeBatch(String sql, Iterator<T> it, ParameterizedPreparedStatementSetter<T> pss) {
     	return template.execute(sql, (PreparedStatement ps)->{
-    		var n = 0;
     		long rows = 0;
+    		var n = 0;
     		while(it.hasNext()) {
 				pss.setValues(ps, it.next());
 				ps.addBatch();
@@ -168,10 +168,10 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(
 					rows += IntStream.of(ps.executeBatch()).sum();
 				}
     		}
-    		if(n > 0 || n % BATCH_SIZE != 0) {
+    		if(n % BATCH_SIZE != 0) {
     			rows += IntStream.of(ps.executeBatch()).sum();
     		}
-    		log.debug("{} rows inserted", rows);
+    		log.debug("{} batch added, {} rows inserted", rows);
     		return n;
     	});
     }
