@@ -1,5 +1,5 @@
-    INSERT INTO e_dtb_rqt (id_dtb_rqt,va_hst,cd_prt,va_nam,dh_str,dh_end,va_usr,va_thr,va_drv,va_prd_nam,va_prd_vrs,va_cmd,cd_prn_ses,va_stt,va_cpt,va_sch) VALUES
-	 (1,'HOST',-1,'TEST','2024-07-19 11:07:43.386','2024-07-19 11:07:44.085','TEST','ForkJoinPool-1-worker-6','17.1','Teradata','Teradata Database','SELECT','f136f9a0-3487-4169-bd50-1b692a7a2718',true,NULL,NULL);
+    INSERT INTO e_dtb_rqt (id_dtb_rqt,va_hst,cd_prt,va_nam,dh_str,dh_end,va_usr,va_thr,va_drv,va_prd_nam,va_prd_vrs,va_cmd,cd_prn_ses,va_stt,va_sch) VALUES
+	 (1,'HOST',-1,'TEST','2024-07-19 11:07:43.386','2024-07-19 11:07:44.085','TEST','ForkJoinPool-1-worker-6','17.1','Teradata','Teradata Database','SELECT','f136f9a0-3487-4169-bd50-1b692a7a2718',true,NULL);
 INSERT INTO e_dtb_stg (va_nam,dh_str,dh_end,va_cnt,cd_ord,cd_dtb_rqt) VALUES
 	 ('CONNECTION','2024-07-18 17:58:15.601','2024-07-18 17:58:15.684',NULL,1,1),
 	 ('STATEMENT','2024-07-18 17:58:15.698','2024-07-18 17:58:15.701',NULL,2,1),
