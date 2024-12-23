@@ -19,7 +19,5 @@ public class DatabaseRequest extends SessionStage {
     private List<DatabaseRequestStage> actions;
     private List<SqlCommand> commands;
 
-    private long id;
-    private String cdSession;
     private boolean status;
 }

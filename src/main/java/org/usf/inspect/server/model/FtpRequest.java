@@ -15,7 +15,5 @@ public class FtpRequest extends SessionStage {
     private String clientVersion;
     private List<FtpRequestStage> actions;
 
-    private long id;
-    private String cdSession;
     private boolean status;
 }

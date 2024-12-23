@@ -22,7 +22,5 @@ public class RestRequest extends SessionStage {
     private String inContentEncoding;
     private String outContentEncoding;
 
-    private long idRequest;
-    private String cdSession;
     private RestSession remoteTrace;
 }

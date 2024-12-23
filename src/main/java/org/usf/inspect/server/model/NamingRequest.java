@@ -13,7 +13,5 @@ public class NamingRequest extends SessionStage {
     private int port;
     private List<NamingRequestStage> actions;
 
-    private long id;
-    private String cdSession;
     private boolean status;
 }

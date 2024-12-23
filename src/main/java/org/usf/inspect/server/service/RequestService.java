@@ -81,7 +81,7 @@ public class RequestService {
                 sessions.forEach(prntB -> {
                     if (!Objects.equals(prntA.getId(), prntB.getId())){
                         Optional<RestRequest> opt = prntB.getRestRequests().stream()
-                                .filter(k -> prntA.getId().equals(k.getId()))
+                                .filter(k -> prntA.getId().equals(k.getIdRequest()))
                                 .findFirst();
                         if (opt.isPresent()) {
                             var ex = opt.get();
@@ -536,7 +536,7 @@ public class RequestService {
             while (rs.next()) {
                 DatabaseRequest out = new DatabaseRequest();
                 out.setCdSession(rs.getString(PARENT.reference()));
-                out.setId(rs.getLong(ID.reference()));
+                out.setIdRequest(rs.getLong(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setPort(rs.getInt(PORT.reference()));
                 out.setName(rs.getString(DB.reference()));
@@ -633,7 +633,7 @@ public class RequestService {
             while (rs.next()) {
                 FtpRequest out = new FtpRequest();
                 out.setCdSession(rs.getString(PARENT.reference()));
-                out.setId(rs.getLong(ID.reference()));
+                out.setIdRequest(rs.getLong(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setPort(rs.getInt(PORT.reference()));
                 out.setProtocol(rs.getString(PROTOCOL.reference()));
@@ -730,7 +730,7 @@ public class RequestService {
             while (rs.next()) {
                 MailRequest out = new MailRequest();
                 out.setCdSession(rs.getString(PARENT.reference()));
-                out.setId(rs.getLong(ID.reference()));
+                out.setIdRequest(rs.getLong(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setPort(rs.getInt(PORT.reference()));
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
@@ -861,7 +861,7 @@ public class RequestService {
             while (rs.next()) {
                 NamingRequest out = new NamingRequest();
                 out.setCdSession(rs.getString(PARENT.reference()));
-                out.setId(rs.getLong(ID.reference()));
+                out.setIdRequest(rs.getLong(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setPort(rs.getInt(PORT.reference()));
                 out.setProtocol(rs.getString(PROTOCOL.reference()));
