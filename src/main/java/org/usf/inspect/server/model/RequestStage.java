@@ -7,9 +7,12 @@ import java.time.Instant;
 
 @Getter
 @Setter
-public abstract class RequestStage {
+public class RequestStage {
     private String name;
     private Instant start;
     private Instant end;
     private ExceptionInfo exception;
+
+    private long idRequest;
+    private int order;
 }

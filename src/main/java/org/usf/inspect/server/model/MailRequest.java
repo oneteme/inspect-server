@@ -13,7 +13,5 @@ public class MailRequest extends SessionStage {
     private List<MailRequestStage> actions;
     private List<Mail> mails;
 
-    private long id;
-    private String cdSession;
     private boolean status;
 }

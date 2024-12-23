@@ -247,9 +247,9 @@ VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getLocalRequests),
             executeBatch("""
 INSERT INTO E_SMTP_RQT(ID_SMTP_RQT,VA_HST,CD_PRT,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)
 VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getMailRequests), (ps, req)-> {
-                req.setId(inc.incrementAndGet());
+                req.setIdRequest(inc.incrementAndGet());
                 var completed = req.getActions() == null || req.getActions().stream().allMatch(a-> isNull(a.getException()));
-                ps.setLong(1, req.getId());
+                ps.setLong(1, req.getIdRequest());
                 ps.setString(2, req.getHost());
                 ps.setInt(3, req.getPort());
                 ps.setString(4, req.getUser());
@@ -268,11 +268,11 @@ VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getMailRequests), 
         if(!isEmpty(request.getMails())) {
             var inc = new AtomicInteger(0);
             for(MailRequestStage stage: request.getActions()) {
-                stage.setId(request.getId());
+                stage.setId(request.getIdRequest());
                 stage.setOrder(inc.incrementAndGet());
             }
             for(Mail mail: request.getMails()) {
-                mail.setId(request.getId());
+                mail.setId(request.getIdRequest());
             }
         }
     }
@@ -325,8 +325,8 @@ VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getMailRequests), 
 INSERT INTO E_FTP_RQT(ID_FTP_RQT,VA_HST,CD_PRT,VA_PCL,VA_SRV_VRS,VA_CLT_VRS,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)
 VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getFtpRequests), (ps, req)-> {
                 var completed = req.getActions() == null || req.getActions().stream().allMatch(a -> isNull(a.getException()));
-                req.setId(inc.incrementAndGet());
-                ps.setLong(1, req.getId());
+                req.setIdRequest(inc.incrementAndGet());
+                ps.setLong(1, req.getIdRequest());
                 ps.setString(2, req.getHost());
                 ps.setInt(3, req.getPort());
                 ps.setString(4, req.getProtocol());
@@ -348,7 +348,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getFtpReques
         if(!isEmpty(request.getActions())) {
             var inc = new AtomicInteger(0);
             for(FtpRequestStage stage: request.getActions()) {
-                stage.setId(request.getId());
+                stage.setId(request.getIdRequest());
                 stage.setOrder(inc.incrementAndGet());
             }
         }
@@ -381,8 +381,8 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getFtpReques
 INSERT INTO E_LDAP_RQT(ID_LDAP_RQT,VA_HST,CD_PRT,VA_PCL,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)
 VALUES(?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getLdapRequests), (ps, req)-> {
                 var completed = req.getActions().stream().allMatch(a-> isNull(a.getException()));
-                req.setId(inc.incrementAndGet());
-                ps.setLong(1, req.getId());
+                req.setIdRequest(inc.incrementAndGet());
+                ps.setLong(1, req.getIdRequest());
                 ps.setString(2, req.getHost());
                 ps.setInt(3, req.getPort());
                 ps.setString(4, req.getProtocol());
@@ -402,7 +402,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getLdapRequests)
         if(!isEmpty(request.getActions())) {
             var inc = new AtomicInteger(0);
             for(NamingRequestStage stage: request.getActions()) {
-                stage.setId(request.getId());
+                stage.setId(request.getIdRequest());
                 stage.setOrder(inc.incrementAndGet());
             }
         }
@@ -435,8 +435,8 @@ VALUES(?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getLdapRequests)
 INSERT INTO E_DTB_RQT(ID_DTB_RQT,VA_HST,CD_PRT,VA_NAM,VA_SCH,DH_STR,DH_END,VA_USR,VA_THR,VA_DRV,VA_PRD_NAM,VA_PRD_VRS,VA_CMD,VA_STT,CD_PRN_SES)
 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getDatabaseRequests), (ps, req)-> {
                 var completed = req.getActions().stream().allMatch(a-> isNull(a.getException()));
-                req.setId(inc.incrementAndGet());
-                ps.setLong(1, req.getId());
+                req.setIdRequest(inc.incrementAndGet());
+                ps.setLong(1, req.getIdRequest());
                 ps.setString(2, req.getHost());
                 ps.setInt(3, req.getPort());
                 ps.setString(4, req.getName());
@@ -461,7 +461,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getDat
         if(!isEmpty(request.getActions())) {
             var inc = new AtomicInteger(0);
             for(DatabaseRequestStage stage: request.getActions()) {
-                stage.setId(request.getId());
+                stage.setIdRequest(request.getIdRequest());
                 stage.setOrder(inc.incrementAndGet());
             }
         }
@@ -475,9 +475,9 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getDat
             ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
             ps.setString(4, valueOfNullableArray(stage.getCount()));
             ps.setInt(5, stage.getOrder());
-            ps.setLong(6, stage.getId());
+            ps.setLong(6, stage.getIdRequest());
             if(stage.getException() != null) {
-                stage.getException().setIdRequest(stage.getId());
+                stage.getException().setIdRequest(stage.getIdRequest());
                 stage.getException().setOrder(stage.getOrder());
                 exceptions.add(stage.getException());
             }
@@ -493,7 +493,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getDat
             ps.setString(2, stage.getException().getType());
             ps.setString(3, stage.getException().getMessage());
             ps.setInt(4, stage.getOrder());
-            ps.setLong(5, stage.getId());
+            ps.setLong(5, stage.getIdRequest());
         });
     }
 

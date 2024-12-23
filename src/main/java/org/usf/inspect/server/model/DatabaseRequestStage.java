@@ -7,7 +7,4 @@ import lombok.Setter;
 @Setter
 public final class DatabaseRequestStage extends RequestStage {
     private long[] count;
-
-    private long id;
-    private int order;
 }
