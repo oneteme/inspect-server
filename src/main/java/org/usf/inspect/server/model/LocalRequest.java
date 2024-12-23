@@ -10,7 +10,5 @@ public class LocalRequest extends SessionStage {
     private String location;
     private ExceptionInfo exception;
 
-    private long idRequest;
-    private String cdSession;
     private boolean status;
 }
