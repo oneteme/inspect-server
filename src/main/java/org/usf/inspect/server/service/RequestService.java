@@ -1,67 +1,18 @@
 package org.usf.inspect.server.service;
 
-import static java.sql.Timestamp.from;
-import static java.util.Objects.isNull;
-import static java.util.Optional.ofNullable;
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toMap;
-import static org.usf.inspect.server.RequestType.*;
-import static org.usf.inspect.server.Utils.requireSingle;
-import static org.usf.inspect.server.config.TraceApiColumn.*;
-import static org.usf.inspect.server.config.TraceApiTable.DATABASE_REQUEST;
-import static org.usf.inspect.server.config.TraceApiTable.DATABASE_STAGE;
-import static org.usf.inspect.server.config.TraceApiTable.EXCEPTION;
-import static org.usf.inspect.server.config.TraceApiTable.FTP_REQUEST;
-import static org.usf.inspect.server.config.TraceApiTable.FTP_STAGE;
-import static org.usf.inspect.server.config.TraceApiTable.INSTANCE;
-import static org.usf.inspect.server.config.TraceApiTable.LDAP_REQUEST;
-import static org.usf.inspect.server.config.TraceApiTable.LDAP_STAGE;
-import static org.usf.inspect.server.config.TraceApiTable.LOCAL_REQUEST;
-import static org.usf.inspect.server.config.TraceApiTable.MAIN_SESSION;
-import static org.usf.inspect.server.config.TraceApiTable.REST_REQUEST;
-import static org.usf.inspect.server.config.TraceApiTable.REST_SESSION;
-import static org.usf.inspect.server.config.TraceApiTable.SMTP_MAIL;
-import static org.usf.inspect.server.config.TraceApiTable.SMTP_REQUEST;
-import static org.usf.inspect.server.config.TraceApiTable.SMTP_STAGE;
-import static org.usf.inspect.server.config.constant.JoinConstant.*;
-import static java.sql.Types.*;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.*;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
-
-import javax.sql.DataSource;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.usf.inspect.core.DatabaseRequestStage;
-import org.usf.inspect.core.ExceptionInfo;
-import org.usf.inspect.core.FtpRequest;
-import org.usf.inspect.core.FtpRequestStage;
 import org.usf.inspect.core.InstanceType;
-import org.usf.inspect.core.Mail;
-import org.usf.inspect.core.MailRequest;
-import org.usf.inspect.core.MailRequestStage;
-import org.usf.inspect.core.NamingRequest;
-import org.usf.inspect.core.NamingRequestStage;
-import org.usf.inspect.core.RestRequest;
-import org.usf.inspect.core.RestSession;
-import org.usf.inspect.core.Session;
 import org.usf.inspect.core.TraceableStage;
 import org.usf.inspect.jdbc.SqlCommand;
-import org.usf.inspect.server.RequestType;
 import org.usf.inspect.server.config.TraceApiColumn;
 import org.usf.inspect.server.config.TraceApiTable;
 import org.usf.inspect.server.dao.RequestDao;
 import org.usf.inspect.server.model.*;
 import org.usf.inspect.server.model.filter.JqueryMainSessionFilter;
 import org.usf.inspect.server.model.filter.JqueryRequestSessionFilter;
-import org.usf.inspect.server.model.wrapper.*;
 import org.usf.jquery.core.DBColumn;
 import org.usf.jquery.core.DBFilter;
 import org.usf.jquery.core.NamedColumn;
@@ -69,7 +20,25 @@ import org.usf.jquery.core.QueryBuilder;
 import org.usf.jquery.web.ColumnDecorator;
 import org.usf.jquery.web.ViewDecorator;
 
-import lombok.RequiredArgsConstructor;
+import javax.sql.DataSource;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.*;
+import java.util.stream.Stream;
+
+import static java.sql.Timestamp.from;
+import static java.sql.Types.TIMESTAMP;
+import static java.sql.Types.VARCHAR;
+import static java.util.Objects.isNull;
+import static java.util.Optional.ofNullable;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
+import static org.usf.inspect.server.RequestType.*;
+import static org.usf.inspect.server.Utils.requireSingle;
+import static org.usf.inspect.server.config.TraceApiColumn.*;
+import static org.usf.inspect.server.config.TraceApiTable.*;
+import static org.usf.inspect.server.config.constant.JoinConstant.*;
 
 @Service
 @RequiredArgsConstructor
@@ -79,13 +48,13 @@ public class RequestService {
     private final DataSource ds;
     private final RequestDao dao;
 
-    public void addInstance(ServerInstanceEnvironment instance) {
+    public void addInstance(InstanceEnvironment instance) {
         dao.saveInstanceEnvironment(instance);
     }
 
     @TraceableStage
     @Transactional(rollbackFor = Throwable.class)
-    public long addSessions(List<ServerSession> sessions) {
+    public long addSessions(List<Session> sessions) {
         return dao.saveSessions(sessions);
     }
 
@@ -115,7 +84,7 @@ public class RequestService {
                                 .filter(k -> prntA.getId().equals(k.getId()))
                                 .findFirst();
                         if (opt.isPresent()) {
-                            var ex = (Exchange) opt.get();
+                            var ex = opt.get();
                             ex.setRemoteTrace((RestSession) prntA);
                         }
                     }
@@ -174,7 +143,7 @@ public class RequestService {
         var v5 = v.toString() + " UNION " + v2.toString() + " UNION " + v3.toString() + " UNION " + v4.toString();
         Object[] args = new Object[]{from(start), from(end), String.join(",", env), from(start), from(end), String.join(",", env), from(start), from(end), String.join(",", env), from(start), from(end), String.join(",", env)};
         int[] argTypes = new int[]{TIMESTAMP, TIMESTAMP, VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR};
-        return template.query(v5, args, argTypes, (ResultSet rs) -> {
+        return template.query(v5, args, argTypes, rs -> {
             Map<String, List<Architecture>> map = new HashMap<>();
             while(rs.next()) {
                 var key = rs.getString(APP_NAME.reference());
@@ -185,21 +154,6 @@ public class RequestService {
             }
             return map.entrySet().stream().map(entry -> new Architecture(entry.getKey(), null, "REST", entry.getValue())).toList();
         });
-        /*return v.build().execute(ds, rs -> {
-            Map<String, List<Architecture>> map = new HashMap<>();
-            while(rs.next()) {
-                var key = rs.getString(APP_NAME.reference());
-                if(!map.containsKey(key)) {
-                    map.put(key, new ArrayList<>());
-                }
-                map.get(key).add(new Architecture(rs.getString(DB.reference()), rs.getString(SCHEMA.reference()), rs.getString("type"), null));
-            }
-            return map.entrySet().stream().map(entry -> new Architecture(entry.getKey(), null, null, entry.getValue())).toList();
-        });*/
-    }
-
-    private static Timestamp fromNullableInstant(Instant instant) {
-        return ofNullable(instant).map(Timestamp::from).orElse(null);
     }
 
     public Map<String,String> getSessionParent(String childId) throws SQLException{
@@ -218,7 +172,7 @@ public class RequestService {
         return Collections.emptyMap();
     }
 
-    public ServerInstanceEnvironment getInstance(String id) throws SQLException {
+    public InstanceEnvironment getInstance(String id) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
                         getColumns(
@@ -228,8 +182,7 @@ public class RequestService {
                 .filters(INSTANCE.column(ID).eq(id));
         return v.build().execute(ds, rs -> {
             if(rs.next()) {
-                return new ServerInstanceEnvironment(
-                        rs.getString(ID.reference()),
+                var instanceEnvironment = new InstanceEnvironment(
                         rs.getString(APP_NAME.reference()),
                         rs.getString(VERSION.reference()),
                         rs.getString(ADDRESS.reference()),
@@ -240,6 +193,8 @@ public class RequestService {
                         InstanceType.valueOf(rs.getString(TYPE.reference())),
                         fromNullableTimestamp(rs.getTimestamp(START.reference())),
                         rs.getString(COLLECTOR.reference()));
+                instanceEnvironment.setId(rs.getString(ID.reference()));
+                return instanceEnvironment;
             }
             return null;
         });
@@ -256,11 +211,11 @@ public class RequestService {
         if (!sessions.isEmpty()) {
             var reqMap = sessions.stream().collect(toMap(Session::getId, identity()));
             var parentIds = reqMap.keySet().stream().toList();
-            getRestRequests(parentIds, Exchange::new).forEach(r -> reqMap.get(r.getCdSession()).append(r));
-            getDatabaseRequests(parentIds).forEach(q -> reqMap.get(q.getCdSession()).append(q));
-            getFtpRequests(parentIds).forEach(q -> reqMap.get(q.getCdSession()).append(q));
-            getSmtpRequests(parentIds).forEach(q -> reqMap.get(q.getCdSession()).append(q));
-            getLdapRequests(parentIds).forEach(q -> reqMap.get(q.getCdSession()).append(q));
+            getRestRequests(parentIds).forEach(r -> reqMap.get(r.getCdSession()).getRestRequests().add(r));
+            getDatabaseRequests(parentIds).forEach(q -> reqMap.get(q.getCdSession()).getDatabaseRequests().add(q));
+            getFtpRequests(parentIds).forEach(q -> reqMap.get(q.getCdSession()).getFtpRequests().add(q));
+            getSmtpRequests(parentIds).forEach(q -> reqMap.get(q.getCdSession()).getMailRequests().add(q));
+            getLdapRequests(parentIds).forEach(q -> reqMap.get(q.getCdSession()).getLdapRequests().add(q));
         }
         return sessions;
     }
@@ -282,7 +237,7 @@ public class RequestService {
         return v.build().execute(ds, rs -> {
             List<Session> sessions = new ArrayList<>();
             while (rs.next()) {
-                ServerRestSession session = new ServerRestSession();
+                RestSession session = new RestSession();
                 session.setId(rs.getString(ID.reference()));
                 session.setMethod(rs.getString(METHOD.reference()));
                 session.setProtocol(rs.getString(PROTOCOL.reference()));
@@ -323,7 +278,7 @@ public class RequestService {
         return v.build().execute(ds, rs -> {
             List<Session> sessions = new ArrayList<>();
             while (rs.next()) {
-                ServerRestSession session = new ServerRestSession();
+                RestSession session = new RestSession();
                 session.setId(rs.getString(ID.reference()));
                 session.setMethod(rs.getString(METHOD.reference()));
                 session.setProtocol(rs.getString(PROTOCOL.reference()));
@@ -370,11 +325,11 @@ public class RequestService {
         JqueryMainSessionFilter jsf = new JqueryMainSessionFilter(Collections.singletonList(id).toArray(String[]::new));
         Session session = requireSingle(getMainSessions(jsf, true));
         if (session != null) {
-            getRestRequests(session.getId(), Exchange::new).forEach(session::append);
-            getDatabaseRequests(session.getId()).forEach(session::append);
-            getFtpRequests(session.getId()).forEach(session::append);
-            getSmtpRequests(session.getId()).forEach(session::append);
-            getLdapRequests(session.getId()).forEach(session::append);
+            getRestRequests(session.getId()).forEach(r -> session.getRestRequests().add(r));
+            getDatabaseRequests(session.getId()).forEach(r -> session.getDatabaseRequests().add(r));
+            getFtpRequests(session.getId()).forEach(r -> session.getFtpRequests().add(r));
+            getSmtpRequests(session.getId()).forEach(r -> session.getMailRequests().add(r));
+            getLdapRequests(session.getId()).forEach(r -> session.getLdapRequests().add(r));
         }
         return session;
     }
@@ -400,7 +355,7 @@ public class RequestService {
         return v.build().execute(ds, rs -> {
             List<Session> sessions = new ArrayList<>();
             while(rs.next()) {
-                ServerMainSession main = new ServerMainSession();
+                MainSession main = new MainSession();
                 main.setId(rs.getString(ID.reference())); // add value of nullable
                 main.setName(rs.getString(NAME.reference()));
                 main.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
@@ -436,7 +391,7 @@ public class RequestService {
         return v.build().execute(ds, rs -> {
             List<Session> sessions = new ArrayList<>();
             while(rs.next()) {
-                ServerMainSession main = new ServerMainSession();
+                MainSession main = new MainSession();
                 main.setId(rs.getString(ID.reference())); // add value of nullable
                 main.setName(rs.getString(NAME.reference()));
                 main.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
@@ -466,11 +421,11 @@ public class RequestService {
         });
     }
 
-    public List<RestRequestWrapper> getRestRequests(String cdSession, Supplier<? extends RestRequest> fn) throws SQLException {
-        return getRestRequests(Collections.singletonList(cdSession), fn);
+    public List<RestRequest> getRestRequests(String cdSession) throws SQLException {
+        return getRestRequests(Collections.singletonList(cdSession));
     }
 
-    private List<RestRequestWrapper> getRestRequests(List<String> cdSessions, Supplier<? extends RestRequest> fn) throws SQLException { //use criteria
+    private List<RestRequest> getRestRequests(List<String> cdSessions) throws SQLException { //use criteria
         var v = new QueryBuilder()
                 .columns(getColumns(
                         REST_REQUEST, ID, PROTOCOL, AUTH, HOST, PORT, PATH, QUERY, METHOD, STATUS, SIZE_IN,
@@ -480,9 +435,10 @@ public class RequestService {
                 .filters(REST_REQUEST.column(PARENT).in(cdSessions.toArray()))
                 .orders(REST_REQUEST.column(START).order());
         return v.build().execute(ds, rs -> {
-            List<RestRequestWrapper> outs = new ArrayList<>();
+            List<RestRequest> outs = new ArrayList<>();
             while (rs.next()) {
-                RestRequestWrapper out = new RestRequestWrapper(rs.getString(PARENT.reference()), fn);
+                RestRequest out = new RestRequest();
+                out.setCdSession(rs.getString(PARENT.reference()));
                 out.setIdRequest(rs.getLong(ID.reference()));
                 out.setId(rs.getString(REMOTE.reference()));
                 out.setProtocol(rs.getString(PROTOCOL.reference()));
@@ -523,11 +479,11 @@ public class RequestService {
         });
     }
 
-    public List<LocalRequestWrapper> getLocalRequests(String cdSession) throws SQLException{
+    public List<LocalRequest> getLocalRequests(String cdSession) throws SQLException{
         return getLocalRequests(Collections.singletonList(cdSession));
     }
 
-    private List<LocalRequestWrapper> getLocalRequests(List<String> cdSessions) throws SQLException{
+    private List<LocalRequest> getLocalRequests(List<String> cdSessions) throws SQLException{
         var v = new QueryBuilder()
                 .columns(getColumns(
                         LOCAL_REQUEST, ID, NAME, LOCATION, START, END, USER, THREAD, STATUS, PARENT
@@ -535,10 +491,11 @@ public class RequestService {
                 .filters(LOCAL_REQUEST.column(PARENT).in(cdSessions.toArray()))
                 .orders(LOCAL_REQUEST.column(START).order());
         return v.build().execute(ds, rs -> {
-            List<LocalRequestWrapper> outs = new ArrayList<>();
+            List<LocalRequest> outs = new ArrayList<>();
             while (rs.next()) {
-                LocalRequestWrapper out = new LocalRequestWrapper(rs.getString(PARENT.reference()));
-                out.setId(rs.getLong(ID.reference()));
+                LocalRequest out = new LocalRequest();
+                out.setCdSession(rs.getString(PARENT.reference()));
+                out.setIdRequest(rs.getLong(ID.reference()));
                 out.setName(rs.getString(NAME.reference()));
                 out.setLocation(rs.getString(LOCATION.reference()));
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
@@ -553,19 +510,19 @@ public class RequestService {
     }
 
 
-    public DatabaseRequestWrapper getDatabaseRequest(long idDatabase) throws SQLException {
+    public DatabaseRequest getDatabaseRequest(long idDatabase) throws SQLException {
         return requireSingle(getDatabaseRequests(DATABASE_REQUEST.column(ID).eq(idDatabase)));
     }
 
-    public List<DatabaseRequestWrapper> getDatabaseRequests(List<String> cdSession) throws SQLException {
+    public List<DatabaseRequest> getDatabaseRequests(List<String> cdSession) throws SQLException {
         return getDatabaseRequests(DATABASE_REQUEST.column(PARENT).in(cdSession.toArray()));
     }
 
-    public List<DatabaseRequestWrapper> getDatabaseRequests(String cdSession) throws SQLException {
+    public List<DatabaseRequest> getDatabaseRequests(String cdSession) throws SQLException {
         return getDatabaseRequests(DATABASE_REQUEST.column(PARENT).eq(cdSession));
     }
 
-    private List<DatabaseRequestWrapper> getDatabaseRequests(DBFilter filter) throws SQLException {
+    private List<DatabaseRequest> getDatabaseRequests(DBFilter filter) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(
@@ -575,9 +532,10 @@ public class RequestService {
                 .filters(filter)
                 .orders(DATABASE_REQUEST.column(START).order());
         return v.build().execute(ds, rs -> {
-            List<DatabaseRequestWrapper> outs = new ArrayList<>();
+            List<DatabaseRequest> outs = new ArrayList<>();
             while (rs.next()) {
-                DatabaseRequestWrapper out = new DatabaseRequestWrapper(rs.getString(PARENT.reference()));
+                DatabaseRequest out = new DatabaseRequest();
+                out.setCdSession(rs.getString(PARENT.reference()));
                 out.setId(rs.getLong(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setPort(rs.getInt(PORT.reference()));
@@ -623,7 +581,7 @@ public class RequestService {
     }
 
 
-    public List<DatabaseRequestStageWrapper> getDatabaseRequestStages(Long id) throws SQLException {
+    public List<DatabaseRequestStage> getDatabaseRequestStages(Long id) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
                         getColumns(
@@ -634,9 +592,9 @@ public class RequestService {
                 .filters(DATABASE_STAGE.column(PARENT).eq(id))
                 .orders(DATABASE_STAGE.column(START).order());
         return v.build().execute(ds, rs -> {
-            List<DatabaseRequestStageWrapper> actions = new ArrayList<>();
+            List<DatabaseRequestStage> actions = new ArrayList<>();
             while (rs.next()) {
-                var action = new DatabaseRequestStageWrapper(new DatabaseRequestStage());
+                var action = new DatabaseRequestStage();
                 action.setName(rs.getString(NAME.reference()));
                 action.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
@@ -649,19 +607,19 @@ public class RequestService {
         });
     }
 
-    public FtpRequestWrapper getFtpRequest(long id) throws SQLException {
+    public FtpRequest getFtpRequest(long id) throws SQLException {
         return requireSingle(getFtpRequests(FTP_REQUEST.column(ID).eq(id)));
     }
 
-    public List<FtpRequestWrapper> getFtpRequests(List<String> cdSession) throws SQLException {
+    public List<FtpRequest> getFtpRequests(List<String> cdSession) throws SQLException {
         return getFtpRequests(FTP_REQUEST.column(PARENT).in(cdSession.toArray()));
     }
 
-    public List<FtpRequestWrapper> getFtpRequests(String cdSession) throws SQLException {
+    public List<FtpRequest> getFtpRequests(String cdSession) throws SQLException {
         return getFtpRequests(FTP_REQUEST.column(PARENT).eq(cdSession));
     }
 
-    private List<FtpRequestWrapper> getFtpRequests(DBFilter filter) throws SQLException {
+    private List<FtpRequest> getFtpRequests(DBFilter filter) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(
@@ -671,9 +629,10 @@ public class RequestService {
                 .filters(filter)
                 .orders(FTP_REQUEST.column(START).order());
         return v.build().execute(ds, rs -> {
-            List<FtpRequestWrapper> outs = new ArrayList<>();
+            List<FtpRequest> outs = new ArrayList<>();
             while (rs.next()) {
-                FtpRequestWrapper out = new FtpRequestWrapper(rs.getString(PARENT.reference()), new FtpRequest());
+                FtpRequest out = new FtpRequest();
+                out.setCdSession(rs.getString(PARENT.reference()));
                 out.setId(rs.getLong(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setPort(rs.getInt(PORT.reference()));
@@ -691,7 +650,8 @@ public class RequestService {
             return outs;
         });
     }
-    public Map<Long, List<String>> getFtpRequestStages(Long[] ids ) throws SQLException{
+
+    public Map<Long, List<String>> getFtpRequestStages(Long[] ids) throws SQLException{
         return getFtpRequestStages(FTP_STAGE.column(PARENT).in(ids));
     }
 
@@ -719,7 +679,7 @@ public class RequestService {
     }
 
 
-    public List<FtpRequestStageWrapper> getFtpRequestStages(long id) throws SQLException {
+    public List<FtpRequestStage> getFtpRequestStages(long id) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(
@@ -730,9 +690,9 @@ public class RequestService {
                 .filters(FTP_STAGE.column(PARENT).eq(id))
                 .orders(FTP_STAGE.column(ORDER).order());
         return v.build().execute(ds, rs -> {
-            List<FtpRequestStageWrapper> actions = new ArrayList<>();
+            List<FtpRequestStage> actions = new ArrayList<>();
             while (rs.next()) {
-                var action = new FtpRequestStageWrapper(new FtpRequestStage());
+                var action = new FtpRequestStage();
                 action.setName(rs.getString(NAME.reference()));
                 action.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
@@ -745,19 +705,19 @@ public class RequestService {
         });
     }
 
-    public MailRequestWrapper getSmtpRequest(long id) throws SQLException {
+    public MailRequest getSmtpRequest(long id) throws SQLException {
         return requireSingle(getSmtpRequests(SMTP_REQUEST.column(ID).eq(id)));
     }
 
-    public List<MailRequestWrapper> getSmtpRequests(List<String> cdSession) throws SQLException {
+    public List<MailRequest> getSmtpRequests(List<String> cdSession) throws SQLException {
         return getSmtpRequests(SMTP_REQUEST.column(PARENT).in(cdSession.toArray()));
     }
 
-    public List<MailRequestWrapper> getSmtpRequests(String cdSession) throws SQLException {
+    public List<MailRequest> getSmtpRequests(String cdSession) throws SQLException {
         return getSmtpRequests(SMTP_REQUEST.column(PARENT).eq(cdSession));
     }
 
-    private List<MailRequestWrapper> getSmtpRequests(DBFilter filter) throws SQLException {
+    private List<MailRequest> getSmtpRequests(DBFilter filter) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(
@@ -766,9 +726,10 @@ public class RequestService {
                 .filters(filter)
                 .orders(SMTP_REQUEST.column(START).order());
         return v.build().execute(ds, rs -> {
-            List<MailRequestWrapper> outs = new ArrayList<>();
+            List<MailRequest> outs = new ArrayList<>();
             while (rs.next()) {
-                MailRequestWrapper out = new MailRequestWrapper(rs.getString(PARENT.reference()), new MailRequest());
+                MailRequest out = new MailRequest();
+                out.setCdSession(rs.getString(PARENT.reference()));
                 out.setId(rs.getLong(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setPort(rs.getInt(PORT.reference()));
@@ -784,7 +745,7 @@ public class RequestService {
         });
     }
 
-    public List<MailRequestStageWrapper> getSmtpRequestStages(long id) throws SQLException {
+    public List<MailRequestStage> getSmtpRequestStages(long id) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(SMTP_STAGE, NAME, START, END, ORDER, PARENT)
@@ -794,9 +755,9 @@ public class RequestService {
                 .filters(SMTP_STAGE.column(PARENT).eq(id))
                 .orders(SMTP_STAGE.column(ORDER).order());
         return v.build().execute(ds, rs -> {
-            List<MailRequestStageWrapper> actions = new ArrayList<>();
+            List<MailRequestStage> actions = new ArrayList<>();
             while (rs.next()) {
-                var action = new MailRequestStageWrapper(new MailRequestStage());
+                var action = new MailRequestStage();
                 action.setName(rs.getString(NAME.reference()));
                 action.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
@@ -808,7 +769,7 @@ public class RequestService {
         });
     }
 
-    public Map<Long, List<String >> getSmtpRequestStages(Long[] ids) throws SQLException{
+    public Map<Long, List<String>> getSmtpRequestStages(Long[] ids) throws SQLException{
         return this.getSmtpRequestStages(SMTP_STAGE.column(PARENT).in(ids));
     }
 
@@ -875,19 +836,19 @@ public class RequestService {
         });
     }
 
-    public NamingRequestWrapper getLdapRequest(long id) throws SQLException {
+    public NamingRequest getLdapRequest(long id) throws SQLException {
         return requireSingle(getLdapRequests(LDAP_REQUEST.column(ID).eq(id)));
     }
 
-    public List<NamingRequestWrapper> getLdapRequests(List<String> cdSession) throws SQLException {
+    public List<NamingRequest> getLdapRequests(List<String> cdSession) throws SQLException {
         return getLdapRequests(LDAP_REQUEST.column(PARENT).in(cdSession.toArray()));
     }
 
-    public List<NamingRequestWrapper> getLdapRequests(String cdSession) throws SQLException {
+    public List<NamingRequest> getLdapRequests(String cdSession) throws SQLException {
         return getLdapRequests(LDAP_REQUEST.column(PARENT).eq(cdSession));
     }
 
-    private List<NamingRequestWrapper> getLdapRequests(DBFilter filter) throws SQLException {
+    private List<NamingRequest> getLdapRequests(DBFilter filter) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(
@@ -896,9 +857,10 @@ public class RequestService {
                 .filters(filter)
                 .orders(LDAP_REQUEST.column(START).order());
         return v.build().execute(ds, rs -> {
-            List<NamingRequestWrapper> outs = new ArrayList<>();
+            List<NamingRequest> outs = new ArrayList<>();
             while (rs.next()) {
-                NamingRequestWrapper out = new NamingRequestWrapper(rs.getString(PARENT.reference()), new NamingRequest());
+                NamingRequest out = new NamingRequest();
+                out.setCdSession(rs.getString(PARENT.reference()));
                 out.setId(rs.getLong(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setPort(rs.getInt(PORT.reference()));
@@ -915,7 +877,7 @@ public class RequestService {
         });
     }
 
-    public List<NamingRequestStageWrapper> getLdapRequestStages(Long id) throws SQLException {
+    public List<NamingRequestStage> getLdapRequestStages(Long id) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(
@@ -926,9 +888,9 @@ public class RequestService {
                 .filters(LDAP_STAGE.column(PARENT).eq(id))
                 .orders(LDAP_STAGE.column(ORDER).order());
         return v.build().execute(ds, rs -> {
-            List<NamingRequestStageWrapper> actions = new ArrayList<>();
+            List<NamingRequestStage> actions = new ArrayList<>();
             while (rs.next()) {
-                var action = new NamingRequestStageWrapper(new NamingRequestStage());
+                var action = new NamingRequestStage();
                 action.setName(rs.getString(NAME.reference()));
                 action.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));

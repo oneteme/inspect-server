@@ -59,7 +59,7 @@
 		<dependency>
 			<groupId>io.github.oneteme</groupId>
 			<artifactId>inspect-core</artifactId>
-			<version>0.0.15</version>
+			<version>0.0.18</version>
 		</dependency>
 		<dependency>
 			<groupId>io.github.oneteme</groupId>
@@ -78,6 +78,13 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.6.2</version>
+				<configuration>
+					<parameters>true</parameters>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
