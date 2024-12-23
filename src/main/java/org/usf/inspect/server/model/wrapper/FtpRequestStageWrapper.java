@@ -11,6 +11,7 @@ import org.usf.inspect.core.FtpRequestStage;
 @Setter
 @RequiredArgsConstructor
 public class FtpRequestStageWrapper {
+    private long id;
     private int order;
 
     @JsonIgnore

@@ -11,6 +11,7 @@ import org.usf.inspect.core.DatabaseRequestStage;
 @Setter
 @RequiredArgsConstructor
 public class DatabaseRequestStageWrapper {
+    private long id;
     private int order;
 
     @JsonIgnore
