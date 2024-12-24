@@ -275,8 +275,8 @@ VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getMailRequests), 
             ps.setString(1, stage.getName());
             ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
             ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
-            ps.setInt(3, stage.getOrder());
-            ps.setLong(4, stage.getId());
+            ps.setInt(4, stage.getOrder());
+            ps.setLong(5, stage.getId());
             if(stage.getException() != null) {
                 stage.getException().setIdRequest(stage.getId());
                 stage.getException().setOrder(stage.getOrder());
