@@ -14,7 +14,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.ResponseEntity.*;
 
 @Slf4j
-@CrossOrigin
 @RestController
 @RequestMapping(value = "script", produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
