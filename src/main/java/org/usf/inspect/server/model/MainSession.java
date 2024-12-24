@@ -23,5 +23,5 @@ public class MainSession extends LocalRequest implements Session {
     private String os;
     private String re;
     private String address;
-    private int mask;
+    private Integer mask;
 }

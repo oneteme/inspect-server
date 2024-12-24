@@ -11,7 +11,7 @@ import java.time.Instant;
 public class InstanceEnvironment {
     private final String name;
     private final String version;
-    private final String address;
+    private String address;
     private final String env;
     private final String os;
     private final String re;
@@ -22,10 +22,17 @@ public class InstanceEnvironment {
 
     private String id;
 
-    public InstanceEnvironment withAddress(String address) {
-        var instance = new InstanceEnvironment(getName(), getVersion(), address, getEnv(), getOs(), getRe(), getUser(), getType(), getInstant(), getCollector());
-        instance.setId(getId());
-        return instance;
+    public InstanceEnvironment(String name, String version, String address, String env, String os, String re, String user, InstanceType type, Instant instant, String collector) {
+        this.name = name;
+        this.version = version;
+        this.address = address;
+        this.env = env;
+        this.os = os;
+        this.re = re;
+        this.user = user;
+        this.type = type;
+        this.instant = instant;
+        this.collector = collector;
     }
 }
 
