@@ -227,7 +227,7 @@ public class RequestService {
                 .columns(
                         getColumns(
                                 REST_SESSION, ID, API_NAME, METHOD,
-                                PROTOCOL, PORT, PATH, QUERY, STATUS, SIZE_IN, SIZE_OUT,
+                                PROTOCOL, PATH, QUERY, STATUS, SIZE_IN, SIZE_OUT,
                                 START, END, USER
                         ))
                 .columns(getColumns(INSTANCE, APP_NAME))
@@ -242,7 +242,6 @@ public class RequestService {
                 session.setId(rs.getString(ID.reference()));
                 session.setMethod(rs.getString(METHOD.reference()));
                 session.setProtocol(rs.getString(PROTOCOL.reference()));
-                session.setPort(rs.getInt(PORT.reference()));
                 session.setPath(rs.getString(PATH.reference()));
                 session.setQuery(rs.getString(QUERY.reference()));
                 session.setStatus(rs.getInt(STATUS.reference()));
@@ -546,7 +545,7 @@ public class RequestService {
                 .columns(
                     getColumns(
                             DATABASE_REQUEST, ID, HOST, PORT, DB, START, END, USER, THREAD, DRIVER,
-                            DB_NAME, DB_VERSION, COMMANDS, STATUS,SCHEMA, PARENT
+                            DB_NAME, DB_VERSION, COMMANDS, STATUS, SCHEMA, PARENT
                     ))
                 .filters(filter)
                 .orders(DATABASE_REQUEST.column(START).order());
@@ -604,12 +603,12 @@ public class RequestService {
         var v = new QueryBuilder()
                 .columns(
                         getColumns(
-                                DATABASE_STAGE, NAME, START, END, ACTION_COUNT, ORDER, PARENT
+                                DATABASE_STAGE, NAME, START, END, ACTION_COUNT, PARENT
                         ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(DATABASE_STAGE.join(EXCEPTION_JOIN).build())
                 .filters(DATABASE_STAGE.column(PARENT).eq(id))
-                .orders(DATABASE_STAGE.column(START).order());
+                .orders(DATABASE_STAGE.column(ORDER).order());
         return v.build().execute(ds, rs -> {
             List<DatabaseRequestStage> actions = new ArrayList<>();
             while (rs.next()) {
@@ -619,7 +618,6 @@ public class RequestService {
                 action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 action.setCount(ofNullable(rs.getString(ACTION_COUNT.reference())).map(str -> Arrays.stream(str.split(",")).mapToLong(Long::parseLong).toArray()).orElse(null));
                 action.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
-                action.setOrder(rs.getInt(ORDER.reference()));
                 actions.add(action);
             }
             return actions;
@@ -702,7 +700,7 @@ public class RequestService {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(
-                            FTP_STAGE, NAME, START, END, ARG, ORDER, PARENT
+                            FTP_STAGE, NAME, START, END, ARG, PARENT
                     ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(FTP_STAGE.join(EXCEPTION_JOIN).build())
@@ -717,7 +715,6 @@ public class RequestService {
                 action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 action.setArgs(ofNullable(rs.getString(ARG.reference())).map(str -> Arrays.stream(str.split(",")).toArray(String[]::new)).orElse(null));
                 action.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
-                action.setOrder(rs.getInt(ORDER.reference()));
                 actions.add(action);
             }
             return actions;
@@ -767,7 +764,7 @@ public class RequestService {
     public List<MailRequestStage> getSmtpRequestStages(long id) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
-                    getColumns(SMTP_STAGE, NAME, START, END, ORDER, PARENT)
+                    getColumns(SMTP_STAGE, NAME, START, END, PARENT)
                 )
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(SMTP_STAGE.join(EXCEPTION_JOIN).build())
@@ -781,7 +778,6 @@ public class RequestService {
                 action.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 action.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
-                action.setOrder(rs.getInt(ORDER.reference()));
                 actions.add(action);
             }
             return actions;
@@ -900,7 +896,7 @@ public class RequestService {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(
-                            LDAP_STAGE, NAME, START, END, ARG, ORDER, PARENT
+                            LDAP_STAGE, NAME, START, END, ARG, PARENT
                     ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(LDAP_STAGE.join(EXCEPTION_JOIN).build())
@@ -914,7 +910,6 @@ public class RequestService {
                 action.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 action.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
-                action.setOrder(rs.getInt(ORDER.reference()));
                 actions.add(action);
             }
             return actions;
