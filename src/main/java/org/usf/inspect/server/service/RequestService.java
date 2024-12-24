@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.InstanceType;
 import org.usf.inspect.core.TraceableStage;
 import org.usf.inspect.jdbc.SqlCommand;
+import org.usf.inspect.server.RequestMask;
 import org.usf.inspect.server.config.TraceApiColumn;
 import org.usf.inspect.server.config.TraceApiTable;
 import org.usf.inspect.server.dao.RequestDao;
@@ -80,9 +81,9 @@ public class RequestService {
         sessions.forEach(prntA ->
                 sessions.forEach(prntB -> {
                     if (!Objects.equals(prntA.getId(), prntB.getId())){
-                        Optional<RestRequest> opt = prntB.getRestRequests().stream()
+                        Optional<RestRequest> opt = prntB.getRestRequests() != null ? prntB.getRestRequests().stream()
                                 .filter(k -> prntA.getId().equals(k.getId()))
-                                .findFirst();
+                                .findFirst() : Optional.empty();
                         if (opt.isPresent()) {
                             var ex = opt.get();
                             ex.setRemoteTrace((RestSession) prntA);
@@ -226,7 +227,7 @@ public class RequestService {
                 .columns(
                         getColumns(
                                 REST_SESSION, ID, API_NAME, METHOD,
-                                PROTOCOL, PORT, PATH, QUERY, STATUS, SIZE_IN, SIZE_OUT,
+                                PROTOCOL, PATH, QUERY, STATUS, SIZE_IN, SIZE_OUT,
                                 START, END, USER
                         ))
                 .columns(getColumns(INSTANCE, APP_NAME))
@@ -241,7 +242,6 @@ public class RequestService {
                 session.setId(rs.getString(ID.reference()));
                 session.setMethod(rs.getString(METHOD.reference()));
                 session.setProtocol(rs.getString(PROTOCOL.reference()));
-                session.setPort(rs.getInt(PORT.reference()));
                 session.setPath(rs.getString(PATH.reference()));
                 session.setQuery(rs.getString(QUERY.reference()));
                 session.setStatus(rs.getInt(STATUS.reference()));
@@ -252,9 +252,6 @@ public class RequestService {
                 session.setName(rs.getString(API_NAME.reference()));
                 session.setUser(rs.getString(USER.reference()));
                 session.setAppName(rs.getString(APP_NAME.reference()));
-                session.setRestRequests(new ArrayList<>());
-                session.setLocalRequests(new ArrayList<>());
-                session.setDatabaseRequests(new ArrayList<>());
                 sessions.add(session);
             }
             return sessions;
@@ -309,12 +306,24 @@ public class RequestService {
                     session.setAppName(rs.getString(APP_NAME.reference()));
                 }
                 session.setMask(rs.getInt(MASK.reference()));
-                session.setRestRequests(new ArrayList<>());
-                session.setLocalRequests(new ArrayList<>());
-                session.setDatabaseRequests(new ArrayList<>());
-                session.setFtpRequests(new ArrayList<>());
-                session.setMailRequests(new ArrayList<>());
-                session.setLdapRequests(new ArrayList<>());
+                if(RequestMask.JDBC.is(session.getMask())) {
+                    session.setDatabaseRequests(new ArrayList<>());
+                }
+                if(RequestMask.LOCAL.is(session.getMask())) {
+                    session.setLocalRequests(new ArrayList<>());
+                }
+                if(RequestMask.REST.is(session.getMask())) {
+                    session.setRestRequests(new ArrayList<>());
+                }
+                if(RequestMask.FTP.is(session.getMask())) {
+                    session.setFtpRequests(new ArrayList<>());
+                }
+                if(RequestMask.SMTP.is(session.getMask())) {
+                    session.setMailRequests(new ArrayList<>());
+                }
+                if(RequestMask.LDAP.is(session.getMask())) {
+                    session.setLdapRequests(new ArrayList<>());
+                }
                 sessions.add(session);
             }
             return sessions;
@@ -365,9 +374,6 @@ public class RequestService {
                 main.setUser(rs.getString(USER.reference()));
                 main.setType(rs.getString(TYPE.reference()));
                 main.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
-                main.setRestRequests(new ArrayList<>());
-                main.setLocalRequests(new ArrayList<>());
-                main.setDatabaseRequests(new ArrayList<>());
                 sessions.add(main);
             }
             return sessions;
@@ -408,13 +414,25 @@ public class RequestService {
                 }
                 main.setUser(rs.getString(USER.reference()));
                 main.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
-                main.setRestRequests(new ArrayList<>());
-                main.setLocalRequests(new ArrayList<>());
-                main.setDatabaseRequests(new ArrayList<>());
-                main.setFtpRequests(new ArrayList<>());
-                main.setMailRequests(new ArrayList<>());
-                main.setLdapRequests(new ArrayList<>());
                 main.setMask(rs.getInt(MASK.reference()));
+                if(RequestMask.JDBC.is(main.getMask())) {
+                    main.setDatabaseRequests(new ArrayList<>());
+                }
+                if(RequestMask.LOCAL.is(main.getMask())) {
+                    main.setLocalRequests(new ArrayList<>());
+                }
+                if(RequestMask.REST.is(main.getMask())) {
+                    main.setRestRequests(new ArrayList<>());
+                }
+                if(RequestMask.FTP.is(main.getMask())) {
+                    main.setFtpRequests(new ArrayList<>());
+                }
+                if(RequestMask.SMTP.is(main.getMask())) {
+                    main.setMailRequests(new ArrayList<>());
+                }
+                if(RequestMask.LDAP.is(main.getMask())) {
+                    main.setLdapRequests(new ArrayList<>());
+                }
                 sessions.add(main);
             }
             return sessions;
@@ -527,7 +545,7 @@ public class RequestService {
                 .columns(
                     getColumns(
                             DATABASE_REQUEST, ID, HOST, PORT, DB, START, END, USER, THREAD, DRIVER,
-                            DB_NAME, DB_VERSION, COMMANDS, STATUS,SCHEMA, PARENT
+                            DB_NAME, DB_VERSION, COMMANDS, STATUS, SCHEMA, PARENT
                     ))
                 .filters(filter)
                 .orders(DATABASE_REQUEST.column(START).order());
@@ -536,7 +554,7 @@ public class RequestService {
             while (rs.next()) {
                 DatabaseRequest out = new DatabaseRequest();
                 out.setCdSession(rs.getString(PARENT.reference()));
-                out.setId(rs.getLong(ID.reference()));
+                out.setIdRequest(rs.getLong(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setPort(rs.getInt(PORT.reference()));
                 out.setName(rs.getString(DB.reference()));
@@ -585,12 +603,12 @@ public class RequestService {
         var v = new QueryBuilder()
                 .columns(
                         getColumns(
-                                DATABASE_STAGE, NAME, START, END, ACTION_COUNT, ORDER, PARENT
+                                DATABASE_STAGE, NAME, START, END, ACTION_COUNT, PARENT
                         ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(DATABASE_STAGE.join(EXCEPTION_JOIN).build())
                 .filters(DATABASE_STAGE.column(PARENT).eq(id))
-                .orders(DATABASE_STAGE.column(START).order());
+                .orders(DATABASE_STAGE.column(ORDER).order());
         return v.build().execute(ds, rs -> {
             List<DatabaseRequestStage> actions = new ArrayList<>();
             while (rs.next()) {
@@ -599,8 +617,7 @@ public class RequestService {
                 action.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 action.setCount(ofNullable(rs.getString(ACTION_COUNT.reference())).map(str -> Arrays.stream(str.split(",")).mapToLong(Long::parseLong).toArray()).orElse(null));
-                action.setException(new ExceptionInfo(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
-                action.setOrder(rs.getInt(ORDER.reference()));
+                action.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 actions.add(action);
             }
             return actions;
@@ -633,7 +650,7 @@ public class RequestService {
             while (rs.next()) {
                 FtpRequest out = new FtpRequest();
                 out.setCdSession(rs.getString(PARENT.reference()));
-                out.setId(rs.getLong(ID.reference()));
+                out.setIdRequest(rs.getLong(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setPort(rs.getInt(PORT.reference()));
                 out.setProtocol(rs.getString(PROTOCOL.reference()));
@@ -683,7 +700,7 @@ public class RequestService {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(
-                            FTP_STAGE, NAME, START, END, ARG, ORDER, PARENT
+                            FTP_STAGE, NAME, START, END, ARG, PARENT
                     ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(FTP_STAGE.join(EXCEPTION_JOIN).build())
@@ -697,8 +714,7 @@ public class RequestService {
                 action.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 action.setArgs(ofNullable(rs.getString(ARG.reference())).map(str -> Arrays.stream(str.split(",")).toArray(String[]::new)).orElse(null));
-                action.setException(new ExceptionInfo(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
-                action.setOrder(rs.getInt(ORDER.reference()));
+                action.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 actions.add(action);
             }
             return actions;
@@ -730,7 +746,7 @@ public class RequestService {
             while (rs.next()) {
                 MailRequest out = new MailRequest();
                 out.setCdSession(rs.getString(PARENT.reference()));
-                out.setId(rs.getLong(ID.reference()));
+                out.setIdRequest(rs.getLong(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setPort(rs.getInt(PORT.reference()));
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
@@ -748,7 +764,7 @@ public class RequestService {
     public List<MailRequestStage> getSmtpRequestStages(long id) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
-                    getColumns(SMTP_STAGE, NAME, START, END, ORDER, PARENT)
+                    getColumns(SMTP_STAGE, NAME, START, END, PARENT)
                 )
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(SMTP_STAGE.join(EXCEPTION_JOIN).build())
@@ -761,8 +777,7 @@ public class RequestService {
                 action.setName(rs.getString(NAME.reference()));
                 action.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
-                action.setException(new ExceptionInfo(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
-                action.setOrder(rs.getInt(ORDER.reference()));
+                action.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 actions.add(action);
             }
             return actions;
@@ -861,7 +876,7 @@ public class RequestService {
             while (rs.next()) {
                 NamingRequest out = new NamingRequest();
                 out.setCdSession(rs.getString(PARENT.reference()));
-                out.setId(rs.getLong(ID.reference()));
+                out.setIdRequest(rs.getLong(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setPort(rs.getInt(PORT.reference()));
                 out.setProtocol(rs.getString(PROTOCOL.reference()));
@@ -881,7 +896,7 @@ public class RequestService {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(
-                            LDAP_STAGE, NAME, START, END, ARG, ORDER, PARENT
+                            LDAP_STAGE, NAME, START, END, ARG, PARENT
                     ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(LDAP_STAGE.join(EXCEPTION_JOIN).build())
@@ -894,8 +909,7 @@ public class RequestService {
                 action.setName(rs.getString(NAME.reference()));
                 action.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
-                action.setException(new ExceptionInfo(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
-                action.setOrder(rs.getInt(ORDER.reference()));
+                action.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 actions.add(action);
             }
             return actions;

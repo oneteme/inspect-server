@@ -8,8 +8,11 @@ import java.time.Instant;
 @Getter
 @Setter
 public class SessionStage {
-    private String user;
-    private Instant start;
-    private Instant end;
-    private String threadName;
+        private String user;
+        private Instant start;
+        private Instant end;
+        private String threadName;
+
+        private Long idRequest;
+        private String cdSession;
 }

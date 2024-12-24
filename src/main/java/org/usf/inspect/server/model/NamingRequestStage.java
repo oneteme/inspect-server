@@ -7,7 +7,4 @@ import lombok.Setter;
 @Setter
 public class NamingRequestStage extends RequestStage {
     private String[] args;
-
-    private long id;
-    private int order;
 }
