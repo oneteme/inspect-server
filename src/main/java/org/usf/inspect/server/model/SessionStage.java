@@ -13,6 +13,6 @@ public class SessionStage {
         private Instant end;
         private String threadName;
 
-        private long idRequest;
+        private Long idRequest;
         private String cdSession;
 }

@@ -268,11 +268,11 @@ VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getMailRequests), 
         if(!isEmpty(request.getMails())) {
             var inc = new AtomicInteger(0);
             for(MailRequestStage stage: request.getActions()) {
-                stage.setId(request.getIdRequest());
+                stage.setIdRequest(request.getIdRequest());
                 stage.setOrder(inc.incrementAndGet());
             }
             for(Mail mail: request.getMails()) {
-                mail.setId(request.getIdRequest());
+                mail.setIdRequest(request.getIdRequest());
             }
         }
     }
@@ -284,9 +284,9 @@ VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getMailRequests), 
             ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
             ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
             ps.setInt(4, stage.getOrder());
-            ps.setLong(5, stage.getId());
+            ps.setLong(5, stage.getIdRequest());
             if(stage.getException() != null) {
-                stage.getException().setIdRequest(stage.getId());
+                stage.getException().setIdRequest(stage.getIdRequest());
                 stage.getException().setOrder(stage.getOrder());
                 exp.add(stage.getException());
             }
@@ -304,7 +304,7 @@ VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getMailRequests), 
             ps.setString(4, mail.getRecipients() != null ? String.join(", ", mail.getRecipients()) : null);
             ps.setString(5, mail.getReplyTo() != null ? String.join(", ", mail.getReplyTo()) : null);
             ps.setInt(6,mail.getSize());
-            ps.setLong(7, mail.getId());
+            ps.setLong(7, mail.getIdRequest());
         });
     }
 
@@ -348,7 +348,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getFtpReques
         if(!isEmpty(request.getActions())) {
             var inc = new AtomicInteger(0);
             for(FtpRequestStage stage: request.getActions()) {
-                stage.setId(request.getIdRequest());
+                stage.setIdRequest(request.getIdRequest());
                 stage.setOrder(inc.incrementAndGet());
             }
         }
@@ -362,9 +362,9 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getFtpReques
             ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
             ps.setString(4, stage.getArgs() != null ? String.join(", ", stage.getArgs()) : null);
             ps.setInt(5, stage.getOrder());
-            ps.setLong(6, stage.getId());
+            ps.setLong(6, stage.getIdRequest());
             if(stage.getException() != null) {
-                stage.getException().setIdRequest(stage.getId());
+                stage.getException().setIdRequest(stage.getIdRequest());
                 stage.getException().setOrder(stage.getOrder());
                 exceptions.add(stage.getException());
             }
@@ -402,7 +402,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getLdapRequests)
         if(!isEmpty(request.getActions())) {
             var inc = new AtomicInteger(0);
             for(NamingRequestStage stage: request.getActions()) {
-                stage.setId(request.getIdRequest());
+                stage.setIdRequest(request.getIdRequest());
                 stage.setOrder(inc.incrementAndGet());
             }
         }
@@ -416,9 +416,9 @@ VALUES(?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getLdapRequests)
             ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
             ps.setString(4, stage.getArgs() != null ? String.join(", ", stage.getArgs()) : null);
             ps.setInt(5, stage.getOrder());
-            ps.setLong(6, stage.getId());
+            ps.setLong(6, stage.getIdRequest());
             if(stage.getException() != null) {
-                stage.getException().setIdRequest(stage.getId());
+                stage.getException().setIdRequest(stage.getIdRequest());
                 stage.getException().setOrder(stage.getOrder());
                 exceptions.add(stage.getException());
             }

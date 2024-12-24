@@ -10,7 +10,7 @@ import java.util.List;
 @Setter
 public class DatabaseRequest extends SessionStage {
     private String host;
-    private int port;
+    private Integer port;
     private String name;
     private String schema;
     private String driverVersion;

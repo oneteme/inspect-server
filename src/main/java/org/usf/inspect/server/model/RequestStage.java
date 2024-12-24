@@ -13,6 +13,6 @@ public class RequestStage {
     private Instant end;
     private ExceptionInfo exception;
 
-    private long idRequest;
-    private int order;
+    private Long idRequest;
+    private Integer order;
 }

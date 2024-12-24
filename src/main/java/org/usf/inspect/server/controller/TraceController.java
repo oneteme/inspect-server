@@ -54,7 +54,7 @@ public class TraceController {
     		return status(BAD_REQUEST).build();
     	}
         if(instance.getType() == CLIENT) {
-            instance = instance.withAddress(hsr.getRemoteAddr());
+            instance.setAddress(hsr.getRemoteAddr());
         }
         instance.setId(nextId());
         try {
