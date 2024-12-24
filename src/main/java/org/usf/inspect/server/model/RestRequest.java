@@ -10,7 +10,7 @@ public class RestRequest extends SessionStage {
     private String method;
     private String protocol;
     private String host;
-    private int port;
+    private Integer port;
     private String path;
     private String query;
     private String contentType;

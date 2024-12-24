@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.InstanceType;
 import org.usf.inspect.core.TraceableStage;
 import org.usf.inspect.jdbc.SqlCommand;
+import org.usf.inspect.server.RequestMask;
 import org.usf.inspect.server.config.TraceApiColumn;
 import org.usf.inspect.server.config.TraceApiTable;
 import org.usf.inspect.server.dao.RequestDao;
@@ -80,9 +81,9 @@ public class RequestService {
         sessions.forEach(prntA ->
                 sessions.forEach(prntB -> {
                     if (!Objects.equals(prntA.getId(), prntB.getId())){
-                        Optional<RestRequest> opt = prntB.getRestRequests().stream()
-                                .filter(k -> prntA.getId().equals(k.getIdRequest()))
-                                .findFirst();
+                        Optional<RestRequest> opt = prntB.getRestRequests() != null ? prntB.getRestRequests().stream()
+                                .filter(k -> prntA.getId().equals(k.getId()))
+                                .findFirst() : Optional.empty();
                         if (opt.isPresent()) {
                             var ex = opt.get();
                             ex.setRemoteTrace((RestSession) prntA);
@@ -252,9 +253,6 @@ public class RequestService {
                 session.setName(rs.getString(API_NAME.reference()));
                 session.setUser(rs.getString(USER.reference()));
                 session.setAppName(rs.getString(APP_NAME.reference()));
-                session.setRestRequests(new ArrayList<>());
-                session.setLocalRequests(new ArrayList<>());
-                session.setDatabaseRequests(new ArrayList<>());
                 sessions.add(session);
             }
             return sessions;
@@ -309,12 +307,24 @@ public class RequestService {
                     session.setAppName(rs.getString(APP_NAME.reference()));
                 }
                 session.setMask(rs.getInt(MASK.reference()));
-                session.setRestRequests(new ArrayList<>());
-                session.setLocalRequests(new ArrayList<>());
-                session.setDatabaseRequests(new ArrayList<>());
-                session.setFtpRequests(new ArrayList<>());
-                session.setMailRequests(new ArrayList<>());
-                session.setLdapRequests(new ArrayList<>());
+                if(RequestMask.JDBC.is(session.getMask())) {
+                    session.setDatabaseRequests(new ArrayList<>());
+                }
+                if(RequestMask.LOCAL.is(session.getMask())) {
+                    session.setLocalRequests(new ArrayList<>());
+                }
+                if(RequestMask.REST.is(session.getMask())) {
+                    session.setRestRequests(new ArrayList<>());
+                }
+                if(RequestMask.FTP.is(session.getMask())) {
+                    session.setFtpRequests(new ArrayList<>());
+                }
+                if(RequestMask.SMTP.is(session.getMask())) {
+                    session.setMailRequests(new ArrayList<>());
+                }
+                if(RequestMask.LDAP.is(session.getMask())) {
+                    session.setLdapRequests(new ArrayList<>());
+                }
                 sessions.add(session);
             }
             return sessions;
@@ -365,9 +375,6 @@ public class RequestService {
                 main.setUser(rs.getString(USER.reference()));
                 main.setType(rs.getString(TYPE.reference()));
                 main.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
-                main.setRestRequests(new ArrayList<>());
-                main.setLocalRequests(new ArrayList<>());
-                main.setDatabaseRequests(new ArrayList<>());
                 sessions.add(main);
             }
             return sessions;
@@ -408,13 +415,25 @@ public class RequestService {
                 }
                 main.setUser(rs.getString(USER.reference()));
                 main.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
-                main.setRestRequests(new ArrayList<>());
-                main.setLocalRequests(new ArrayList<>());
-                main.setDatabaseRequests(new ArrayList<>());
-                main.setFtpRequests(new ArrayList<>());
-                main.setMailRequests(new ArrayList<>());
-                main.setLdapRequests(new ArrayList<>());
                 main.setMask(rs.getInt(MASK.reference()));
+                if(RequestMask.JDBC.is(main.getMask())) {
+                    main.setDatabaseRequests(new ArrayList<>());
+                }
+                if(RequestMask.LOCAL.is(main.getMask())) {
+                    main.setLocalRequests(new ArrayList<>());
+                }
+                if(RequestMask.REST.is(main.getMask())) {
+                    main.setRestRequests(new ArrayList<>());
+                }
+                if(RequestMask.FTP.is(main.getMask())) {
+                    main.setFtpRequests(new ArrayList<>());
+                }
+                if(RequestMask.SMTP.is(main.getMask())) {
+                    main.setMailRequests(new ArrayList<>());
+                }
+                if(RequestMask.LDAP.is(main.getMask())) {
+                    main.setLdapRequests(new ArrayList<>());
+                }
                 sessions.add(main);
             }
             return sessions;
@@ -599,7 +618,7 @@ public class RequestService {
                 action.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 action.setCount(ofNullable(rs.getString(ACTION_COUNT.reference())).map(str -> Arrays.stream(str.split(",")).mapToLong(Long::parseLong).toArray()).orElse(null));
-                action.setException(new ExceptionInfo(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+                action.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 action.setOrder(rs.getInt(ORDER.reference()));
                 actions.add(action);
             }
@@ -697,7 +716,7 @@ public class RequestService {
                 action.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 action.setArgs(ofNullable(rs.getString(ARG.reference())).map(str -> Arrays.stream(str.split(",")).toArray(String[]::new)).orElse(null));
-                action.setException(new ExceptionInfo(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+                action.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 action.setOrder(rs.getInt(ORDER.reference()));
                 actions.add(action);
             }
@@ -761,7 +780,7 @@ public class RequestService {
                 action.setName(rs.getString(NAME.reference()));
                 action.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
-                action.setException(new ExceptionInfo(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+                action.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 action.setOrder(rs.getInt(ORDER.reference()));
                 actions.add(action);
             }
@@ -894,7 +913,7 @@ public class RequestService {
                 action.setName(rs.getString(NAME.reference()));
                 action.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
-                action.setException(new ExceptionInfo(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+                action.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 action.setOrder(rs.getInt(ORDER.reference()));
                 actions.add(action);
             }
