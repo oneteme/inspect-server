@@ -7,13 +7,22 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
 import static org.usf.inspect.server.Utils.nArg;
+
 public class QueryLoader {
 
-    public static List<Query> loadQueries (@NonNull String env, List<String> appName, @NonNull Instant before, List<String> version) {
+    private static final String INSERT_TEMP_REQUEST = "insert into temp_request_table ";
+    private static final String DELETE_TEMP_REQUEST = "delete from temp_request_table;";
+    private QueryLoader(){}
+    public static List<Query> loadQueries (@NonNull List<String> env, List<String> appName, @NonNull Instant before, List<String> version) {
 
         List<Object> cteParams = new ArrayList<>();
         cteParams.add(Timestamp.from(before));
-        cteParams.add(env);
+
+        if(env.isEmpty()){
+            throw new IllegalArgumentException("need atleast one environement");
+        }
+        String envCondition = "and va_env in ("+ nArg(env.size()) +")";
+        cteParams.addAll(env);
         String appNameCondition = "";
         if(appName != null && !appName.isEmpty()){
             appNameCondition = "and va_app in ("+ nArg(appName.size()) +")";
@@ -43,7 +52,7 @@ public class QueryLoader {
         //fill temp session temp table
         queries.add(new Query(
                 """
-with deleted_instances as( select eei.id_ins as id, 'i' as va_typ from e_env_ins eei where dh_str < ? and va_env = ? %s %s )
+with deleted_instances as( select eei.id_ins as id, 'i' as va_typ from e_env_ins eei where dh_str < ? %s %s %s )
 insert into temp_session_table
 select id_ses as id, 'r' as va_typ
 from e_rst_ses ers
@@ -56,10 +65,10 @@ where ems.cd_ins in (select id from deleted_instances)
 and ems.dh_str < ?
 union
 select * from deleted_instances;
-                         """.formatted(appNameCondition, versionCondition),cteParams.toArray()));
+                         """.formatted(envCondition, appNameCondition, versionCondition),cteParams.toArray()));
         //fill temp request table
         queries.add(new Query(
-                "insert into temp_request_table "+ createRequestQuery("id_rst_rqt","e_rst_rqt"
+                INSERT_TEMP_REQUEST + createRequestQuery("id_rst_rqt","e_rst_rqt"
         )));
 
         // delete rest exception
@@ -74,12 +83,12 @@ select * from deleted_instances;
 
         // empty temp_request_table
         queries.add(new Query(
-                "delete from temp_request_table;"
+                DELETE_TEMP_REQUEST
         ));
         //---------------------
         //fill temp request table
         queries.add(new Query(
-                "insert into temp_request_table " + createRequestQuery("id_dtb_rqt","e_dtb_rqt")
+                INSERT_TEMP_REQUEST + createRequestQuery("id_dtb_rqt","e_dtb_rqt")
         ));
 
         // delete jdbc exception
@@ -98,12 +107,12 @@ select * from deleted_instances;
 
         // empty temp_request_table
         queries.add(new Query(
-                "delete from temp_request_table;"
+                DELETE_TEMP_REQUEST
         ));
         //---------------------
         //fill temp request table
         queries.add(new Query(
-                "insert into temp_request_table " + createRequestQuery("id_ftp_rqt","e_ftp_rqt")
+                INSERT_TEMP_REQUEST + createRequestQuery("id_ftp_rqt","e_ftp_rqt")
         ));
 
         // delete ftp exception
@@ -123,12 +132,12 @@ select * from deleted_instances;
 
         // empty temp_request_table
         queries.add(new Query(
-                "delete from temp_request_table;"
+                DELETE_TEMP_REQUEST
         ));
         //---------------------
         //fill temp request table
         queries.add(new Query(
-                "insert into temp_request_table "+createRequestQuery("id_smtp_rqt","e_smtp_rqt")
+                INSERT_TEMP_REQUEST + createRequestQuery("id_smtp_rqt","e_smtp_rqt")
         ));
 
         // delete smtp exception
@@ -153,12 +162,12 @@ select * from deleted_instances;
 
         // empty temp_request_table
         queries.add(new Query(
-                "delete from temp_request_table;"
+                DELETE_TEMP_REQUEST
         ));
         //---------------------
         //fill temp request table
         queries.add(new Query(
-                "insert into temp_request_table "+ createRequestQuery("id_ldap_rqt","e_ldap_rqt")
+                INSERT_TEMP_REQUEST + createRequestQuery("id_ldap_rqt","e_ldap_rqt")
         ));
 
         // delete ldap exception
@@ -177,12 +186,12 @@ select * from deleted_instances;
         ));
         // empty temp_request_table
         queries.add(new Query(
-                "delete from temp_request_table;"
+                DELETE_TEMP_REQUEST
         ));
         //---------------------
         //fill temp request table
         queries.add(new Query(
-                "insert into temp_request_table "+createRequestQuery("id_lcl_rqt","e_lcl_rqt")
+                INSERT_TEMP_REQUEST + createRequestQuery("id_lcl_rqt","e_lcl_rqt")
         ));
 
         // delete local exception

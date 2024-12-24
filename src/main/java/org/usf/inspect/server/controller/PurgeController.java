@@ -22,7 +22,7 @@ public class PurgeController {
     @DeleteMapping("purgedata")
     public boolean purgeDate(
             @RequestParam(name = "start") Instant start,
-            @RequestParam(name = "env") String environment,
+            @RequestParam(name = "env") List<String> environment,
             @RequestParam(required = false, name = "appname") List<String> appNameList,
             @RequestParam(required = false, name = "version") List<String> versionList
     ){

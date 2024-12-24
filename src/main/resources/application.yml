@@ -38,6 +38,14 @@ inspect:
       excludes:
         method: OPTIONS
         path: /favicon.ico
+  purge:
+    enabled : true
+    schedule: "0 * * * * *"
+    depth: 90 #en jour
+    env:
+      rec: 30 #en jour
+      ppd: 120 #en jour
+
 #   main-session: false
 #   jdbc-request: false
 #   rest-request: false

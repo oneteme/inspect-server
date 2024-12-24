@@ -19,15 +19,15 @@ public class PurgeService {
     private static final Logger logger = Logger.getLogger(PurgeService.class.getName());
 
     @Transactional(rollbackFor = Throwable.class)
-    public boolean purgeData(String env, List<String> appName, Instant before, List<String> version) {
+    public boolean purgeData(List<String> env, List<String> appName, Instant before, List<String> version) {
 
         logger.log(Level.INFO, "+ Purging old Data, parameters in entry");
-        logger.log(Level.INFO, "\t- Environment: " + env);
+        logger.log(Level.INFO, "\t- Environment: " + env.toString());
         logger.log(Level.INFO, "\t- Start: " + before);
         List<Query> queries = QueryLoader.loadQueries(env,appName,before,version);
 
         for(Query query: queries){
-            template.update(query.getSql(),query.getParams());
+           template.update(query.getSql(),query.getParams());
         }
         return true;
     }
