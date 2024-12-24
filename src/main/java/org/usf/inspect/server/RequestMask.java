@@ -51,4 +51,8 @@ public enum RequestMask {
 		}
 		return v;
 	}
+
+	public boolean is(int value) {
+		return (value & this.value) > 0;
+	}
 }
