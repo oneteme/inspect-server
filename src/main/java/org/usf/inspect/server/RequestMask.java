@@ -2,9 +2,8 @@ package org.usf.inspect.server;
 
 import static org.usf.inspect.server.Utils.isEmpty;
 
-import org.usf.inspect.core.Session;
-
 import lombok.RequiredArgsConstructor;
+import org.usf.inspect.server.model.Session;
 
 /**
  * 
@@ -51,5 +50,9 @@ public enum RequestMask {
 			v |= m.value;
 		}
 		return v;
+	}
+
+	public boolean is(int value) {
+		return (value & this.value) > 0;
 	}
 }
