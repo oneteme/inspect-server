@@ -40,11 +40,10 @@ inspect:
         path: /favicon.ico
   purge:
     enabled : true
-    schedule: "0 * * * * *"
+    schedule: "0 0 0 * * *"
     depth: 90 #en jour
-    env:
-      rec: 30 #en jour
-      ppd: 120 #en jour
+  #env
+    #ppd: 120
 
 #   main-session: false
 #   jdbc-request: false
