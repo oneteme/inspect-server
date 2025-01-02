@@ -3,6 +3,7 @@ package org.usf.inspect.server;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -13,10 +14,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 
-
-@Slf4j
 @Service
+@Slf4j
 @RequiredArgsConstructor
+@EnableConfigurationProperties(InspectConfigurationProperties.class)
 @ConditionalOnProperty(prefix = "inspect.purge", name="enabled", havingValue = "true")
 public class PurgeScheduler {
 
@@ -27,19 +28,23 @@ public class PurgeScheduler {
     @Scheduled(cron= "#{@inspectConfiguration.config.schedule}")
     @TraceableStage
     public void purgeBatch(){
-        List<String> envList = template.queryForList("SELECT DISTINCT v1.va_env FROM e_env_ins v1 WHERE v1.va_env IS NOT NULL ORDER BY v1.va_env ASC",String.class);
-        var config =  inspectConfiguration.getConfig();
-        if(config.getEnv() != null && !config.getEnv().isEmpty()){
-            envList = envList.stream().filter(item -> !config.getEnv().containsKey(item)).toList();
-            config.getEnv().forEach((envName,depth) -> purgeData(List.of(envName),null,depth,null));
+        try {
+            List<String> envList = template.queryForList("SELECT DISTINCT v1.va_env FROM e_env_ins v1 WHERE v1.va_env IS NOT NULL ORDER BY v1.va_env ASC", String.class);
+            if(inspectConfiguration.getConfig().getEnv() != null && !inspectConfiguration.getConfig().getEnv().isEmpty()){
+                inspectConfiguration.getConfig().getEnv().forEach((envName,depth) ->
+                {
+                    envList.remove(envName);
+                    purgeService.purgeData(List.of(envName), null, Instant.now().minus(depth, ChronoUnit.DAYS), null);
+                });
+            }
+            if(!envList.isEmpty())
+                purgeService.purgeData(envList, null, Instant.now().minus(inspectConfiguration.getConfig().getDepth(), ChronoUnit.DAYS), null);
+        }catch (Exception e){
+            log.error("Error while purging old data: [Purge BATCH]",e);
         }
-        purgeData(envList,null,config.getDepth(),null);
+
     }
 
-    public void purgeData(List<String> env, List<String> appName, int depth, List<String> versions){
-        Instant threshold = Instant.now().minus(depth, ChronoUnit.DAYS);
-        purgeService.purgeData(env, appName, threshold, versions);
-    }
 
 
 }

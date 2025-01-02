@@ -13,19 +13,19 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @Slf4j
 @CrossOrigin
 @RestController
-@RequestMapping(value = "purge/", produces = APPLICATION_JSON_VALUE)
+@RequestMapping(value = "admin/", produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 public class PurgeController {
 
     private final PurgeService purgeService;
 
-    @DeleteMapping("purgedata")
+    @DeleteMapping("purge/{env}")
     public boolean purgeDate(
             @RequestParam(name = "start") Instant start,
-            @RequestParam(name = "env") List<String> environment,
+            @PathVariable(name = "env") String environment,
             @RequestParam(required = false, name = "appname") List<String> appNameList,
             @RequestParam(required = false, name = "version") List<String> versionList
     ){
-        return purgeService.purgeData(environment,appNameList,start,versionList);
+        return purgeService.purgeData(List.of(environment),appNameList,start,versionList);
     }
 }
