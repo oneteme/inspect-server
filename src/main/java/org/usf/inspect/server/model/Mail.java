@@ -1,4 +1,4 @@
-package org.usf.inspect.server.model.object;
+package org.usf.inspect.server.model;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -13,5 +13,5 @@ public final class Mail {
     private String[] replyTo;
     private int size;
 
-    private long id;
+    private Long idRequest;
 }

@@ -6,7 +6,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.usf.inspect.server.RequestMask;
-import org.usf.inspect.server.model.object.*;
+import org.usf.inspect.server.model.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -247,9 +247,9 @@ VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getLocalRequests),
             executeBatch("""
 INSERT INTO E_SMTP_RQT(ID_SMTP_RQT,VA_HST,CD_PRT,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)
 VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getMailRequests), (ps, req)-> {
-                req.setId(inc.incrementAndGet());
+                req.setIdRequest(inc.incrementAndGet());
                 var completed = req.getActions() == null || req.getActions().stream().allMatch(a-> isNull(a.getException()));
-                ps.setLong(1, req.getId());
+                ps.setLong(1, req.getIdRequest());
                 ps.setString(2, req.getHost());
                 ps.setInt(3, req.getPort());
                 ps.setString(4, req.getUser());
@@ -268,11 +268,11 @@ VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getMailRequests), 
         if(!isEmpty(request.getMails())) {
             var inc = new AtomicInteger(0);
             for(MailRequestStage stage: request.getActions()) {
-                stage.setId(request.getId());
+                stage.setIdRequest(request.getIdRequest());
                 stage.setOrder(inc.incrementAndGet());
             }
             for(Mail mail: request.getMails()) {
-                mail.setId(request.getId());
+                mail.setIdRequest(request.getIdRequest());
             }
         }
     }
@@ -284,9 +284,9 @@ VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getMailRequests), 
             ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
             ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
             ps.setInt(4, stage.getOrder());
-            ps.setLong(5, stage.getId());
+            ps.setLong(5, stage.getIdRequest());
             if(stage.getException() != null) {
-                stage.getException().setIdRequest(stage.getId());
+                stage.getException().setIdRequest(stage.getIdRequest());
                 stage.getException().setOrder(stage.getOrder());
                 exp.add(stage.getException());
             }
@@ -304,7 +304,7 @@ VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getMailRequests), 
             ps.setString(4, mail.getRecipients() != null ? String.join(", ", mail.getRecipients()) : null);
             ps.setString(5, mail.getReplyTo() != null ? String.join(", ", mail.getReplyTo()) : null);
             ps.setInt(6,mail.getSize());
-            ps.setLong(7, mail.getId());
+            ps.setLong(7, mail.getIdRequest());
         });
     }
 
@@ -325,8 +325,8 @@ VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getMailRequests), 
 INSERT INTO E_FTP_RQT(ID_FTP_RQT,VA_HST,CD_PRT,VA_PCL,VA_SRV_VRS,VA_CLT_VRS,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)
 VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getFtpRequests), (ps, req)-> {
                 var completed = req.getActions() == null || req.getActions().stream().allMatch(a -> isNull(a.getException()));
-                req.setId(inc.incrementAndGet());
-                ps.setLong(1, req.getId());
+                req.setIdRequest(inc.incrementAndGet());
+                ps.setLong(1, req.getIdRequest());
                 ps.setString(2, req.getHost());
                 ps.setInt(3, req.getPort());
                 ps.setString(4, req.getProtocol());
@@ -348,7 +348,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getFtpReques
         if(!isEmpty(request.getActions())) {
             var inc = new AtomicInteger(0);
             for(FtpRequestStage stage: request.getActions()) {
-                stage.setId(request.getId());
+                stage.setIdRequest(request.getIdRequest());
                 stage.setOrder(inc.incrementAndGet());
             }
         }
@@ -362,9 +362,9 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getFtpReques
             ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
             ps.setString(4, stage.getArgs() != null ? String.join(", ", stage.getArgs()) : null);
             ps.setInt(5, stage.getOrder());
-            ps.setLong(6, stage.getId());
+            ps.setLong(6, stage.getIdRequest());
             if(stage.getException() != null) {
-                stage.getException().setIdRequest(stage.getId());
+                stage.getException().setIdRequest(stage.getIdRequest());
                 stage.getException().setOrder(stage.getOrder());
                 exceptions.add(stage.getException());
             }
@@ -378,11 +378,11 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getFtpReques
         if(sessions.stream().anyMatch(s-> !isEmpty(s.getLdapRequests()))){
             var inc = new AtomicLong(selectMaxId("E_LDAP_RQT", "ID_LDAP_RQT"));
             executeBatch("""
-    INSERT INTO E_LDAP_RQT(ID_LDAP_RQT,VA_HST,CD_PRT,VA_PCL,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)
-    VALUES(?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getLdapRequests), (ps, req)-> {
+INSERT INTO E_LDAP_RQT(ID_LDAP_RQT,VA_HST,CD_PRT,VA_PCL,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)
+VALUES(?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getLdapRequests), (ps, req)-> {
                 var completed = req.getActions().stream().allMatch(a-> isNull(a.getException()));
-                req.setId(inc.incrementAndGet());
-                ps.setLong(1, req.getId());
+                req.setIdRequest(inc.incrementAndGet());
+                ps.setLong(1, req.getIdRequest());
                 ps.setString(2, req.getHost());
                 ps.setInt(3, req.getPort());
                 ps.setString(4, req.getProtocol());
@@ -402,7 +402,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getFtpReques
         if(!isEmpty(request.getActions())) {
             var inc = new AtomicInteger(0);
             for(NamingRequestStage stage: request.getActions()) {
-                stage.setId(request.getId());
+                stage.setIdRequest(request.getIdRequest());
                 stage.setOrder(inc.incrementAndGet());
             }
         }
@@ -416,9 +416,9 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getFtpReques
             ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
             ps.setString(4, stage.getArgs() != null ? String.join(", ", stage.getArgs()) : null);
             ps.setInt(5, stage.getOrder());
-            ps.setLong(6, stage.getId());
+            ps.setLong(6, stage.getIdRequest());
             if(stage.getException() != null) {
-                stage.getException().setIdRequest(stage.getId());
+                stage.getException().setIdRequest(stage.getIdRequest());
                 stage.getException().setOrder(stage.getOrder());
                 exceptions.add(stage.getException());
             }
@@ -432,11 +432,11 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getFtpReques
         if(sessions.stream().anyMatch(s-> !isEmpty(s.getDatabaseRequests()))){
             var inc = new AtomicLong(selectMaxId("E_DTB_RQT", "ID_DTB_RQT"));
             executeBatch("""
-    INSERT INTO E_DTB_RQT(ID_DTB_RQT,VA_HST,CD_PRT,VA_NAM,VA_SCH,DH_STR,DH_END,VA_USR,VA_THR,VA_DRV,VA_PRD_NAM,VA_PRD_VRS,VA_CMD,VA_STT,CD_PRN_SES)
-    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getDatabaseRequests), (ps, req)-> {
+INSERT INTO E_DTB_RQT(ID_DTB_RQT,VA_HST,CD_PRT,VA_NAM,VA_SCH,DH_STR,DH_END,VA_USR,VA_THR,VA_DRV,VA_PRD_NAM,VA_PRD_VRS,VA_CMD,VA_STT,CD_PRN_SES)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getDatabaseRequests), (ps, req)-> {
                 var completed = req.getActions().stream().allMatch(a-> isNull(a.getException()));
-                req.setId(inc.incrementAndGet());
-                ps.setLong(1, req.getId());
+                req.setIdRequest(inc.incrementAndGet());
+                ps.setLong(1, req.getIdRequest());
                 ps.setString(2, req.getHost());
                 ps.setInt(3, req.getPort());
                 ps.setString(4, req.getName());
@@ -461,7 +461,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getFtpReques
         if(!isEmpty(request.getActions())) {
             var inc = new AtomicInteger(0);
             for(DatabaseRequestStage stage: request.getActions()) {
-                stage.setId(request.getId());
+                stage.setIdRequest(request.getIdRequest());
                 stage.setOrder(inc.incrementAndGet());
             }
         }
@@ -475,9 +475,9 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getFtpReques
             ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
             ps.setString(4, valueOfNullableArray(stage.getCount()));
             ps.setInt(5, stage.getOrder());
-            ps.setLong(6, stage.getId());
+            ps.setLong(6, stage.getIdRequest());
             if(stage.getException() != null) {
-                stage.getException().setIdRequest(stage.getId());
+                stage.getException().setIdRequest(stage.getIdRequest());
                 stage.getException().setOrder(stage.getOrder());
                 exceptions.add(stage.getException());
             }
@@ -485,6 +485,16 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getFtpReques
         if(!exceptions.isEmpty()) {
             saveExceptions(exceptions, JDBC);
         }
+    }
+
+    public void saveExceptions(List<Session> sessions) {
+        executeBatch("INSERT INTO E_EXC_INF(VA_TYP,VA_ERR_TYP,VA_ERR_MSG,CD_ORD,CD_RQT) VALUES(?,?,?,?,?)", treeIterator(sessions,  Session::getDatabaseRequests, DatabaseRequest::getActions), (ps, stage)-> {
+            ps.setString(1, JDBC.name());
+            ps.setString(2, stage.getException().getType());
+            ps.setString(3, stage.getException().getMessage());
+            ps.setInt(4, stage.getOrder());
+            ps.setLong(5, stage.getIdRequest());
+        });
     }
 
     // TODO use RequestQueryBuilder

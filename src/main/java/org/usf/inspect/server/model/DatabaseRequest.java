@@ -1,4 +1,4 @@
-package org.usf.inspect.server.model.object;
+package org.usf.inspect.server.model;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -10,7 +10,7 @@ import java.util.List;
 @Setter
 public class DatabaseRequest extends SessionStage {
     private String host;
-    private int port;
+    private Integer port;
     private String name;
     private String schema;
     private String driverVersion;
@@ -19,7 +19,5 @@ public class DatabaseRequest extends SessionStage {
     private List<DatabaseRequestStage> actions;
     private List<SqlCommand> commands;
 
-    private long id;
-    private String cdSession;
     private boolean status;
 }

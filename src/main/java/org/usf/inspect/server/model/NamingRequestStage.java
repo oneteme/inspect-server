@@ -1,4 +1,4 @@
-package org.usf.inspect.server.model.object;
+package org.usf.inspect.server.model;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -7,7 +7,4 @@ import lombok.Setter;
 @Setter
 public class NamingRequestStage extends RequestStage {
     private String[] args;
-
-    private long id;
-    private int order;
 }

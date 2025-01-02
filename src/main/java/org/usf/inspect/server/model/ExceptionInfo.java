@@ -1,4 +1,4 @@
-package org.usf.inspect.server.model.object;
+package org.usf.inspect.server.model;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +11,6 @@ public class ExceptionInfo {
     private final String type;
     private final String message;
 
-    private long idRequest;
-    private int order;
+    private Long idRequest;
+    private Integer order;
 }

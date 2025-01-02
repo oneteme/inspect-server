@@ -1,4 +1,4 @@
-package org.usf.inspect.server.model.object;
+package org.usf.inspect.server.model;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -10,7 +10,5 @@ public class LocalRequest extends SessionStage {
     private String location;
     private ExceptionInfo exception;
 
-    private long idRequest;
-    private String cdSession;
     private boolean status;
 }
