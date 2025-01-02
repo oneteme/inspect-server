@@ -10,12 +10,10 @@ import java.util.List;
 public class FtpRequest extends SessionStage {
     private String protocol;
     private String host;
-    private int port;
+    private Integer port;
     private String serverVersion;
     private String clientVersion;
     private List<FtpRequestStage> actions;
 
-    private long id;
-    private String cdSession;
     private boolean status;
 }

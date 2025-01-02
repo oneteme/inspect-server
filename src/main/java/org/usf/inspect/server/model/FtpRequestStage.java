@@ -7,7 +7,4 @@ import lombok.Setter;
 @Setter
 public class FtpRequestStage extends RequestStage {
     private String[] args;
-
-    private long id;
-    private int order;
 }

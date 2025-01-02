@@ -9,11 +9,9 @@ import java.util.List;
 @Getter
 public class MailRequest extends SessionStage {
     private String host;
-    private int port;
+    private Integer port;
     private List<MailRequestStage> actions;
     private List<Mail> mails;
 
-    private long id;
-    private String cdSession;
     private boolean status;
 }

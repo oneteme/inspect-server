@@ -10,10 +10,8 @@ import java.util.List;
 public class NamingRequest extends SessionStage {
     private String protocol;
     private String host;
-    private int port;
+    private Integer port;
     private List<NamingRequestStage> actions;
 
-    private long id;
-    private String cdSession;
     private boolean status;
 }
