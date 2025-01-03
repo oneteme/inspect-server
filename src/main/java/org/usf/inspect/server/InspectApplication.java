@@ -9,6 +9,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.usf.inspect.server.model.MainSession;
 import org.usf.inspect.server.model.RestSession;
@@ -17,6 +18,7 @@ import static org.springframework.http.converter.json.Jackson2ObjectMapperBuilde
 
 @SpringBootApplication
 @EnableTransactionManagement
+@EnableScheduling
 public class InspectApplication {
 
 	public static void main(String[] args) {
