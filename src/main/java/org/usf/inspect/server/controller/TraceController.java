@@ -7,7 +7,6 @@ import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.usf.inspect.core.DispatchState;
 import org.usf.inspect.server.model.*;
 import org.usf.inspect.server.model.filter.JqueryMainSessionFilter;
 import org.usf.inspect.server.model.filter.JqueryRequestSessionFilter;
@@ -118,6 +117,16 @@ public class TraceController {
         return requestService.getRestSessionsForSearch(jsf);
     }
 
+    @GetMapping("session/rest/{appName}/dump")
+    public List<Session> getRestSessionsForDump(
+            @PathVariable String appName,
+            @RequestParam(name = "env") String env,
+            @RequestParam(name = "start") Instant start,
+            @RequestParam(name = "end") Instant end
+    ) throws SQLException {
+        return requestService.getRestSessionsForDump(env, appName, start, end);
+    }
+
     @GetMapping("session/rest/{id}")
     public ResponseEntity<Session> getRestSession(@PathVariable String id) throws SQLException {
         return Optional.ofNullable(requestService.getRestSession(id))
@@ -161,6 +170,16 @@ public class TraceController {
 
         JqueryMainSessionFilter fc = new JqueryMainSessionFilter(null, appNames, environments, users, start, end, names, launchModes, location);
         return requestService.getMainSessionsForSearch(fc);
+    }
+
+    @GetMapping("session/main/{appName}/dump")
+    public List<Session> getMainSessionsForDump(
+            @PathVariable String appName,
+            @RequestParam(name = "env") String env,
+            @RequestParam(name = "start") Instant start,
+            @RequestParam(name = "end") Instant end
+    ) throws SQLException {
+        return requestService.getMainSessionsForDump(env, appName, start, end);
     }
 
     @GetMapping("session/main/{id}")

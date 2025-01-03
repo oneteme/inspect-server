@@ -258,6 +258,46 @@ public class RequestService {
         });
     }
 
+    public List<Session> getRestSessionsForDump(String env, String appName, Instant start, Instant end) throws SQLException {
+        var v = new QueryBuilder()
+                .columns(
+                    getColumns(
+                        REST_SESSION, ID, API_NAME, METHOD,
+                        PROTOCOL, PATH, QUERY, STATUS, SIZE_IN, SIZE_OUT,
+                        START, END, USER, THREAD, HOST, ERR_MSG, ERR_TYPE
+                    )
+                )
+                .filters(REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)))
+                .filters(INSTANCE.column(ENVIRONEMENT).eq(env))
+                .filters(INSTANCE.column(APP_NAME).eq(appName))
+                .filters(REST_SESSION.column(END).ge(from(start)).and(REST_SESSION.column(START).le(from(end))))
+                .orders(REST_SESSION.column(START).order());
+        return v.build().execute(ds, rs -> {
+            List<Session> sessions = new ArrayList<>();
+            while (rs.next()) {
+                RestSession session = new RestSession();
+                session.setId(rs.getString(ID.reference()));
+                session.setMethod(rs.getString(METHOD.reference()));
+                session.setProtocol(rs.getString(PROTOCOL.reference()));
+                session.setPath(rs.getString(PATH.reference()));
+                session.setQuery(rs.getString(QUERY.reference()));
+                session.setStatus(rs.getInt(STATUS.reference()));
+                session.setInDataSize(rs.getLong(SIZE_IN.reference()));
+                session.setOutDataSize(rs.getLong(SIZE_OUT.reference()));
+                session.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
+                session.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                session.setName(rs.getString(API_NAME.reference()));
+                session.setUser(rs.getString(USER.reference()));
+                session.setHost(rs.getString(HOST.reference()));
+                session.setThreadName(rs.getString(THREAD.reference()));
+                session.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+                sessions.add(session);
+            }
+            return sessions;
+        });
+    }
+
+
     public List<Session> getRestSessions(JqueryRequestSessionFilter jsf, boolean lazy) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
@@ -341,6 +381,36 @@ public class RequestService {
             getLdapRequests(session.getId()).forEach(r -> session.getLdapRequests().add(r));
         }
         return session;
+    }
+
+    public List<Session> getMainSessionsForDump(String env, String appName, Instant start, Instant end) throws SQLException {
+        var v = new QueryBuilder()
+                .columns(
+                        getColumns(
+                                MAIN_SESSION, ID, NAME, START, END, TYPE, LOCATION, THREAD, ERR_TYPE, ERR_MSG
+                        )
+                )
+                .filters(MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)))
+                .filters(INSTANCE.column(ENVIRONEMENT).eq(env))
+                .filters(INSTANCE.column(APP_NAME).eq(appName))
+                .filters(MAIN_SESSION.column(END).ge(from(start)).and(MAIN_SESSION.column(START).le(from(end))))
+                .orders(MAIN_SESSION.column(START).order());
+        return v.build().execute(ds, rs -> {
+            List<Session> sessions = new ArrayList<>();
+            while (rs.next()) {
+                MainSession main = new MainSession();
+                main.setId(rs.getString(ID.reference())); // add value of nullable
+                main.setName(rs.getString(NAME.reference()));
+                main.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
+                main.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                main.setType(rs.getString(TYPE.reference()));
+                main.setLocation(rs.getString(LOCATION.reference()));
+                main.setThreadName(rs.getString(THREAD.reference()));
+                main.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+                sessions.add(main);
+            }
+            return sessions;
+        });
     }
 
     public Session getMainSession(String id) throws SQLException{
