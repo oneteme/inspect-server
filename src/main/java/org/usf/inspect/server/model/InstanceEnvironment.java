@@ -7,7 +7,6 @@ import java.time.Instant;
 
 @Getter
 @Setter
-@RequiredArgsConstructor
 public class InstanceEnvironment {
     private final String name;
     private final String version;
