@@ -24,7 +24,6 @@ jobs:
         java-version: '21'
         distribution: 'temurin' #Eclipse Temurin
     - run: mvn  --batch-mode --no-transfer-progress clean install
-    - run: cp $(ls target/inspect-server*.jar | head -n 1) inspect-server.jar
     - uses: oneteme/automation-scripts/.github/actions/mvn-project-version@main
       id: prj_ver
     - uses: docker/login-action@v3
