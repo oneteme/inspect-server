@@ -1,5 +1,5 @@
 # Utilisez une image de base contenant JRE 11 slim
-FROM openjdk:11-jre-slim
+FROM openjdk:17-jre-slim
 
 # Copiez le fichier JAR généré dans le conteneur
 ARG JAR_FILE=target/*.jar

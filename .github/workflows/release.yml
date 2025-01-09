@@ -23,9 +23,7 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin' #Eclipse Temurin
-    - run: mvn  --batch-mode --no-transfer-progress clean install
-    - uses: oneteme/automation-scripts/.github/actions/mvn-project-version@main
-      id: prj_ver
+    - run: mvn  --batch-mode --no-transfer-progress clean package
     - uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKERHUB_USER }}
@@ -37,6 +35,8 @@ jobs:
         push: true
         tags: "${{ secrets.DOCKERHUB_USER }}/${{ github.event.repository.name }}:latest"
     
+    - uses: oneteme/automation-scripts/.github/actions/mvn-project-version@main
+      id: prj_ver
     outputs:
       version: ${{ steps.prj_ver.outputs.version }}
   
