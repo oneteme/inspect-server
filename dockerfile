@@ -5,7 +5,7 @@ FROM openjdk:11-jre-slim
 WORKDIR /app
 
 # Copiez le fichier JAR généré dans le conteneur
-COPY $(ls target/inspect-server*.jar | head -n 1) /app/inspect-server.jar
+COPY target/inspect-server.jar /app/inspect-server.jar
 
 # Exposez le port sur lequel l'application écoute
 EXPOSE 9000
