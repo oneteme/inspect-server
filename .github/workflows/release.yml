@@ -35,7 +35,7 @@ jobs:
     - uses: docker/build-push-action@v6
       with:
         push: true
-        tags: user/app:latest
+        tags: "${{ secrets.DOCKERHUB_USER }}/${{ github.event.repository.name }:latest"
     
     outputs:
       version: ${{ steps.prj_ver.outputs.version }}
