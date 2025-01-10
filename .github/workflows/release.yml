@@ -33,8 +33,9 @@ jobs:
     - uses: docker/setup-buildx-action@v3.8.0
     - uses: docker/build-push-action@v6.10.0
       with:
-        push: true
+        context: .
         tags: "${{ secrets.DOCKERHUB_USER }}/${{ github.event.repository.name }}:latest"
+        push: true
     
     - uses: oneteme/automation-scripts/.github/actions/mvn-project-version@main
       id: prj_ver
