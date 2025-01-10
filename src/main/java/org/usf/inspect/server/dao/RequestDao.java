@@ -11,6 +11,7 @@ import org.usf.inspect.server.model.*;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -313,7 +314,7 @@ VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getMailRequests), 
             ps.setString(1, mask.name());
             ps.setString(2, exp.getType());
             ps.setString(3, exp.getMessage());
-            ps.setInt(4, exp.getOrder());
+            ps.setObject(4, exp.getOrder(), Types.INTEGER);
             ps.setLong(5, exp.getIdRequest());
         });
     }
