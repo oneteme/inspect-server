@@ -24,13 +24,12 @@ jobs:
         java-version: '21'
         distribution: 'temurin' #Eclipse Temurin
     - run: mvn  --batch-mode --no-transfer-progress clean package
-    - run: ls ./target/
     - uses: docker/login-action@v3.3.0
       with:
         username: ${{ secrets.DOCKERHUB_USER }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
-    - uses: docker/setup-qemu-action@v3.2.0
-    - uses: docker/setup-buildx-action@v3.8.0
+    #- uses: docker/setup-qemu-action@v3.2.0 #multiple architectures ARM, x86_64, etc.
+    #- uses: docker/setup-buildx-action@v3.8.0
     - uses: docker/build-push-action@v6.10.0
       with:
         context: .
