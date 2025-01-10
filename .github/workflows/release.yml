@@ -34,7 +34,7 @@ jobs:
     - uses: docker/build-push-action@v6.10.0
       with:
         context: .
-        tags: "${{ secrets.DOCKERHUB_USER }}/${{ github.event.repository.name }}:latest"
+        tags: "oneteme/${{ github.event.repository.name }}:latest"
         push: true
     
     - uses: oneteme/automation-scripts/.github/actions/mvn-project-version@main
