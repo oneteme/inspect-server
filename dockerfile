@@ -1,5 +1,5 @@
 # Utilisez une image de base contenant JRE 11 slim
-FROM openjdk:17.0.1-jdk-slim
+FROM eclipse-temurin:17-jre-alpine
 
 # Copiez le fichier JAR généré dans le conteneur
 ARG JAR_FILE=./target/*.jar
