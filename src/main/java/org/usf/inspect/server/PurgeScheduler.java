@@ -34,7 +34,9 @@ public class PurgeScheduler {
                 inspectConfiguration.getConfig().getEnv().forEach((envName,depth) ->
                 {
                     envList.remove(envName);
-                    purgeService.purgeData(List.of(envName), null, Instant.now().minus(depth, ChronoUnit.DAYS), null);
+                    if(depth != -1){
+                        purgeService.purgeData(List.of(envName), null, Instant.now().minus(depth, ChronoUnit.DAYS), null);
+                    }
                 });
             }
             if(!envList.isEmpty())
