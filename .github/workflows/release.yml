@@ -11,10 +11,15 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin' #Eclipse Temurin
-#    - uses: oneteme/automation-scripts/.github/actions/sonar-java-scan@main
-#      env:
-#        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    - uses: oneteme/automation-scripts/.github/actions/sonar-java-scan@main
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    - uses: oneteme/automation-scripts/.github/actions/mvn-project-version@main
+      id: prj_ver
+    outputs:
+      version: ${{ steps.prj_ver.outputs.version }}
   deploy:
+    if: "!endsWith(needs.deploy.outputs.version, '-SNAPSHOT')"
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -23,7 +28,7 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin' #Eclipse Temurin
-    - run: mvn  --batch-mode --no-transfer-progress clean package
+    - run: mvn --batch-mode --no-transfer-progress clean package
     - uses: docker/login-action@v3.3.0
       with:
         username: ${{ secrets.DOCKERHUB_USER }}
@@ -33,22 +38,16 @@ jobs:
     - uses: docker/build-push-action@v6.10.0
       with:
         context: .
-        tags: "oneteme/${{ github.event.repository.name }}:latest"
+        tags: "oneteme/${{ github.event.repository.name }}-pg:latest"
         push: true
-    
-    - uses: oneteme/automation-scripts/.github/actions/mvn-project-version@main
-      id: prj_ver
-    outputs:
-      version: ${{ steps.prj_ver.outputs.version }}
-  
   release:
-    needs: deploy
+    needs:
+    - build
+    - deploy
     runs-on: ubuntu-latest
-    if: "!endsWith(needs.deploy.outputs.version, '-SNAPSHOT')"
     steps:
     - uses: oneteme/automation-scripts/.github/actions/create-release-notes@main
       with:
         version: ${{ needs.deploy.outputs.version }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
