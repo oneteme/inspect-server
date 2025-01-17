@@ -11,16 +11,16 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin' #Eclipse Temurin
-    - uses: oneteme/automation-scripts/.github/actions/sonar-java-scan@main
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#    - uses: oneteme/automation-scripts/.github/actions/sonar-java-scan@main
+#      env:
+#        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     - uses: oneteme/automation-scripts/.github/actions/mvn-project-version@main
       id: prj_ver
     outputs:
       version: ${{ steps.prj_ver.outputs.version }}
   deploy:
-    if: "!endsWith(needs.deploy.outputs.version, '-SNAPSHOT')"
     needs: build
+    if: "!endsWith(needs.build.outputs.version, '-SNAPSHOT')"
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -29,6 +29,7 @@ jobs:
         java-version: '21'
         distribution: 'temurin' #Eclipse Temurin
     - run: mvn --batch-mode --no-transfer-progress -Ppg clean package
+    - run: echo "ver=${${{ github.event.repository.name }}%*.*}" >> $GITHUB_OUTPUT
     - uses: docker/login-action@v3.3.0
       with:
         username: ${{ secrets.DOCKERHUB_USER }}
@@ -48,6 +49,6 @@ jobs:
     steps:
     - uses: oneteme/automation-scripts/.github/actions/create-release-notes@main
       with:
-        version: ${{ needs.deploy.outputs.version }}
+        version: ${{ needs.build.outputs.version }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
