@@ -28,7 +28,7 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin' #Eclipse Temurin
-    - run: mvn --batch-mode --no-transfer-progress clean package
+    - run: mvn --batch-mode --no-transfer-progress -Ppg clean package
     - uses: docker/login-action@v3.3.0
       with:
         username: ${{ secrets.DOCKERHUB_USER }}
