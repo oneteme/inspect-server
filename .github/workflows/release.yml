@@ -31,7 +31,7 @@ jobs:
     - run: mvn --batch-mode --no-transfer-progress -Ppg clean package
     - run: |
         version=${{ needs.build.outputs.version }}
-        echo "minVer=${version%*.*}" >> $GITHUB_OUTPUT #minor version
+        echo "minVer=${version%*.*}" >> $GITHUB_OUTPUT #major.minor
       id: extract
     - uses: docker/login-action@v3.3.0
       with:
