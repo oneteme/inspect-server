@@ -29,7 +29,9 @@ jobs:
         java-version: '21'
         distribution: 'temurin' #Eclipse Temurin
     - run: mvn --batch-mode --no-transfer-progress -Ppg clean package
-    - run: echo "majVer=${{ needs.build.outputs.version%*.* }}" >> $GITHUB_OUTPUT
+    - run: |
+        version=${{ needs.build.outputs.version }}
+        echo "minVer=${version%*.*}" >> $GITHUB_OUTPUT #minor version
       id: extract
     - uses: docker/login-action@v3.3.0
       with:
@@ -40,7 +42,7 @@ jobs:
     - uses: docker/build-push-action@v6.10.0
       with:
         context: .
-        tags: "oneteme/${{ github.event.repository.name }}-pg:${{ steps.extract.outputs.majVer }}"
+        tags: "oneteme/${{ github.event.repository.name }}-pg:${{ steps.extract.outputs.minVer }}"
         push: true
   release:
     needs:
