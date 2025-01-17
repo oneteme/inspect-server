@@ -42,7 +42,7 @@ jobs:
     - uses: docker/build-push-action@v6.10.0
       with:
         context: .
-        tags: "oneteme/${{ github.event.repository.name }}-pg:${{ steps.extract.outputs.minVer }}"
+        tags: "oneteme/${{ github.event.repository.name }}:${{ steps.extract.outputs.minVer }}"
         push: true
   release:
     needs:
