@@ -7,3 +7,9 @@ spring:
   h2:
     console:
       enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'

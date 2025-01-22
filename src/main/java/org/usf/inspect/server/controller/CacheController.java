@@ -33,7 +33,7 @@ public class CacheController {
     private final SessionQueueService queue;
     private final RestTemplate template;
     
-    @Value("${spring.profiles.active}")
+    @Value("${spring.profiles.active:}")
     private String activeProfile;
 
 	private String host = null;

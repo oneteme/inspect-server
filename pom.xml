@@ -5,7 +5,7 @@
 	
 	<groupId>io.github.oneteme</groupId>
 	<artifactId>inspect-server</artifactId>
-	<version>1.0.0</version>
+	<version>15.0.0</version>
 	<packaging>jar</packaging>
 	<name>inspect-server</name>
 	<description>INtegrated System Performance Evaluation and Communication Tracking server</description>
@@ -66,6 +66,11 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -78,19 +83,6 @@
 	</build>
 	
 	<profiles>
-		<profile>
-			<id>default</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-			<dependencies>
-				<dependency>
-					<groupId>com.h2database</groupId>
-					<artifactId>h2</artifactId>
-					<scope>runtime</scope>
-				</dependency>
-			</dependencies>
-		</profile>
 		<profile>
 			<id>pg</id>
 			<dependencies>
