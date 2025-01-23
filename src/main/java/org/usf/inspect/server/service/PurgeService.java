@@ -16,7 +16,6 @@ import java.util.*;
 public class PurgeService {
 
     private final JdbcTemplate template;
-    private final Map<String, Integer> suppInfo = new HashMap<>();
 
     @Transactional(rollbackFor = Throwable.class)
     public boolean purgeData(List<String> env, List<String> appName, Instant before, List<String> version) {
@@ -25,6 +24,7 @@ public class PurgeService {
         log.info("\t- Environment: " + env.toString());
         log.info("\t- Start: " + before);
         List<Query> queries = QueryLoader.loadQueries(env,appName,before,version);
+        Map<String, Integer> suppInfo = new HashMap<>();
 
         int i;
         for(Query query: queries){
