@@ -636,7 +636,7 @@ public class RequestService {
                 out.setProductName(rs.getString(DB_NAME.reference()));
                 out.setProductVersion(rs.getString(DB_VERSION.reference()));
                 out.setActions(new ArrayList<>());
-                out.setCommands(valueOfNullabletoEnumList(SqlCommand.class, rs.getString(COMMANDS.reference())));
+                out.setCommands(rs.getString(COMMANDS.reference()));
                 out.setStatus(rs.getBoolean(STATUS.reference()));
                 out.setSchema(rs.getString(SCHEMA.reference()));
                 outs.add(out);
@@ -673,7 +673,7 @@ public class RequestService {
         var v = new QueryBuilder()
                 .columns(
                         getColumns(
-                                DATABASE_STAGE, NAME, START, END, ACTION_COUNT, PARENT
+                                DATABASE_STAGE, NAME, START, END, ACTION_COUNT, COMMANDS, PARENT
                         ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(DATABASE_STAGE.join(EXCEPTION_JOIN).build())
@@ -687,6 +687,7 @@ public class RequestService {
                 action.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 action.setCount(ofNullable(rs.getString(ACTION_COUNT.reference())).map(str -> Arrays.stream(str.split(",")).mapToLong(Long::parseLong).toArray()).orElse(null));
+                action.setCommands(valueOfNullabletoEnumList(SqlCommand.class, rs.getString(COMMANDS.reference())).toArray(new SqlCommand[0]));
                 action.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 actions.add(action);
             }

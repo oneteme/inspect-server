@@ -154,6 +154,7 @@ public class ColumnConstant {
             case START -> DH_STR;
             case END -> DH_END;
             case ACTION_COUNT -> VA_CNT;
+            case COMMANDS -> VA_CMD;
             case ORDER -> CD_ORD;
             case PARENT -> CD_DTB_RQT;
             default -> null;
