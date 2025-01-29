@@ -520,6 +520,7 @@ public class RequestService {
                         REST_REQUEST, ID, PROTOCOL, AUTH, HOST, PORT, PATH, QUERY, METHOD, STATUS, SIZE_IN,
                         SIZE_OUT, CONTENT_ENCODING_IN, CONTENT_ENCODING_OUT, START, END, THREAD, REMOTE, PARENT
                 ))
+                .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(REST_REQUEST.join(EXCEPTION_JOIN).build())
                 //.columns(REST_REQUEST.column(PARENT).as("test"), EXCEPTION.column(PARENT).as("test2"))
                 .filters(REST_REQUEST.column(PARENT).in(cdSessions.toArray()))
@@ -579,6 +580,8 @@ public class RequestService {
                 .columns(getColumns(
                         LOCAL_REQUEST, ID, NAME, LOCATION, START, END, USER, THREAD, STATUS, PARENT
                 ))
+                .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
+                .joins(LOCAL_REQUEST.join(EXCEPTION_JOIN).build())
                 .filters(LOCAL_REQUEST.column(PARENT).in(cdSessions.toArray()))
                 .orders(LOCAL_REQUEST.column(START).order());
         return v.build().execute(ds, rs -> {
@@ -594,6 +597,7 @@ public class RequestService {
                 out.setUser(rs.getString(USER.reference()));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setStatus(rs.getBoolean(STATUS.reference()));
+                out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 outs.add(out);
             }
             return outs;
