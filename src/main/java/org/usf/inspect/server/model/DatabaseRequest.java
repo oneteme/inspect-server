@@ -22,7 +22,7 @@ public class DatabaseRequest extends SessionStage {
     private boolean status;
 
     public String mainCommand(){
-        Set<SqlCommand> r = actions.stream().map(DatabaseRequestStage::getCommands).filter(Objects::nonNull).flatMap(Arrays::stream).collect(Collectors.toSet());
+        Set<SqlCommand> r = Optional.ofNullable(actions).orElseGet(Collections::emptyList).stream().map(DatabaseRequestStage::getCommands).filter(Objects::nonNull).flatMap(Arrays::stream).collect(Collectors.toSet());
         if(r.size() == 1){
             return r.iterator().next().toString();
         }
