@@ -174,6 +174,7 @@ CREATE TABLE ${_schema}.e_dtb_stg (
     dh_str timestamp(6),   
     dh_end timestamp(6),   
     va_cnt varchar,
+    va_cmd varchar,
     cd_ord bigint,
     cd_dtb_rqt bigint
 )

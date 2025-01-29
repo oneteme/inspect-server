@@ -449,7 +449,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getDat
                 ps.setString(10, req.getDriverVersion());
                 ps.setString(11, req.getProductName());
                 ps.setString(12, req.getProductVersion());
-                ps.setString(13, valueOfNullableList(req.getCommands()));
+                ps.setString(13, req.mainCommand());
                 ps.setBoolean(14, completed);
                 ps.setString(15, req.getCdSession());
                 updateStages(req);
@@ -470,13 +470,14 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getDat
 
     private void saveDatabaseActions(List<Session> sessions) {
         var exceptions = new ArrayList<ExceptionInfo>();
-        executeBatch("INSERT INTO E_DTB_STG(VA_NAM,DH_STR,DH_END,VA_CNT,CD_ORD,CD_DTB_RQT) VALUES(?,?,?,?,?,?)", treeIterator(sessions, Session::getDatabaseRequests, DatabaseRequest::getActions), (ps, stage)-> {
+        executeBatch("INSERT INTO E_DTB_STG(VA_NAM,DH_STR,DH_END,VA_CNT,VA_CMD,CD_ORD,CD_DTB_RQT) VALUES(?,?,?,?,?,?,?)", treeIterator(sessions, Session::getDatabaseRequests, DatabaseRequest::getActions), (ps, stage)-> {
             ps.setString(1, stage.getName());
             ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
             ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
             ps.setString(4, valueOfNullableArray(stage.getCount()));
-            ps.setInt(5, stage.getOrder());
-            ps.setLong(6, stage.getIdRequest());
+            ps.setString(5,valueOfNullableList(stage.getCommands()));
+            ps.setInt(6, stage.getOrder());
+            ps.setLong(7, stage.getIdRequest());
             if(stage.getException() != null) {
                 stage.getException().setIdRequest(stage.getIdRequest());
                 stage.getException().setOrder(stage.getOrder());
@@ -530,9 +531,9 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getDat
         return nonNull(o) ? o.toString() : null;
     }
 
-    private static <T extends Enum<T>> String valueOfNullableList(List<T> enumList) {
+    private static <T extends Enum<T>> String valueOfNullableList(T[] enumList) {
         return nonNull(enumList)
-                ? enumList.stream().filter(Objects::nonNull).map(Enum::name).collect(joining(","))
+                ? Arrays.stream(enumList).filter(Objects::nonNull).map(Enum::name).collect(joining(","))
                 : null;
     }
     
