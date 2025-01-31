@@ -252,6 +252,8 @@ public class ColumnConstant {
             case RE -> VA_RE;
             case USER -> VA_USR;
             case COLLECTOR -> VA_CLR;
+            case BRANCH -> VA_BRCH;
+            case HASH -> VA_HSH;
             default -> null;
         };
     }

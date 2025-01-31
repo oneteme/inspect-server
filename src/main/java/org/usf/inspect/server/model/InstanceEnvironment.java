@@ -18,10 +18,12 @@ public class InstanceEnvironment {
     private final InstanceType type;
     private final Instant instant;
     private final String collector;
+    private final String branch;
+    private final String hash;
 
     private String id;
 
-    public InstanceEnvironment(String name, String version, String address, String env, String os, String re, String user, InstanceType type, Instant instant, String collector) {
+    public InstanceEnvironment(String name, String version, String address, String env, String os, String re, String user, InstanceType type, Instant instant, String collector, String branch, String hash) {
         this.name = name;
         this.version = version;
         this.address = address;
@@ -32,6 +34,8 @@ public class InstanceEnvironment {
         this.type = type;
         this.instant = instant;
         this.collector = collector;
+        this.branch = branch;
+        this.hash = hash;
     }
 }
 
