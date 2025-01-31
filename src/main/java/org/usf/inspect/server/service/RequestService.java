@@ -178,7 +178,7 @@ public class RequestService {
                 .columns(
                         getColumns(
                                 INSTANCE, ID, USER, TYPE, START, APP_NAME, VERSION, ADDRESS,
-                                ENVIRONEMENT, OS, RE, COLLECTOR
+                                ENVIRONEMENT, OS, RE, COLLECTOR, BRANCH, HASH
                         ))
                 .filters(INSTANCE.column(ID).eq(id));
         return v.build().execute(ds, rs -> {
@@ -193,7 +193,10 @@ public class RequestService {
                         rs.getString(USER.reference()),
                         InstanceType.valueOf(rs.getString(TYPE.reference())),
                         fromNullableTimestamp(rs.getTimestamp(START.reference())),
-                        rs.getString(COLLECTOR.reference()));
+                        rs.getString(COLLECTOR.reference()),
+                        rs.getString(BRANCH.reference()),
+                        rs.getString(HASH.reference()));
+
                 instanceEnvironment.setId(rs.getString(ID.reference()));
                 return instanceEnvironment;
             }
@@ -459,7 +462,7 @@ public class RequestService {
                             ERR_TYPE, ERR_MSG, MASK, USER, INSTANCE_ENV
                     ));
         if(lazy) {
-            v.columns(getColumns(INSTANCE, APP_NAME, OS, RE, ADDRESS)).filters(MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));;
+            v.columns(getColumns(INSTANCE, APP_NAME, OS, RE, ADDRESS)).filters(MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
         }
 
         if(jsf != null) {

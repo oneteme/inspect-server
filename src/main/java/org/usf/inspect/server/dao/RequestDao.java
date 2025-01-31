@@ -39,8 +39,8 @@ public class RequestDao {
 
     public void saveInstanceEnvironment(InstanceEnvironment instance) {
         template.update("""
-INSERT INTO E_ENV_INS(ID_INS,VA_TYP,DH_STR,VA_APP,VA_VRS,VA_ADR,VA_ENV,VA_OS,VA_RE,VA_USR,VA_CLR)
-VALUES(?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
+INSERT INTO E_ENV_INS(ID_INS,VA_TYP,DH_STR,VA_APP,VA_VRS,VA_ADR,VA_ENV,VA_OS,VA_RE,VA_USR,VA_CLR,VA_BRCH,VA_HSH)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             ps.setString(1, instance.getId());
             ps.setString(2, instance.getType() != null ? instance.getType().name() : null);
             ps.setTimestamp(3, fromNullableInstant(instance.getInstant()));
@@ -52,6 +52,8 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             ps.setString(9, instance.getRe());
             ps.setString(10, instance.getUser());
             ps.setString(11, instance.getCollector());
+            ps.setString(12, instance.getBranch());
+            ps.setString(13, instance.getHash());
         });
     }
 
