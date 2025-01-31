@@ -8,8 +8,8 @@ INSERT INTO e_dtb_stg (va_nam,dh_str,dh_end,va_cnt,cd_ord,cd_dtb_rqt) VALUES
 	 ('MORE','2024-07-18 17:58:15.768','2024-07-18 17:58:15.768',NULL,5,1),
 	 ('DISCONNECTION','2024-07-18 17:58:15.769','2024-07-18 17:58:15.770',NULL,6,1);
 INSERT INTO e_env_ins
-(id_ins, va_typ, dh_str, va_app, va_vrs, va_adr, va_env, va_os, va_re, va_usr, va_clr)
-VALUES('b8610804-3b52-4913-beb0-a81792914512', 'CLIENT', '2024-11-27 10:35:21.550', 'ihm', '__GIT_BUILD_VERSION__', '0:0:0:0:0:0:0:1', 'dev', 'Windows 10.0', 'Edge', NULL, 'inspect-ng-collector-0.0.1');
+(id_ins, va_typ, dh_str, va_app, va_vrs, va_adr, va_env, va_os, va_re, va_usr, va_clr, va_brch, va_hsh)
+VALUES('b8610804-3b52-4913-beb0-a81792914512', 'CLIENT', '2024-11-27 10:35:21.550', 'ihm', '__GIT_BUILD_VERSION__', '0:0:0:0:0:0:0:1', 'dev', 'Windows 10.0', 'Edge', NULL, 'inspect-ng-collector-0.0.1','branch_test','2de34cd4');
 INSERT INTO e_exc_inf
 (va_typ, va_err_typ, va_err_msg, cd_ord, cd_rqt)
 VALUES('JDBC', 'java.sql.SQLTransientConnectionException', 'HikariPool-1 - Connection is not available, request timed out after 180000ms.', 1, 1);

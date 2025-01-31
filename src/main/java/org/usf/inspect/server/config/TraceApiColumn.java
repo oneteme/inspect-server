@@ -71,6 +71,8 @@ public enum TraceApiColumn implements ColumnDecorator {
 
     ORDER("order"),
     COLLECTOR("collector"),
+    BRANCH("branch"),
+    HASH("hash"),
     //---
     ELAPSEDTIME("elapsedtime", FilterConstant::elapsedtime2, CriteriaBuilder.multiArgs(FilterConstant::elapsedTimeExpressions)),
     COUNT_SLOWEST("elapsedTimeSlowest", FilterConstant::elapsedTimeVerySlow),

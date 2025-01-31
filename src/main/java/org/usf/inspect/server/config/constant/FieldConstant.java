@@ -73,5 +73,7 @@ public final class FieldConstant {
     public static final String VA_RCP = "va_rcp";
     public static final String VA_RPL = "va_rpl";
     public static final String VA_SZE = "va_sze";
+    public static final String VA_BRCH= "va_brch";
+    public static final String VA_HSH = "va_hsh";
 
 }
