@@ -625,7 +625,7 @@ public class RequestService {
                 .columns(
                     getColumns(
                             DATABASE_REQUEST, ID, HOST, PORT, DB, START, END, USER, THREAD, DRIVER,
-                            DB_NAME, DB_VERSION, COMMANDS, STATUS, SCHEMA, PARENT
+                            DB_NAME, DB_VERSION, COMMAND, STATUS, SCHEMA, PARENT
                     ))
                 .filters(filter)
                 .orders(DATABASE_REQUEST.column(START).order());
@@ -646,7 +646,7 @@ public class RequestService {
                 out.setProductName(rs.getString(DB_NAME.reference()));
                 out.setProductVersion(rs.getString(DB_VERSION.reference()));
                 out.setActions(new ArrayList<>());
-                out.setCommands(rs.getString(COMMANDS.reference()));
+                out.setCommand(rs.getString(COMMAND.reference()));
                 out.setStatus(rs.getBoolean(STATUS.reference()));
                 out.setSchema(rs.getString(SCHEMA.reference()));
                 outs.add(out);
