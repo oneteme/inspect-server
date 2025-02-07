@@ -53,5 +53,6 @@ jobs:
     - uses: oneteme/automation-scripts/.github/actions/github-release-notes@main
       with:
         version: ${{ needs.build.outputs.version }}
+        draft: endsWith(needs.deploy.outputs.version, '-SNAPSHOT')
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
