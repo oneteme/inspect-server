@@ -20,3 +20,18 @@ jobs:
     - uses: oneteme/automation-scripts/.github/actions/mvn-scan-project@main
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    - name: extract version
+      id: prj_ver
+      uses: oneteme/automation-scripts/.github/actions/mvn-project-version@main
+    outputs:
+      version: ${{ steps.prj_ver.outputs.version }}
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: oneteme/automation-scripts/.github/actions/github-release-notes@main
+      with:
+        version: ${{ needs.build.outputs.version }}
+        draft: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
