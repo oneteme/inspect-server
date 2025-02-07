@@ -18,7 +18,7 @@ public class DatabaseRequest extends SessionStage {
     private String productName;
     private String productVersion;
     private List<DatabaseRequestStage> actions;
-    private String commands;
+    private String command;
     private boolean status;
 
     public String mainCommand(){
