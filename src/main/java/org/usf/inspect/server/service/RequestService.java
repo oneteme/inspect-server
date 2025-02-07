@@ -215,11 +215,11 @@ public class RequestService {
         if (!sessions.isEmpty()) {
             var reqMap = sessions.stream().collect(toMap(Session::getId, identity()));
             var parentIds = reqMap.keySet().stream().toList();
-            getRestRequests(parentIds).forEach(r -> reqMap.get(r.getCdSession()).getRestRequests().add(r));
-            getDatabaseRequests(parentIds).forEach(q -> reqMap.get(q.getCdSession()).getDatabaseRequests().add(q));
-            getFtpRequests(parentIds).forEach(q -> reqMap.get(q.getCdSession()).getFtpRequests().add(q));
-            getSmtpRequests(parentIds).forEach(q -> reqMap.get(q.getCdSession()).getMailRequests().add(q));
-            getLdapRequests(parentIds).forEach(q -> reqMap.get(q.getCdSession()).getLdapRequests().add(q));
+            getRestRequestsComplete(parentIds).forEach(r -> reqMap.get(r.getCdSession()).getRestRequests().add(r));
+            getDatabaseRequestsComplete(parentIds).forEach(q -> reqMap.get(q.getCdSession()).getDatabaseRequests().add(q));
+            getFtpRequestsComplete(parentIds).forEach(q -> reqMap.get(q.getCdSession()).getFtpRequests().add(q));
+            getSmtpRequestsComplete(parentIds).forEach(q -> reqMap.get(q.getCdSession()).getMailRequests().add(q));
+            getLdapRequestsComplete(parentIds).forEach(q -> reqMap.get(q.getCdSession()).getLdapRequests().add(q));
         }
         return sessions;
     }
@@ -378,11 +378,11 @@ public class RequestService {
         JqueryMainSessionFilter jsf = new JqueryMainSessionFilter(Collections.singletonList(id).toArray(String[]::new));
         Session session = requireSingle(getMainSessions(jsf, true));
         if (session != null) {
-            getRestRequests(session.getId()).forEach(r -> session.getRestRequests().add(r));
-            getDatabaseRequests(session.getId()).forEach(r -> session.getDatabaseRequests().add(r));
-            getFtpRequests(session.getId()).forEach(r -> session.getFtpRequests().add(r));
-            getSmtpRequests(session.getId()).forEach(r -> session.getMailRequests().add(r));
-            getLdapRequests(session.getId()).forEach(r -> session.getLdapRequests().add(r));
+            getRestRequestsComplete(session.getId()).forEach(r -> session.getRestRequests().add(r));
+            getDatabaseRequestsComplete(session.getId()).forEach(r -> session.getDatabaseRequests().add(r));
+            getFtpRequestsComplete(session.getId()).forEach(r -> session.getFtpRequests().add(r));
+            getSmtpRequestsComplete(session.getId()).forEach(r -> session.getMailRequests().add(r));
+            getLdapRequestsComplete(session.getId()).forEach(r -> session.getLdapRequests().add(r));
         }
         return session;
     }
@@ -513,11 +513,15 @@ public class RequestService {
         });
     }
 
-    public List<RestRequest> getRestRequests(String cdSession) throws SQLException {
-        return getRestRequests(Collections.singletonList(cdSession));
+    public List<RestRequest> getRestRequestsComplete(String cdSession) throws SQLException {
+        return getRestRequestsComplete(Collections.singletonList(cdSession));
     }
 
-    private List<RestRequest> getRestRequests(List<String> cdSessions) throws SQLException { //use criteria
+    public List<RestRequest> getRestRequestsLazy(String cdSession) throws SQLException {
+        return getRestRequestsLazy(Collections.singletonList(cdSession));
+    }
+
+    private List<RestRequest> getRestRequestsComplete(List<String> cdSessions) throws SQLException { //use criteria
         var v = new QueryBuilder()
                 .columns(getColumns(
                         REST_REQUEST, ID, PROTOCOL, AUTH, HOST, PORT, PATH, QUERY, METHOD, STATUS, SIZE_IN,
@@ -550,6 +554,38 @@ public class RequestService {
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setAuthScheme(rs.getString(AUTH.reference()));
+                out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+                outs.add(out);
+            }
+            return outs;
+        });
+    }
+
+    private List<RestRequest> getRestRequestsLazy(List<String> cdSessions) throws SQLException { //use criteria
+        var v = new QueryBuilder()
+                .columns(getColumns(
+                        REST_REQUEST, ID, PROTOCOL, HOST, PATH, QUERY, METHOD, STATUS, START, END, THREAD, REMOTE, PARENT
+                ))
+                .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
+                .joins(REST_REQUEST.join(EXCEPTION_JOIN).build())
+                //.columns(REST_REQUEST.column(PARENT).as("test"), EXCEPTION.column(PARENT).as("test2"))
+                .filters(REST_REQUEST.column(PARENT).in(cdSessions.toArray()))
+                .orders(REST_REQUEST.column(START).order());
+        return v.build().execute(ds, rs -> {
+            List<RestRequest> outs = new ArrayList<>();
+            while (rs.next()) {
+                RestRequest out = new RestRequest();
+                out.setIdRequest(rs.getLong(ID.reference()));
+                out.setId(rs.getString(REMOTE.reference()));
+                out.setProtocol(rs.getString(PROTOCOL.reference()));
+                out.setHost(rs.getString(HOST.reference()));
+                out.setPath(rs.getString(PATH.reference()));
+                out.setQuery(rs.getString(QUERY.reference()));
+                out.setMethod(rs.getString(METHOD.reference()));
+                out.setStatus(rs.getInt(STATUS.reference()));
+                out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
+                out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                out.setThreadName(rs.getString(THREAD.reference()));
                 out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 outs.add(out);
             }
@@ -608,24 +644,28 @@ public class RequestService {
     }
 
 
-    public DatabaseRequest getDatabaseRequest(long idDatabase) throws SQLException {
-        return requireSingle(getDatabaseRequests(DATABASE_REQUEST.column(ID).eq(idDatabase)));
+    public DatabaseRequest getDatabaseRequestComplete(long idDatabase) throws SQLException {
+        return requireSingle(getDatabaseRequestsComplete(DATABASE_REQUEST.column(ID).eq(idDatabase)));
     }
 
-    public List<DatabaseRequest> getDatabaseRequests(List<String> cdSession) throws SQLException {
-        return getDatabaseRequests(DATABASE_REQUEST.column(PARENT).in(cdSession.toArray()));
+    public List<DatabaseRequest> getDatabaseRequestsComplete(List<String> cdSession) throws SQLException {
+        return getDatabaseRequestsComplete(DATABASE_REQUEST.column(PARENT).in(cdSession.toArray()));
     }
 
-    public List<DatabaseRequest> getDatabaseRequests(String cdSession) throws SQLException {
-        return getDatabaseRequests(DATABASE_REQUEST.column(PARENT).eq(cdSession));
+    public List<DatabaseRequest> getDatabaseRequestsComplete(String cdSession) throws SQLException {
+        return getDatabaseRequestsComplete(DATABASE_REQUEST.column(PARENT).eq(cdSession));
     }
 
-    private List<DatabaseRequest> getDatabaseRequests(DBFilter filter) throws SQLException {
+    public List<DatabaseRequest> getDatabaseRequestsLazy(String cdSession) throws SQLException {
+        return getDatabaseRequestsLazy(DATABASE_REQUEST.column(PARENT).eq(cdSession));
+    }
+
+    private List<DatabaseRequest> getDatabaseRequestsComplete(DBFilter filter) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(
                             DATABASE_REQUEST, ID, HOST, PORT, DB, START, END, USER, THREAD, DRIVER,
-                            DB_NAME, DB_VERSION, COMMANDS, STATUS, SCHEMA, PARENT
+                            DB_NAME, DB_VERSION, COMMAND, STATUS, SCHEMA, PARENT
                     ))
                 .filters(filter)
                 .orders(DATABASE_REQUEST.column(START).order());
@@ -646,7 +686,37 @@ public class RequestService {
                 out.setProductName(rs.getString(DB_NAME.reference()));
                 out.setProductVersion(rs.getString(DB_VERSION.reference()));
                 out.setActions(new ArrayList<>());
-                out.setCommands(rs.getString(COMMANDS.reference()));
+                out.setCommand(rs.getString(COMMAND.reference()));
+                out.setStatus(rs.getBoolean(STATUS.reference()));
+                out.setSchema(rs.getString(SCHEMA.reference()));
+                outs.add(out);
+            }
+            return outs;
+        });
+    }
+
+    private List<DatabaseRequest> getDatabaseRequestsLazy(DBFilter filter) throws SQLException {
+        var v = new QueryBuilder()
+                .columns(
+                        getColumns(
+                                DATABASE_REQUEST, ID, HOST ,DB, START, END, USER, THREAD, COMMAND, STATUS, SCHEMA, PARENT
+                        ))
+                .filters(filter)
+                .orders(DATABASE_REQUEST.column(START).order());
+        return v.build().execute(ds, rs -> {
+            List<DatabaseRequest> outs = new ArrayList<>();
+            while (rs.next()) {
+                DatabaseRequest out = new DatabaseRequest();
+                out.setCdSession(rs.getString(PARENT.reference()));
+                out.setIdRequest(rs.getLong(ID.reference()));
+                out.setHost(rs.getString(HOST.reference()));
+                out.setName(rs.getString(DB.reference()));
+                out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
+                out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                out.setUser(rs.getString(USER.reference()));
+                out.setThreadName(rs.getString(THREAD.reference()));
+                out.setActions(new ArrayList<>());
+                out.setCommand(rs.getString(COMMAND.reference()));
                 out.setStatus(rs.getBoolean(STATUS.reference()));
                 out.setSchema(rs.getString(SCHEMA.reference()));
                 outs.add(out);
@@ -705,19 +775,23 @@ public class RequestService {
         });
     }
 
-    public FtpRequest getFtpRequest(long id) throws SQLException {
-        return requireSingle(getFtpRequests(FTP_REQUEST.column(ID).eq(id)));
+    public FtpRequest getFtpRequestComplete(long id) throws SQLException {
+        return requireSingle(getFtpRequestsComplete(FTP_REQUEST.column(ID).eq(id)));
     }
 
-    public List<FtpRequest> getFtpRequests(List<String> cdSession) throws SQLException {
-        return getFtpRequests(FTP_REQUEST.column(PARENT).in(cdSession.toArray()));
+    public List<FtpRequest> getFtpRequestsComplete(List<String> cdSession) throws SQLException {
+        return getFtpRequestsComplete(FTP_REQUEST.column(PARENT).in(cdSession.toArray()));
     }
 
-    public List<FtpRequest> getFtpRequests(String cdSession) throws SQLException {
-        return getFtpRequests(FTP_REQUEST.column(PARENT).eq(cdSession));
+    public List<FtpRequest> getFtpRequestsComplete(String cdSession) throws SQLException {
+        return getFtpRequestsComplete(FTP_REQUEST.column(PARENT).eq(cdSession));
     }
 
-    private List<FtpRequest> getFtpRequests(DBFilter filter) throws SQLException {
+    public List<FtpRequest> getFtpRequestsLazy(String cdSession) throws SQLException {
+        return getFtpRequestsLazy(FTP_REQUEST.column(PARENT).eq(cdSession));
+    }
+
+    private List<FtpRequest> getFtpRequestsComplete(DBFilter filter) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(
@@ -740,6 +814,32 @@ public class RequestService {
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setUser(rs.getString(USER.reference()));
+                out.setThreadName(rs.getString(THREAD.reference()));
+                out.setActions(new ArrayList<>());
+                out.setStatus(rs.getBoolean(STATUS.reference()));
+                outs.add(out);
+            }
+            return outs;
+        });
+    }
+
+    private List<FtpRequest> getFtpRequestsLazy(DBFilter filter) throws SQLException {
+        var v = new QueryBuilder()
+                .columns(
+                        getColumns(
+                                FTP_REQUEST, ID, HOST, START, END, THREAD, STATUS
+                        )
+                )
+                .filters(filter)
+                .orders(FTP_REQUEST.column(START).order());
+        return v.build().execute(ds, rs -> {
+            List<FtpRequest> outs = new ArrayList<>();
+            while (rs.next()) {
+                FtpRequest out = new FtpRequest();
+                out.setIdRequest(rs.getLong(ID.reference()));
+                out.setHost(rs.getString(HOST.reference()));
+                out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
+                out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setActions(new ArrayList<>());
                 out.setStatus(rs.getBoolean(STATUS.reference()));
@@ -802,19 +902,23 @@ public class RequestService {
         });
     }
 
-    public MailRequest getSmtpRequest(long id) throws SQLException {
-        return requireSingle(getSmtpRequests(SMTP_REQUEST.column(ID).eq(id)));
+    public MailRequest getSmtpRequestsComplete(long id) throws SQLException {
+        return requireSingle(getSmtpRequestsComplete(SMTP_REQUEST.column(ID).eq(id)));
     }
 
-    public List<MailRequest> getSmtpRequests(List<String> cdSession) throws SQLException {
-        return getSmtpRequests(SMTP_REQUEST.column(PARENT).in(cdSession.toArray()));
+    public List<MailRequest> getSmtpRequestsComplete(List<String> cdSession) throws SQLException {
+        return getSmtpRequestsComplete(SMTP_REQUEST.column(PARENT).in(cdSession.toArray()));
     }
 
-    public List<MailRequest> getSmtpRequests(String cdSession) throws SQLException {
-        return getSmtpRequests(SMTP_REQUEST.column(PARENT).eq(cdSession));
+    public List<MailRequest> getSmtpRequestsComplete(String cdSession) throws SQLException {
+        return getSmtpRequestsComplete(SMTP_REQUEST.column(PARENT).eq(cdSession));
     }
 
-    private List<MailRequest> getSmtpRequests(DBFilter filter) throws SQLException {
+    public List<MailRequest> getSmtpRequestsLazy(String cdSession) throws SQLException {
+        return getSmtpRequestsLazy(SMTP_REQUEST.column(PARENT).eq(cdSession));
+    }
+
+    private List<MailRequest> getSmtpRequestsComplete(DBFilter filter) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(
@@ -833,6 +937,31 @@ public class RequestService {
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setUser(rs.getString(USER.reference()));
+                out.setThreadName(rs.getString(THREAD.reference()));
+                out.setActions(new ArrayList<>());
+                out.setStatus(rs.getBoolean(STATUS.reference()));
+                outs.add(out);
+            }
+            return outs;
+        });
+    }
+
+    private List<MailRequest> getSmtpRequestsLazy(DBFilter filter) throws SQLException {
+        var v = new QueryBuilder()
+                .columns(
+                        getColumns(
+                                SMTP_REQUEST, ID, HOST, START, END, THREAD, STATUS
+                        ))
+                .filters(filter)
+                .orders(SMTP_REQUEST.column(START).order());
+        return v.build().execute(ds, rs -> {
+            List<MailRequest> outs = new ArrayList<>();
+            while (rs.next()) {
+                MailRequest out = new MailRequest();
+                out.setIdRequest(rs.getLong(ID.reference()));
+                out.setHost(rs.getString(HOST.reference()));
+                out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
+                out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setActions(new ArrayList<>());
                 out.setStatus(rs.getBoolean(STATUS.reference()));
@@ -932,19 +1061,22 @@ public class RequestService {
         });
     }
 
-    public NamingRequest getLdapRequest(long id) throws SQLException {
-        return requireSingle(getLdapRequests(LDAP_REQUEST.column(ID).eq(id)));
+    public NamingRequest getLdapRequestsComplete(long id) throws SQLException {
+        return requireSingle(getLdapRequestsComplete(LDAP_REQUEST.column(ID).eq(id)));
     }
 
-    public List<NamingRequest> getLdapRequests(List<String> cdSession) throws SQLException {
-        return getLdapRequests(LDAP_REQUEST.column(PARENT).in(cdSession.toArray()));
+    public List<NamingRequest> getLdapRequestsComplete(List<String> cdSession) throws SQLException {
+        return getLdapRequestsComplete(LDAP_REQUEST.column(PARENT).in(cdSession.toArray()));
     }
 
-    public List<NamingRequest> getLdapRequests(String cdSession) throws SQLException {
-        return getLdapRequests(LDAP_REQUEST.column(PARENT).eq(cdSession));
+    public List<NamingRequest> getLdapRequestsComplete(String cdSession) throws SQLException {
+        return getLdapRequestsComplete(LDAP_REQUEST.column(PARENT).eq(cdSession));
+    }
+    public List<NamingRequest> getLdapRequestsLazy(String cdSession) throws SQLException {
+        return getLdapRequestsLazy(LDAP_REQUEST.column(PARENT).eq(cdSession));
     }
 
-    private List<NamingRequest> getLdapRequests(DBFilter filter) throws SQLException {
+    private List<NamingRequest> getLdapRequestsComplete(DBFilter filter) throws SQLException {
         var v = new QueryBuilder()
                 .columns(
                     getColumns(
@@ -964,6 +1096,31 @@ public class RequestService {
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setUser(rs.getString(USER.reference()));
+                out.setThreadName(rs.getString(THREAD.reference()));
+                out.setActions(new ArrayList<>());
+                out.setStatus(rs.getBoolean(STATUS.reference()));
+                outs.add(out);
+            }
+            return outs;
+        });
+    }
+
+    private List<NamingRequest> getLdapRequestsLazy(DBFilter filter) throws SQLException {
+        var v = new QueryBuilder()
+                .columns(
+                        getColumns(
+                                LDAP_REQUEST, ID, HOST, START, END, THREAD, STATUS
+                        ))
+                .filters(filter)
+                .orders(LDAP_REQUEST.column(START).order());
+        return v.build().execute(ds, rs -> {
+            List<NamingRequest> outs = new ArrayList<>();
+            while (rs.next()) {
+                NamingRequest out = new NamingRequest();
+                out.setIdRequest(rs.getLong(ID.reference()));
+                out.setHost(rs.getString(HOST.reference()));
+                out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
+                out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setActions(new ArrayList<>());
                 out.setStatus(rs.getBoolean(STATUS.reference()));

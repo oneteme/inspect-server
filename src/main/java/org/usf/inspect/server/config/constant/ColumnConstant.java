@@ -114,7 +114,7 @@ public class ColumnConstant {
             case DRIVER -> VA_DRV;
             case DB_NAME -> VA_PRD_NAM;
             case DB_VERSION -> VA_PRD_VRS;
-            case COMMANDS -> VA_CMD;
+            case COMMAND -> VA_CMD;
             case STATUS -> VA_STT;
             case PARENT -> CD_PRN_SES;
             default -> null;
