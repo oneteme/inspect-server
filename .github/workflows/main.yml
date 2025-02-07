@@ -25,6 +25,7 @@ jobs:
       uses: oneteme/automation-scripts/.github/actions/mvn-project-version@main
     outputs:
       version: ${{ steps.prj_ver.outputs.version }}
+#no deploy
   release:
     needs: build
     runs-on: ubuntu-latest
