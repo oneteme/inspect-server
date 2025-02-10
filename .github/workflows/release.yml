@@ -11,7 +11,7 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin' #Eclipse Temurin
-    - uses: oneteme/automation-scripts/.github/actions/sonar-java-scan@main
+    - uses: oneteme/automation-scripts/.github/actions/mvn-scan-project@main
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     - uses: oneteme/automation-scripts/.github/actions/mvn-project-version@main
@@ -50,8 +50,9 @@ jobs:
     - deploy
     runs-on: ubuntu-latest
     steps:
-    - uses: oneteme/automation-scripts/.github/actions/create-release-notes@main
+    - uses: oneteme/automation-scripts/.github/actions/github-release-notes@main
       with:
         version: ${{ needs.build.outputs.version }}
+        draft: endsWith(needs.deploy.outputs.version, '-SNAPSHOT')
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

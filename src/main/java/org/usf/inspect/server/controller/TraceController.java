@@ -191,7 +191,7 @@ public class TraceController {
 
     @GetMapping("session/{id_session}/request/rest")
     public ResponseEntity<List<RestRequest>> getRestRequests(@PathVariable(name = "id_session") String idSession) throws SQLException {
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getRestRequests(idSession));
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getRestRequestsLazy(idSession));
     }
 
     @GetMapping("session/request/rest/exception")
@@ -206,13 +206,13 @@ public class TraceController {
 
     @GetMapping("session/{id_session}/request/database")
     public ResponseEntity<List<DatabaseRequest>> getDatabaseRequests(@PathVariable(name = "id_session") String idSession) throws SQLException {
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getDatabaseRequests(idSession));
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getDatabaseRequestsLazy(idSession));
     }
 
     @GetMapping("session/{id_session}/request/database/{id_database}")
     public ResponseEntity<DatabaseRequest> getDatabaseRequest(@PathVariable(name = "id_session") String idSession,
                                                                      @PathVariable(name = "id_database") long idDatabase) throws SQLException {
-        return Optional.ofNullable(requestService.getDatabaseRequest(idDatabase))
+        return Optional.ofNullable(requestService.getDatabaseRequestComplete(idDatabase))
                 .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
@@ -235,13 +235,13 @@ public class TraceController {
 
     @GetMapping("session/{id_session}/request/ftp")
     public ResponseEntity<List<FtpRequest>> getFtpRequests(@PathVariable(name = "id_session") String idSession) throws SQLException {
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getFtpRequests(idSession));
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getFtpRequestsLazy(idSession));
     }
 
     @GetMapping("session/{id_session}/request/ftp/{id_ftp}")
     public ResponseEntity<FtpRequest> getFtpRequest(@PathVariable(name = "id_session") String idSession,
                                                     @PathVariable(name = "id_ftp") long idFtp) throws SQLException {
-        return Optional.ofNullable(requestService.getFtpRequest(idFtp))
+        return Optional.ofNullable(requestService.getFtpRequestComplete(idFtp))
                 .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
@@ -265,13 +265,13 @@ public class TraceController {
     }
     @GetMapping("session/{id_session}/request/smtp")
     public ResponseEntity<List<MailRequest>> getSmtpRequests(@PathVariable(name = "id_session") String idSession) throws SQLException {
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getSmtpRequests(idSession));
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getSmtpRequestsLazy(idSession));
     }
 
     @GetMapping("session/{id_session}/request/smtp/{id_smtp}")
     public ResponseEntity<MailRequest> getSmtpRequest(@PathVariable(name = "id_session") String idSession,
                                                              @PathVariable(name = "id_smtp") long idSmtp) throws SQLException {
-        return Optional.ofNullable(requestService.getSmtpRequest(idSmtp))
+        return Optional.ofNullable(requestService.getSmtpRequestsComplete(idSmtp))
                 .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
@@ -309,13 +309,13 @@ public class TraceController {
 
     @GetMapping("session/{id_session}/request/ldap")
     public ResponseEntity<List<NamingRequest>> getLdapRequests(@PathVariable(name = "id_session") String idSession) throws SQLException {
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getLdapRequests(idSession));
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getLdapRequestsLazy(idSession));
     }
 
     @GetMapping("session/{id_session}/request/ldap/{id_ldap}")
     public ResponseEntity<NamingRequest> getLdapRequest(@PathVariable(name = "id_session") String idSession,
                                                                @PathVariable(name = "id_ldap") long idLdap) throws SQLException {
-        return Optional.ofNullable(requestService.getLdapRequest(idLdap))
+        return Optional.ofNullable(requestService.getLdapRequestsComplete(idLdap))
                 .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
