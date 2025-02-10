@@ -699,7 +699,7 @@ public class RequestService {
         var v = new QueryBuilder()
                 .columns(
                         getColumns(
-                                DATABASE_REQUEST, ID, HOST ,DB, START, END, USER, THREAD, COMMAND, STATUS, SCHEMA, PARENT
+                                DATABASE_REQUEST, ID, HOST ,DB, START, END, USER, THREAD, COMMAND, STATUS, SCHEMA
                         ))
                 .filters(filter)
                 .orders(DATABASE_REQUEST.column(START).order());
@@ -707,7 +707,6 @@ public class RequestService {
             List<DatabaseRequest> outs = new ArrayList<>();
             while (rs.next()) {
                 DatabaseRequest out = new DatabaseRequest();
-                out.setCdSession(rs.getString(PARENT.reference()));
                 out.setIdRequest(rs.getLong(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setName(rs.getString(DB.reference()));
