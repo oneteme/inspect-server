@@ -20,6 +20,7 @@ public class InstanceEnvironment {
     private final String collector;
     private final String branch;
     private final String hash;
+    private String end;
 
     private String id;
 

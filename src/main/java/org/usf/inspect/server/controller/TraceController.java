@@ -71,7 +71,11 @@ public class TraceController {
     }
 
     @PutMapping("instance/{id}/session")
-    public ResponseEntity<Void> addSessions(@PathVariable String id, @RequestBody Session[] sessions) {
+    public ResponseEntity<Void> addSessions( @PathVariable("id") String id,
+                                             @RequestBody Session[] sessions,
+                                             @RequestParam(name = "pending")  Integer pending,
+                                             @RequestParam(name = "end") Instant end
+                                            ) {
     	if(isEmpty(sessions)) {
     		return status(BAD_REQUEST).build();
     	}
