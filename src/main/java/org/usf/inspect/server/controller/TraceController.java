@@ -73,13 +73,17 @@ public class TraceController {
     @PutMapping("instance/{id}/session")
     public ResponseEntity<Void> addSessions( @PathVariable("id") String id,
                                              @RequestBody Session[] sessions,
-                                             @RequestParam(name = "pending")  Integer pending,
-                                             @RequestParam(name = "end") Instant end
+                                             @RequestParam(required = false, name = "pending")  Integer pending,
+                                             @RequestParam(required = false, name = "end") Instant end
                                             ) {
     	if(isEmpty(sessions)) {
     		return status(BAD_REQUEST).build();
     	}
     	try {
+            if(end!=null){
+                requestService.updateInstance(end,id);
+                log.warn("Instance with id : {} has ended. Pending sessions : {}", id, pending);
+            }
 	        for(Session s : sessions) {
 	            s.setInstanceId(id);
 	            if(isNull(s.getId())) {

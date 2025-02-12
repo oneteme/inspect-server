@@ -205,6 +205,7 @@ CREATE TABLE ${_schema}.e_env_ins (
     id_ins varchar,
     va_typ varchar,
     dh_str timestamp(6),
+    dh_end timestamp(6),
     va_app varchar,
     va_vrs varchar,
     va_adr varchar,
