@@ -53,6 +53,10 @@ public class RequestService {
         dao.saveInstanceEnvironment(instance);
     }
 
+    public void updateInstance(Instant end,String instanceId){
+        dao.updateInstanceEnvironment(end,instanceId);
+    }
+
     @TraceableStage
     @Transactional(rollbackFor = Throwable.class)
     public long addSessions(List<Session> sessions) {

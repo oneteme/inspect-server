@@ -57,6 +57,13 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
         });
     }
 
+    public void updateInstanceEnvironment(Instant end, String instanceId){
+        template.update("UPDATE E_ENV_INS SET DH_END = ? WHERE ID_INS = ?", ps -> {
+            ps.setTimestamp(1,fromNullableInstant(end));
+            ps.setString(2,instanceId);
+        });
+    }
+
     public long saveSessions(List<Session> sessions) {
         var rs = filterAndSave(sessions, RestSession.class, this::saveRestSessions);
         var ms = filterAndSave(sessions, MainSession.class, this::saveMainSessions);
