@@ -80,9 +80,12 @@ public class TraceController {
     		return status(BAD_REQUEST).build();
     	}
     	try {
-            if(end!=null){
+            if(end != null){
                 requestService.updateInstance(end,id);
-                log.warn("Instance with id : {} has ended. Pending sessions : {}", id, pending);
+                log.warn("Instance with id : {} has ended", id);
+            }
+            if(pending != null){
+                log.info("Pending sessions : {}", pending);
             }
 	        for(Session s : sessions) {
 	            s.setInstanceId(id);
