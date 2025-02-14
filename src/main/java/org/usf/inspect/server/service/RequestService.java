@@ -181,7 +181,7 @@ public class RequestService {
         var v = new QueryBuilder()
                 .columns(
                         getColumns(
-                                INSTANCE, ID, USER, TYPE, START, APP_NAME, VERSION, ADDRESS,
+                                INSTANCE, ID, USER, TYPE, START, END, APP_NAME, VERSION, ADDRESS,
                                 ENVIRONEMENT, OS, RE, COLLECTOR, BRANCH, HASH
                         ))
                 .filters(INSTANCE.column(ID).eq(id));
@@ -199,7 +199,8 @@ public class RequestService {
                         fromNullableTimestamp(rs.getTimestamp(START.reference())),
                         rs.getString(COLLECTOR.reference()),
                         rs.getString(BRANCH.reference()),
-                        rs.getString(HASH.reference()));
+                        rs.getString(HASH.reference()),
+                        fromNullableTimestamp(rs.getTimestamp(END.reference())));
 
                 instanceEnvironment.setId(rs.getString(ID.reference()));
                 return instanceEnvironment;
