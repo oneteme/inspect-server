@@ -244,6 +244,7 @@ public class ColumnConstant {
             case ID -> ID_INS;
             case TYPE -> VA_TYP;
             case START -> DH_STR;
+            case END -> DH_END;
             case APP_NAME -> VA_APP;
             case VERSION -> VA_VRS;
             case ADDRESS -> VA_ADR;
