@@ -25,6 +25,7 @@ jobs:
     outputs:
       version: ${{ steps.prj_ver.outputs.version }}
   deploy:
+    if: github.ref_name == 'main' 
     needs: build
     runs-on: ubuntu-latest
     steps:
