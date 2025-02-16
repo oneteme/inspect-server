@@ -33,11 +33,11 @@ inspect:
 | SPRING_DATASOURCE_URL                  | **string** | x           | 
 | SPRING_DATASOURCE_USERNAME             | **string** | x           | 
 | SPRING_DATASOURCE_PASSWORD             | **string** | x           |
-| Inspect.enabled                        | **string** | false       |
-| Inspect.dispatch.delay                 | **int**    | 30          | 
-| Inspect.dispatch.unit                  | **string** | SECONDS     |
-| Inspect.dispatch.buffer-max-size       | **int**    | -1          |
-| Inspect.purge.enabled                  | **string** | false       | 
-| Inspect.purge.schedule                 | **string** | 0 0 0 * * * | 
-| Inspect.purge.depth                    | **string** | 90          | 
+| INSPECT_ENABLED                       | **string** | false       |
+| INSPECT_DISPATCH_DELAY                | **int**    | 30          | 
+| INSPECT_DISPATCH_UNIT                 | **string** | SECONDS     |
+| INSPECT_DISPATCH_BUFFER_MAX_SIZE       | **int**    | -1          |
+| INSPECT_PURGE_ENABLED                  | **string** | false       | 
+| INSPECT_PURGE_SCHEDULE               | **string** | 0 0 0 * * * | 
+| INSPECT_PURGE_DEPTH                    | **string** | 90          | 
 
