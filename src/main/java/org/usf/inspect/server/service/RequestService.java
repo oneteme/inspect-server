@@ -258,10 +258,10 @@ public class RequestService {
 
     public int getRestSessionCountForSearch(JqueryRequestSessionFilter jsf) throws SQLException {
         var v = new QueryBuilder()
-                .columns(REST_SESSION.column(INSTANCE_ENV).count().as("count"))
-                .filters(REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
+                .columns(REST_SESSION.column(INSTANCE_ENV).count().as("count"));
         if (jsf != null) {
             v.filters(jsf.filters(REST_SESSION).toArray(DBFilter[]::new));
+            v.filters(REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
         }
         return v.build().execute(ds, rs -> {
             if (rs.next()) {
@@ -455,10 +455,10 @@ public class RequestService {
 
     public int getMainSessionCountForSearch(JqueryMainSessionFilter jsf) throws SQLException {
         var v = new QueryBuilder()
-                .columns(MAIN_SESSION.column(INSTANCE_ENV).count().as("count"))
-                .filters(MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
+                .columns(MAIN_SESSION.column(INSTANCE_ENV).count().as("count"));
         if(jsf != null) {
             v.filters(jsf.filters(MAIN_SESSION).toArray(DBFilter[]::new));
+            v.filters(MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
         }
         return v.build().execute(ds, rs -> {
             if (rs.next()) {
