@@ -7,10 +7,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.InstanceType;
 import org.usf.inspect.core.TraceableStage;
 import org.usf.inspect.jdbc.SqlCommand;
+import org.usf.inspect.server.Constants;
 import org.usf.inspect.server.RequestMask;
 import org.usf.inspect.server.config.TraceApiColumn;
 import org.usf.inspect.server.config.TraceApiTable;
 import org.usf.inspect.server.dao.RequestDao;
+import org.usf.inspect.server.exception.PayloadTooLargeException;
 import org.usf.inspect.server.mapper.MainSessionForSearchMapper;
 import org.usf.inspect.server.mapper.RestSessionForSearchMapper;
 import org.usf.inspect.server.model.*;
@@ -233,6 +235,12 @@ public class RequestService {
 
     @Deprecated
     public List<Session> getRestSessionsForSearch(JqueryRequestSessionFilter jsf) throws SQLException {
+
+        var count = getRestSessionCountForSearch(jsf);
+        if(count > Constants.PAYLOAD_LIMIT){
+            throw new PayloadTooLargeException();
+        }
+
         var v = new QueryBuilder()
                 .columns(
                         getColumns(
@@ -246,6 +254,21 @@ public class RequestService {
             v.filters(jsf.filters(REST_SESSION).toArray(DBFilter[]::new));
         }
       return v.build().execute(ds, new RestSessionForSearchMapper());
+    }
+
+    public int getRestSessionCountForSearch(JqueryRequestSessionFilter jsf) throws SQLException {
+        var v = new QueryBuilder()
+                .columns(REST_SESSION.column(INSTANCE_ENV).count().as("count"))
+                .filters(REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
+        if (jsf != null) {
+            v.filters(jsf.filters(REST_SESSION).toArray(DBFilter[]::new));
+        }
+        return v.build().execute(ds, rs -> {
+            if (rs.next()) {
+                return rs.getInt("count");
+            }
+            return 0;
+        });
     }
 
     public List<Session> getRestSessionsForDump(String env, String appName, Instant start, Instant end) throws SQLException {
@@ -410,6 +433,12 @@ public class RequestService {
 
     @Deprecated
     public List<Session> getMainSessionsForSearch(JqueryMainSessionFilter jsf) throws SQLException {
+
+        var count = getMainSessionCountForSearch(jsf);
+        if(count > Constants.PAYLOAD_LIMIT){
+            throw new PayloadTooLargeException();
+        }
+
         var v = new QueryBuilder()
                 .columns(
                         getColumns(
@@ -422,6 +451,21 @@ public class RequestService {
             v.filters(jsf.filters(MAIN_SESSION).toArray(DBFilter[]::new));
         }
         return v.build().execute(ds, new MainSessionForSearchMapper());
+    }
+
+    public int getMainSessionCountForSearch(JqueryMainSessionFilter jsf) throws SQLException {
+        var v = new QueryBuilder()
+                .columns(MAIN_SESSION.column(INSTANCE_ENV).count().as("count"))
+                .filters(MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
+        if(jsf != null) {
+            v.filters(jsf.filters(MAIN_SESSION).toArray(DBFilter[]::new));
+        }
+        return v.build().execute(ds, rs -> {
+            if (rs.next()) {
+                return rs.getInt("count");
+            }
+            return 0;
+        });
     }
 
     public List<Session> getMainSessions(JqueryMainSessionFilter jsf, boolean lazy) throws SQLException {

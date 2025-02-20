@@ -21,11 +21,7 @@ public class RestSessionForSearchMapper implements ResultSetMapper<List<Session>
     @Override
     public List<Session> map(ResultSet rs) throws SQLException {
         List<Session> sessions = new ArrayList<>();
-        int i =0;
         while (rs.next()) {
-            if(i > Constants.PAYLOAD_LIMIT){
-                throw new PayloadTooLargeException();
-            }
             RestSession session = new RestSession();
             session.setId(rs.getString(ID.reference()));
             session.setMethod(rs.getString(METHOD.reference()));
@@ -42,7 +38,6 @@ public class RestSessionForSearchMapper implements ResultSetMapper<List<Session>
             session.setAppName(rs.getString(APP_NAME.reference()));
             session.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
             sessions.add(session);
-            i++;
         }
         return sessions;
     }

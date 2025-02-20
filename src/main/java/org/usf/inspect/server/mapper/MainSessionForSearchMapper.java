@@ -22,11 +22,7 @@ public class MainSessionForSearchMapper implements ResultSetMapper<List<Session>
     @Override
     public List<Session> map(ResultSet rs) throws SQLException {
         List<Session> sessions = new ArrayList<>();
-        int i =0;
         while (rs.next()) {
-            if(i > Constants.PAYLOAD_LIMIT){
-                throw new PayloadTooLargeException();
-            }
             MainSession main = new MainSession();
             main.setId(rs.getString(ID.reference())); // add value of nullable
             main.setName(rs.getString(NAME.reference()));
@@ -38,7 +34,6 @@ public class MainSessionForSearchMapper implements ResultSetMapper<List<Session>
             main.setType(rs.getString(TYPE.reference()));
             main.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
             sessions.add(main);
-            i++;
         }
         return sessions;
     }
