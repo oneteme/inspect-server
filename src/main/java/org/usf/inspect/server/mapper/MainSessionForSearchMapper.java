@@ -1,7 +1,4 @@
 package org.usf.inspect.server.mapper;
-
-import org.usf.inspect.server.Constants;
-import org.usf.inspect.server.exception.PayloadTooLargeException;
 import org.usf.inspect.server.model.MainSession;
 import org.usf.inspect.server.model.Session;
 import org.usf.jquery.core.ResultSetMapper;
