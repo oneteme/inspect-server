@@ -7,10 +7,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.InstanceType;
 import org.usf.inspect.core.TraceableStage;
 import org.usf.inspect.jdbc.SqlCommand;
+import org.usf.inspect.server.Constants;
 import org.usf.inspect.server.RequestMask;
 import org.usf.inspect.server.config.TraceApiColumn;
 import org.usf.inspect.server.config.TraceApiTable;
 import org.usf.inspect.server.dao.RequestDao;
+import org.usf.inspect.server.exception.PayloadTooLargeException;
+import org.usf.inspect.server.mapper.MainSessionForSearchMapper;
+import org.usf.inspect.server.mapper.RestSessionForSearchMapper;
 import org.usf.inspect.server.model.*;
 import org.usf.inspect.server.model.filter.JqueryMainSessionFilter;
 import org.usf.inspect.server.model.filter.JqueryRequestSessionFilter;
@@ -231,6 +235,12 @@ public class RequestService {
 
     @Deprecated
     public List<Session> getRestSessionsForSearch(JqueryRequestSessionFilter jsf) throws SQLException {
+
+        var count = getRestSessionCountForSearch(jsf);
+        if(count > Constants.PAYLOAD_LIMIT){
+            throw new PayloadTooLargeException();
+        }
+
         var v = new QueryBuilder()
                 .columns(
                         getColumns(
@@ -243,27 +253,21 @@ public class RequestService {
         if(jsf != null) {
             v.filters(jsf.filters(REST_SESSION).toArray(DBFilter[]::new));
         }
+      return v.build().execute(ds, new RestSessionForSearchMapper());
+    }
+
+    public int getRestSessionCountForSearch(JqueryRequestSessionFilter jsf) throws SQLException {
+        var v = new QueryBuilder()
+                .columns(REST_SESSION.column(INSTANCE_ENV).count().as("count"));
+        if (jsf != null) {
+            v.filters(jsf.filters(REST_SESSION).toArray(DBFilter[]::new));
+            v.filters(REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
+        }
         return v.build().execute(ds, rs -> {
-            List<Session> sessions = new ArrayList<>();
-            while (rs.next()) {
-                RestSession session = new RestSession();
-                session.setId(rs.getString(ID.reference()));
-                session.setMethod(rs.getString(METHOD.reference()));
-                session.setProtocol(rs.getString(PROTOCOL.reference()));
-                session.setPath(rs.getString(PATH.reference()));
-                session.setQuery(rs.getString(QUERY.reference()));
-                session.setStatus(rs.getInt(STATUS.reference()));
-                session.setInDataSize(rs.getLong(SIZE_IN.reference()));
-                session.setOutDataSize(rs.getLong(SIZE_OUT.reference()));
-                session.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
-                session.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
-                session.setName(rs.getString(API_NAME.reference()));
-                session.setUser(rs.getString(USER.reference()));
-                session.setAppName(rs.getString(APP_NAME.reference()));
-                session.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
-                sessions.add(session);
+            if (rs.next()) {
+                return rs.getInt("count");
             }
-            return sessions;
+            return 0;
         });
     }
 
@@ -429,6 +433,12 @@ public class RequestService {
 
     @Deprecated
     public List<Session> getMainSessionsForSearch(JqueryMainSessionFilter jsf) throws SQLException {
+
+        var count = getMainSessionCountForSearch(jsf);
+        if(count > Constants.PAYLOAD_LIMIT){
+            throw new PayloadTooLargeException();
+        }
+
         var v = new QueryBuilder()
                 .columns(
                         getColumns(
@@ -440,22 +450,21 @@ public class RequestService {
         if(jsf != null) {
             v.filters(jsf.filters(MAIN_SESSION).toArray(DBFilter[]::new));
         }
+        return v.build().execute(ds, new MainSessionForSearchMapper());
+    }
+
+    public int getMainSessionCountForSearch(JqueryMainSessionFilter jsf) throws SQLException {
+        var v = new QueryBuilder()
+                .columns(MAIN_SESSION.column(INSTANCE_ENV).count().as("count"));
+        if(jsf != null) {
+            v.filters(jsf.filters(MAIN_SESSION).toArray(DBFilter[]::new));
+            v.filters(MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
+        }
         return v.build().execute(ds, rs -> {
-            List<Session> sessions = new ArrayList<>();
-            while(rs.next()) {
-                MainSession main = new MainSession();
-                main.setId(rs.getString(ID.reference())); // add value of nullable
-                main.setName(rs.getString(NAME.reference()));
-                main.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
-                main.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
-                main.setLocation(rs.getString(LOCATION.reference()));
-                main.setAppName(rs.getString(APP_NAME.reference()));
-                main.setUser(rs.getString(USER.reference()));
-                main.setType(rs.getString(TYPE.reference()));
-                main.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
-                sessions.add(main);
+            if (rs.next()) {
+                return rs.getInt("count");
             }
-            return sessions;
+            return 0;
         });
     }
 
@@ -1200,11 +1209,11 @@ public class RequestService {
         return Stream.of(columns).map(table::column).toArray(NamedColumn[]::new);
     }
 
-    private static Instant fromNullableTimestamp(Timestamp timestamp) {
+    public static Instant fromNullableTimestamp(Timestamp timestamp) {
         return ofNullable(timestamp).map(Timestamp::toInstant).orElse(null);
     }
 
-    private static ExceptionInfo getExceptionInfoIfNotNull(String className, String message) {
+    public static ExceptionInfo getExceptionInfoIfNotNull(String className, String message) {
         if(className != null || message != null) {
             return new ExceptionInfo(className, message);
         }
