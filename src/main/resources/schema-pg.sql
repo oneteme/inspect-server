@@ -213,7 +213,9 @@ CREATE TABLE ${_schema}.e_env_ins (
     va_os varchar,
     va_re varchar,
     va_usr varchar,
-    va_clr varchar
+    va_clr varchar,
+    va_brch varchar,
+    va_hsh varchar
 );
 
 CREATE UNIQUE INDEX idx_main_ses_id_ses_dh_str ON ${_schema}.e_main_ses(id_ses,dh_str);
