@@ -2,15 +2,15 @@ package org.usf.inspect.server.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.web.bind.annotation.*;
-import org.usf.inspect.server.service.InstanceService;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.usf.jquery.core.DynamicModel;
 import org.usf.jquery.core.KeyValueMapper;
 import org.usf.jquery.core.QueryBuilder;
 import org.usf.jquery.web.RequestQueryParam;
 
-import java.sql.SQLException;
-import java.util.Collection;
 import java.util.List;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -21,7 +21,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RequiredArgsConstructor
 public class JQueryController {
     private final JdbcTemplate template;
-    private final InstanceService instanceService;
 
     @GetMapping("session/main")
     public List<DynamicModel> getMainSession(
@@ -80,12 +79,5 @@ public class JQueryController {
     private List<DynamicModel> usingSpringJdbc(QueryBuilder req) {
         var query = req.build();
         return template.query(query.getQuery(), new KeyValueMapper()::map, query.getArgs());
-    }
-
-    @GetMapping("session/rest/name")
-    public Collection<String> getApiNames(
-            @RequestParam(required = false, name = "env") String environment,
-            @RequestParam(required = false, name = "appname") String appName) throws SQLException {
-        return instanceService.getApiNames(environment, appName);
     }
 }
