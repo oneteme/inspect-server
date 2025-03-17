@@ -275,12 +275,14 @@ VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getMailRequests), 
         }
     }
     private static void updateStages(MailRequest request) {
-        if(!isEmpty(request.getMails())) {
+        if(!isEmpty(request.getActions())) {
             var inc = new AtomicInteger(0);
-            for(MailRequestStage stage: request.getActions()) {
+            for (MailRequestStage stage : request.getActions()) {
                 stage.setIdRequest(request.getIdRequest());
                 stage.setOrder(inc.incrementAndGet());
             }
+        }
+        if(!isEmpty(request.getMails())) {
             for(Mail mail: request.getMails()) {
                 mail.setIdRequest(request.getIdRequest());
             }
