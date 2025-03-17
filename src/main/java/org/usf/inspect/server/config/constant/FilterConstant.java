@@ -27,10 +27,13 @@ public class FilterConstant {
         return table.column(ERR_TYPE).beginCase().when(isNotNull(),1).orElse(0).sum();
     }
 
+    public static OperationColumn countNoExceptions(ViewDecorator table){
+        return table.column(ERR_TYPE).beginCase().when(isNull(),1).orElse(0).sum();
+    }
+
     public static DBColumn err(ViewDecorator table){ // temporary solution to be changed
         return table.column(ERR_MSG).coalesce(table.column(ERR_TYPE));
     }
-
 
     public static OperationColumn countError(ViewDecorator table){
         return countStatusByType(table, eq(false));
