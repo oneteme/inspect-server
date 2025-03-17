@@ -192,4 +192,12 @@ public class JoinConstant {
             default -> null;
         };
     }
+
+    public static JoinBuilder instanceJoins(String name) {
+        return switch (name) {
+            case REST_SESSION_JOIN ->
+                    ()-> new ViewJoin[]{leftJoin(REST_SESSION.view(), INSTANCE.column(ID).eq(REST_SESSION.column(INSTANCE_ENV)))};
+            default -> null;
+        };
+    }
 }
