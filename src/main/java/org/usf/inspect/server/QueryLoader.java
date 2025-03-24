@@ -224,9 +224,9 @@ select * from deleted_instances;
         ));
 
         // delete instances
-        queries.add(new Query(
+        /*queries.add(new Query(
                 "delete from e_env_ins where id_ins in (select id from temp_session_table where va_typ ='i');","e_env_ins"
-        ));
+        ));*/
 
         //delete temp table
         queries.add(new Query(
