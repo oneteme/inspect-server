@@ -50,7 +50,7 @@ public class JquerySessionFilter {
             filters.add(table.column(START).ge(from(getStart())));
         }
         if(getEnd() != null) {
-            filters.add(table.column(END).lt(from(getEnd())));
+            filters.add(table.column(START).lt(from(getEnd()))); // to be fixed
         }
         return filters;
     }
