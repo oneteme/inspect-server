@@ -12,7 +12,7 @@ import java.util.Map;
 @ToString
 @ConfigurationProperties(prefix = "inspect.purge")
 @RequiredArgsConstructor
-public class InspectConfigurationProperties {
+public class InspectPurgeConfigurationProperties {
     private boolean enabled= true;
     private String schedule = "0 0 * * * *";
     private int depth = 90;

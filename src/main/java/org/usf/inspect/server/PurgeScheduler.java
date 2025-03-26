@@ -17,21 +17,21 @@ import java.util.List;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@EnableConfigurationProperties(InspectConfigurationProperties.class)
+@EnableConfigurationProperties(InspectPurgeConfigurationProperties.class)
 @ConditionalOnProperty(prefix = "inspect.purge", name="enabled", havingValue = "true")
 public class PurgeScheduler {
 
     private final JdbcTemplate template;
     private final PurgeService purgeService;
-    private final InspectConfiguration inspectConfiguration;
+    private final InspectPurgeConfiguration inspectPurgeConfiguration;
 
-    @Scheduled(cron= "#{@inspectConfiguration.config.schedule}")
+    @Scheduled(cron= "#{@inspectPurgeConfiguration.config.schedule}")
     @TraceableStage
     public void purgeBatch(){
         try {
             List<String> envList = template.queryForList("SELECT DISTINCT v1.va_env FROM e_env_ins v1 WHERE v1.va_env IS NOT NULL ORDER BY v1.va_env ASC", String.class);
-            if(inspectConfiguration.getConfig().getEnv() != null && !inspectConfiguration.getConfig().getEnv().isEmpty()){
-                inspectConfiguration.getConfig().getEnv().forEach((envName,depth) ->
+            if(inspectPurgeConfiguration.getConfig().getEnv() != null && !inspectPurgeConfiguration.getConfig().getEnv().isEmpty()){
+                inspectPurgeConfiguration.getConfig().getEnv().forEach((envName,depth) ->
                 {
                     envList.remove(envName);
                     if(depth > -1){
@@ -40,7 +40,7 @@ public class PurgeScheduler {
                 });
             }
             if(!envList.isEmpty())
-                purgeService.purgeData(envList, null, Instant.now().minus(inspectConfiguration.getConfig().getDepth(), ChronoUnit.DAYS), null);
+                purgeService.purgeData(envList, null, Instant.now().minus(inspectPurgeConfiguration.getConfig().getDepth(), ChronoUnit.DAYS), null);
         }catch (Exception e){
             log.error("Error while purging old data: [Purge BATCH]",e);
         }
