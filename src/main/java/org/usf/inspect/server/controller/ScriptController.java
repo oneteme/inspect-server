@@ -4,11 +4,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.usf.inspect.server.model.PartitionBy;
+import org.usf.inspect.server.model.PartitionedTable;
 import org.usf.inspect.server.service.ScriptService;
 
 import java.io.FileNotFoundException;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.ResponseEntity.*;
@@ -21,11 +26,12 @@ public class ScriptController {
 
     private final ScriptService service;
 
-    @PutMapping(value = "partition")
-    public ResponseEntity<?> createPartition(@RequestParam YearMonth start, @RequestParam YearMonth end) {
+    @PatchMapping(value = "partition")
+    public ResponseEntity<?> createPartition(@RequestBody(required = false) Map<PartitionedTable, PartitionBy> config, @RequestParam YearMonth start, @RequestParam YearMonth end) {
         if(end.compareTo(start) < 0) {
             return badRequest().body("end < start");
         }
-        return ok(service.createPartitions(start, end));
+        service.createPartitions(start, end, config == null ? new HashMap<>() : config);
+        return ok().build();
     }
 }
