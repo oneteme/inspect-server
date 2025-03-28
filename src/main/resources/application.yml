@@ -20,7 +20,6 @@ spring:
     console:
       enabled: true
       path: /h2
-
 logging:
   level:
     org.usf.jquery: DEBUG
@@ -38,17 +37,31 @@ inspect:
       excludes:
         method: OPTIONS
         path: /favicon.ico
+   #main-session: false
+   #jdbc-request: false
+   #rest-request: false
   purge:
     enabled : false
-    schedule: "0 0 0 * * *"
+    schedule: "0 0 1 * * ?"
     depth: 90 #en jour
-  #env
-    #ppd: 120
+    #env
+      #ppd: 120
+  partition:
+    enabled: false
+    schedule: "0 0 0 L * ?"
+    session:
+      http: DAY
+      #main: MONTH
+    request:
+      http: DAY
+      jdbc: DAY
+      #ftp: MONTH
+      #smtp: MONTH
+      #ldap: MONTH
+      #local: MONTH
+  # target: REMOTE => log only
+  # server:
+  #   host:
+  #   compress-min-size:
 
-#   main-session: false
-#   jdbc-request: false
-#   rest-request: false
-# target: REMOTE => log only
-# server:
-#   host:
-#   compress-min-size:
+
