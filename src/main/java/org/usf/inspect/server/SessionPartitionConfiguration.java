@@ -3,14 +3,13 @@ package org.usf.inspect.server;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-
-import java.time.temporal.ChronoUnit;
-import static java.time.temporal.ChronoUnit.MONTHS;
+import org.usf.inspect.server.model.Partition;
 
 @Setter
 @Getter
 @ToString
 public class SessionPartitionConfiguration {
-    private ChronoUnit http = MONTHS;
-    private ChronoUnit main = MONTHS;
+
+    private Partition http;
+    private Partition main;
 }

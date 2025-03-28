@@ -3,18 +3,18 @@ package org.usf.inspect.server;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.usf.inspect.server.model.Partition;
 
-
-import java.time.temporal.ChronoUnit;
-import static java.time.temporal.ChronoUnit.MONTHS;
 @Setter
 @Getter
 @ToString
 public class RequestPartitionConfiguration {
-    private ChronoUnit http = MONTHS;
-    private ChronoUnit jdbc = MONTHS;
-    private ChronoUnit smtp = MONTHS;
-    private ChronoUnit ldap = MONTHS;
-    private ChronoUnit ftp = MONTHS;
-    private ChronoUnit local = MONTHS;
+
+    private Partition http;
+    private Partition jdbc;
+    private Partition smtp;
+    private Partition ldap;
+    private Partition ftp;
+    private Partition local;
+
 }

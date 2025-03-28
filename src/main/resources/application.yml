@@ -39,22 +39,21 @@ inspect:
         path: /favicon.ico
   purge:
     enabled : false
-    schedule: "0 0 0 * * *"
+    schedule: "0 0 1 * * ?"
     depth: 90 #en jour
   partition:
     enabled: false
     schedule: "0 0 0 L * ?"
-    frequency: MONTHS
     session:
-      http: DAYS
-      #main: MONTHS
+      http: DAY
+      #main: MONTH
     request:
-      http: DAYS
-      jdbc: DAYS
-      #ftp: MONTHS
-      #smtp: MONTHS
-      #ldap: MONTHS
-      #local: MONTHS
+      http: DAY
+      jdbc: DAY
+      #ftp: MONTH
+      #smtp: MONTH
+      #ldap: MONTH
+      #local: MONTH
   #env
     #ppd: 120
 
