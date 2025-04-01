@@ -39,7 +39,7 @@ public class PurgeScheduler {
                 env.forEach((envName,d) ->
                 {
                     envList.remove(envName);
-                    if(depth > -1){
+                    if(d > -1){
                         purgeService.purgeData(List.of(envName), null, Instant.now().minus(d, ChronoUnit.DAYS), null);
                     }
                 });
