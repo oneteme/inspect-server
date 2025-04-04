@@ -18,10 +18,7 @@ import org.usf.inspect.server.mapper.RestSessionForSearchMapper;
 import org.usf.inspect.server.model.*;
 import org.usf.inspect.server.model.filter.JqueryMainSessionFilter;
 import org.usf.inspect.server.model.filter.JqueryRequestSessionFilter;
-import org.usf.jquery.core.DBColumn;
-import org.usf.jquery.core.DBFilter;
-import org.usf.jquery.core.NamedColumn;
-import org.usf.jquery.core.QueryBuilder;
+import org.usf.jquery.core.*;
 import org.usf.jquery.web.ColumnDecorator;
 import org.usf.jquery.web.ViewDecorator;
 
@@ -272,7 +269,12 @@ public class RequestService {
     }
 
     public List<Session> getRestSessionsForDump(String env, String appName, Instant start, Instant end) throws SQLException {
+        var cte = new QueryBuilder()
+                .columns(getColumns(INSTANCE, ID, START))
+                .filters(INSTANCE.column(ENVIRONEMENT).eq(env))
+                .filters(INSTANCE.column(APP_NAME).eq(appName)).asView();
         var v = new QueryBuilder()
+                .ctes(cte)
                 .columns(
                     getColumns(
                         REST_SESSION, ID, API_NAME, METHOD,
@@ -280,10 +282,9 @@ public class RequestService {
                         START, END, USER, THREAD, HOST, ERR_MSG, ERR_TYPE
                     )
                 )
-                .filters(REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)))
-                .filters(INSTANCE.column(ENVIRONEMENT).eq(env))
-                .filters(INSTANCE.column(APP_NAME).eq(appName))
+                .filters(REST_SESSION.column(START).ge(new QueryBuilder().columns(new ViewColumn("start", cte, JDBCType.TIMESTAMP, null).max().as("dh_max")).asView().asColumn()))
                 .filters(REST_SESSION.column(END).ge(from(start)).and(REST_SESSION.column(START).le(from(end))))
+                .filters(REST_SESSION.column(INSTANCE_ENV).in(new QueryBuilder().columns(new ViewColumn("id", cte, JDBCType.VARCHAR, null)).asView().asColumn()))
                 .orders(REST_SESSION.column(START).order());
         return v.build().execute(ds, rs -> {
             List<Session> sessions = new ArrayList<>();
@@ -397,16 +398,20 @@ public class RequestService {
     }
 
     public List<Session> getMainSessionsForDump(String env, String appName, Instant start, Instant end) throws SQLException {
+        var cte = new QueryBuilder()
+                .columns(getColumns(INSTANCE, ID, START))
+                .filters(INSTANCE.column(ENVIRONEMENT).eq(env))
+                .filters(INSTANCE.column(APP_NAME).eq(appName)).asView();
         var v = new QueryBuilder()
+                .ctes(cte)
                 .columns(
                         getColumns(
                                 MAIN_SESSION, ID, NAME, START, END, TYPE, LOCATION, THREAD, ERR_TYPE, ERR_MSG
                         )
                 )
-                .filters(MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)))
-                .filters(INSTANCE.column(ENVIRONEMENT).eq(env))
-                .filters(INSTANCE.column(APP_NAME).eq(appName))
+                .filters(MAIN_SESSION.column(START).ge(new QueryBuilder().columns(new ViewColumn("start", cte, JDBCType.TIMESTAMP, null).max().as("dh_max")).asView().asColumn()))
                 .filters(MAIN_SESSION.column(END).ge(from(start)).and(MAIN_SESSION.column(START).le(from(end))))
+                .filters(MAIN_SESSION.column(INSTANCE_ENV).in(new QueryBuilder().columns(new ViewColumn("id", cte, JDBCType.VARCHAR, null)).asView().asColumn()))
                 .orders(MAIN_SESSION.column(START).order());
         return v.build().execute(ds, rs -> {
             List<Session> sessions = new ArrayList<>();
