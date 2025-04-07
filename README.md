@@ -13,6 +13,7 @@
 
 - ## [Integration](#%EF%B8%8F-integration)
   - ### [Setup](#setup-1)
+- - ### [Dispatch](#dispatch-1)
   - ### [Partition](#partition-1)
   - ### [Purge](#purge-1)
 
@@ -21,15 +22,32 @@
 
 # 🛠️ Integration
 
+Starting the server is very straightforward, similar to any Spring Boot project. You just need to configure the data source.
+
 ## Setup
 ```YAML
+spring:
+  datasource:
+    url: **
+    username: **
+    password: **
+    driver-class-name: **
+```
+
+## Dispatch
+
+The dispatch configuration section is responsible for managing how sessions collected by various collectors are buffered in memory before being periodically saved to the database according to the configured delay.
+
+```YAML
 inspect:
-  enabled: true
+  ..
   dispatch:
     delay: 30 #sever trace frequency
     unit: SECONDS
-    buffer-max-size: -1 #inspect-server only
+    buffer-size: 50 # Initial number of sessions in the buffer
+    buffer-max-size: -1 # Maximum number of sessions in the buffer
 ```
+
 
 #### API Reference
 
@@ -43,12 +61,15 @@ inspect:
 ---
 
 ## Partition
+
+The partition configuration section is designed to adapt data partitioning based on traffic and the volume of data to be stored. This ensures efficient handling and storage of data by segmenting it according to specific criteria.
+
 ```YAML
 inspect:
   #...
   partition:
-    enabled: true
-    schedule: "0 0 0 L * ?"
+    enabled: true #A flag to enable or disable the partition functionality
+    #schedule: "0 0 0 L * ?" The cron expression that defines when the partition operation should be executed
     session:
       http: DAY
       #main: MONTH
@@ -80,13 +101,16 @@ inspect:
 ---
 
 ## Purge
+
+The purge configuration section is responsible for automatically deleting traces that exceed a certain configured delay. This delay can be overridden for different environments, such as DEV and PROD, to better manage data volume while retaining important traces for a longer period.
+
 ```YAML
 inspect:
   #...
   purge:
-    enabled : true
-    schedule:  "0 0 1 * * ?"
-    depth: 90 #en jour
+    enabled : true # A flag to enable or disable the purge functionality.
+    schedule:  "0 0 1 * * ?" # The cron expression that defines when the purge operation should be executed.
+    depth: 90 #The number of days for which traces should be retained before being purged
     #env
       #ppd: 120
 ```
