@@ -44,6 +44,16 @@ inspect:
   dispatch:
     delay: 30 #sever trace frequency
     unit: SECONDS
+```
+
+You can even configure the initial size of the buffer as well as the maximum size at which INSPECT will discard additional sessions in case they cannot be saved to the database.
+
+```YAML
+inspect:
+  ..
+  dispatch:
+    delay: 30 #sever trace frequency
+    unit: SECONDS
     buffer-size: 50 # Initial number of sessions in the buffer
     buffer-max-size: -1 # Maximum number of sessions in the buffer
 ```
