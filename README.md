@@ -1,17 +1,25 @@
-
-
-## 📋 Table of Contents
-
-- ## [Integration](#-Integration)
-- - ### [Setup](#-Simple Setup)
-- - ### [Partition](#-Partition)
-- - ### [Purge](#-Purge)
-
-<br/>
+# Inpect Server 
 
 ---
 
-<br/>
+<p align="center">
+  <a href="https://spring.io/">
+    <img src="https://img.shields.io/badge/SpringBoot-3.2-$.svg?logo=spring&logoColor=white" alt="Angular 16" style="border-radius: 4px;">
+  </a>
+  <a href="https://github.com/oneteme/jquery/blob/main/LICENSE">
+    <img src="https://img.shields.io/badge/jquery-4.0.3-blue.svg" alt="License" style="border-radius: 4px;">
+  </a>
+</p>
+
+## 📋 Table of Contents
+
+- ## [Integration](#-integration)
+- - ### [Setup](#-simple-setup)
+- - ### [Partition](#-partition)
+- - ### [Purge](#-purge)
+
+
+---
 
 # 🛠️ Integration
 
@@ -35,35 +43,7 @@ inspect:
 | INSPECT_DISPATCH_UNIT                 | **string** | SECONDS     |
 | INSPECT_DISPATCH_BUFFER_MAX_SIZE       | **int**    | -1          |
 
-<br/>
-
 ---
-
-<br/>
-
-## Purge
-```YAML
-inspect:
-  #...
-  purge:
-    enabled : false
-    schedule:  "0 0 1 * * ?"
-    depth: 90 #en jour
-```
-
-#### API Reference
-
-| VARIABLE                               | TYPE       | REQUIRED    | 
-|----------------------------------------|------------|-------------|
-| INSPECT_PURGE_ENABLED                  | **string** | false       | 
-| INSPECT_PURGE_SCHEDULE               | **string** |  0 0 1 * * ?| 
-| INSPECT_PURGE_DEPTH                    | **string** | 90          | 
-
-<br/>
-
----
-
-<br/>
 
 ## Partition
 ```YAML
@@ -100,11 +80,25 @@ inspect:
 | INSPECT_PARTITION_REQUEST_LDAP  | **string**  ( DAY / MONTH ) |  MONTH       | 
 | INSPECT_PARTITION_REQUEST_LOCAL | **string**  ( DAY / MONTH ) |  MONTH     | 
 
-
-<br/>
-
 ---
 
-<br/>
+## Purge
+```YAML
+inspect:
+  #...
+  purge:
+    enabled : false
+    schedule:  "0 0 1 * * ?"
+    depth: 90 #en jour
+```
+
+#### API Reference
+
+| VARIABLE                               | TYPE       | REQUIRED    | 
+|----------------------------------------|------------|-------------|
+| INSPECT_PURGE_ENABLED                  | **string** | false       | 
+| INSPECT_PURGE_SCHEDULE                 | **string** |  0 0 1 * * ?| 
+| INSPECT_PURGE_DEPTH                    | **string** | 90          | 
 
 
+---
