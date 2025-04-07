@@ -1,7 +1,5 @@
 # Inpect Server 
 
----
-
 <p align="center">
   <a href="https://spring.io/">
     <img src="https://img.shields.io/badge/SpringBoot-3.2-$.svg?logo=spring&logoColor=white" alt="Angular 16" style="border-radius: 4px;">
