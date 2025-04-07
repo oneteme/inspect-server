@@ -13,18 +13,15 @@
 
 ## 📋 Table of Contents
 
-- ## [Integration](#-integration)
-- - ### [Setup](#-simple-setup)
-- - ### [Partition](#-partition)
-- - ### [Purge](#-purge)
+
+- [Setup](#-setup)
+- [Partition](#-partition)
+- [Purge](#-purge)
 
 
 ---
 
-# 🛠️ Integration
-
-
-## Simple Setup
+## Setup
 ```YAML
 inspect:
   enabled: true
@@ -87,9 +84,11 @@ inspect:
 inspect:
   #...
   purge:
-    enabled : false
+    enabled : true
     schedule:  "0 0 1 * * ?"
     depth: 90 #en jour
+    #env
+      #ppd: 120
 ```
 
 #### API Reference
