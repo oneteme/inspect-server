@@ -13,13 +13,15 @@
 
 ## 📋 Table of Contents
 
-
-- [Setup](#-setup)
-- [Partition](#-partition)
-- [Purge](#-purge)
+- ## [Integration](#integration)
+- - ### [Setup](#setup)
+- - ### [Partition](#partition)
+- - ### [Purge](#purge)
 
 
 ---
+
+# 🛠️ Integration
 
 ## Setup
 ```YAML
