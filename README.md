@@ -13,7 +13,7 @@
 
 - ## [Integration](#%EF%B8%8F-integration)
   - ### [Setup](#setup-1)
-- - ### [Dispatch](#dispatch-1)
+  - ### [Dispatch](#dispatch-1)
   - ### [Partition](#partition-1)
   - ### [Purge](#purge-1)
 
