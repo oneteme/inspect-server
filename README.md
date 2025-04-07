@@ -56,6 +56,7 @@ inspect:
 | INSPECT_ENABLED                       | **string** | false       |
 | INSPECT_DISPATCH_DELAY                | **int**    | 30          | 
 | INSPECT_DISPATCH_UNIT                 | **string** | SECONDS     |
+| INSPECT_DISPATCH_BUFFER_SIZE           | **int** | 50     |
 | INSPECT_DISPATCH_BUFFER_MAX_SIZE       | **int**    | -1          |
 
 ---
