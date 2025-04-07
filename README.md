@@ -11,10 +11,10 @@
 
 ## 📋 Table of Contents
 
-- ## [Integration](#integration)
-- - ### [Setup](#setup)
-- - ### [Partition](#partition)
-- - ### [Purge](#purge)
+- ## [Integration](#%EF%B8%8F-integration)
+  - ### [Setup](#setup-1)
+  - ### [Partition](#partition-1)
+  - ### [Purge](#purge-1)
 
 
 ---
