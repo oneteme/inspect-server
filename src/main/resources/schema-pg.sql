@@ -1,6 +1,4 @@
-set _schema = inspect_dev;
-
-CREATE TABLE ${_schema}.e_main_ses (
+CREATE TABLE IF NOT EXISTS e_main_ses (
     id_ses varchar,
     va_typ varchar,
     va_nam varchar,
@@ -16,7 +14,7 @@ CREATE TABLE ${_schema}.e_main_ses (
 )
 PARTITION BY RANGE (dh_str);
 
-CREATE TABLE ${_schema}.e_rst_ses ( 
+CREATE TABLE IF NOT EXISTS e_rst_ses (
     id_ses varchar,
     va_mth varchar,
     va_pcl varchar, 
@@ -45,7 +43,7 @@ CREATE TABLE ${_schema}.e_rst_ses (
 )
 PARTITION BY RANGE (dh_str);
 
-CREATE TABLE ${_schema}.e_rst_rqt ( 
+CREATE TABLE IF NOT EXISTS e_rst_rqt (
     id_rst_rqt bigint,
     va_mth varchar,
     va_pcl varchar,
@@ -68,7 +66,7 @@ CREATE TABLE ${_schema}.e_rst_rqt (
 )
 PARTITION BY RANGE (dh_str);
 
-CREATE TABLE ${_schema}.e_smtp_rqt (
+CREATE TABLE IF NOT EXISTS e_smtp_rqt (
     id_smtp_rqt bigint,
     va_hst varchar,
     cd_prt int,
@@ -81,7 +79,7 @@ CREATE TABLE ${_schema}.e_smtp_rqt (
 )
 PARTITION BY RANGE (dh_str);
 
-CREATE TABLE ${_schema}.e_smtp_stg (
+CREATE TABLE IF NOT EXISTS e_smtp_stg (
     va_nam varchar,
     dh_str timestamp(6),
     dh_end timestamp(6),
@@ -90,7 +88,7 @@ CREATE TABLE ${_schema}.e_smtp_stg (
 )
 PARTITION BY RANGE (dh_str);
 
-CREATE TABLE ${_schema}.e_smtp_mail (
+CREATE TABLE IF NOT EXISTS e_smtp_mail (
     va_sbj varchar,
     va_cnt_typ varchar,
     va_frm varchar,
@@ -100,7 +98,7 @@ CREATE TABLE ${_schema}.e_smtp_mail (
     cd_smtp_rqt bigint
 );
 
-CREATE TABLE ${_schema}.e_ftp_rqt (
+CREATE TABLE IF NOT EXISTS e_ftp_rqt (
     id_ftp_rqt bigint,
     va_hst varchar,
     cd_prt int,
@@ -116,7 +114,7 @@ CREATE TABLE ${_schema}.e_ftp_rqt (
 )
 PARTITION BY RANGE (dh_str);
 
-CREATE TABLE ${_schema}.e_ftp_stg (
+CREATE TABLE IF NOT EXISTS e_ftp_stg (
     va_nam varchar,
     dh_str timestamp(6),
     dh_end timestamp(6),
@@ -126,7 +124,7 @@ CREATE TABLE ${_schema}.e_ftp_stg (
 )
 PARTITION BY RANGE (dh_str);
 
-CREATE TABLE ${_schema}.e_ldap_rqt (
+CREATE TABLE IF NOT EXISTS e_ldap_rqt (
     id_ldap_rqt bigint,
     va_hst varchar,
     cd_prt int,
@@ -140,7 +138,7 @@ CREATE TABLE ${_schema}.e_ldap_rqt (
 )
 PARTITION BY RANGE (dh_str);
 
-CREATE TABLE ${_schema}.e_ldap_stg (
+CREATE TABLE IF NOT EXISTS e_ldap_stg (
     va_nam varchar,
     dh_str timestamp(6),
     dh_end timestamp(6),
@@ -150,7 +148,7 @@ CREATE TABLE ${_schema}.e_ldap_stg (
 )
 PARTITION BY RANGE (dh_str);
 
-CREATE TABLE ${_schema}.e_dtb_rqt ( 
+CREATE TABLE IF NOT EXISTS e_dtb_rqt (
     id_dtb_rqt bigint, 
     va_hst varchar,
     cd_prt int,
@@ -169,7 +167,7 @@ CREATE TABLE ${_schema}.e_dtb_rqt (
 )
 PARTITION BY RANGE (dh_str);
 
-CREATE TABLE ${_schema}.e_dtb_stg ( 
+CREATE TABLE IF NOT EXISTS e_dtb_stg (
     va_nam varchar,
     dh_str timestamp(6),   
     dh_end timestamp(6),   
@@ -180,7 +178,7 @@ CREATE TABLE ${_schema}.e_dtb_stg (
 )
 PARTITION BY RANGE (dh_str);
 
-CREATE TABLE ${_schema}.e_lcl_rqt ( 
+CREATE TABLE IF NOT EXISTS e_lcl_rqt (
     id_lcl_rqt bigint,
     va_nam varchar,  
     VA_LCT varchar,  
@@ -193,7 +191,7 @@ CREATE TABLE ${_schema}.e_lcl_rqt (
 )
 PARTITION BY RANGE (dh_str);
 
-CREATE TABLE ${_schema}.e_exc_inf (
+CREATE TABLE IF NOT EXISTS e_exc_inf (
     va_typ varchar, 
     va_err_typ varchar,
     va_err_msg varchar,
@@ -201,7 +199,7 @@ CREATE TABLE ${_schema}.e_exc_inf (
     cd_rqt bigint 
 );
 
-CREATE TABLE ${_schema}.e_env_ins (
+CREATE TABLE IF NOT EXISTS e_env_ins (
     id_ins varchar,
     va_typ varchar,
     dh_str timestamp(6),
@@ -218,44 +216,28 @@ CREATE TABLE ${_schema}.e_env_ins (
     va_hsh varchar
 );
 
-CREATE UNIQUE INDEX idx_main_ses_id_ses_dh_str ON ${_schema}.e_main_ses(id_ses,dh_str);
-CREATE INDEX idx_main_ses_cd_ins ON ${_schema}.e_main_ses(cd_ins);
-CREATE UNIQUE INDEX idx_rst_ses_id_ses_dh_str ON ${_schema}.e_rst_ses(id_ses,dh_str);
-CREATE INDEX idx_rst_ses_cd_ins ON ${_schema}.e_rst_ses(cd_ins);
-CREATE UNIQUE INDEX idx_rst_rqt_cd_ins_dh_str ON ${_schema}.e_rst_rqt(id_rst_rqt,dh_str);
-CREATE INDEX idx_rst_rqt_cd_prn_ses ON ${_schema}.e_rst_rqt(cd_prn_ses);
-CREATE UNIQUE INDEX idx_smtp_rqt_id_smtp_rqt_dh_str ON ${_schema}.e_smtp_rqt(id_smtp_rqt,dh_str);
-CREATE INDEX idx_smtp_rqt_cd_prn_ses ON ${_schema}.e_smtp_rqt(cd_prn_ses);
-CREATE INDEX idx_smtp_stg_cd_smtp_rqt ON ${_schema}.e_smtp_stg(cd_smtp_rqt);
-CREATE INDEX idx_smtp_mail_cd_smtp_rqt ON ${_schema}.e_smtp_mail(cd_smtp_rqt);
-CREATE UNIQUE INDEX idx_ftp_rqt_id_ftp_rqt_dh_str ON ${_schema}.e_ftp_rqt(id_ftp_rqt,dh_str);
-CREATE INDEX idx_ftp_rqt_cd_prn_ses ON ${_schema}.e_ftp_rqt(cd_prn_ses);
-CREATE INDEX idx_ftp_stg_cd_ftp_rqt ON ${_schema}.e_ftp_stg(cd_ftp_rqt);
-CREATE UNIQUE INDEX idx_ldap_rqt_id_ldap_rqt_dh_str ON ${_schema}.e_ldap_rqt(id_ldap_rqt,dh_str);
-CREATE INDEX idx_ldap_rqt_cd_prn_ses ON ${_schema}.e_ldap_rqt(cd_prn_ses);
-CREATE INDEX idx_ldap_stg_cd_ldap_rqt ON ${_schema}.e_ldap_stg(cd_ldap_rqt);
-CREATE UNIQUE INDEX idx_dtb_rqt_id_dtb_rqt_dh_str ON ${_schema}.e_dtb_rqt(id_dtb_rqt,dh_str);
-CREATE INDEX idx_dtb_rqt_cd_prn_ses ON ${_schema}.e_dtb_rqt(cd_prn_ses);
-CREATE INDEX idx_dtb_stg_cd_dtb_rqt ON ${_schema}.e_dtb_stg(cd_dtb_rqt);
-CREATE UNIQUE INDEX idx_lcl_rqt_id_lcl_rqt_dh_str ON ${_schema}.e_lcl_rqt(id_lcl_rqt,dh_str);
-CREATE INDEX idx_lcl_rqt_cd_prn_ses ON ${_schema}.e_lcl_rqt(cd_prn_ses);
-CREATE INDEX idx_exc_inf_cd_rqt ON ${_schema}.e_exc_inf(cd_rqt);
-CREATE UNIQUE INDEX idx_env_ins_id_ins ON ${_schema}.e_env_ins(id_ins);
-CREATE INDEX idx_env_ins_va_app_va_env ON ${_schema}.e_env_ins(va_app, va_env);
-
-set _debut = '2024-07-01 00:00:00';
-set _fin = '2024-08-01 00:00:00';
-set _suffix = '2024_07';
-
-CREATE TABLE ${_schema}.e_rst_rqt_partitioned_${_suffix} PARTITION OF ${_schema}.e_rst_rqt FOR VALUES FROM (${_debut}) TO (${_fin});
-CREATE TABLE ${_schema}.e_main_ses_partitioned_${_suffix} PARTITION OF ${_schema}.e_main_ses FOR VALUES FROM (${_debut}) TO (${_fin});
-CREATE TABLE ${_schema}.e_rst_ses_partitioned_${_suffix} PARTITION OF ${_schema}.e_rst_ses FOR VALUES FROM (${_debut}) TO (${_fin});
-CREATE TABLE ${_schema}.e_smtp_rqt_partitioned_${_suffix} PARTITION OF ${_schema}.e_smtp_rqt FOR VALUES FROM (${_debut}) TO (${_fin});
-CREATE TABLE ${_schema}.e_smtp_stg_partitioned_${_suffix} PARTITION OF ${_schema}.e_smtp_stg FOR VALUES FROM (${_debut}) TO (${_fin});
-CREATE TABLE ${_schema}.e_ftp_rqt_partitioned_${_suffix} PARTITION OF ${_schema}.e_ftp_rqt FOR VALUES FROM (${_debut}) TO (${_fin});
-CREATE TABLE ${_schema}.e_ftp_stg_partitioned_${_suffix} PARTITION OF ${_schema}.e_ftp_stg FOR VALUES FROM (${_debut}) TO (${_fin});
-CREATE TABLE ${_schema}.e_ldap_rqt_partitioned_${_suffix} PARTITION OF ${_schema}.e_ldap_rqt FOR VALUES FROM (${_debut}) TO (${_fin});
-CREATE TABLE ${_schema}.e_ldap_stg_partitioned_${_suffix} PARTITION OF ${_schema}.e_ldap_stg FOR VALUES FROM (${_debut}) TO (${_fin});
-CREATE TABLE ${_schema}.e_dtb_rqt_partitioned_${_suffix} PARTITION OF ${_schema}.e_dtb_rqt FOR VALUES FROM (${_debut}) TO (${_fin});
-CREATE TABLE ${_schema}.e_dtb_stg_partitioned_${_suffix} PARTITION OF ${_schema}.e_dtb_stg FOR VALUES FROM (${_debut}) TO (${_fin});
-CREATE TABLE ${_schema}.e_lcl_rqt_partitioned_${_suffix} PARTITION OF ${_schema}.e_lcl_rqt FOR VALUES FROM (${_debut}) TO (${_fin});
+CREATE UNIQUE INDEX IF NOT EXISTS idx_main_ses_id_ses_dh_str ON e_main_ses(id_ses,dh_str);
+CREATE INDEX IF NOT EXISTS idx_main_ses_cd_ins ON e_main_ses(cd_ins);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_rst_ses_id_ses_dh_str ON e_rst_ses(id_ses,dh_str);
+CREATE INDEX IF NOT EXISTS idx_rst_ses_cd_ins ON e_rst_ses(cd_ins);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_rst_rqt_id_rst_rqt_dh_str ON e_rst_rqt(id_rst_rqt,dh_str);
+CREATE INDEX IF NOT EXISTS idx_rst_rqt_cd_prn_ses ON e_rst_rqt(cd_prn_ses);
+CREATE INDEX IF NOT EXISTS idx_rst_rqt_cd_rmt_ses ON e_rst_rqt(cd_rmt_ses);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_smtp_rqt_id_smtp_rqt_dh_str ON e_smtp_rqt(id_smtp_rqt,dh_str);
+CREATE INDEX IF NOT EXISTS idx_smtp_rqt_cd_prn_ses ON e_smtp_rqt(cd_prn_ses);
+CREATE INDEX IF NOT EXISTS idx_smtp_stg_cd_smtp_rqt ON e_smtp_stg(cd_smtp_rqt);
+CREATE INDEX IF NOT EXISTS idx_smtp_mail_cd_smtp_rqt ON e_smtp_mail(cd_smtp_rqt);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ftp_rqt_id_ftp_rqt_dh_str ON e_ftp_rqt(id_ftp_rqt,dh_str);
+CREATE INDEX IF NOT EXISTS idx_ftp_rqt_cd_prn_ses ON e_ftp_rqt(cd_prn_ses);
+CREATE INDEX IF NOT EXISTS idx_ftp_stg_cd_ftp_rqt ON e_ftp_stg(cd_ftp_rqt);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ldap_rqt_id_ldap_rqt_dh_str ON e_ldap_rqt(id_ldap_rqt,dh_str);
+CREATE INDEX IF NOT EXISTS idx_ldap_rqt_cd_prn_ses ON e_ldap_rqt(cd_prn_ses);
+CREATE INDEX IF NOT EXISTS idx_ldap_stg_cd_ldap_rqt ON e_ldap_stg(cd_ldap_rqt);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_dtb_rqt_id_dtb_rqt_dh_str ON e_dtb_rqt(id_dtb_rqt,dh_str);
+CREATE INDEX IF NOT EXISTS idx_dtb_rqt_cd_prn_ses ON e_dtb_rqt(cd_prn_ses);
+CREATE INDEX IF NOT EXISTS idx_dtb_stg_cd_dtb_rqt ON e_dtb_stg(cd_dtb_rqt);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_lcl_rqt_id_lcl_rqt_dh_str ON e_lcl_rqt(id_lcl_rqt,dh_str);
+CREATE INDEX IF NOT EXISTS idx_lcl_rqt_cd_prn_ses ON e_lcl_rqt(cd_prn_ses);
+CREATE INDEX IF NOT EXISTS idx_exc_inf_cd_rqt ON e_exc_inf(cd_rqt);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_env_ins_id_ins ON e_env_ins(id_ins);
+CREATE INDEX IF NOT EXISTS idx_env_ins_va_app_va_env ON e_env_ins(va_app, va_env);
