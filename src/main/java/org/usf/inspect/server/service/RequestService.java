@@ -398,6 +398,7 @@ public class RequestService {
     }
 
     public List<Session> getMainSessionsForDump(String env, String appName, Instant start, Instant end) throws SQLException {
+
         var cte = new QueryBuilder()
                 .columns(getColumns(INSTANCE, ID, START))
                 .filters(INSTANCE.column(ENVIRONEMENT).eq(env))

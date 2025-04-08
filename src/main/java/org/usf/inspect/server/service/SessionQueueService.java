@@ -34,7 +34,7 @@ public class SessionQueueService {
     	return (int) dispatcher.peek().count();
     }
 
-    boolean saveSessions(boolean complete, int attempts, List<Session> sessions) {
+    boolean saveSessions(boolean complete, int attempts, List<Session> sessions, int pending) {
         service.addSessions(sessions);
         return true;
     }
