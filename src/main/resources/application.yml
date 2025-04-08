@@ -12,10 +12,14 @@ spring:
     username: sa
     password:
     driver-class-name: org.h2.Driver
-    #data: classpath:data-h2.sql
     hikari:
       minimum-idle: 1
       maximum-pool-size: 5
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data-h2.sql
   h2:
     console:
       enabled: true

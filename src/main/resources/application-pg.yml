@@ -4,6 +4,10 @@ spring:
     #username: ${SPRING_DATASOURCE_USERNAME}
     #password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
+  sql:
+    init:
+      schema-locations: classpath:schema-pg.sql
+      data-locations: #classpath:data-pg.sql
   h2:
     console:
       enabled: false
