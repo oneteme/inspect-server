@@ -106,6 +106,15 @@ public class TraceController {
     	}
     }
 
+    @GetMapping("request/rest")
+    public List<RestRequest> getRestRequests(@RequestParam(required = false, name = "env") String[] environments,
+                                         @RequestParam(required = false, name = "appname") String[] appNames,
+                                         @RequestParam(required = false, name = "start") Instant start,
+                                         @RequestParam(required = false, name = "end") Instant end) throws SQLException {
+        JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, appNames, environments, null, start, end, null, null, null, null, null, null, null, null, null, null);
+        return requestService.getRestRequestsForSearch(jsf);
+    }
+
     @GetMapping("session/rest")
     public List<Session> getRestSessions(
             @RequestParam(required = false, name = "method") String[] methods,

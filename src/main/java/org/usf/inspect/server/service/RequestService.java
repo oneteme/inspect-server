@@ -538,7 +538,14 @@ public class RequestService {
     }
 
     public List<RestRequest> getRestRequestsLazy(String cdSession) throws SQLException {
-        return getRestRequestsLazy(Collections.singletonList(cdSession));
+        Collection<DBFilter> filters = new ArrayList<>();
+        filters.add(REST_REQUEST.column(PARENT).in(Collections.singletonList(cdSession)));
+        return getRestRequestsByFilter(filters.toArray(DBFilter[]::new));
+    }
+
+    public List<RestRequest> getRestRequestsForSearch(JqueryRequestSessionFilter jsf) throws SQLException {
+
+       return getRestRequestsByFilter(jsf.filters(REST_REQUEST).toArray(DBFilter[]::new));
     }
 
     private List<RestRequest> getRestRequestsComplete(List<String> cdSessions) throws SQLException { //use criteria
@@ -581,15 +588,16 @@ public class RequestService {
         });
     }
 
-    private List<RestRequest> getRestRequestsLazy(List<String> cdSessions) throws SQLException { //use criteria
+    private List<RestRequest> getRestRequestsByFilter(DBFilter[] filter) throws SQLException { //use criteria
         var v = new QueryBuilder()
                 .columns(getColumns(
                         REST_REQUEST, ID, PROTOCOL, HOST, PATH, QUERY, METHOD, STATUS, START, END, THREAD, REMOTE, PARENT
                 ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(REST_REQUEST.join(EXCEPTION_JOIN).build())
+                .joins(REST_REQUEST.join(REST_SESSION_JOIN).build())
                 //.columns(REST_REQUEST.column(PARENT).as("test"), EXCEPTION.column(PARENT).as("test2"))
-                .filters(REST_REQUEST.column(PARENT).in(cdSessions.toArray()))
+                .filters(filter)
                 .orders(REST_REQUEST.column(START).order());
         return v.build().execute(ds, rs -> {
             List<RestRequest> outs = new ArrayList<>();
