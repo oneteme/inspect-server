@@ -20,6 +20,7 @@ import org.usf.jquery.core.DBFilter;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.usf.jquery.core.LogicalOperator;
 
 @Getter
 @Setter
@@ -34,8 +35,9 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
     private final String[] apiNames;
     private final String path;
     private final String query;
+    private final String[] rangestatus;
 
-    public JqueryRequestSessionFilter(String[] ids, String[] appNames, String[] environments, String[] users, Instant start, Instant end, String[] methods, String[] protocols, String[] hosts, String[] ports, String[] medias, String[] auths, Integer[] status, String[] apiNames, String path, String query) {
+    public JqueryRequestSessionFilter(String[] ids, String[] appNames, String[] environments, String[] users, Instant start, Instant end, String[] methods, String[] protocols, String[] hosts, String[] ports, String[] medias, String[] auths, Integer[] status, String[] apiNames, String path, String query,String[] rangestatus) {
         super(ids, appNames, environments, users, start, end);
         this.methods = methods;
         this.protocols = protocols;
@@ -47,10 +49,11 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
         this.apiNames = apiNames;
         this.path = path;
         this.query = query;
+        this.rangestatus = rangestatus;
     }
 
     public JqueryRequestSessionFilter(String[] ids) {
-        this(ids, null,null,null,null, null, null,null,null,null,null,null,null, null,null,null);
+        this(ids, null,null,null,null, null, null,null,null,null,null,null,null, null,null,null,null);
     }
 
     @Override
@@ -84,7 +87,15 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
             filters.add(table.column(AUTH).in(getAuths()));
         }
         if(!isEmpty(getStatus())) {
-            filters.add(table.column(STATUS).in(getStatus()));
+            filters.add(table.column(STATUS).in(getAuths()));
+        }
+
+        if(!isEmpty(getRangestatus())){
+            DBFilter filter = table.column(STATUS).varchar().startsLike(getRangestatus()[0].charAt(0));
+            for(int i=1;i < getRangestatus().length; i++) {
+                filter = filter.append(LogicalOperator.OR, table.column(STATUS).varchar().startsLike(getRangestatus()[i].charAt(0)));
+            }
+            filters.add(filter);
         }
         return filters;
     }

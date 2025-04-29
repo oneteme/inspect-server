@@ -108,10 +108,11 @@ public class TraceController {
 
     @GetMapping("request/rest")
     public List<RestRequest> getRestRequests(@RequestParam(required = false, name = "env") String[] environments,
-                                         @RequestParam(required = false, name = "appname") String[] appNames,
+                                         @RequestParam(required = false, name = "host") String[] hosts,
                                          @RequestParam(required = false, name = "start") Instant start,
-                                         @RequestParam(required = false, name = "end") Instant end) throws SQLException {
-        JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, appNames, environments, null, start, end, null, null, null, null, null, null, null, null, null, null);
+                                         @RequestParam(required = false, name = "end") Instant end,
+                                         @RequestParam(required = false, name = "rangestatus") String [] rangestatus) throws SQLException {
+        JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, null, environments, null, start, end, null, null, hosts, null, null, null, null, null, null, null,rangestatus);
         return requestService.getRestRequestsForSearch(jsf);
     }
 
@@ -133,7 +134,7 @@ public class TraceController {
             @RequestParam(required = false, name = "appname") String[] appNames,
             @RequestParam(required = false, name = "env") String[] environments) throws SQLException {
 
-        JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, appNames, environments, users, start, end, methods, protocols, hosts, ports, medias, auths, status, apiNames, path, query);
+        JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, appNames, environments, users, start, end, methods, protocols, hosts, ports, medias, auths, status, apiNames, path, query,null);
         return requestService.getRestSessionsForSearch(jsf);
     }
 

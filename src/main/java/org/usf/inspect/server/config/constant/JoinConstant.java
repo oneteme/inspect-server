@@ -1,11 +1,7 @@
 package org.usf.inspect.server.config.constant;
 
 import static org.usf.inspect.server.RequestType.*;
-import static org.usf.inspect.server.config.TraceApiColumn.ID;
-import static org.usf.inspect.server.config.TraceApiColumn.INSTANCE_ENV;
-import static org.usf.inspect.server.config.TraceApiColumn.ORDER;
-import static org.usf.inspect.server.config.TraceApiColumn.PARENT;
-import static org.usf.inspect.server.config.TraceApiColumn.TYPE;
+import static org.usf.inspect.server.config.TraceApiColumn.*;
 import static org.usf.inspect.server.config.TraceApiTable.DATABASE_REQUEST;
 import static org.usf.inspect.server.config.TraceApiTable.DATABASE_STAGE;
 import static org.usf.inspect.server.config.TraceApiTable.EXCEPTION;
