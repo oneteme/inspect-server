@@ -258,4 +258,16 @@ public class ColumnConstant {
             default -> null;
         };
     }
+
+    public static String userActionColumns(TraceApiColumn column){
+        return switch (column) {
+            case ID -> ID_USR_ACN;
+            case TYPE -> VA_TYP;
+            case NAME -> VA_NAM;
+            case NODE_NAME -> VA_NDE_NAM;
+            case START -> DH_STR;
+            case PARENT -> CD_PRN_SES;
+            default -> null;
+        };
+    }
 }

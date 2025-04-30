@@ -30,6 +30,7 @@ public enum TraceApiDatabase implements DatabaseDecorator {
 			case LOCAL_REQUEST: yield "e_lcl_rqt";
 			case EXCEPTION: yield "e_exc_inf";
 			case INSTANCE: yield "e_env_ins";
+			case USER_ACTION: yield "e_usr_acn";
 			default: yield null;
 		};
 	}

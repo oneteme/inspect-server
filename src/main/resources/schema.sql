@@ -205,3 +205,12 @@ CREATE TABLE IF NOT EXISTS E_ENV_INS (
     VA_BRCH VARCHAR,
     VA_HSH VARCHAR
 );
+
+CREATE TABLE IF NOT EXISTS E_USR_ACN (
+    ID_ACN bigint,
+    VA_TYP varchar,
+    DH_STR timestamp(6),
+    VA_NAM varchar,
+    VA_NDE_NAM varchar,
+    CD_PRN_SES varchar
+);

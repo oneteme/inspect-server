@@ -2,7 +2,10 @@ package org.usf.inspect.server;
 
 import static java.util.Arrays.fill;
 import static java.util.Objects.isNull;
+import static java.util.Optional.ofNullable;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Collection;
 
 import lombok.AccessLevel;
@@ -40,5 +43,9 @@ public final class Utils {
 		var arr = new int[size];
 		fill(arr, defaultValue);
 		return arr;
+	}
+
+	public static Instant fromNullableTimestamp(Timestamp timestamp) {
+		return ofNullable(timestamp).map(Timestamp::toInstant).orElse(null);
 	}
 }
