@@ -50,6 +50,7 @@ public enum TraceApiColumn implements ColumnDecorator {
     RE("re"),
 
     NAME("name"),
+    NODE_NAME("nodeName"),
     TYPE("type"),
     LOCATION("location"),
     ERR_TYPE("errorType"),

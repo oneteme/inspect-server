@@ -6,20 +6,7 @@ import static org.usf.inspect.server.config.TraceApiColumn.INSTANCE_ENV;
 import static org.usf.inspect.server.config.TraceApiColumn.ORDER;
 import static org.usf.inspect.server.config.TraceApiColumn.PARENT;
 import static org.usf.inspect.server.config.TraceApiColumn.TYPE;
-import static org.usf.inspect.server.config.TraceApiTable.DATABASE_REQUEST;
-import static org.usf.inspect.server.config.TraceApiTable.DATABASE_STAGE;
-import static org.usf.inspect.server.config.TraceApiTable.EXCEPTION;
-import static org.usf.inspect.server.config.TraceApiTable.FTP_REQUEST;
-import static org.usf.inspect.server.config.TraceApiTable.FTP_STAGE;
-import static org.usf.inspect.server.config.TraceApiTable.INSTANCE;
-import static org.usf.inspect.server.config.TraceApiTable.LDAP_REQUEST;
-import static org.usf.inspect.server.config.TraceApiTable.LDAP_STAGE;
-import static org.usf.inspect.server.config.TraceApiTable.LOCAL_REQUEST;
-import static org.usf.inspect.server.config.TraceApiTable.MAIN_SESSION;
-import static org.usf.inspect.server.config.TraceApiTable.REST_REQUEST;
-import static org.usf.inspect.server.config.TraceApiTable.REST_SESSION;
-import static org.usf.inspect.server.config.TraceApiTable.SMTP_REQUEST;
-import static org.usf.inspect.server.config.TraceApiTable.SMTP_STAGE;
+import static org.usf.inspect.server.config.TraceApiTable.*;
 import static org.usf.jquery.core.ViewJoin.innerJoin;
 import static org.usf.jquery.core.ViewJoin.leftJoin;
 
@@ -197,6 +184,14 @@ public class JoinConstant {
         return switch (name) {
             case REST_SESSION_JOIN ->
                     ()-> new ViewJoin[]{leftJoin(REST_SESSION.view(), INSTANCE.column(ID).eq(REST_SESSION.column(INSTANCE_ENV)))};
+            default -> null;
+        };
+    }
+
+    public static JoinBuilder userActionJoins(String name) {
+        return switch (name) {
+            case MAIN_SESSION_JOIN ->
+                    ()-> new ViewJoin[]{innerJoin(MAIN_SESSION.view(), USER_ACTION.column(PARENT).eq(MAIN_SESSION.column(ID)))};
             default -> null;
         };
     }

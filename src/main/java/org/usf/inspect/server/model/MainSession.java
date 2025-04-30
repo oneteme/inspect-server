@@ -17,6 +17,7 @@ public class MainSession extends LocalRequest implements Session {
     private List<FtpRequest> ftpRequests;
     private List<MailRequest> mailRequests;
     private List<NamingRequest> ldapRequests;
+    private List<UserAction> userActions;
 
     private String instanceId;
     private String appName;
@@ -24,4 +25,14 @@ public class MainSession extends LocalRequest implements Session {
     private String re;
     private String address;
     private Integer mask;
+
+    @Override
+    public void updateCdSession() {
+        Session.super.updateCdSession();
+        if(getUserActions() != null) {
+            for (UserAction action : getUserActions()) {
+                action.setCdSession(getId());
+            }
+        }
+    }
 }

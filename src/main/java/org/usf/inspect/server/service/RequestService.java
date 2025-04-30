@@ -37,6 +37,7 @@ import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static org.usf.inspect.server.RequestType.*;
+import static org.usf.inspect.server.Utils.fromNullableTimestamp;
 import static org.usf.inspect.server.Utils.requireSingle;
 import static org.usf.inspect.server.config.TraceApiColumn.*;
 import static org.usf.inspect.server.config.TraceApiTable.*;
@@ -1213,10 +1214,6 @@ public class RequestService {
 
     private static NamedColumn[] getColumns(ViewDecorator table, ColumnDecorator... columns) {
         return Stream.of(columns).map(table::column).toArray(NamedColumn[]::new);
-    }
-
-    public static Instant fromNullableTimestamp(Timestamp timestamp) {
-        return ofNullable(timestamp).map(Timestamp::toInstant).orElse(null);
     }
 
     public static ExceptionInfo getExceptionInfoIfNotNull(String className, String message) {
