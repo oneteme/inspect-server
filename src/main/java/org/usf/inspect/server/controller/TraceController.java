@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.usf.inspect.server.model.*;
 import org.usf.inspect.server.model.filter.JqueryMainSessionFilter;
 import org.usf.inspect.server.model.filter.JqueryRequestSessionFilter;
+import org.usf.inspect.server.service.AnalyticService;
 import org.usf.inspect.server.service.RequestService;
 import org.usf.inspect.server.service.SessionQueueService;
 
@@ -42,6 +43,7 @@ import static org.usf.jquery.core.Utils.isEmpty;
 public class TraceController {
 
     private final RequestService requestService;
+    private final AnalyticService analyticService;
     private final SessionQueueService queueService;
     
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
@@ -339,6 +341,21 @@ public class TraceController {
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
+    @GetMapping("session/{id_session}/user/action")
+    public ResponseEntity<List<UserAction>> getUserActions(@PathVariable(name = "id_session") String idSession) throws SQLException {
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(analyticService.getUserActions(idSession));
+    }
+
+    @GetMapping("session/user/{user}/action")
+    public ResponseEntity<List<MainSession>> getUserActions(
+            @PathVariable(name = "user") String user,
+            @RequestParam(name = "date") Instant date,
+            @RequestParam(name = "offset", defaultValue = "0") Integer offSet,
+            @RequestParam(name = "limit", defaultValue = "10") Integer limit
+    ) throws SQLException {
+        return ResponseEntity.ok().body(analyticService.getUserActions(user, date, offSet, limit));
+    }
+
     @GetMapping("session/request/ldap/stages")
     public ResponseEntity<Map<Long,List<String>> > getLdapRequestStages(@RequestParam(required = true, name = "ids") Long[] idFtpList) throws SQLException {
         return ResponseEntity.ok().body(requestService.getLdapRequestStages(idFtpList));
@@ -348,6 +365,7 @@ public class TraceController {
     public ResponseEntity<Map<Long, ExceptionInfo>> getLdapRequestExceptions(@RequestParam(required = true, name = "ids") Long[] idLdapList) throws SQLException {
         return ResponseEntity.ok().body(requestService.getLdapRequestExceptions(idLdapList));
     }
+
 
     @GetMapping("architecture")
     public List<Architecture> getArchitecture(
