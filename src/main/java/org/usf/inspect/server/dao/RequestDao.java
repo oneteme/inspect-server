@@ -262,7 +262,7 @@ VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getMailRequests), 
             ps.setInt(4, stage.getOrder());
             ps.setLong(5, stage.getIdRequest());
         });
-        saveExceptions(getExceptions(sessions.stream().flatMap(s -> s.getMailRequests().stream().flatMap(d -> d.getActions().stream()))), SMTP);
+        saveExceptions(getExceptions(sessions.stream().filter(s -> !isEmpty(s.getMailRequests())).flatMap(s -> s.getMailRequests().stream().flatMap(d -> d.getActions().stream()))), SMTP);
     }
 
     private void saveMailRequestMails(List<Session> sessions) {
@@ -311,7 +311,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getFtpReques
             ps.setInt(5, stage.getOrder());
             ps.setLong(6, stage.getIdRequest());
         });
-        saveExceptions(getExceptions(sessions.stream().flatMap(s -> s.getFtpRequests().stream().flatMap(d -> d.getActions().stream()))), FTP);
+        saveExceptions(getExceptions(sessions.stream().filter(s -> !isEmpty(s.getFtpRequests())).flatMap(s -> s.getFtpRequests().stream().flatMap(d -> d.getActions().stream()))), FTP);
     }
 
     public void saveLdapRequests(List<Session> sessions) {
@@ -346,7 +346,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getLdapRequests)
             ps.setInt(5, stage.getOrder());
             ps.setLong(6, stage.getIdRequest());
         });
-        saveExceptions(getExceptions(sessions.stream().flatMap(s -> s.getLdapRequests().stream().flatMap(d -> d.getActions().stream()))), LDAP);
+        saveExceptions(getExceptions(sessions.stream().filter(s -> !isEmpty(s.getLdapRequests())).flatMap(s -> s.getLdapRequests().stream().flatMap(d -> d.getActions().stream()))), LDAP);
     }
 
     public void saveDatabaseRequests(List<Session> sessions) {
@@ -387,7 +387,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getDat
             ps.setInt(6, stage.getOrder());
             ps.setLong(7, stage.getIdRequest());
         });
-        saveExceptions(getExceptions(sessions.stream().flatMap(s -> s.getDatabaseRequests().stream().flatMap(d -> d.getActions().stream()))), JDBC);
+        saveExceptions(getExceptions(sessions.stream().filter(s -> !isEmpty(s.getDatabaseRequests())).flatMap(s -> s.getDatabaseRequests().stream().flatMap(d -> d.getActions().stream()))), JDBC);
     }
 
     private <T extends RequestStage> List<ExceptionInfo> getExceptions(Stream<T> stages) {
