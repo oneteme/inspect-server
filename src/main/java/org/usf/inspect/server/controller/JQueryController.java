@@ -70,6 +70,12 @@ public class JQueryController {
         return usingSpringJdbc(query);
     }
 
+    @GetMapping("user/action")
+    public List<DynamicModel> getUserAction(
+            @RequestQueryParam(view = "user_action", defaultColumns = "count") QueryBuilder query) {
+        return usingSpringJdbc(query);
+    }
+
     @GetMapping("instance")
     public List<DynamicModel> getInstance(
             @RequestQueryParam(view = "instance") QueryBuilder query) {
