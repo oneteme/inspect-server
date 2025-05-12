@@ -8,7 +8,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.usf.inspect.server.model.*;
+import org.usf.inspect.server.model.cutomModel.CustomRequest;
+import org.usf.inspect.server.model.cutomModel.CustomRestRequest;
 import org.usf.inspect.server.model.filter.JqueryMainSessionFilter;
+import org.usf.inspect.server.model.filter.JqueryRequestFilter;
 import org.usf.inspect.server.model.filter.JqueryRequestSessionFilter;
 import org.usf.inspect.server.service.RequestService;
 import org.usf.inspect.server.service.SessionQueueService;
@@ -107,14 +110,62 @@ public class TraceController {
     }
 
     @GetMapping("request/rest")
-    public List<RestRequest> getRestRequests(@RequestParam(required = false, name = "env") String[] environments,
-                                         @RequestParam(required = false, name = "host") String[] hosts,
-                                         @RequestParam(required = false, name = "start") Instant start,
-                                         @RequestParam(required = false, name = "end") Instant end,
-                                         @RequestParam(required = false, name = "rangestatus") String [] rangestatus) throws SQLException {
+    public List<CustomRestRequest> getRestRequests(@RequestParam(required = false, name = "env") String[] environments,
+                                                   @RequestParam(required = false, name = "host") String[] hosts,
+                                                   @RequestParam(required = false, name = "start") Instant start,
+                                                   @RequestParam(required = false, name = "end") Instant end,
+                                                   @RequestParam(required = false, name = "rangestatus") String [] rangestatus) throws SQLException {
         JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, null, environments, null, start, end, null, null, hosts, null, null, null, null, null, null, null,rangestatus);
-        return requestService.getRestRequestsForSearch(jsf);
+        return requestService.getRestRequestsLazyForSearch(jsf);
     }
+
+    @GetMapping("request/rest/{id}")
+    public RestRequest getRestRequestById (@PathVariable int id) throws SQLException {
+        return Optional.ofNullable(requestService.getRestRequestsCompleteById(id))
+                .map(o -> ok().cacheControl(maxAge(1, DAYS)).body(o))
+                .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null)).getBody();
+    }
+
+    @GetMapping("request/database")
+    public List<CustomRequest> getDatabaseRequestForSearch(@RequestParam(required = false, name = "env") String[] environments,
+                                             @RequestParam(required = false, name = "host") String[] hosts,
+                                             @RequestParam(required = false, name = "start") Instant start,
+                                             @RequestParam(required = false, name = "end") Instant end,
+                                             @RequestParam(required = false, name = "rangestatus") Boolean [] rangestatus) throws SQLException {
+        JqueryRequestFilter jsf = new JqueryRequestFilter(environments,hosts,start,end,rangestatus);
+        return requestService.getDatabaseRequestsLazyForSearch(jsf);
+    }
+
+    @GetMapping("request/ftp")
+    public List<CustomRequest> getFtpRequestForSearch(@RequestParam(required = false, name = "env") String[] environments,
+                                                             @RequestParam(required = false, name = "host") String[] hosts,
+                                                             @RequestParam(required = false, name = "start") Instant start,
+                                                             @RequestParam(required = false, name = "end") Instant end,
+                                                             @RequestParam(required = false, name = "rangestatus") Boolean [] rangestatus) throws SQLException {
+        JqueryRequestFilter jsf = new JqueryRequestFilter(environments,hosts,start,end,rangestatus);
+        return requestService.getFtpRequestsLazyForSearch(jsf);
+    }
+
+    @GetMapping("request/smtp")
+    public List<CustomRequest> getSmtpRequestForSearch(@RequestParam(required = false, name = "env") String[] environments,
+                                                       @RequestParam(required = false, name = "host") String[] hosts,
+                                                       @RequestParam(required = false, name = "start") Instant start,
+                                                       @RequestParam(required = false, name = "end") Instant end,
+                                                       @RequestParam(required = false, name = "rangestatus") Boolean [] rangestatus) throws SQLException {
+        JqueryRequestFilter jsf = new JqueryRequestFilter(environments,hosts,start,end,rangestatus);
+        return requestService.getSmtpRequestsLazyForSearch(jsf);
+    }
+
+    @GetMapping("request/ldap")
+    public List<CustomRequest> getLdapRequestForSearch(@RequestParam(required = false, name = "env") String[] environments,
+                                                         @RequestParam(required = false, name = "host") String[] hosts,
+                                                         @RequestParam(required = false, name = "start") Instant start,
+                                                         @RequestParam(required = false, name = "end") Instant end,
+                                                         @RequestParam(required = false, name = "rangestatus") Boolean [] rangestatus) throws SQLException {
+        JqueryRequestFilter jsf = new JqueryRequestFilter(environments,hosts,start,end,rangestatus);
+        return requestService.getLdapRequestsLazyForSearch(jsf);
+    }
+
 
     @GetMapping("session/rest")
     public List<Session> getRestSessions(
@@ -211,8 +262,8 @@ public class TraceController {
     }
 
     @GetMapping("session/{id_session}/request/rest")
-    public ResponseEntity<List<RestRequest>> getRestRequests(@PathVariable(name = "id_session") String idSession) throws SQLException {
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getRestRequestsLazy(idSession));
+    public ResponseEntity<List<CustomRestRequest>> getRestRequests(@PathVariable(name = "id_session") String idSession) throws SQLException {
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getRestRequestsLazyForParent(idSession));
     }
 
     @GetMapping("session/request/rest/exception")
