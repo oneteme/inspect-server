@@ -1,4 +1,4 @@
-package org.usf.inspect.server.model.cutomModel;
+package org.usf.inspect.server.dto;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -9,9 +9,10 @@ import java.time.Instant;
 
 @Setter
 @Getter
-public class CustomRequest extends SessionStage {
+public class DtoRequest extends SessionStage {
     protected String id;
     protected String type;
+    protected String sessionType;
     protected String host;
     protected Instant start;
     protected Instant end;
