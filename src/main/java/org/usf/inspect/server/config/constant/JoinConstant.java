@@ -1,11 +1,7 @@
 package org.usf.inspect.server.config.constant;
 
 import static org.usf.inspect.server.RequestType.*;
-import static org.usf.inspect.server.config.TraceApiColumn.ID;
-import static org.usf.inspect.server.config.TraceApiColumn.INSTANCE_ENV;
-import static org.usf.inspect.server.config.TraceApiColumn.ORDER;
-import static org.usf.inspect.server.config.TraceApiColumn.PARENT;
-import static org.usf.inspect.server.config.TraceApiColumn.TYPE;
+import static org.usf.inspect.server.config.TraceApiColumn.*;
 import static org.usf.inspect.server.config.TraceApiTable.*;
 import static org.usf.jquery.core.ViewJoin.innerJoin;
 import static org.usf.jquery.core.ViewJoin.leftJoin;
