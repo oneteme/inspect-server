@@ -27,4 +27,37 @@ public interface Session {
 
     String getInstanceId(); //UUID
     void setInstanceId(String id);
+
+    default void updateCdSession() {
+        if(getRestRequests() != null) {
+            for (RestRequest request : getRestRequests()) {
+                request.setCdSession(getId());
+            }
+        }
+        if(getDatabaseRequests() != null) {
+            for (DatabaseRequest request : getDatabaseRequests()) {
+                request.setCdSession(getId());
+            }
+        }
+        if(getLocalRequests() != null) {
+            for (LocalRequest request : getLocalRequests()) {
+                request.setCdSession(getId());
+            }
+        }
+        if(getFtpRequests() != null) {
+            for (FtpRequest request : getFtpRequests()) {
+                request.setCdSession(getId());
+            }
+        }
+        if(getMailRequests() != null) {
+            for (MailRequest request : getMailRequests()) {
+                request.setCdSession(getId());
+            }
+        }
+        if(getLdapRequests() != null) {
+            for (NamingRequest request : getLdapRequests()) {
+                request.setCdSession(getId());
+            }
+        }
+    }
 }

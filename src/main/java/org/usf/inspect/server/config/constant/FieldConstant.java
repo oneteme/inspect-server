@@ -19,6 +19,7 @@ public final class FieldConstant {
     public static final String ID_RST_RQT = "id_rst_rqt";
     public static final String ID_LDAP_RQT = "id_ldap_rqt";
     public static final String CD_LDAP_RQT = "cd_ldap_rqt";
+    public static final String ID_USR_ACN = "id_acn";
 
     public static final String ID_INS = "id_ins";
     public static final String CD_INS = "cd_ins";
@@ -39,6 +40,7 @@ public final class FieldConstant {
     public static final String VA_I_CNT_ENC = "va_i_cnt_enc";
     public static final String VA_O_CNT_ENC = "va_o_cnt_enc";
     public static final String VA_NAM = "va_nam";
+    public static final String VA_NDE_NAM = "va_nde_nam";
     public static final String VA_SCH = "va_sch";
     public static final String DH_STR = "dh_str";
     public static final String DH_END = "dh_end";

@@ -16,6 +16,7 @@ public class RestSession extends RestRequest implements Session {
     private List<FtpRequest> ftpRequests;
     private List<MailRequest> mailRequests;
     private List<NamingRequest> ldapRequests;
+
     private String userAgent;
     private String cacheControl;
 

@@ -5,7 +5,10 @@ import lombok.Setter;
 import org.usf.inspect.jdbc.SqlCommand;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
+import static org.usf.inspect.server.Utils.isEmpty;
 
 @Getter
 @Setter
@@ -30,5 +33,15 @@ public class DatabaseRequest extends SessionStage {
             return "SQL";
         }
         return null;
+    }
+
+    public void updateIdRequest() {
+        if(!isEmpty(getActions())) {
+            var inc = new AtomicInteger(0);
+            for(DatabaseRequestStage stage: getActions()) {
+                stage.setIdRequest(getIdRequest());
+                stage.setOrder(inc.incrementAndGet());
+            }
+        }
     }
 }

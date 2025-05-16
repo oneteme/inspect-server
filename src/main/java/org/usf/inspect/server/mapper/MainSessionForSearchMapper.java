@@ -1,4 +1,5 @@
 package org.usf.inspect.server.mapper;
+
 import org.usf.inspect.server.model.MainSession;
 import org.usf.inspect.server.model.Session;
 import org.usf.jquery.core.ResultSetMapper;
@@ -8,9 +9,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.usf.inspect.server.Utils.fromNullableTimestamp;
 import static org.usf.inspect.server.config.TraceApiColumn.*;
-import static org.usf.inspect.server.config.TraceApiColumn.ERR_MSG;
-import static org.usf.inspect.server.service.RequestService.fromNullableTimestamp;
 import static org.usf.inspect.server.service.RequestService.getExceptionInfoIfNotNull;
 
 
