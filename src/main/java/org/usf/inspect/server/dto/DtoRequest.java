@@ -3,6 +3,7 @@ package org.usf.inspect.server.dto;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.usf.inspect.server.model.ExceptionInfo;
 import org.usf.inspect.server.model.SessionStage;
 
 import java.time.Instant;
@@ -22,5 +23,5 @@ public class DtoRequest extends SessionStage {
     protected String command;
     protected String schema;
     protected boolean status;
-
+    protected ExceptionInfo exception;
 }

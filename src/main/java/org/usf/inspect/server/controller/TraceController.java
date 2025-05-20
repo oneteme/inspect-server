@@ -111,6 +111,29 @@ public class TraceController {
     	}
     }
 
+
+
+    @GetMapping("request/rest/{id}")
+    public RestRequest getRestRequestById (@PathVariable int id) throws SQLException {
+        return Optional.ofNullable(requestService.getRestRequestsCompleteById(id))
+                .map(o -> ok().cacheControl(maxAge(1, DAYS)).body(o))
+                .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null)).getBody();
+    }
+
+    @GetMapping("request/{type}/hosts")
+    public List<String> getRequestsHostsbyType(
+            @PathVariable String type,
+            @RequestParam(name = "env") String environment,
+            @RequestParam(name = "start") Instant start,
+            @RequestParam(name = "end") Instant end) throws SQLException {
+        try {
+            RequestType.valueOf(type);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid request type: " + type, e);
+        }
+        return requestService.getRequestsHostsByType(type, environment, start, end);
+    }
+
     @GetMapping("request/rest")
     public List<DtoRestRequest> getRestRequests(@RequestParam(required = false, name = "env") String[] environments,
                                                 @RequestParam(required = false, name = "host") String[] hosts,
@@ -120,13 +143,6 @@ public class TraceController {
 
         JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, null, environments, null, start, end, null, null, hosts, null, null, null, null, null, null, null,rangestatus);
         return requestService.getRestRequestsLazyForSearch(jsf);
-    }
-
-    @GetMapping("request/rest/{id}")
-    public RestRequest getRestRequestById (@PathVariable int id) throws SQLException {
-        return Optional.ofNullable(requestService.getRestRequestsCompleteById(id))
-                .map(o -> ok().cacheControl(maxAge(1, DAYS)).body(o))
-                .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null)).getBody();
     }
 
     @GetMapping("request/database")
