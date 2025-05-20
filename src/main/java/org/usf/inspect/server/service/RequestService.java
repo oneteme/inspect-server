@@ -777,6 +777,7 @@ public class RequestService {
                 out.setId(rs.getString(PARENT.reference()));
                 out.setType(rs.getString(TYPE.reference()));
                 out.setSessionType(rs.getString("sessiontype"));
+                out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 outs.add(out);
             }
             return outs;
@@ -954,6 +955,7 @@ public class RequestService {
                 out.setId(rs.getString(PARENT.reference()));
                 out.setType(rs.getString(TYPE.reference()));
                 out.setSessionType(rs.getString("sessiontype"));
+                out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 outs.add(out);
             }
             return outs;
@@ -1125,6 +1127,7 @@ public class RequestService {
                 out.setId(rs.getString(PARENT.reference()));
                 out.setType(rs.getString(TYPE.reference()));
                 out.setSessionType(rs.getString("sessiontype"));
+                out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 outs.add(out);
             }
             return outs;
@@ -1328,6 +1331,7 @@ public class RequestService {
                 out.setId(rs.getString(PARENT.reference()));
                 out.setType(rs.getString(TYPE.reference()));
                 out.setSessionType(rs.getString("sessiontype"));
+                out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 outs.add(out);
             }
             return outs;
@@ -1439,6 +1443,49 @@ public class RequestService {
         return this.getSubRequestExceptions(EXCEPTION.column(PARENT).in(ids).and(EXCEPTION.column(TYPE).eq(LDAP.name())));
     }
 
+
+    public List<String> getRequestsHostsByType(String  type, String environement, Instant start, Instant end) throws SQLException{
+        var Table = TraceApiTable.valueOf(RequestType.valueOf(type).getTable());
+        var v1 = new QueryBuilder()
+                .columns(getColumns(Table,HOST))
+                .filters(Table.column(START).ge(from(start)))
+                .filters(Table.column(START).lt(from(end)))
+                .filters(Table.column(PARENT)
+                .in(SessionIdByType_Environement_period("rest",environement,start,end))).distinct();
+
+       var v2 = new QueryBuilder()
+                .columns(getColumns(Table,HOST))
+                .filters(Table.column(START).ge(from(start)))
+                .filters(Table.column(START).lt(from(end)))
+                .filters(Table.column(PARENT)
+                .in(SessionIdByType_Environement_period("main",environement,start,end))).distinct();
+
+       var r = v1.toString() + " UNION " + v2.toString();
+
+        Object[] args = new Object[]{from(start), from(end), environement, from(start), from(end), "SERVER", from(start), from(end), environement, from(start), from(end)};
+        int[] argTypes = new int[]{TIMESTAMP, TIMESTAMP, VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, TIMESTAMP, TIMESTAMP};
+        return template.query(r, args, argTypes, rs -> {
+            List<String> hosts = new ArrayList<>();
+            while (rs.next()) {
+                hosts.add(rs.getString(HOST.reference()));
+            }
+            return hosts;
+        });
+    }
+
+    public SingleColumnQuery SessionIdByType_Environement_period(String type, String environement, Instant start, Instant end){
+        var v  = new QueryBuilder()
+                .columns(getColumns(REST_SESSION,ID))
+                .joins(REST_SESSION.join(INSTANCE_JOIN).build())
+                .filters(INSTANCE.column(ENVIRONEMENT).eq(environement))
+                .filters(REST_SESSION.column(START).ge(from(start)))
+                .filters(REST_SESSION.column(START).lt(from(end)));
+        if(Objects.equals(type, "rest")){
+            v.filters(INSTANCE.column(TYPE).eq("SERVER"));
+        }
+
+        return v.asView().asColumn();
+    }
 
     private String getPropertyByFilters(TraceApiTable table, TraceApiColumn target, DBFilter filters) throws SQLException { // main / apissesion
         var v = new QueryBuilder().columns(getColumns(table,target)).filters(filters);
