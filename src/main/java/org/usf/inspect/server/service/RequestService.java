@@ -1451,14 +1451,14 @@ public class RequestService {
                 .filters(Table.column(START).ge(from(start)))
                 .filters(Table.column(START).lt(from(end)))
                 .filters(Table.column(PARENT)
-                .in(SessionIdByType_Environement_period("rest",environement,start,end))).distinct();
+                .in(SessionIdByType_Environement_period("rest_session",environement,start,end))).distinct();
 
        var v2 = new QueryBuilder()
                 .columns(getColumns(Table,HOST))
                 .filters(Table.column(START).ge(from(start)))
                 .filters(Table.column(START).lt(from(end)))
                 .filters(Table.column(PARENT)
-                .in(SessionIdByType_Environement_period("main",environement,start,end))).distinct();
+                .in(SessionIdByType_Environement_period("main_session",environement,start,end))).distinct();
 
        var r = v1.toString() + " UNION " + v2.toString();
 
@@ -1474,13 +1474,14 @@ public class RequestService {
     }
 
     public SingleColumnQuery SessionIdByType_Environement_period(String type, String environement, Instant start, Instant end){
+        var Table = TraceApiTable.valueOf(RequestType.valueOf(type).getTable());
         var v  = new QueryBuilder()
-                .columns(getColumns(REST_SESSION,ID))
-                .joins(REST_SESSION.join(INSTANCE_JOIN).build())
+                .columns(getColumns(Table,ID))
+                .joins(Table.join(INSTANCE_JOIN).build())
                 .filters(INSTANCE.column(ENVIRONEMENT).eq(environement))
-                .filters(REST_SESSION.column(START).ge(from(start)))
-                .filters(REST_SESSION.column(START).lt(from(end)));
-        if(Objects.equals(type, "rest")){
+                .filters(Table.column(START).ge(from(start)))
+                .filters(Table.column(START).lt(from(end)));
+        if(Objects.equals(type, "rest_session")){
             v.filters(INSTANCE.column(TYPE).eq("SERVER"));
         }
 
