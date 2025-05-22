@@ -72,7 +72,6 @@ public enum TraceApiTable implements ViewDecorator {
 	SMTP_MAIL(ColumnConstant::smtpMailColumns),
 	LDAP_REQUEST(ColumnConstant::ldapRequestColumns, JoinConstant::ldapRequestJoins),
 	LDAP_STAGE(ColumnConstant::ldapStageColumns, JoinConstant::ldapStageJoins),
-
     LOCAL_REQUEST(ColumnConstant::localRequestColumns, JoinConstant::localRequestJoins),
     EXCEPTION(ColumnConstant::exceptionColumns, JoinConstant::exceptionJoins),
     INSTANCE(ColumnConstant::instanceColumns, JoinConstant::instanceJoins),
