@@ -87,7 +87,7 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
             filters.add(table.column(AUTH).in(getAuths()));
         }
         if(!isEmpty(getStatus())) {
-            filters.add(table.column(STATUS).in(getAuths()));
+            filters.add(table.column(STATUS).in(getStatus()));
         }
 
         if(!isEmpty(getRangestatus())){
