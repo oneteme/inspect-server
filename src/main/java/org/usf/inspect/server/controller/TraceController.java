@@ -202,9 +202,10 @@ public class TraceController {
             @RequestParam(required = false, name = "apiname") String[] apiNames,
             @RequestParam(required = false, name = "user") String[] users,
             @RequestParam(required = false, name = "appname") String[] appNames,
-            @RequestParam(required = false, name = "env") String[] environments) throws SQLException {
+            @RequestParam(required = false, name = "env") String[] environments,
+            @RequestParam(required = false, name = "rangestatus") String [] rangestatus) throws SQLException {
 
-        JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, appNames, environments, users, start, end, methods, protocols, hosts, ports, medias, auths, status, apiNames, path, query,null);
+        JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, appNames, environments, users, start, end, methods, protocols, hosts, ports, medias, auths, status, apiNames, path, query,rangestatus);
         return requestService.getRestSessionsForSearch(jsf);
     }
 
@@ -256,10 +257,11 @@ public class TraceController {
             @RequestParam(required = false, name = "start") Instant start,
             @RequestParam(required = false, name = "end") Instant end,
             @RequestParam(required = false, name = "user") String[] users,
-            @RequestParam(required = false, name = "appname") String[] appNames
+            @RequestParam(required = false, name = "appname") String[] appNames,
+            @RequestParam(required = false, name = "rangestatus") String [] rangestatus
     ) throws SQLException {
 
-        JqueryMainSessionFilter fc = new JqueryMainSessionFilter(null, appNames, environments, users, start, end, names, launchModes, location);
+        JqueryMainSessionFilter fc = new JqueryMainSessionFilter(null, appNames, environments, users, start, end, names, launchModes, location, rangestatus);
         return requestService.getMainSessionsForSearch(fc);
     }
 
