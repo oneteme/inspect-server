@@ -18,16 +18,18 @@ public class JqueryMainSessionFilter extends JquerySessionFilter {
     private final String[] names;
     private final String[] launchModes;
     private final String location;
+    private final String[] rangestatus;
 
-    public JqueryMainSessionFilter(String[] ids, String[] appNames, String[] environments, String[] users, Instant start, Instant end, String[] names, String[] launchModes, String location) {
-        super(ids, appNames, environments, users, start, end);
+    public JqueryMainSessionFilter(String[] ids, String[] appNames, String[] environments, String[] users, Instant start, Instant end, String[] names, String[] launchModes, String location, String[] rangestatus) {
+        super(ids, appNames, environments, users, start, end );
         this.names = names;
         this.launchModes = launchModes;
         this.location = location;
+        this.rangestatus = rangestatus;
     }
 
     public JqueryMainSessionFilter(String[] ids) {
-        this(ids, null, null, null, null, null, null, null, null);
+        this(ids, null, null, null, null, null, null, null, null,null);
     }
     @Override
     public Collection<DBFilter> filters(TraceApiTable table) {
@@ -40,6 +42,18 @@ public class JqueryMainSessionFilter extends JquerySessionFilter {
         }
         if(getLocation() != null) {
             filters.add(table.column(LOCATION).contentLike(getLocation()));
+        }
+
+        if(!isEmpty(getRangestatus())){
+            if(getRangestatus().length < 2) {
+                DBFilter filter;
+                if(Boolean.parseBoolean(getRangestatus()[0])){
+                    filter = table.column(ERR_TYPE).coalesce("null").eq("null").and(table.column(ERR_MSG).coalesce("null").eq("null"));
+                }else {
+                    filter = table.column(ERR_TYPE).coalesce("null").ne("null").and(table.column(ERR_MSG).coalesce("null").ne("null"));
+                }
+                filters.add(filter);
+            }
         }
         return filters;
     }
