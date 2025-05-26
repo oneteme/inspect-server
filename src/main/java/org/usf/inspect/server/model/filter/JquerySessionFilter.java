@@ -1,12 +1,7 @@
 package org.usf.inspect.server.model.filter;
 
 import static java.sql.Timestamp.from;
-import static org.usf.inspect.server.config.TraceApiColumn.APP_NAME;
-import static org.usf.inspect.server.config.TraceApiColumn.END;
-import static org.usf.inspect.server.config.TraceApiColumn.ENVIRONEMENT;
-import static org.usf.inspect.server.config.TraceApiColumn.ID;
-import static org.usf.inspect.server.config.TraceApiColumn.START;
-import static org.usf.inspect.server.config.TraceApiColumn.USER;
+import static org.usf.inspect.server.config.TraceApiColumn.*;
 import static org.usf.inspect.server.config.TraceApiTable.INSTANCE;
 import static org.usf.jquery.core.Utils.isEmpty;
 
