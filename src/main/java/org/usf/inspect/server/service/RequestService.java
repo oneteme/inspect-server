@@ -1,13 +1,14 @@
 package org.usf.inspect.server.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.InstanceType;
 import org.usf.inspect.core.TraceableStage;
 import org.usf.inspect.jdbc.SqlCommand;
-import org.usf.inspect.server.Constants;
 import org.usf.inspect.server.RequestMask;
 import org.usf.inspect.server.config.TraceApiColumn;
 import org.usf.inspect.server.config.TraceApiTable;
@@ -24,14 +25,11 @@ import org.usf.inspect.server.model.filter.JqueryRequestSessionFilter;
 import org.usf.jquery.core.*;
 import org.usf.jquery.web.ColumnDecorator;
 import org.usf.jquery.web.ViewDecorator;
-
 import javax.sql.DataSource;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Stream;
-
 import static java.sql.Timestamp.from;
 import static java.sql.Types.TIMESTAMP;
 import static java.sql.Types.VARCHAR;
@@ -48,11 +46,14 @@ import static org.usf.inspect.server.config.constant.JoinConstant.*;
 
 @Service
 @RequiredArgsConstructor
+@Setter
+@ConfigurationProperties(prefix = "inspect")
 public class RequestService {
 
     private final JdbcTemplate template;
     private final DataSource ds;
     private final RequestDao dao;
+    private int requestLimit= 300000;
 
     public void addInstance(InstanceEnvironment instance) {
         dao.saveInstanceEnvironment(instance);
@@ -238,7 +239,7 @@ public class RequestService {
     public List<Session> getRestSessionsForSearch(JqueryRequestSessionFilter jsf) throws SQLException {
 
         var count = getRestSessionCountForSearch(jsf);
-        if(count > Constants.PAYLOAD_LIMIT){
+        if(count > requestLimit){
             throw new PayloadTooLargeException();
         }
 
@@ -445,7 +446,7 @@ public class RequestService {
     public List<Session> getMainSessionsForSearch(JqueryMainSessionFilter jsf) throws SQLException {
 
         var count = getMainSessionCountForSearch(jsf);
-        if(count > Constants.PAYLOAD_LIMIT){
+        if(count > requestLimit){
             throw new PayloadTooLargeException();
         }
 
@@ -628,7 +629,25 @@ public class RequestService {
         });
     }
 
+    private int getRequestCountByTable(TraceApiTable table ,DBFilter[] filters, ViewJoin[][] joins) throws SQLException {
+        var v = new QueryBuilder()
+                .columns(table.column(ID).count().as("count"))
+                .joins(Stream.of(joins).flatMap(Arrays::stream).toArray(ViewJoin[]::new))
+                .filters(filters);
+        return v.build().execute(ds, rs -> {
+            if (rs.next()) {
+                return rs.getInt("count");
+            }
+            return 0;
+        });
+    }
+
     private List<DtoRestRequest> getRestRequestsByFilter(DBFilter[] filters, ViewJoin[][] joins) throws SQLException { //use criteria
+
+        var count = getRequestCountByTable(REST_REQUEST,filters,joins);
+        if(count > requestLimit){
+            throw new PayloadTooLargeException();
+        }
         var v = new QueryBuilder()
                 .columns(getColumns(
                         REST_REQUEST, ID, PROTOCOL, HOST, PATH, QUERY, METHOD, STATUS, START, END, THREAD, REMOTE, PARENT
@@ -750,6 +769,11 @@ public class RequestService {
     }
 
     private List<DtoRequest> getDatabaseRequestsByFilter(DBFilter[] filters, ViewJoin[][] joins, String type,NamedColumn[] mainType) throws SQLException {
+        var count = getRequestCountByTable(DATABASE_REQUEST,filters,joins);
+        if(count > requestLimit){
+            throw new PayloadTooLargeException();
+        }
+
         var v = new QueryBuilder()
                 .columns(mainType)
                 .columns(DBColumn.constant(type).as("sessiontype"))
@@ -930,6 +954,11 @@ public class RequestService {
     }
 
     public List<DtoRequest>getFtpRequestsByFilter(DBFilter[] filters, ViewJoin[][] joins, String type, NamedColumn[] mainType) throws SQLException {
+        var count = getRequestCountByTable(FTP_REQUEST,filters,joins);
+        if(count > requestLimit){
+            throw new PayloadTooLargeException();
+        }
+
         var v = new QueryBuilder()
                 .columns(mainType)
                 .columns(DBColumn.constant(type).as("sessiontype"))
@@ -1103,6 +1132,11 @@ public class RequestService {
     }
 
     public List<DtoRequest> getSmtpRequestsByFilter(DBFilter[] filters, ViewJoin[][] joins, String type, NamedColumn[] mainType) throws SQLException {
+        var count = getRequestCountByTable(SMTP_REQUEST,filters,joins);
+        if(count > requestLimit){
+            throw new PayloadTooLargeException();
+        }
+
         var v = new QueryBuilder()
                 .columns(mainType)
                 .columns(DBColumn.constant(type).as("sessiontype"))
@@ -1307,6 +1341,11 @@ public class RequestService {
     }
 
     public List<DtoRequest> getLdapRequestsByFilter(DBFilter[] filters, ViewJoin[][] joins, String type, NamedColumn[] mainType) throws SQLException {
+        var count = getRequestCountByTable(LDAP_REQUEST,filters,joins);
+        if(count > requestLimit){
+            throw new PayloadTooLargeException();
+        }
+
         var v = new QueryBuilder()
                 .columns(mainType)
                 .columns(DBColumn.constant(type).as("sessiontype"))
