@@ -24,11 +24,11 @@ public class FilterConstant {
     }
 
     public static OperationColumn countExceptions(ViewDecorator table){
-        return table.column(ERR_TYPE).beginCase().when(isNotNull(),1).orElse(0).sum();
+        return table.column(ERR_MSG).beginCase().when(isNotNull(),1).orElse(0).sum();
     }
 
     public static OperationColumn countNoExceptions(ViewDecorator table){
-        return table.column(ERR_TYPE).beginCase().when(isNull(),1).orElse(0).sum();
+        return table.column(ERR_MSG).beginCase().when(isNull(),1).orElse(0).sum();
     }
 
     public static DBColumn err(ViewDecorator table){ // temporary solution to be changed
