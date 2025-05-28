@@ -236,7 +236,7 @@ CREATE INDEX IF NOT EXISTS idx_rst_rqt_cd_rmt_ses ON e_rst_rqt(cd_rmt_ses);
 CREATE INDEX IF NOT EXISTS idx_rst_rqt_va_hst ON e_rst_rqt(va_hst);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_smtp_rqt_id_smtp_rqt_dh_str ON e_smtp_rqt(id_smtp_rqt, dh_str);
 CREATE INDEX IF NOT EXISTS idx_smtp_rqt_cd_prn_ses ON e_smtp_rqt(cd_prn_ses);
-CREATE INDEX IF NOT EXISTS idx_rst_rqt_va_hst ON e_ldap_rqt(va_hst);
+CREATE INDEX IF NOT EXISTS idx_rst_rqt_va_hst ON e_smtp_rqt(va_hst);
 CREATE INDEX IF NOT EXISTS idx_smtp_stg_cd_smtp_rqt ON e_smtp_stg(cd_smtp_rqt);
 CREATE INDEX IF NOT EXISTS idx_smtp_mail_cd_smtp_rqt ON e_smtp_mail(cd_smtp_rqt);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_ftp_rqt_id_ftp_rqt_dh_str ON e_ftp_rqt(id_ftp_rqt, dh_str);
