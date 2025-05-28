@@ -21,6 +21,7 @@ import static org.usf.inspect.server.config.TraceApiColumn.*;
 import static org.usf.inspect.server.config.TraceApiTable.MAIN_SESSION;
 import static org.usf.inspect.server.config.TraceApiTable.USER_ACTION;
 import static org.usf.inspect.server.config.constant.JoinConstant.MAIN_SESSION_JOIN;
+import static org.usf.inspect.server.config.constant.JoinConstant.USER_ACTION_JOIN;
 
 @Service
 @RequiredArgsConstructor
@@ -71,9 +72,9 @@ public class AnalyticService {
                         USER_ACTION.column(TYPE),
                         USER_ACTION.column(START).as("action_start")
                 )
-                .joins(USER_ACTION.join(MAIN_SESSION_JOIN).build())
+                .joins(MAIN_SESSION.join(USER_ACTION_JOIN).build())
                 .filters(MAIN_SESSION.column(USER).eq(user))
-                .filters(MAIN_SESSION.column(START).gt(from(date)))
+                .filters(MAIN_SESSION.column(START).ge(from(date)))
                 .offset(offSet)
                 .limit(limit)
                 .orders(MAIN_SESSION.column(START).asc(), USER_ACTION.column(START).asc());
@@ -97,7 +98,12 @@ public class AnalyticService {
                     session.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                     session.setName(rs.getString("session_name"));
                     session.setLocation(rs.getString(LOCATION.reference()));
-                    session.setUserActions(new ArrayList<>(List.of(userAction)));
+                    if(userAction.getStart() == null) {
+                        session.setUserActions(new ArrayList<>());
+                    } else {
+                        session.setUserActions(new ArrayList<>(List.of(userAction)));
+                    }
+
                     sessions.add(session);
                 } else {
                     session.getUserActions().add(userAction);
