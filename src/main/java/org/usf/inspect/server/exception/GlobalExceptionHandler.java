@@ -15,7 +15,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handlePayloadTooLargeException(PayloadTooLargeException ex){
         Map<String, String> body = new HashMap<>();
         body.put("error","PAYLOAD_TOO_LARGE");
-        body.put("message","Donées trop volumineuses, Veuillez affiner votre requête");
+        body.put("message","Données trop volumineuses, Veuillez affiner votre requête");
         return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(body);
     }
 }
