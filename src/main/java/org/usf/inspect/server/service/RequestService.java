@@ -548,10 +548,14 @@ public class RequestService {
 
     public List<DtoRestRequest> getRestRequestsLazyForSearch(JqueryRequestSessionFilter jsf) throws SQLException {
         List<DtoRestRequest> mergeList= new ArrayList<>();
+        mergeList.addAll(getRestRequestsByFilter(jsf.filters(REST_REQUEST).toArray(DBFilter[]::new), // todo add start filter on rest_session
+                                                 new ViewJoin[][]{REST_REQUEST.join(EXCEPTION_JOIN).build(),REST_REQUEST.join(REST_SESSION_JOIN).build(),REST_SESSION.join(INSTANCE_JOIN).build()},
+                                                 "rest",
+                                                 new ColumnProxy[]{DBColumn.constant(null).as("type")}));
         mergeList.addAll(getRestRequestsByFilter(jsf.filters(REST_REQUEST).toArray(DBFilter[]::new),
-                                                 new ViewJoin[][]{REST_REQUEST.join(EXCEPTION_JOIN).build(),REST_REQUEST.join(REST_SESSION_JOIN).build(),REST_SESSION.join(INSTANCE_JOIN).build()}));
-        mergeList.addAll(getRestRequestsByFilter(jsf.filters(REST_REQUEST).toArray(DBFilter[]::new),
-                                                 new ViewJoin[][]{REST_REQUEST.join(EXCEPTION_JOIN).build(),REST_REQUEST.join(MAIN_SESSION_JOIN).build(),MAIN_SESSION.join(INSTANCE_JOIN).build()}));
+                                                 new ViewJoin[][]{REST_REQUEST.join(EXCEPTION_JOIN).build(),REST_REQUEST.join(MAIN_SESSION_JOIN).build(),MAIN_SESSION.join(INSTANCE_JOIN).build()},
+                                                "main",
+                                                getColumns(MAIN_SESSION,TYPE)));
         return  mergeList;
     }
 
@@ -630,8 +634,9 @@ public class RequestService {
     }
 
     private int getRequestCountByTable(TraceApiTable table ,DBFilter[] filters, ViewJoin[][] joins) throws SQLException {
+        //todo : add start filter on rest_session
         var v = new QueryBuilder()
-                .columns(table.column(ID).count().as("count"))
+                .columns(table.column(PARENT).count().as("count"))
                 .joins(Stream.of(joins).flatMap(Arrays::stream).toArray(ViewJoin[]::new))
                 .filters(filters);
         return v.build().execute(ds, rs -> {
@@ -642,13 +647,15 @@ public class RequestService {
         });
     }
 
-    private List<DtoRestRequest> getRestRequestsByFilter(DBFilter[] filters, ViewJoin[][] joins) throws SQLException { //use criteria
+    private List<DtoRestRequest> getRestRequestsByFilter(DBFilter[] filters, ViewJoin[][] joins, String type,NamedColumn[] mainType) throws SQLException { //use criteria
 
         var count = getRequestCountByTable(REST_REQUEST,filters,joins);
         if(count > requestLimit){
             throw new PayloadTooLargeException();
         }
         var v = new QueryBuilder()
+                .columns(mainType)
+                .columns(DBColumn.constant(type).as("sessiontype"))
                 .columns(getColumns(
                         REST_REQUEST, ID, PROTOCOL, HOST, PATH, QUERY, METHOD, STATUS, START, END, THREAD, REMOTE, PARENT
                 ))
@@ -663,6 +670,7 @@ public class RequestService {
                 DtoRestRequest out = new DtoRestRequest();
                 out.setIdRequest(rs.getLong(ID.reference()));
                 out.setId(rs.getString(REMOTE.reference()));
+                out.setParent(rs.getString(PARENT.reference()));
                 out.setProtocol(rs.getString(PROTOCOL.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setPath(rs.getString(PATH.reference()));
@@ -672,6 +680,8 @@ public class RequestService {
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setThreadName(rs.getString(THREAD.reference()));
+                out.setType(rs.getString(TYPE.reference()));
+                out.setSessionType(rs.getString("sessiontype"));
                 out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 out.setAppName(rs.getString(APP_NAME.reference()));
                 outs.add(out);
