@@ -136,7 +136,7 @@ public class RequestService {
                 .columns(DBColumn.constant(null).as("schema"))
                 .columns(DBColumn.constant("SMTP").as("type"))
                 .distinct(true)
-                .joins(REST_SESSION.join(SMTP_REQUEST_JOIN))
+                .joins(REST_SESSION.join("request"))
                 .joins(REST_SESSION.join(INSTANCE_JOIN))
                 .filters(SMTP_REQUEST.column(HOST).notNull())
                 .filters(REST_SESSION.column(START).ge(from(start)))
@@ -1548,17 +1548,20 @@ public class RequestService {
     public String[] getRequestsHostsByType(String  type, String environement, Instant start, Instant end) throws SQLException{
         var Table = TraceApiTable.valueOf(RequestType.valueOf(type).getTable());
         var v1 = new QueryComposer()
-                .columns(getColumns(Table,HOST))
+                .distinct(true)
+                .columns(Table.column(HOST))
+        		.subViewQuery(INSTANCE.view(), sub-> sub.filters(INSTANCE.column(ENVIRONEMENT).eq(environement)))
                 .filters(Table.column(START).ge(from(start)))
                 .filters(Table.column(START).lt(from(end)))
                 .filters(Table.column(PARENT)
-                .in(SessionIdByType_Environement_period("rest_session",environement,start,end))).distinct(true)
+                .in(SessionIdByType_Environement_period("rest_session",environement,start,end)))
                 .unions(new QueryComposer()
+                        .distinct(true)
                         .columns(getColumns(Table,HOST))
                         .filters(Table.column(START).ge(from(start)))
                         .filters(Table.column(START).lt(from(end)))
                         .filters(Table.column(PARENT)
-                        .in(SessionIdByType_Environement_period("main_session",environement,start,end))).distinct(true).compose().asUnion(true));
+                        .in(SessionIdByType_Environement_period("main_session",environement,start,end))).compose().asUnion(true));
       
         return INSPECT.execute(v1, toArray(rs -> rs.getString(HOST.reference()), String[]::new));
     }
@@ -1568,12 +1571,12 @@ public class RequestService {
         var v  = new QueryComposer()
                 .columns(getColumns(Table,ID))
                 .joins(Table.join(INSTANCE_JOIN))
-                .filters(INSTANCE.column(ENVIRONEMENT).eq(environement))
+//                .filters(INSTANCE.column(ENVIRONEMENT).eq(environement))
                 .filters(Table.column(START).ge(from(start)))
                 .filters(Table.column(START).lt(from(end)));
-        if(Objects.equals(type, "rest_session")){
-            v.filters(INSTANCE.column(TYPE).eq("SERVER"));
-        }
+//        if(Objects.equals(type, "rest_session")){
+//            v.filters(INSTANCE.column(TYPE).eq("SERVER"));
+//        }
 
         return v.compose().asColumn();
     }
