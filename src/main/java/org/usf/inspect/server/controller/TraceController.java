@@ -16,6 +16,9 @@ import org.usf.inspect.server.model.filter.JqueryRequestSessionFilter;
 import org.usf.inspect.server.service.AnalyticService;
 import org.usf.inspect.server.service.RequestService;
 import org.usf.inspect.server.service.SessionQueueService;
+import org.usf.jquery.core.QueryComposer;
+import org.usf.jquery.web.QueryRequest;
+import org.usf.jquery.web.QueryRequestFilter;
 
 import java.sql.SQLException;
 import java.time.Instant;
@@ -119,9 +122,24 @@ public class TraceController {
                 .map(o -> ok().cacheControl(maxAge(1, DAYS)).body(o))
                 .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null)).getBody();
     }
+    
+//    @GetMapping("request/rest/{id}") //id_req=123 | prnt_cd = 123
+//    public RestRequest getRestRequestById2 (
+//            @QueryRequestFilter(
+//            view = "ID", 
+//            column = "count",
+//            join = "exception",
+//            filters = {},
+//            order = "start") QueryComposer query) throws SQLException {
+//        return Optional.ofNullable(requestService.getRestRequestsCompleteById(id))
+//                .map(o -> ok().cacheControl(maxAge(1, DAYS)).body(o))
+//                .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null)).getBody();
+//    }
+    
+    
 
     @GetMapping("request/{type}/hosts")
-    public List<String> getRequestsHostsbyType(
+    public String[] getRequestsHostsbyType(
             @PathVariable String type,
             @RequestParam(name = "env") String environment,
             @RequestParam(name = "start") Instant start,

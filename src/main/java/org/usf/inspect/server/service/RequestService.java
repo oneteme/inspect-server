@@ -45,6 +45,7 @@ import static org.usf.inspect.server.config.TraceApiColumn.*;
 import static org.usf.inspect.server.config.TraceApiDatabase.INSPECT;
 import static org.usf.inspect.server.config.TraceApiTable.*;
 import static org.usf.inspect.server.config.constant.JoinConstant.*;
+import static org.usf.jquery.core.Mappers.toArray;
 
 @Service
 @RequiredArgsConstructor
@@ -547,16 +548,38 @@ public class RequestService {
         return getRestRequestsLazy(Collections.singletonList(cdSession));
     }
 
-    public List<DtoRestRequest> getRestRequestsLazyForSearch(JqueryRequestSessionFilter jsf) throws SQLException {
+    public List<DtoRestRequest> getRestRequestsLazyForSearch(JqueryRequestSessionFilter jsf) throws SQLException { // garbage
         List<DtoRestRequest> mergeList= new ArrayList<>();
-        mergeList.addAll(getRestRequestsByFilter(jsf.filters(REST_REQUEST).toArray(DBFilter[]::new), // todo add start filter on rest_session
-                                                 new ViewJoin[][]{REST_REQUEST.join(EXCEPTION_JOIN),REST_REQUEST.join(REST_SESSION_JOIN),REST_SESSION.join(INSTANCE_JOIN)},
-                                                 "rest",
-                                                 new ColumnProxy[]{DBColumn.constant(null).as("type")}));
-        mergeList.addAll(getRestRequestsByFilter(jsf.filters(REST_REQUEST).toArray(DBFilter[]::new),
-                                                 new ViewJoin[][]{REST_REQUEST.join(EXCEPTION_JOIN),REST_REQUEST.join(MAIN_SESSION_JOIN),MAIN_SESSION.join(INSTANCE_JOIN)},
-                                                "main",
-                                                getColumns(MAIN_SESSION,TYPE)));
+
+        List<DBFilter> restFilters = (ArrayList)jsf.filters(REST_REQUEST);
+        restFilters.add(REST_SESSION.column(START).ge(from(jsf.getStart())));
+        restFilters.add(REST_SESSION.column(START).lt(from(jsf.getEnd())));
+
+        mergeList.addAll(getRestRequestsByFilter(
+                restFilters.toArray(DBFilter[]::new),
+                new ViewJoin[][]{
+                        REST_REQUEST.join(EXCEPTION_JOIN),
+                        REST_REQUEST.join(REST_SESSION_JOIN),
+                        REST_SESSION.join(INSTANCE_JOIN)
+                },
+                "rest",
+                new ColumnProxy[]{DBColumn.constant(null).as("type")}
+        ));
+
+        List<DBFilter> mainFilters = (ArrayList)jsf.filters(REST_REQUEST);
+        mainFilters.add(MAIN_SESSION.column(START).ge(from(jsf.getStart())));
+        mainFilters.add(MAIN_SESSION.column(START).lt(from(jsf.getEnd())));
+
+        mergeList.addAll(getRestRequestsByFilter(
+                mainFilters.toArray(DBFilter[]::new),
+                new ViewJoin[][]{
+                        REST_REQUEST.join(EXCEPTION_JOIN),
+                        REST_REQUEST.join(MAIN_SESSION_JOIN),
+                        MAIN_SESSION.join(INSTANCE_JOIN)
+                },
+                "main",
+                getColumns(MAIN_SESSION, TYPE)
+        ));
         return  mergeList;
     }
 
@@ -768,11 +791,19 @@ public class RequestService {
 
     public List<DtoRequest> getDatabaseRequestsLazyForSearch(JqueryRequestFilter jsf) throws SQLException{// todo: fix this
         List<DtoRequest> mergeList= new ArrayList<>();
-        mergeList.addAll(getDatabaseRequestsByFilter(jsf.filters(DATABASE_REQUEST).toArray(DBFilter[]::new),
-                new ViewJoin[][]{DATABASE_REQUEST.join(EXCEPTION_JOIN),DATABASE_REQUEST.join(REST_SESSION_JOIN),REST_SESSION.join(INSTANCE_JOIN)},
+
+        List<DBFilter> restFilters = (ArrayList)jsf.filters(DATABASE_REQUEST);
+        restFilters.add(REST_SESSION.column(START).ge(from(jsf.getStart())));
+        restFilters.add(REST_SESSION.column(START).lt(from(jsf.getEnd())));
+        mergeList.addAll(getDatabaseRequestsByFilter(restFilters.toArray(DBFilter[]::new),
+                new ViewJoin[][]{DATABASE_REQUEST.join(EXCEPTION_JOIN), DATABASE_REQUEST.join(REST_SESSION_JOIN),REST_SESSION.join(INSTANCE_JOIN)},
                 "rest",
                 new ColumnProxy[]{DBColumn.constant(null).as("type")}));
-        mergeList.addAll(getDatabaseRequestsByFilter(jsf.filters(DATABASE_REQUEST).toArray(DBFilter[]::new),
+
+        List<DBFilter> mainFilters = (ArrayList)jsf.filters(DATABASE_REQUEST);
+        mainFilters.add(MAIN_SESSION.column(START).ge(from(jsf.getStart())));
+        mainFilters.add(MAIN_SESSION.column(START).lt(from(jsf.getEnd())));
+        mergeList.addAll(getDatabaseRequestsByFilter(mainFilters.toArray(DBFilter[]::new),
                 new ViewJoin[][]{DATABASE_REQUEST.join(EXCEPTION_JOIN),DATABASE_REQUEST.join(MAIN_SESSION_JOIN),MAIN_SESSION.join(INSTANCE_JOIN)},
                 "main",
                 getColumns(MAIN_SESSION,TYPE)));
@@ -953,11 +984,19 @@ public class RequestService {
 
     public List<DtoRequest> getFtpRequestsLazyForSearch(JqueryRequestFilter jsf) throws SQLException{
         List<DtoRequest> mergeList= new ArrayList<>();
-        mergeList.addAll(getFtpRequestsByFilter(jsf.filters(FTP_REQUEST).toArray(DBFilter[]::new),
+
+        List<DBFilter> restFilters = (ArrayList)jsf.filters(FTP_REQUEST);
+        restFilters.add(REST_SESSION.column(START).ge(from(jsf.getStart())));
+        restFilters.add(REST_SESSION.column(START).lt(from(jsf.getEnd())));
+        mergeList.addAll(getFtpRequestsByFilter(restFilters.toArray(DBFilter[]::new),
                 new ViewJoin[][]{FTP_REQUEST.join(EXCEPTION_JOIN),FTP_REQUEST.join(REST_SESSION_JOIN),REST_SESSION.join(INSTANCE_JOIN)},
                 "rest",
                 new ColumnProxy[]{DBColumn.constant(null).as("type")}));
-        mergeList.addAll(getFtpRequestsByFilter(jsf.filters(FTP_REQUEST).toArray(DBFilter[]::new),
+
+        List<DBFilter> mainFilters = (ArrayList)jsf.filters(FTP_REQUEST);
+        mainFilters.add(MAIN_SESSION.column(START).ge(from(jsf.getStart())));
+        mainFilters.add(MAIN_SESSION.column(START).lt(from(jsf.getEnd())));
+       mergeList.addAll(getFtpRequestsByFilter(mainFilters.toArray(DBFilter[]::new),
                 new ViewJoin[][]{FTP_REQUEST.join(EXCEPTION_JOIN),FTP_REQUEST.join(MAIN_SESSION_JOIN),MAIN_SESSION.join(INSTANCE_JOIN)},
                 "main",
                 getColumns(MAIN_SESSION,TYPE)));
@@ -1131,11 +1170,19 @@ public class RequestService {
 
     public List<DtoRequest> getSmtpRequestsLazyForSearch(JqueryRequestFilter jsf) throws SQLException{
         List<DtoRequest> mergeList= new ArrayList<>();
-        mergeList.addAll(getSmtpRequestsByFilter(jsf.filters(SMTP_REQUEST).toArray(DBFilter[]::new),
+
+        List<DBFilter> restFilters = (ArrayList)jsf.filters(SMTP_REQUEST);
+        restFilters.add(REST_SESSION.column(START).ge(from(jsf.getStart())));
+        restFilters.add(REST_SESSION.column(START).lt(from(jsf.getEnd())));
+        mergeList.addAll(getSmtpRequestsByFilter(restFilters.toArray(DBFilter[]::new),
                 new ViewJoin[][]{SMTP_REQUEST.join(EXCEPTION_JOIN),SMTP_REQUEST.join(REST_SESSION_JOIN),REST_SESSION.join(INSTANCE_JOIN)},
                 "rest",
                 new ColumnProxy[]{DBColumn.constant(null).as("type")}));
-        mergeList.addAll(getSmtpRequestsByFilter(jsf.filters(SMTP_REQUEST).toArray(DBFilter[]::new),
+
+        List<DBFilter> mainFilters = (ArrayList)jsf.filters(SMTP_REQUEST);
+        mainFilters.add(MAIN_SESSION.column(START).ge(from(jsf.getStart())));
+        mainFilters.add(MAIN_SESSION.column(START).lt(from(jsf.getEnd())));
+        mergeList.addAll(getSmtpRequestsByFilter(mainFilters.toArray(DBFilter[]::new),
                 new ViewJoin[][]{SMTP_REQUEST.join(EXCEPTION_JOIN),SMTP_REQUEST.join(MAIN_SESSION_JOIN),MAIN_SESSION.join(INSTANCE_JOIN)},
                 "main",
                 getColumns(MAIN_SESSION,TYPE)));
@@ -1339,11 +1386,19 @@ public class RequestService {
 
     public List<DtoRequest> getLdapRequestsLazyForSearch(JqueryRequestFilter jsf) throws SQLException{
         List<DtoRequest> mergeList= new ArrayList<>();
-        mergeList.addAll(getLdapRequestsByFilter(jsf.filters(LDAP_REQUEST).toArray(DBFilter[]::new),
+
+        List<DBFilter> restFilters = (ArrayList)jsf.filters(LDAP_REQUEST);
+        restFilters.add(REST_SESSION.column(START).ge(from(jsf.getStart())));
+        restFilters.add(REST_SESSION.column(START).lt(from(jsf.getEnd())));
+        mergeList.addAll(getLdapRequestsByFilter(restFilters.toArray(DBFilter[]::new),
                 new ViewJoin[][]{LDAP_REQUEST.join(EXCEPTION_JOIN),LDAP_REQUEST.join(REST_SESSION_JOIN),REST_SESSION.join(INSTANCE_JOIN)},
                 "rest",
                 new ColumnProxy[]{DBColumn.constant(null).as("type")}));
-        mergeList.addAll(getLdapRequestsByFilter(jsf.filters(LDAP_REQUEST).toArray(DBFilter[]::new),
+
+        List<DBFilter> mainFilters = (ArrayList)jsf.filters(LDAP_REQUEST);
+        mainFilters.add(MAIN_SESSION.column(START).ge(from(jsf.getStart())));
+        mainFilters.add(MAIN_SESSION.column(START).lt(from(jsf.getEnd())));
+        mergeList.addAll(getLdapRequestsByFilter(mainFilters.toArray(DBFilter[]::new),
                 new ViewJoin[][]{LDAP_REQUEST.join(EXCEPTION_JOIN),LDAP_REQUEST.join(MAIN_SESSION_JOIN),MAIN_SESSION.join(INSTANCE_JOIN)},
           "main",
                 getColumns(MAIN_SESSION,TYPE)));
@@ -1452,18 +1507,14 @@ public class RequestService {
                 .joins(LDAP_STAGE.join(EXCEPTION_JOIN))
                 .filters(LDAP_STAGE.column(PARENT).eq(id))
                 .orders(LDAP_STAGE.column(ORDER).order());
-        return v.build().execute(ds, rs -> {
-            List<NamingRequestStage> actions = new ArrayList<>();
-            while (rs.next()) {
+        return v.build().execute(ds, Mappers.toList(rs -> {
                 var action = new NamingRequestStage();
                 action.setName(rs.getString(NAME.reference()));
                 action.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 action.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 action.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
-                actions.add(action);
-            }
-            return actions;
-        });
+                return action;
+        }));
     }
 
     public Map<Long, List<String>> getLdapRequestStages(Long[] ids ) throws SQLException{
@@ -1494,7 +1545,7 @@ public class RequestService {
     }
 
 
-    public List<String> getRequestsHostsByType(String  type, String environement, Instant start, Instant end) throws SQLException{
+    public String[] getRequestsHostsByType(String  type, String environement, Instant start, Instant end) throws SQLException{
         var Table = TraceApiTable.valueOf(RequestType.valueOf(type).getTable());
         var v1 = new QueryComposer()
                 .columns(getColumns(Table,HOST))
@@ -1508,16 +1559,8 @@ public class RequestService {
                         .filters(Table.column(START).lt(from(end)))
                         .filters(Table.column(PARENT)
                         .in(SessionIdByType_Environement_period("main_session",environement,start,end))).distinct(true).compose().asUnion(true));
-
-        Object[] args = new Object[]{from(start), from(end), environement, from(start), from(end), "SERVER", from(start), from(end), environement, from(start), from(end)};
-        int[] argTypes = new int[]{TIMESTAMP, TIMESTAMP, VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, TIMESTAMP, TIMESTAMP};
-        return template.query(v1.build().toString(), args, argTypes, rs -> {
-            List<String> hosts = new ArrayList<>();
-            while (rs.next()) {
-                hosts.add(rs.getString(HOST.reference()));
-            }
-            return hosts;
-        });
+      
+        return INSPECT.execute(v1, toArray(rs -> rs.getString(HOST.reference()), String[]::new));
     }
 
     public SingleQueryColumn SessionIdByType_Environement_period(String type, String environement, Instant start, Instant end){
