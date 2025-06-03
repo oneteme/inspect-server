@@ -1547,33 +1547,34 @@ public class RequestService {
 
     public String[] getRequestsHostsByType(String  type, String environement, Instant start, Instant end) throws SQLException{
         var Table = TraceApiTable.valueOf(RequestType.valueOf(type).getTable());
+        var mask = RequestMask.valueOf(type.toUpperCase()).getValue(); //TODO
         var v1 = new QueryComposer()
                 .distinct(true)
                 .columns(Table.column(HOST))
         		.subViewQuery(INSTANCE.view(), sub-> sub.filters(INSTANCE.column(ENVIRONEMENT).eq(environement)))
                 .filters(Table.column(START).ge(from(start)))
                 .filters(Table.column(START).lt(from(end)))
-                .filters(Table.column(PARENT)
-                .in(SessionIdByType_Environement_period("rest_session",environement,start,end)))
+                .filters(Table.column(PARENT).in(SessionIdByType_Environement_period("rest_session",environement,start,end,mask)))
                 .unions(new QueryComposer()
                         .distinct(true)
                         .columns(getColumns(Table,HOST))
                         .filters(Table.column(START).ge(from(start)))
                         .filters(Table.column(START).lt(from(end)))
-                        .filters(Table.column(PARENT)
-                        .in(SessionIdByType_Environement_period("main_session",environement,start,end))).compose().asUnion(true));
+                        .filters(Table.column(PARENT).in(SessionIdByType_Environement_period("main_session",environement,start,end,mask)))
+                        .compose().asUnion(true));
       
         return INSPECT.execute(v1, toArray(rs -> rs.getString(HOST.reference()), String[]::new));
     }
 
-    public SingleQueryColumn SessionIdByType_Environement_period(String type, String environement, Instant start, Instant end){
+    public SingleQueryColumn SessionIdByType_Environement_period(String type, String environement, Instant start, Instant end, int mask){
         var Table = TraceApiTable.valueOf(RequestType.valueOf(type).getTable());
         var v  = new QueryComposer()
                 .columns(getColumns(Table,ID))
                 .joins(Table.join(INSTANCE_JOIN))
+                .filters(Table.column(START).ge(from(start)),
+                		Table.column(START).lt(from(end)), 
+                		Table.column(MASK).bitAnd(mask).gt(0));
 //                .filters(INSTANCE.column(ENVIRONEMENT).eq(environement))
-                .filters(Table.column(START).ge(from(start)))
-                .filters(Table.column(START).lt(from(end)));
 //        if(Objects.equals(type, "rest_session")){
 //            v.filters(INSTANCE.column(TYPE).eq("SERVER"));
 //        }

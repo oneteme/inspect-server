@@ -2,6 +2,7 @@ package org.usf.inspect.server;
 
 import static org.usf.inspect.server.Utils.isEmpty;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.usf.inspect.server.model.Session;
 
@@ -14,6 +15,7 @@ import org.usf.inspect.server.model.Session;
  * @author u$f
  *
  */
+@Getter
 @RequiredArgsConstructor
 public enum RequestMask {
 	
