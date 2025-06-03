@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.usf.inspect.server.model.MainSession;
 import org.usf.inspect.server.model.UserAction;
 import org.usf.jquery.core.QueryBuilder;
+import org.usf.jquery.core.QueryComposer;
 import org.usf.jquery.core.ResultSetMapper;
 
 import javax.sql.DataSource;
@@ -44,7 +45,7 @@ public class AnalyticService {
     };
 
     public List<UserAction> getUserActions(@NonNull String idSession) throws SQLException {
-        var q = new QueryBuilder()
+        var q = new QueryComposer()
                 .columns(
                         USER_ACTION.column(NAME),
                         USER_ACTION.column(NODE_NAME),
@@ -58,7 +59,7 @@ public class AnalyticService {
     }
 
     public List<MainSession> getUserActions(@NonNull String user, @NonNull Instant date, @NonNull Integer offSet, @NonNull Integer limit) throws SQLException {
-        var q = new QueryBuilder()
+        var q = new QueryComposer()
                 .columns(
                         MAIN_SESSION.column(ID),
                         MAIN_SESSION.column(START).as("session_start"),
@@ -72,7 +73,7 @@ public class AnalyticService {
                         USER_ACTION.column(TYPE),
                         USER_ACTION.column(START).as("action_start")
                 )
-                .joins(MAIN_SESSION.join(USER_ACTION_JOIN).build())
+                .joins(MAIN_SESSION.join(USER_ACTION_JOIN))
                 .filters(MAIN_SESSION.column(USER).eq(user))
                 .filters(MAIN_SESSION.column(START).ge(from(date)))
                 .offset(offSet)
