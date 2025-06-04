@@ -1,16 +1,17 @@
 package org.usf.inspect.server.service;
 
-import lombok.RequiredArgsConstructor;
+import static org.usf.inspect.core.Helper.log;
+
+import java.time.YearMonth;
+import java.util.Map;
+
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.server.model.Partition;
 import org.usf.inspect.server.model.PartitionedTable;
 
-import java.time.YearMonth;
-import java.util.Map;
-
-import static org.usf.inspect.core.Helper.log;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor

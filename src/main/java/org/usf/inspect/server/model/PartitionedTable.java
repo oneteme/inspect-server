@@ -1,10 +1,10 @@
 package org.usf.inspect.server.model;
 
-import lombok.RequiredArgsConstructor;
-
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
+
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public enum PartitionedTable {

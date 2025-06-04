@@ -17,10 +17,10 @@ import java.util.Collection;
 
 import org.usf.inspect.server.config.TraceApiTable;
 import org.usf.jquery.core.DBFilter;
+import org.usf.jquery.core.LogicalOperator;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.usf.jquery.core.LogicalOperator;
 
 @Getter
 @Setter

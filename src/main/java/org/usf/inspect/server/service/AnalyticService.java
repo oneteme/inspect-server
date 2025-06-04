@@ -1,28 +1,35 @@
 package org.usf.inspect.server.service;
 
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.usf.inspect.server.model.MainSession;
-import org.usf.inspect.server.model.UserAction;
-import org.usf.jquery.core.QueryBuilder;
-import org.usf.jquery.core.QueryComposer;
-import org.usf.jquery.core.ResultSetMapper;
+import static java.sql.Timestamp.from;
+import static org.usf.inspect.server.Utils.fromNullableTimestamp;
+import static org.usf.inspect.server.config.TraceApiColumn.END;
+import static org.usf.inspect.server.config.TraceApiColumn.ID;
+import static org.usf.inspect.server.config.TraceApiColumn.LOCATION;
+import static org.usf.inspect.server.config.TraceApiColumn.NAME;
+import static org.usf.inspect.server.config.TraceApiColumn.NODE_NAME;
+import static org.usf.inspect.server.config.TraceApiColumn.PARENT;
+import static org.usf.inspect.server.config.TraceApiColumn.START;
+import static org.usf.inspect.server.config.TraceApiColumn.TYPE;
+import static org.usf.inspect.server.config.TraceApiColumn.USER;
+import static org.usf.inspect.server.config.TraceApiTable.MAIN_SESSION;
+import static org.usf.inspect.server.config.TraceApiTable.USER_ACTION;
+import static org.usf.inspect.server.config.constant.JoinConstant.USER_ACTION_JOIN;
 
-import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import static java.sql.Timestamp.from;
-import static org.usf.inspect.server.Utils.fromNullableTimestamp;
-import static org.usf.inspect.server.config.TraceApiColumn.*;
-import static org.usf.inspect.server.config.TraceApiTable.MAIN_SESSION;
-import static org.usf.inspect.server.config.TraceApiTable.USER_ACTION;
-import static org.usf.inspect.server.config.constant.JoinConstant.MAIN_SESSION_JOIN;
-import static org.usf.inspect.server.config.constant.JoinConstant.USER_ACTION_JOIN;
+import javax.sql.DataSource;
+
+import org.springframework.stereotype.Service;
+import org.usf.inspect.server.model.MainSession;
+import org.usf.inspect.server.model.UserAction;
+import org.usf.jquery.core.QueryComposer;
+import org.usf.jquery.core.ResultSetMapper;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor

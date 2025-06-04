@@ -1,12 +1,15 @@
 package org.usf.inspect.server;
 
-import lombok.NonNull;
-import org.usf.inspect.server.model.Query;
+import static org.usf.inspect.server.Utils.nArg;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.*;
-import static org.usf.inspect.server.Utils.nArg;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.usf.inspect.server.model.Query;
+
+import lombok.NonNull;
 
 public class QueryLoader {
 

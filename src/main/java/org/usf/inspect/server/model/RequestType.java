@@ -1,6 +1,5 @@
 package org.usf.inspect.server.model;
 
-import org.usf.inspect.server.config.TraceApiDatabase;
 import org.usf.inspect.server.config.TraceApiTable;
 
 import lombok.Getter;

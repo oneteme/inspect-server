@@ -1,22 +1,12 @@
 package org.usf.inspect.server.config;
 
-import static java.lang.Integer.parseInt;
-import static org.usf.inspect.server.config.TraceApiColumn.HOST;
-import static org.usf.inspect.server.config.TraceApiColumn.ID;
-import static org.usf.inspect.server.config.TraceApiColumn.PARENT;
-import static org.usf.inspect.server.config.TraceApiColumn.PORT;
-import static org.usf.inspect.server.config.TraceApiColumn.START;
-import static org.usf.jquery.core.DBColumn.allColumns;
-import static org.usf.jquery.core.ViewJoin.innerJoin;
-
 import java.util.function.Function;
 
 import org.usf.inspect.server.config.constant.ColumnConstant;
 import org.usf.inspect.server.config.constant.JoinConstant;
-import org.usf.jquery.core.*;
+import org.usf.jquery.core.ViewJoin;
 import org.usf.jquery.web.Builder;
 import org.usf.jquery.web.ColumnDecorator;
-import org.usf.jquery.web.ViewBuilder;
 import org.usf.jquery.web.ViewDecorator;
 
 import lombok.NonNull;

@@ -1,6 +1,10 @@
 package org.usf.inspect.server.model.filter;
 
-import static org.usf.inspect.server.config.TraceApiColumn.*;
+import static org.usf.inspect.server.config.TraceApiColumn.ERR_MSG;
+import static org.usf.inspect.server.config.TraceApiColumn.ERR_TYPE;
+import static org.usf.inspect.server.config.TraceApiColumn.LOCATION;
+import static org.usf.inspect.server.config.TraceApiColumn.NAME;
+import static org.usf.inspect.server.config.TraceApiColumn.TYPE;
 import static org.usf.jquery.core.Utils.isEmpty;
 
 import java.time.Instant;
