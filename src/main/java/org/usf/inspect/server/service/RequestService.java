@@ -276,6 +276,7 @@ public class RequestService {
     public List<Session> getRestSessionsForDump(String env, String appName, Instant start, Instant end) throws SQLException {
         var cte = new QueryBuilder()
                 .columns(getColumns(INSTANCE, ID, START))
+                .filters(INSTANCE.column(START).le(from(end)))
                 .filters(INSTANCE.column(ENVIRONEMENT).eq(env))
                 .filters(INSTANCE.column(APP_NAME).eq(appName)).asView();
         var v = new QueryBuilder()
@@ -287,7 +288,6 @@ public class RequestService {
                         START, END, USER, THREAD, HOST, ERR_MSG, ERR_TYPE
                     )
                 )
-                .filters(REST_SESSION.column(START).ge(new QueryBuilder().columns(new ViewColumn("start", cte, JDBCType.TIMESTAMP, null).max().as("dh_max")).asView().asColumn()))
                 .filters(REST_SESSION.column(END).ge(from(start)).and(REST_SESSION.column(START).le(from(end))))
                 .filters(REST_SESSION.column(INSTANCE_ENV).in(new QueryBuilder().columns(new ViewColumn("id", cte, JDBCType.VARCHAR, null)).asView().asColumn()))
                 .orders(REST_SESSION.column(START).order());
