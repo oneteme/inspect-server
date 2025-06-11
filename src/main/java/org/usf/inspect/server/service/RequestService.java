@@ -406,6 +406,7 @@ public class RequestService {
 
         var cte = new QueryBuilder()
                 .columns(getColumns(INSTANCE, ID, START))
+                .filters(INSTANCE.column(START).le(from(end)))
                 .filters(INSTANCE.column(ENVIRONEMENT).eq(env))
                 .filters(INSTANCE.column(APP_NAME).eq(appName)).asView();
         var v = new QueryBuilder()
@@ -415,7 +416,6 @@ public class RequestService {
                                 MAIN_SESSION, ID, NAME, START, END, TYPE, LOCATION, THREAD, ERR_TYPE, ERR_MSG
                         )
                 )
-                .filters(MAIN_SESSION.column(START).ge(new QueryBuilder().columns(new ViewColumn("start", cte, JDBCType.TIMESTAMP, null).max().as("dh_max")).asView().asColumn()))
                 .filters(MAIN_SESSION.column(END).ge(from(start)).and(MAIN_SESSION.column(START).le(from(end))))
                 .filters(MAIN_SESSION.column(INSTANCE_ENV).in(new QueryBuilder().columns(new ViewColumn("id", cte, JDBCType.VARCHAR, null)).asView().asColumn()))
                 .orders(MAIN_SESSION.column(START).order());
