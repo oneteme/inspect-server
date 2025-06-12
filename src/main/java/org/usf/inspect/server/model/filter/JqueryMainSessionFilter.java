@@ -48,8 +48,7 @@ public class JqueryMainSessionFilter extends JquerySessionFilter {
             filters.add(table.column(LOCATION).contentLike(getLocation()));
         }
 
-        if(!isEmpty(getRangestatus())){
-            if(getRangestatus().length < 2) {
+        if(!isEmpty(getRangestatus()) && getRangestatus().length < 2){
                 DBFilter filter;
                 if(Boolean.parseBoolean(getRangestatus()[0])){
                     filter = table.column(ERR_TYPE).coalesce("null").eq("null").and(table.column(ERR_MSG).coalesce("null").eq("null"));
@@ -57,7 +56,6 @@ public class JqueryMainSessionFilter extends JquerySessionFilter {
                     filter = table.column(ERR_TYPE).coalesce("null").ne("null").and(table.column(ERR_MSG).coalesce("null").ne("null"));
                 }
                 filters.add(filter);
-            }
         }
         return filters;
     }

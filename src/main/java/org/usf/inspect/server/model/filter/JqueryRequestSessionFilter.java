@@ -100,13 +100,4 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
         return filters;
     }
 
-   /* static DBFilter statusCriteria(TraceApiTable table, int status){ //5|4|2
-        var c = table.column(STATUS);
-        switch (status){
-            case 2: return c.ge(200).and(c.lt(300));
-            case 4: return c.ge(400).and(c.lt(500));
-            case 5: return c.ge(500);
-
-        }
-    }*/
 }

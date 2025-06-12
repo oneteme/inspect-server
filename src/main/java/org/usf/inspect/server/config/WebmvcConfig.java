@@ -28,5 +28,6 @@ public class WebmvcConfig implements WebMvcConfigurer {
     			asList(TraceApiTable.values()),
         		asList(TraceApiColumn.values()), ds));
         resolvers.add(new CommonRequestQueryResolver());
+        resolvers.add(new CommonRequestQueryFilterResolver());
     }
 }
