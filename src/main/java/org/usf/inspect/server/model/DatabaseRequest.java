@@ -26,8 +26,11 @@ public class DatabaseRequest extends SessionStage {
 
     public String mainCommand(){
         Set<SqlCommand> r = Optional.ofNullable(actions).orElseGet(Collections::emptyList).stream().map(DatabaseRequestStage::getCommands).filter(Objects::nonNull).flatMap(Arrays::stream).collect(Collectors.toSet());
-        if(r.size() == 1){
-            return r.iterator().next().toString();
+        if(r.size() == 1) {
+            var s = r.iterator().next();
+            if (s != null) {
+                return s.toString();
+            }
         }
         if(r.size() > 1){
             return "SQL";
