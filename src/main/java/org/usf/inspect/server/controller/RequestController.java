@@ -33,14 +33,12 @@ import static org.springframework.http.CacheControl.maxAge;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.http.ResponseEntity.status;
-import static org.usf.inspect.server.Utils.fromNullableTimestamp;
-import static org.usf.inspect.server.config.TraceApiColumn.*;
-import static org.usf.inspect.server.config.TraceApiColumn.ID;
+import static org.usf.inspect.server.config.TraceApiDatabase.INSPECT;
 
 @Slf4j
 @CrossOrigin
 @RestController
-@RequestMapping(value = "v3/request", produces = APPLICATION_JSON_VALUE)
+@RequestMapping(value = "v3/query", produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 public class RequestController {
 
@@ -54,19 +52,10 @@ public class RequestController {
                            column = "app_name,version,address,environement,os,re,user,type,start,collector,branch,hash,end,id") QueryComposer request) throws SQLException {
         return ok()
                 .cacheControl(maxAge(1, DAYS))
-                .body(TraceApiDatabase.INSPECT.execute(request, InspectMappers.instanceEnvironmentMapper()));
+                .body(INSPECT.execute(request, InspectMappers.instanceEnvironmentMapper()));
     }
 
-    @GetMapping("request/rests")
-    public List<RestRequest> getRestRequestss(
-        @QueryRequestFilter(view = "rest_request",
-                            column = "id,protocol,auth,host,port,path,query,method,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,remote,parent,exception.err_type,exception.err_msg",
-                            join = "exception",
-                            order = "start.asc") QueryComposer request) throws SQLException {
-        return Optional.ofNullable(TraceApiDatabase.INSPECT.execute(request, InspectMappers.restRequestMapper()))
-                .map(o -> ok().cacheControl(maxAge(1, DAYS)).body(o))
-                .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null)).getBody();
-    }
+
 
 
   /*  @GetMapping("request/rest/{id}")
@@ -91,6 +80,8 @@ public class RequestController {
 
 
     //@QueryRequestFilter(database = "acc", view = "ratt", column = "pom,filiere", join = "conv", ignoreParameters = { "start", "end" }) QueryComposer request)
+
+    // todo :  not yet
     @GetMapping("request/{type}/hosts")
     public String[] getRequestsHostsbyType(
             @PathVariable String type,
@@ -105,6 +96,18 @@ public class RequestController {
         return requestService.getRequestsHostsByType(type, environment, start, end);
     }
 
+    /*@GetMapping("request/rest") // todo:  parameters : env, host, start, end, rangestatus
+    public List<RestRequest> getRestRequests(
+            @QueryRequestFilter(view = "rest_request",
+                    column = "id,protocol,auth,host,port,path,query,method,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,remote,parent,exception.err_type,exception.err_msg",
+                    join = "exception",
+                    order = "start.asc") QueryComposer request) throws SQLException {
+        return Optional.ofNullable(TraceApiDatabase.INSPECT.execute(request, InspectMappers.restRequestMapper()))
+                .map(o -> ok().cacheControl(maxAge(1, DAYS)).body(o))
+                .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null)).getBody();
+    }*/
+
+
     @GetMapping("request/rest")
     public List<DtoRestRequest> getRestRequests(@RequestParam(required = false, name = "env") String[] environments,
                                                 @RequestParam(required = false, name = "host") String[] hosts,
@@ -115,6 +118,17 @@ public class RequestController {
         JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, null, environments, null, start, end, null, null, hosts, null, null, null, null, null, null, null,rangestatus);
         return requestService.getRestRequestsLazyForSearch(jsf);
     }
+
+    /*@GetMapping("request/database") // todo:  parameters : env, host, start, end, rangestatus
+    public List<RestRequest> getDatabaseRequest(
+            @QueryRequestFilter(view = "database_request",
+                    column = "id,host,db,start,end,thread,command,status,schema,parent,exception.err_type,exception.err_msg",
+                    join = "exception",
+                    order = "start.asc") QueryComposer request) throws SQLException {
+        return Optional.ofNullable(TraceApiDatabase.INSPECT.execute(request, InspectMappers.restRequestMapper()))
+                .map(o -> ok().cacheControl(maxAge(1, DAYS)).body(o))
+                .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null)).getBody();
+    }*/
 
     @GetMapping("request/database")
     public List<DtoRequest> getDatabaseRequestForSearch(@RequestParam(required = false, name = "env") String[] environments,
@@ -191,13 +205,28 @@ public class RequestController {
     }
 
     @GetMapping("session/rest/{id}")
+    public List<Session> getRestSession(
+            @QueryRequestFilter(view = "rest_session",
+            column = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,err_type,err_msg,mask,user,user_agt,cache_control,instance_env",) QueryComposer request) throws SQLException{
+        return INSPECT.execute(request, InspectMappers.restSessionWithInstanceMapper());
+    }
+
+    @GetMapping("session/rest/{id}/winstance")
+    public List<Session> getRestSessionWithInstance(
+            @QueryRequestFilter(view = "rest_session",
+                    column = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,err_type,err_msg,mask,user,user_agt,cache_control,instance_env,app_name,os,re,address",
+                    join="instance") QueryComposer request) throws SQLException{
+        return INSPECT.execute(request, InspectMappers.restSessionWithoutInstanceMapper());
+    }
+
+    @GetMapping("session/rest/{id}") //todo : remove
     public ResponseEntity<Session> getRestSession(@PathVariable String id) throws SQLException {
         return Optional.ofNullable(requestService.getRestSession(id))
                 .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
                 .orElseGet(()->ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping("session/rest/{id}/parent")
+    @GetMapping("session/rest/{id}/parent") // can't optimise
     public ResponseEntity<Map<String, String>> getSessionParent(@PathVariable String id) throws SQLException {
         return Optional.of(requestService.getSessionParent(id))
                 .filter(o -> !o.isEmpty())

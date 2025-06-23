@@ -123,6 +123,7 @@ import org.usf.inspect.server.dao.RequestDao;
 import org.usf.inspect.server.dto.DtoRequest;
 import org.usf.inspect.server.dto.DtoRestRequest;
 import org.usf.inspect.server.exception.PayloadTooLargeException;
+import org.usf.inspect.server.mapper.InspectMappers;
 import org.usf.inspect.server.mapper.MainSessionForSearchMapper;
 import org.usf.inspect.server.mapper.RestSessionForSearchMapper;
 import org.usf.inspect.server.model.Architecture;
@@ -189,7 +190,7 @@ public class RequestService {
 
     public Session getMainTree(String id) throws SQLException {
         List<String> prntIds = dao.selectChildsById(id);
-        List<Session> prntIncList = getRestSessionsForTree(prntIds);
+        List<Session> prntIncList = getRestSessionsForTree(prntIds); // todo : optimise
         Session session = getMainSessionForTree(id);
         if(session != null){
             prntIncList.add(session);
@@ -200,7 +201,7 @@ public class RequestService {
 
     public Session getRestTree(String id) throws SQLException {
         List<String> prntIds = dao.selectChildsById(id);
-        List<Session> prntIncList = getRestSessionsForTree(prntIds);
+        List<Session> prntIncList = getRestSessionsForTree(prntIds); // todo : optimise
         createTree(prntIncList);
         return prntIncList.stream().filter(r ->  r.getId().equals(id)).findFirst().orElseThrow();
     }
@@ -359,7 +360,6 @@ public class RequestService {
         if(count > requestLimit){
             throw new PayloadTooLargeException();
         }
-
         var v = new QueryComposer()
                 .columns(
                         getColumns(
@@ -372,7 +372,7 @@ public class RequestService {
         if(jsf != null) {
             v.filters(jsf.filters(REST_SESSION).toArray(DBFilter[]::new));
         }
-      return v.build().execute(ds, new RestSessionForSearchMapper());
+      return INSPECT.execute(v, InspectMappers.restSessionShallowMapper());
     }
 
     public int getRestSessionCountForSearch(JqueryRequestSessionFilter jsf) throws SQLException {
@@ -382,7 +382,7 @@ public class RequestService {
             v.filters(jsf.filters(REST_SESSION).toArray(DBFilter[]::new));
             v.filters(REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
         }
-        return v.build().execute(ds, rs -> {
+        return INSPECT.execute(v, rs -> {
             if (rs.next()) {
                 return rs.getInt("count");
             }
@@ -408,29 +408,7 @@ public class RequestService {
                 .filters(REST_SESSION.column(END).ge(from(start)).and(REST_SESSION.column(START).le(from(end))))
                 .filters(REST_SESSION.column(INSTANCE_ENV).in(new QueryComposer().columns(new ViewColumn("id", cte, JDBCType.VARCHAR, null)).compose().asColumn()))
                 .orders(REST_SESSION.column(START).order());
-        return v.build().execute(ds, rs -> {
-            List<Session> sessions = new ArrayList<>();
-            while (rs.next()) {
-                RestSession session = new RestSession();
-                session.setId(rs.getString(ID.reference()));
-                session.setMethod(rs.getString(METHOD.reference()));
-                session.setProtocol(rs.getString(PROTOCOL.reference()));
-                session.setPath(rs.getString(PATH.reference()));
-                session.setQuery(rs.getString(QUERY.reference()));
-                session.setStatus(rs.getInt(STATUS.reference()));
-                session.setInDataSize(rs.getLong(SIZE_IN.reference()));
-                session.setOutDataSize(rs.getLong(SIZE_OUT.reference()));
-                session.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
-                session.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
-                session.setName(rs.getString(API_NAME.reference()));
-                session.setUser(rs.getString(USER.reference()));
-                session.setHost(rs.getString(HOST.reference()));
-                session.setThreadName(rs.getString(THREAD.reference()));
-                session.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
-                sessions.add(session);
-            }
-            return sessions;
-        });
+        return INSPECT.execute(v, InspectMappers.restSessionShallowMapper());
     }
 
 
@@ -578,7 +556,7 @@ public class RequestService {
         if(jsf != null) {
             v.filters(jsf.filters(MAIN_SESSION).toArray(DBFilter[]::new));
         }
-        return v.build().execute(ds, new MainSessionForSearchMapper());
+        return INSPECT.execute(v, new MainSessionForSearchMapper());
     }
 
     public int getMainSessionCountForSearch(JqueryMainSessionFilter jsf) throws SQLException {
@@ -588,7 +566,7 @@ public class RequestService {
             v.filters(jsf.filters(MAIN_SESSION).toArray(DBFilter[]::new));
             v.filters(MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
         }
-        return v.build().execute(ds, rs -> {
+        return INSPECT.execute(v, rs -> {
             if (rs.next()) {
                 return rs.getInt("count");
             }
@@ -1699,7 +1677,7 @@ public class RequestService {
 
     private String getPropertyByFilters(TraceApiTable table, TraceApiColumn target, DBFilter filters) throws SQLException { // main / apissesion
         var v = new QueryComposer().columns(getColumns(table,target)).filters(filters);
-        return v.build().execute(ds, rs -> {
+        return INSPECT.execute(v, rs -> {
             if(rs.next()){
                 return rs.getString(target.reference()); // to be changed
             }
