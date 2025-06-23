@@ -233,19 +233,6 @@ select * from deleted_instances;
                 "drop table if exists temp_session_table;"
         ));
 
-        queries.add(new Query("VACUUM ANALYZE e_dtb_rqt;"));
-        queries.add(new Query("VACUUM ANALYZE e_dtb_stg;"));
-        queries.add(new Query("VACUUM ANALYZE e_ftp_rqt;"));
-        queries.add(new Query("VACUUM ANALYZE e_ftp_stg;"));
-        queries.add(new Query("VACUUM ANALYZE e_smtp_rqt;"));
-        queries.add(new Query("VACUUM ANALYZE e_smtp_stg;"));
-        queries.add(new Query("VACUUM ANALYZE e_ldap_rqt;"));
-        queries.add(new Query("VACUUM ANALYZE e_ldap_stg;"));
-        queries.add(new Query("VACUUM ANALYZE e_lcl_rqt;"));
-        queries.add(new Query("VACUUM ANALYZE e_rst_ses;"));
-        queries.add(new Query("VACUUM ANALYZE e_rst_rqt;"));
-        queries.add(new Query("VACUUM ANALYZE e_main_ses;"));
-
         return queries;
     }
 

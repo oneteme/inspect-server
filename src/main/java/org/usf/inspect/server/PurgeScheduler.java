@@ -5,7 +5,6 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -29,6 +28,7 @@ public class PurgeScheduler {
     private final PurgeService purgeService;
     private int depth = 90;
     private Map<String, Integer> env;
+    private boolean purged = false;
 
     @Scheduled(cron= "${inspect.purge.schedule:0 0 1 * * ?}")
     @TraceableStage
@@ -40,16 +40,18 @@ public class PurgeScheduler {
                 {
                     envList.remove(envName);
                     if(d > -1){
-                        purgeService.purgeData(List.of(envName), null, Instant.now().minus(d, ChronoUnit.DAYS), null);
+                        purged |= purgeService.purgeData(List.of(envName), null, Instant.now().minus(d, ChronoUnit.DAYS), null);
                     }
                 });
             }
             if(!envList.isEmpty())
-                purgeService.purgeData(envList, null, Instant.now().minus(depth, ChronoUnit.DAYS), null);
+                purged |= purgeService.purgeData(envList, null, Instant.now().minus(depth, ChronoUnit.DAYS), null);
+            if(purged){
+                purgeService.vaccum();
+            }
         }catch (Exception e){
             log.error("Error while purging old data: [Purge BATCH]",e);
         }
-
     }
 
 
