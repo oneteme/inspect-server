@@ -6,6 +6,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.usf.inspect.server.RequestMask;
+import org.usf.inspect.server.Utils;
 import org.usf.inspect.server.model.*;
 
 import java.sql.PreparedStatement;
@@ -28,6 +29,7 @@ import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.joining;
 import static org.usf.inspect.server.RequestMask.*;
 import static org.usf.inspect.server.TreeIterator.treeIterator;
+import static org.usf.inspect.server.Utils.*;
 import static org.usf.inspect.server.Utils.isEmpty;
 
 @Repository
@@ -113,7 +115,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(
             ps.setInt(5, ses.getPort());
             ps.setString(6, ses.getPath());
             ps.setString(7, ses.getQuery());
-            ps.setString(8, ses.getContentType());
+            ps.setString(8, contentTypeExtract(ses.getContentType()));
             ps.setString(9, ses.getAuthScheme());
             ps.setInt(10, ses.getStatus());
             ps.setLong(11, ses.getInDataSize());
@@ -127,7 +129,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(
             ps.setString(19, nonNull(exp) ? exp.getMessage() : null);
             ps.setString(20, ses.getName());
             ps.setString(21, ses.getUser());
-            ps.setString(22, ses.getUserAgent());
+            ps.setString(22, userAgentExtract(ses.getUserAgent()));
             ps.setString(23, ses.getCacheControl());
             ps.setInt(24, mask(ses));
             ps.setString(25, ses.getInstanceId());
@@ -186,7 +188,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session
                 ps.setInt(6, req.getPort());
                 ps.setString(7, req.getPath());
                 ps.setString(8, req.getQuery());
-                ps.setString(9, req.getContentType());
+                ps.setString(9, contentTypeExtract(req.getContentType()));
                 ps.setString(10, req.getAuthScheme());
                 ps.setInt(11, req.getStatus());
                 ps.setLong(12, req.getInDataSize());
