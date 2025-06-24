@@ -52,27 +52,32 @@ public final class Utils {
 	public static String userAgentExtract(String userAgent) {
 		if (userAgent == null) return null;
 
-		// L'ordre est important (Edge contient Chrome, Chrome contient Safari)
-		if (userAgent.contains("Edg") || userAgent.contains("Edge")) {
-			var m = java.util.regex.Pattern.compile("(Edg|Edge)/([\\d.]+)").matcher(userAgent);
-			return m.find() ? "Edge/" + m.group(2) : "Edge";
-		}
+		if (userAgent.contains("Mozilla")) {
 
-		if (userAgent.contains("Chrome")) {
-			var m = java.util.regex.Pattern.compile("Chrome/([\\d.]+)").matcher(userAgent);
-			return m.find() ? "Chrome/" + m.group(1) : "Chrome";
-		}
+			var os = java.util.regex.Pattern.compile("Mozilla/([\\d.]+) (\\([^)]+\\))").matcher(userAgent);
+			var osGroup = os.find() ? " " + os.group(2): "";
 
-		if (userAgent.contains("Firefox")) {
-			var m = java.util.regex.Pattern.compile("Firefox/([\\d.]+)").matcher(userAgent);
-			return m.find() ? "Firefox/" + m.group(1) : "Firefox";
-		}
+			// L'ordre est important (Edge contient Chrome, Chrome contient Safari)
+			if (userAgent.contains("Edg") || userAgent.contains("Edge")) {
+				var m = java.util.regex.Pattern.compile("(Edg|Edge)/([\\d.]+)").matcher(userAgent);
+				return m.find() ? "Edge/" + m.group(2) + osGroup : "Edge" + osGroup;
+			}
 
-		if (userAgent.contains("Safari")) {
-			var m = java.util.regex.Pattern.compile("Safari/([\\d.]+)").matcher(userAgent);
-			return m.find() ? "Safari/" + m.group(1) : "Safari";
-		}
+			if (userAgent.contains("Chrome")) {
+				var m = java.util.regex.Pattern.compile("Chrome/([\\d.]+)").matcher(userAgent);
+				return m.find() ? "Chrome/" + m.group(1) + osGroup : "Chrome" + osGroup;
+			}
 
+			if (userAgent.contains("Firefox")) {
+				var m = java.util.regex.Pattern.compile("Firefox/([\\d.]+)").matcher(userAgent);
+				return m.find() ? "Firefox/" + m.group(1) + osGroup : "Firefox" + osGroup;
+			}
+
+			if (userAgent.contains("Safari")) {
+				var m = java.util.regex.Pattern.compile("Safari/([\\d.]+)").matcher(userAgent);
+				return m.find() ? "Safari/" + m.group(1) + osGroup : "Safari" + osGroup;
+			}
+		}
 		if (userAgent.contains("Postman")) {
 			var m = java.util.regex.Pattern.compile("PostmanRuntime/([\\d.]+)").matcher(userAgent);
 			return m.find() ? "Postman/" + m.group(1) : "Postman";
