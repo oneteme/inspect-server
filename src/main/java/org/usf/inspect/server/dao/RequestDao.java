@@ -174,7 +174,7 @@ VALUES(?,?,?,?,?,?)""", treeIterator(sessions, MainSession::getUserActions), (ps
     }
 
     public void saveRestRequests(List<Session> sessions) {
-    	if(sessions.stream().anyMatch(s-> !isEmpty(s.getRestRequests()))){ //avoid exec select max
+        if(sessions.stream().anyMatch(s-> !isEmpty(s.getRestRequests()))){ //avoid exec select max
 	        var exp = new ArrayList<ExceptionInfo>();
 	        var inc = new AtomicLong(selectMaxId("E_RST_RQT", "ID_RST_RQT"));
 	        executeBatch("""
