@@ -62,7 +62,8 @@ CREATE TABLE IF NOT EXISTS e_rst_rqt (
     dh_end timestamp(6),
     va_thr varchar,
     cd_prn_ses varchar, 
-    cd_rmt_ses varchar 
+    cd_rmt_ses varchar,
+    cd_ins varchar
 )
 PARTITION BY RANGE (dh_str);
 
@@ -75,7 +76,8 @@ CREATE TABLE IF NOT EXISTS e_smtp_rqt (
     dh_end timestamp(6),
     va_thr varchar,
     va_stt boolean,
-    cd_prn_ses varchar
+    cd_prn_ses varchar,
+    cd_ins varchar
 )
 PARTITION BY RANGE (dh_str);
 
@@ -110,7 +112,8 @@ CREATE TABLE IF NOT EXISTS e_ftp_rqt (
     dh_end timestamp(6),
     va_thr varchar,
     va_stt boolean,
-    cd_prn_ses varchar -- index
+    cd_prn_ses varchar, -- index
+    cd_ins varchar
 )
 PARTITION BY RANGE (dh_str);
 
@@ -134,7 +137,8 @@ CREATE TABLE IF NOT EXISTS e_ldap_rqt (
     dh_end timestamp(6),
     va_thr varchar,
     va_stt boolean,
-    cd_prn_ses varchar -- index
+    cd_prn_ses varchar, -- index
+    cd_ins varchar
 )
 PARTITION BY RANGE (dh_str);
 
@@ -163,7 +167,8 @@ CREATE TABLE IF NOT EXISTS e_dtb_rqt (
     va_prd_vrs varchar, 
     va_cmd varchar,
     VA_STT boolean,
-    cd_prn_ses varchar 
+    cd_prn_ses varchar,
+    cd_ins varchar
 )
 PARTITION BY RANGE (dh_str);
 
@@ -188,7 +193,8 @@ CREATE TABLE IF NOT EXISTS e_lcl_rqt (
     va_usr varchar,
     va_thr varchar,
     va_stt boolean,
-    cd_prn_ses varchar 
+    cd_prn_ses varchar,
+    cd_ins varchar
 )
 PARTITION BY RANGE (dh_str);
 
