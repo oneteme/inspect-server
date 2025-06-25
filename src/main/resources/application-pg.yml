@@ -6,7 +6,9 @@ spring:
     driver-class-name: org.postgresql.Driver
   sql:
     init:
-      schema-locations: classpath:schema-pg.sql
+      schema-locations:
+        - classpath:schema-pg.sql
+        - classpath:schema-pg-update.sql
       data-locations: #classpath:data-pg.sql
   h2:
     console:
