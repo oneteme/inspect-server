@@ -213,8 +213,8 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session
             var exp = new ArrayList<ExceptionInfo>();
             var inc = new AtomicLong(selectMaxId("E_LCL_RQT", "ID_LCL_RQT"));
             executeBatch("""
-INSERT INTO E_LCL_RQT(ID_LCL_RQT,VA_NAM,VA_LCT,DH_STR,DH_END,VA_USR,VA_THR,VA_STT,CD_PRN_SES)
-VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getLocalRequests), (ps, req)-> {
+INSERT INTO E_LCL_RQT(ID_LCL_RQT,VA_NAM,VA_LCT,DH_STR,DH_END,VA_USR,VA_THR,VA_STT,CD_PRN_SES,VA_TYP)
+VALUES(?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getLocalRequests), (ps, req)-> {
                 ps.setLong(1, inc.incrementAndGet());
                 ps.setString(2,req.getName());
                 ps.setString(3,req.getLocation());
@@ -224,6 +224,7 @@ VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getLocalRequests),
                 ps.setString(7,req.getThreadName());
                 ps.setBoolean(8, isNull(req.getException()));
                 ps.setString(9, req.getCdSession());
+                ps.setString(10, req.getType());
                 if(req.getException() != null) {
                     req.getException().setIdRequest(inc.get());
                     exp.add(req.getException());
