@@ -42,4 +42,30 @@ public class PurgeService {
         return true;
     }
 
+    public void vaccum(){
+        String[] vacuumQueries = {
+                "VACUUM ANALYZE e_dtb_rqt;",
+                "VACUUM ANALYZE e_dtb_stg;",
+                "VACUUM ANALYZE e_ftp_rqt;",
+                "VACUUM ANALYZE e_ftp_stg;",
+                "VACUUM ANALYZE e_smtp_rqt;",
+                "VACUUM ANALYZE e_smtp_stg;",
+                "VACUUM ANALYZE e_ldap_rqt;",
+                "VACUUM ANALYZE e_ldap_stg;",
+                "VACUUM ANALYZE e_lcl_rqt;",
+                "VACUUM ANALYZE e_rst_ses;",
+                "VACUUM ANALYZE e_rst_rqt;",
+                "VACUUM ANALYZE e_main_ses;"
+        };
+        try {
+            log.info("+ Vaccum Data");
+            for (String query : vacuumQueries) {
+                template.update(query);
+            }
+        } catch (Exception e) {
+            log.error("Error while vaccuming tables", e);
+        }
+    }
+
+
 }
