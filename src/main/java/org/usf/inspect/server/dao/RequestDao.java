@@ -178,8 +178,8 @@ VALUES(?,?,?,?,?,?)""", treeIterator(sessions, MainSession::getUserActions), (ps
 	        var exp = new ArrayList<ExceptionInfo>();
 	        var inc = new AtomicLong(selectMaxId("E_RST_RQT", "ID_RST_RQT"));
 	        executeBatch("""
-INSERT INTO E_RST_RQT(ID_RST_RQT,CD_RMT_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,CD_PRN_SES)
-VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getRestRequests), (ps, req)-> {
+INSERT INTO E_RST_RQT(ID_RST_RQT,CD_RMT_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,CD_PRN_SES,CD_INS)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getRestRequests), (ps, req)-> {
                 ps.setLong(1, inc.incrementAndGet());
                 ps.setString(2, req.getId());
                 ps.setString(3, req.getMethod());
@@ -199,6 +199,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session
                 ps.setTimestamp(17, fromNullableInstant(req.getEnd()));
                 ps.setString(18, req.getThreadName());
                 ps.setString(19, req.getCdSession());
+                ps.setString(20, req.getInstanceId());
                 if (req.getException() != null) {
                     req.getException().setIdRequest(inc.get());
                     exp.add(req.getException());
@@ -213,8 +214,8 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session
             var exp = new ArrayList<ExceptionInfo>();
             var inc = new AtomicLong(selectMaxId("E_LCL_RQT", "ID_LCL_RQT"));
             executeBatch("""
-INSERT INTO E_LCL_RQT(ID_LCL_RQT,VA_NAM,VA_LCT,DH_STR,DH_END,VA_USR,VA_THR,VA_STT,CD_PRN_SES)
-VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getLocalRequests), (ps, req)-> {
+INSERT INTO E_LCL_RQT(ID_LCL_RQT,VA_NAM,VA_LCT,DH_STR,DH_END,VA_USR,VA_THR,VA_STT,CD_PRN_SES,CD_INS)
+VALUES(?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getLocalRequests), (ps, req)-> {
                 ps.setLong(1, inc.incrementAndGet());
                 ps.setString(2,req.getName());
                 ps.setString(3,req.getLocation());
@@ -224,6 +225,7 @@ VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getLocalRequests),
                 ps.setString(7,req.getThreadName());
                 ps.setBoolean(8, isNull(req.getException()));
                 ps.setString(9, req.getCdSession());
+                ps.setString(10, req.getInstanceId());
                 if(req.getException() != null) {
                     req.getException().setIdRequest(inc.get());
                     exp.add(req.getException());
@@ -237,8 +239,8 @@ VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getLocalRequests),
         if(sessions.stream().anyMatch(s-> !isEmpty(s.getMailRequests()))){
             var inc = new AtomicLong(selectMaxId("E_SMTP_RQT", "ID_SMTP_RQT"));
             executeBatch("""
-INSERT INTO E_SMTP_RQT(ID_SMTP_RQT,VA_HST,CD_PRT,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)
-VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getMailRequests), (ps, req)-> {
+INSERT INTO E_SMTP_RQT(ID_SMTP_RQT,VA_HST,CD_PRT,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES,CD_INS)
+VALUES(?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getMailRequests), (ps, req)-> {
                 req.setIdRequest(inc.incrementAndGet());
                 ps.setLong(1, req.getIdRequest());
                 ps.setString(2, req.getHost());
@@ -249,6 +251,7 @@ VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getMailRequests), 
                 ps.setString(7, req.getThreadName());
                 ps.setBoolean(8, isCompleted(req.getActions()));
                 ps.setString(9, req.getCdSession());
+                ps.setString(10, req.getInstanceId());
                 req.updateIdRequest();
             });
             saveMailRequestStages(sessions);
@@ -283,8 +286,8 @@ VALUES(?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getMailRequests), 
         if(sessions.stream().anyMatch(s-> !isEmpty(s.getFtpRequests()))){
             var inc = new AtomicLong(selectMaxId("E_FTP_RQT", "ID_FTP_RQT"));
             executeBatch("""
-INSERT INTO E_FTP_RQT(ID_FTP_RQT,VA_HST,CD_PRT,VA_PCL,VA_SRV_VRS,VA_CLT_VRS,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)
-VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getFtpRequests), (ps, req)-> {
+INSERT INTO E_FTP_RQT(ID_FTP_RQT,VA_HST,CD_PRT,VA_PCL,VA_SRV_VRS,VA_CLT_VRS,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES,CD_INS)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getFtpRequests), (ps, req)-> {
                 req.setIdRequest(inc.incrementAndGet());
                 ps.setLong(1, req.getIdRequest());
                 ps.setString(2, req.getHost());
@@ -298,6 +301,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getFtpReques
                 ps.setString(10, req.getThreadName());
                 ps.setBoolean(11, isCompleted(req.getActions()));
                 ps.setString(12, req.getCdSession());
+                ps.setString(13, req.getInstanceId());
                 req.updateIdRequest();
             });
             saveFtpRequestStages(sessions);
@@ -320,8 +324,8 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getFtpReques
         if(sessions.stream().anyMatch(s-> !isEmpty(s.getLdapRequests()))){
             var inc = new AtomicLong(selectMaxId("E_LDAP_RQT", "ID_LDAP_RQT"));
             executeBatch("""
-INSERT INTO E_LDAP_RQT(ID_LDAP_RQT,VA_HST,CD_PRT,VA_PCL,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES)
-VALUES(?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getLdapRequests), (ps, req)-> {
+INSERT INTO E_LDAP_RQT(ID_LDAP_RQT,VA_HST,CD_PRT,VA_PCL,VA_USR,DH_STR,DH_END,VA_THR,VA_STT,CD_PRN_SES,CD_INS)
+VALUES(?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getLdapRequests), (ps, req)-> {
                 req.setIdRequest(inc.incrementAndGet());
                 ps.setLong(1, req.getIdRequest());
                 ps.setString(2, req.getHost());
@@ -333,6 +337,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getLdapRequests)
                 ps.setString(8, req.getThreadName());
                 ps.setBoolean(9, isCompleted(req.getActions()));
                 ps.setString(10, req.getCdSession());
+                ps.setString(11, req.getInstanceId());
                 req.updateIdRequest();
             });
             saveLdapRequestStages(sessions);
@@ -355,8 +360,8 @@ VALUES(?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getLdapRequests)
         if(sessions.stream().anyMatch(s-> !isEmpty(s.getDatabaseRequests()))){
             var inc = new AtomicLong(selectMaxId("E_DTB_RQT", "ID_DTB_RQT"));
             executeBatch("""
-INSERT INTO E_DTB_RQT(ID_DTB_RQT,VA_HST,CD_PRT,VA_NAM,VA_SCH,DH_STR,DH_END,VA_USR,VA_THR,VA_DRV,VA_PRD_NAM,VA_PRD_VRS,VA_CMD,VA_STT,CD_PRN_SES)
-VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getDatabaseRequests), (ps, req)-> {
+INSERT INTO E_DTB_RQT(ID_DTB_RQT,VA_HST,CD_PRT,VA_NAM,VA_SCH,DH_STR,DH_END,VA_USR,VA_THR,VA_DRV,VA_PRD_NAM,VA_PRD_VRS,VA_CMD,VA_STT,CD_PRN_SES,CD_INS)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getDatabaseRequests), (ps, req)-> {
                 req.setIdRequest(inc.incrementAndGet());
                 ps.setLong(1, req.getIdRequest());
                 ps.setString(2, req.getHost());
@@ -373,6 +378,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", treeIterator(sessions, Session::getDat
                 ps.setString(13, req.mainCommand());
                 ps.setBoolean(14, isCompleted(req.getActions()));
                 ps.setString(15, req.getCdSession());
+                ps.setString(16, req.getInstanceId());
                 req.updateIdRequest();
             });
             saveDatabaseActions(sessions);
