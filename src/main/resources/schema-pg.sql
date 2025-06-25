@@ -185,6 +185,7 @@ PARTITION BY RANGE (dh_str);
 
 CREATE TABLE IF NOT EXISTS e_lcl_rqt (
     id_lcl_rqt bigint,
+    va_typ varchar,
     va_nam varchar,  
     va_lct varchar,
     dh_str timestamp(6),  

@@ -744,7 +744,7 @@ public class RequestService {
     private List<LocalRequest> getLocalRequests(List<String> cdSessions) throws SQLException{
         var v = new QueryBuilder()
                 .columns(getColumns(
-                        LOCAL_REQUEST, ID, NAME, LOCATION, START, END, USER, THREAD, STATUS, PARENT
+                        LOCAL_REQUEST, ID, NAME, LOCATION, START, END, USER, THREAD, STATUS, PARENT, TYPE
                 ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(LOCAL_REQUEST.join(EXCEPTION_JOIN).build())
@@ -762,6 +762,7 @@ public class RequestService {
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setUser(rs.getString(USER.reference()));
                 out.setThreadName(rs.getString(THREAD.reference()));
+                out.setType(rs.getString(TYPE.reference()));
                 out.setStatus(rs.getBoolean(STATUS.reference()));
                 out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
                 outs.add(out);

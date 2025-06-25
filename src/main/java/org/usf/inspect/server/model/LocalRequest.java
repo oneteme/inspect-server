@@ -9,6 +9,7 @@ import java.util.List;
 public class LocalRequest extends SessionStage {
     private String name;
     private String location;
+    private String type;
     private ExceptionInfo exception;
     private List<ExceptionInfo> exceptions;
     private boolean status;
