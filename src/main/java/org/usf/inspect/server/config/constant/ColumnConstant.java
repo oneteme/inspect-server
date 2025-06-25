@@ -132,6 +132,7 @@ public class ColumnConstant {
             case THREAD -> VA_THR;
             case STATUS -> VA_STT;
             case PARENT -> CD_PRN_SES;
+            case TYPE -> VA_TYP;
             default -> null;
         };
     }
