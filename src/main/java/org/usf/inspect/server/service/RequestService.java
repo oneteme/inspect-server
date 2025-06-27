@@ -514,22 +514,7 @@ public class RequestService {
                 .filters(MAIN_SESSION.column(END).ge(from(start)).and(MAIN_SESSION.column(START).le(from(end))))
                 .filters(MAIN_SESSION.column(INSTANCE_ENV).in(new QueryComposer().columns(new ViewColumn("id", cte, JDBCType.VARCHAR, null)).compose().asColumn()))
                 .orders(MAIN_SESSION.column(START).order());
-        return v.build().execute(ds, rs -> {
-            List<Session> sessions = new ArrayList<>();
-            while (rs.next()) {
-                MainSession main = new MainSession();
-                main.setId(rs.getString(ID.reference())); // add value of nullable
-                main.setName(rs.getString(NAME.reference()));
-                main.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
-                main.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
-                main.setType(rs.getString(TYPE.reference()));
-                main.setLocation(rs.getString(LOCATION.reference()));
-                main.setThreadName(rs.getString(THREAD.reference()));
-                main.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
-                sessions.add(main);
-            }
-            return sessions;
-        });
+        return INSPECT.execute(v, InspectMappers.mainSessionDumpMapper());
     }
 
     public Session getMainSession(String id) throws SQLException{
@@ -556,7 +541,7 @@ public class RequestService {
         if(jsf != null) {
             v.filters(jsf.filters(MAIN_SESSION).toArray(DBFilter[]::new));
         }
-        return INSPECT.execute(v, new MainSessionForSearchMapper());
+        return INSPECT.execute(v, InspectMappers.mainSessionForSearchMapper());
     }
 
     public int getMainSessionCountForSearch(JqueryMainSessionFilter jsf) throws SQLException {
@@ -1008,6 +993,8 @@ public class RequestService {
             return outs;
         });
     }
+
+
     public Map<Long,Integer>  getDatabaseRequestStageRowCount(Long[] ids) throws SQLException {
         return getDatabaseRequestStageRowCount(DATABASE_STAGE.column(PARENT).in(ids));
     }
@@ -1022,6 +1009,7 @@ public class RequestService {
         return v.build().execute(ds, rs -> {
             Map<Long,Integer> actionsMap= new HashMap<>();
             while (rs.next()) {
+                // sum action value
                 actionsMap.put(rs.getLong(PARENT.reference()), rs.getInt(ACTION_COUNT.reference()));
             }
             return actionsMap;
@@ -1702,7 +1690,7 @@ public class RequestService {
                 .orElse(null);
     }
 
-    private static <T extends Enum<T>> List<T> valueOfNullabletoEnumList(Class<T> classe, String values){
+    public static <T extends Enum<T>> List<T> valueOfNullabletoEnumList(Class<T> classe, String values){
         return Stream.of(splitNullable(values))
                 .map(v-> valueOfNullable(classe, v))
                 .filter(Objects::nonNull)

@@ -6,8 +6,6 @@ import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.usf.inspect.core.InstanceType;
-import org.usf.inspect.server.config.TraceApiDatabase;
 import org.usf.inspect.server.dto.DtoRequest;
 import org.usf.inspect.server.dto.DtoRestRequest;
 import org.usf.inspect.server.mapper.InspectMappers;
@@ -17,12 +15,12 @@ import org.usf.inspect.server.model.filter.JqueryRequestFilter;
 import org.usf.inspect.server.model.filter.JqueryRequestSessionFilter;
 import org.usf.inspect.server.service.AnalyticService;
 import org.usf.inspect.server.service.RequestService;
-import org.usf.jquery.core.Mappers;
 import org.usf.jquery.core.QueryComposer;
 import org.usf.jquery.web.QueryRequestFilter;
 
 import java.sql.SQLException;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,8 +30,10 @@ import static java.util.concurrent.TimeUnit.DAYS;
 import static org.springframework.http.CacheControl.maxAge;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.ResponseEntity.ok;
-import static org.springframework.http.ResponseEntity.status;
+import static org.usf.inspect.server.RequestType.REST;
+import static org.usf.inspect.server.config.TraceApiColumn.*;
 import static org.usf.inspect.server.config.TraceApiDatabase.INSPECT;
+import static org.usf.inspect.server.config.TraceApiTable.*;
 
 @Slf4j
 @CrossOrigin
@@ -54,9 +54,6 @@ public class RequestController {
                 .cacheControl(maxAge(1, DAYS))
                 .body(INSPECT.execute(request, InspectMappers.instanceEnvironmentMapper()));
     }
-
-
-
 
   /*  @GetMapping("request/rest/{id}")
     public RestRequest getRestRequestById (@PathVariable int id) throws SQLException {
@@ -207,11 +204,11 @@ public class RequestController {
     @GetMapping("session/rest/{id}")
     public List<Session> getRestSession(
             @QueryRequestFilter(view = "rest_session",
-            column = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,err_type,err_msg,mask,user,user_agt,cache_control,instance_env",) QueryComposer request) throws SQLException{
+            column = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,err_type,err_msg,mask,user,user_agt,cache_control,instance_env") QueryComposer request) throws SQLException{
         return INSPECT.execute(request, InspectMappers.restSessionWithInstanceMapper());
     }
 
-    @GetMapping("session/rest/{id}/winstance")
+    @GetMapping("session/rest/{id}/winstance") // to remove
     public List<Session> getRestSessionWithInstance(
             @QueryRequestFilter(view = "rest_session",
                     column = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,err_type,err_msg,mask,user,user_agt,cache_control,instance_env,app_name,os,re,address",
@@ -219,14 +216,14 @@ public class RequestController {
         return INSPECT.execute(request, InspectMappers.restSessionWithoutInstanceMapper());
     }
 
-    @GetMapping("session/rest/{id}") //todo : remove
+    /*@GetMapping("session/rest/{id}") //todo : remove
     public ResponseEntity<Session> getRestSession(@PathVariable String id) throws SQLException {
         return Optional.ofNullable(requestService.getRestSession(id))
                 .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
                 .orElseGet(()->ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
-    }
+    }*/
 
-    @GetMapping("session/rest/{id}/parent") // can't optimise
+    @GetMapping("session/rest/{id}/parent") // can't optimise, done
     public ResponseEntity<Map<String, String>> getSessionParent(@PathVariable String id) throws SQLException {
         return Optional.of(requestService.getSessionParent(id))
                 .filter(o -> !o.isEmpty())
@@ -248,7 +245,7 @@ public class RequestController {
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping("session/main")
+    @GetMapping("session/main") // can't optimise, done
     public List<Session> getMainSessions(
             @RequestParam(required = false, name = "env") String[] environments,
             @RequestParam(required = false, name = "name") String[] names,
@@ -265,7 +262,7 @@ public class RequestController {
         return requestService.getMainSessionsForSearch(fc);
     }
 
-    @GetMapping("session/main/{appName}/dump")
+    @GetMapping("session/main/{appName}/dump") // can't optimise, done
     public List<Session> getMainSessionsForDump(
             @PathVariable String appName,
             @RequestParam(name = "env") String env,
@@ -275,62 +272,156 @@ public class RequestController {
         return requestService.getMainSessionsForDump(env, appName, start, end);
     }
 
-    @GetMapping("session/main/{id}")
+    @GetMapping("sesion/main/{id}")
+    public List<Session> getMainSession(
+            @QueryRequestFilter(
+                view = "main_session",
+                column = "id,name,start,end,type,location,thread,err_type,err_msg,mask,ser,instance_env") QueryComposer request) throws SQLException {
+        return INSPECT.execute(request, InspectMappers.mainSessionWithoutInstanceMapper());
+    }
+
+   /* @GetMapping("session/main/{id}") // to be removed
     public ResponseEntity<Session> getMainSession(@PathVariable String id) throws SQLException { // without tree
         return Optional.ofNullable(requestService.getMainSession(id))
                 .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
-    }
+    }*/
 
     @GetMapping("session/{id_session}/request/rest")
+    public List<RestRequest>  getRestRequests(
+            @QueryRequestFilter(
+                view = "rest_request",
+                column = "id,protocol,host,path,query,method,status,start,end,thread,remote,parent,err_type,err_msg",
+                join = "exception",
+                order = "start") QueryComposer request) throws SQLException {
+        return INSPECT.execute(request, InspectMappers.restRequestMapper());
+    }
+
+   /* @GetMapping("session/{id_session}/request/rest")
     public ResponseEntity<List<RestRequest>> getRestRequests(@PathVariable(name = "id_session") String idSession) throws SQLException {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getRestRequestsLazyForParent(idSession));
     }
+    */
 
-    @GetMapping("session/request/rest/exception")
-    public ResponseEntity<Map<Long, ExceptionInfo>> getRestRequestExceptions(@RequestParam(required = true, name = "ids") Long[] idRequestList) throws SQLException {
-        return ResponseEntity.ok().body(requestService.getRestRequestExceptions(idRequestList));
+    @GetMapping("session/request/exception") // need to add exception type to front call
+    public Map<Long, ExceptionInfo> getRequestExceptions(
+            @QueryRequestFilter(
+                    view = "exception",
+                    column = "err_type,err_msg,parent",
+                    ignoreParameters = "ids") QueryComposer request,
+            @RequestParam( name = "ids") Long[] idRequestList)  {
+        return INSPECT.execute(request.filters(EXCEPTION.column(PARENT).in(idRequestList)), InspectMappers::exceptionInfoMapper);
     }
 
+   /* @GetMapping("session/request/rest/exception")
+    public ResponseEntity<Map<Long, ExceptionInfo>> getRestRequestExceptions(@RequestParam(required = true, name = "ids") Long[] idRequestList) throws SQLException {
+        return ResponseEntity.ok().body(requestService.getRestRequestExceptions(idRequestList));
+    }*/
+
+    @GetMapping("session/{idSession}/request/local")
+    public List<LocalRequest> getLocalRequests(
+            @QueryRequestFilter(
+                    view = "local_request",
+                    column = "id,name,location,start,end,user,thread,status,parent,exception.err_type,exception.err_msg",
+                    join = "exception",
+                    order = "start") QueryComposer request, @PathVariable String idSession) throws SQLException {
+        return INSPECT.execute(request.filters(LOCAL_REQUEST.column(PARENT).eq(idSession)), InspectMappers.localRequestMapper());
+    }
+
+    /*
     @GetMapping("session/{id_session}/request/local")
     public ResponseEntity<List<LocalRequest>> getLocalRequests(@PathVariable(name = "id_session") String idSession) throws SQLException {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getLocalRequests(idSession));
-    }
+    }*/
 
-    @GetMapping("session/{id_session}/request/database")
+    @GetMapping("session/{idSession}/request/database")
+    public List<DatabaseRequest> getDatabaseRequests(
+            @QueryRequestFilter(
+                    view = "database_request",
+                    column = "id,host,db,start,end,user,thread,command,status,schema",
+                    order = "start") QueryComposer request, @PathVariable String idSession) {
+        return INSPECT.execute(request.filters(DATABASE_REQUEST.column(PARENT).eq(idSession)), InspectMappers.databaseRequestLazyMapper());
+    }
+    /*@GetMapping("session/{id_session}/request/database")
     public ResponseEntity<List<DatabaseRequest>> getDatabaseRequests(@PathVariable(name = "id_session") String idSession) throws SQLException {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getDatabaseRequestsLazy(idSession));
-    }
+    }*/
 
-    @GetMapping("session/{id_session}/request/database/{id_database}")
+    @GetMapping("session/{idSession}/request/database/{idDatabase}")
+    public DatabaseRequest getDatabaseRequest(
+            @QueryRequestFilter(
+                    view = "database_request",
+                    column = "id,host,port,db,start,end,user,thread,driver,db_name,db_version,command,status,schema,parent",
+                    order = "start") QueryComposer request, @PathVariable String idSession, @PathVariable long idDatabase) {
+        return INSPECT.execute(request.filters(DATABASE_REQUEST.column(ID).eq(idDatabase)), InspectMappers::databaseRequestComplete);
+    }
+    /*@GetMapping("session/{id_session}/request/database/{id_database}")
     public ResponseEntity<DatabaseRequest> getDatabaseRequest(@PathVariable(name = "id_session") String idSession,
                                                               @PathVariable(name = "id_database") long idDatabase) throws SQLException {
         return Optional.ofNullable(requestService.getDatabaseRequestComplete(idDatabase))
                 .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
+    }*/
+
+    @GetMapping("session/{idSession}/request/database/{idDatabase}/stage")
+    public List<DatabaseRequestStage> getDatabaseRequestStages(
+            @QueryRequestFilter(
+                    view = "database_stage",
+                    column = "name,start,end,action_count,commands,parent,exception.err_type,exception.err_msg",
+                    join = "exception",
+                    order = "start") QueryComposer request, @PathVariable String idSession, @PathVariable long idDatabase) {
+        return INSPECT.execute(request.filters(DATABASE_STAGE.column(PARENT).eq(idDatabase)), InspectMappers.databaseRequestStageMapper());
     }
 
-    @GetMapping("session/{id_session}/request/database/{id_database}/stage")
+   /* @GetMapping("session/{id_session}/request/database/{id_database}/stage")
     public ResponseEntity<List<DatabaseRequestStage>> getDatabaseRequestStages(@PathVariable(name = "id_session") String idSession,
                                                                                @PathVariable(name = "id_database") long idDatabase) throws SQLException {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getDatabaseRequestStages(idDatabase));
-    }
+    }*/
+
 
     @GetMapping("session/request/database/stages/count")
+    public Map<Long, Integer> getDatabaseRequestStages(
+            @QueryRequestFilter(
+                    view = "database_stage",
+                    column = "action_count,parent",
+                    ignoreParameters = "ids") QueryComposer request,
+            @RequestParam(name = "ids") Long[] idDatabaseList) {
+        return INSPECT.execute(request.filters(DATABASE_STAGE.column(PARENT).in(idDatabaseList)), rs -> {
+            Map<Long,Integer> actionsMap= new HashMap<>();
+            while (rs.next()) {
+                actionsMap.put(rs.getLong(PARENT.reference()), rs.getInt(ACTION_COUNT.reference()));
+            }
+            return actionsMap;
+        });
+    }
+
+   @GetMapping("session/request/database/stages/count") // bugged
     public ResponseEntity<Map<Long,Integer>> getDatabaseRequestStagesRowCount(@RequestParam(required = true, name = "ids") Long[] idDatabaseList) throws SQLException {
         return ResponseEntity.ok().body(requestService.getDatabaseRequestStageRowCount(idDatabaseList));
     }
 
-    @GetMapping("session/request/database/exception")
+    /*@GetMapping("session/request/database/exception") // look getRequestExceptions
     public ResponseEntity<Map<Long, ExceptionInfo>> getDatabaseRequestExceptions(@RequestParam(required = true, name = "ids") Long[] idDatabaseList) throws SQLException {
         return ResponseEntity.ok().body(requestService.getDatabaseRequestExceptions(idDatabaseList));
+    }*/
+
+
+    @GetMapping("session/{idSession}/request/ftp")
+    public List<FtpRequest> getFtpRequests(
+            @QueryRequestFilter(
+                    view = "ftp_request",
+                    column = "id,host,start,end,thread,status",
+                    order = "start") QueryComposer request,
+            @PathVariable String idSession){
+        return INSPECT.execute(request.filters(FTP_REQUEST.column(PARENT).eq(idSession)), InspectMappers.ftpRequestLazyMapper());
     }
 
-    @GetMapping("session/{id_session}/request/ftp")
+    /*@GetMapping("session/{id_session}/request/ftp")
     public ResponseEntity<List<FtpRequest>> getFtpRequests(@PathVariable(name = "id_session") String idSession) throws SQLException {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.getFtpRequestsLazy(idSession));
-    }
-
+    }*/
+    //im heeeeeeeeeeeeeeeeeee
     @GetMapping("session/{id_session}/request/ftp/{id_ftp}")
     public ResponseEntity<FtpRequest> getFtpRequest(@PathVariable(name = "id_session") String idSession,
                                                     @PathVariable(name = "id_ftp") long idFtp) throws SQLException {
