@@ -58,9 +58,6 @@ public class TraceController {
                                              @RequestParam(required = false, name = "pending")  Integer pending,
                                              @RequestParam(required = false, name = "end") Instant end
                                             ) {
-    	if(isEmpty(sessions)) {
-    		return status(BAD_REQUEST).build();
-    	}
     	try {
             if(end != null){
                 requestService.updateInstance(end,id);

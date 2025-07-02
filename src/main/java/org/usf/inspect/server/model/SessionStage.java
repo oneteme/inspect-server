@@ -15,4 +15,5 @@ public class SessionStage {
 
         private Long idRequest;
         private String cdSession;
+        private String instanceId;
 }

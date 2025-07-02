@@ -235,6 +235,7 @@ select * from deleted_instances;
         queries.add(new Query(
                 "drop table if exists temp_session_table;"
         ));
+
         return queries;
     }
 

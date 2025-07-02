@@ -304,6 +304,7 @@ public class RequestService {
         var cte = new QueryComposer()
                 .filters(INSTANCE.column(START).le(from(end)))
                 .columns(getColumns(INSTANCE, ID, START))
+                .filters(INSTANCE.column(START).le(from(end)))
                 .filters(INSTANCE.column(ENVIRONEMENT).eq(env))
                 .filters(INSTANCE.column(APP_NAME).eq(appName)).compose();
         var v = new QueryComposer()
@@ -412,6 +413,7 @@ public class RequestService {
         var cte = new QueryComposer()
                 .filters(INSTANCE.column(START).le(from(end)))
                 .columns(getColumns(INSTANCE, ID, START))
+                .filters(INSTANCE.column(START).le(from(end)))
                 .filters(INSTANCE.column(ENVIRONEMENT).eq(env))
                 .filters(INSTANCE.column(APP_NAME).eq(appName)).compose();
         var v = new QueryComposer()
@@ -670,6 +672,7 @@ public class RequestService {
             return outs;
         });
     }
+
 
     public DatabaseRequest getDatabaseRequestComplete(long idDatabase)  {
         return requireSingle(getDatabaseRequestsComplete(DATABASE_REQUEST.column(ID).eq(idDatabase)));

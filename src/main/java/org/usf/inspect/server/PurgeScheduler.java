@@ -30,6 +30,7 @@ public class PurgeScheduler {
     private final PurgeService purgeService;
     private int depth = 90;
     private Map<String, Integer> env;
+    private boolean purged = false;
 
     @Scheduled(cron= "${inspect.purge.schedule:0 0 1 * * ?}")
     @TraceableStage
@@ -41,16 +42,18 @@ public class PurgeScheduler {
                 {
                     envList.remove(envName);
                     if(d > -1){
-                        purgeService.purgeData(List.of(envName), null, Instant.now().minus(d, ChronoUnit.DAYS), null);
+                        purged |= purgeService.purgeData(List.of(envName), null, Instant.now().minus(d, ChronoUnit.DAYS), null);
                     }
                 });
             }
             if(!envList.isEmpty())
-                purgeService.purgeData(envList, null, Instant.now().minus(depth, ChronoUnit.DAYS), null);
+                purged |= purgeService.purgeData(envList, null, Instant.now().minus(depth, ChronoUnit.DAYS), null);
+            if(purged){
+                purgeService.vaccum();
+            }
         }catch (Exception e){
             log.error("Error while purging old data: [Purge BATCH]",e);
         }
-
     }
 
 

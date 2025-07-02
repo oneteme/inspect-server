@@ -32,6 +32,10 @@ public class PurgeController {
             @RequestParam(required = false, name = "appname") List<String> appNameList,
             @RequestParam(required = false, name = "version") List<String> versionList
     ){
-        return purgeService.purgeData(List.of(environment),appNameList,start,versionList);
+        var purged = purgeService.purgeData(List.of(environment),appNameList,start,versionList);
+        if(purged){
+            purgeService.vaccum();
+        }
+        return purged;
     }
 }
