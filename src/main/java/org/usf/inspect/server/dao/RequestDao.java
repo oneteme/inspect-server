@@ -1,29 +1,21 @@
 package org.usf.inspect.server.dao;
 
-import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
-import static java.util.stream.Collectors.joining;
-import static org.usf.inspect.server.RequestMask.FTP;
-import static org.usf.inspect.server.RequestMask.JDBC;
-import static org.usf.inspect.server.RequestMask.LDAP;
-import static org.usf.inspect.server.RequestMask.LOCAL;
-import static org.usf.inspect.server.RequestMask.REST;
-import static org.usf.inspect.server.RequestMask.SMTP;
-import static org.usf.inspect.server.RequestMask.mask;
-import static org.usf.inspect.server.TreeIterator.treeIterator;
-import static org.usf.inspect.server.Utils.isEmpty;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
+import org.springframework.stereotype.Repository;
+import org.usf.inspect.server.RequestMask;
+import org.usf.inspect.server.Utils;
+import org.usf.inspect.server.model.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.ToIntFunction;
@@ -32,23 +24,13 @@ import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
-import org.springframework.stereotype.Repository;
-import org.usf.inspect.server.RequestMask;
-import org.usf.inspect.server.model.DatabaseRequest;
-import org.usf.inspect.server.model.ExceptionInfo;
-import org.usf.inspect.server.model.FtpRequest;
-import org.usf.inspect.server.model.InstanceEnvironment;
-import org.usf.inspect.server.model.MailRequest;
-import org.usf.inspect.server.model.MainSession;
-import org.usf.inspect.server.model.NamingRequest;
-import org.usf.inspect.server.model.RequestStage;
-import org.usf.inspect.server.model.RestSession;
-import org.usf.inspect.server.model.Session;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+import static java.util.stream.Collectors.joining;
+import static org.usf.inspect.server.RequestMask.*;
+import static org.usf.inspect.server.TreeIterator.treeIterator;
+import static org.usf.inspect.server.Utils.*;
+import static org.usf.inspect.server.Utils.isEmpty;
 
 @Repository
 @RequiredArgsConstructor

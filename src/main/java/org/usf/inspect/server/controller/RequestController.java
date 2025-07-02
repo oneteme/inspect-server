@@ -373,7 +373,7 @@ public class RequestController {
     @GetMapping("session/{idSession}/request/smtp/{idSmtp}")
     public MailRequest getSmtpRequest(
             @QueryRequestFilter(
-                    view = "mail_request",
+                    view = "smtp_request",
                     column = "id,host,port,start,end,user,thread,status,parent",
                     order = "start") QueryComposer request,
             @PathVariable String idSession,
