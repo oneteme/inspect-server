@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.usf.inspect.server.model.*;
-import org.usf.inspect.server.service.AnalyticService;
 import org.usf.inspect.server.service.RequestService;
 import org.usf.inspect.server.service.SessionQueueService;
 import java.time.Instant;
@@ -30,7 +29,6 @@ import static org.usf.jquery.core.Utils.isEmpty;
 public class TraceController {
 
     private final RequestService requestService;
-    private final AnalyticService analyticService;
     private final SessionQueueService queueService;
     
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)

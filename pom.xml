@@ -59,7 +59,7 @@
 		<dependency>
 			<groupId>io.github.oneteme</groupId>
 			<artifactId>jquery</artifactId>
-			<version>4.0.4-SNAPSHOT</version>
+			<version>4.0.5</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
