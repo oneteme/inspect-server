@@ -302,6 +302,7 @@ public class RequestService {
 
     public List<Session> getRestSessionsForDump(String env, String appName, Instant start, Instant end) {
         var cte = new QueryComposer()
+                .filters(INSTANCE.column(START).le(from(end)))
                 .columns(getColumns(INSTANCE, ID, START))
                 .filters(INSTANCE.column(ENVIRONEMENT).eq(env))
                 .filters(INSTANCE.column(APP_NAME).eq(appName)).compose();
@@ -314,7 +315,6 @@ public class RequestService {
                         START, END, USER, THREAD, HOST, ERR_MSG, ERR_TYPE
                     )
                 )
-                .filters(REST_SESSION.column(START).ge(new QueryComposer().columns(new ViewColumn("start", cte, JDBCType.TIMESTAMP, null).max().as("dh_max")).compose().asColumn()))
                 .filters(REST_SESSION.column(END).ge(from(start)).and(REST_SESSION.column(START).le(from(end))))
                 .filters(REST_SESSION.column(INSTANCE_ENV).in(new QueryComposer().columns(new ViewColumn("id", cte, JDBCType.VARCHAR, null)).compose().asColumn()))
                 .orders(REST_SESSION.column(START).order());
@@ -410,6 +410,7 @@ public class RequestService {
     public List<Session> getMainSessionsForDump(String env, String appName, Instant start, Instant end) {
 
         var cte = new QueryComposer()
+                .filters(INSTANCE.column(START).le(from(end)))
                 .columns(getColumns(INSTANCE, ID, START))
                 .filters(INSTANCE.column(ENVIRONEMENT).eq(env))
                 .filters(INSTANCE.column(APP_NAME).eq(appName)).compose();
@@ -420,7 +421,6 @@ public class RequestService {
                                 MAIN_SESSION, ID, NAME, START, END, TYPE, LOCATION, THREAD, ERR_TYPE, ERR_MSG
                         )
                 )
-                .filters(MAIN_SESSION.column(START).ge(new QueryComposer().columns(new ViewColumn("start", cte, JDBCType.TIMESTAMP, null).max().as("dh_max")).compose().asColumn()))
                 .filters(MAIN_SESSION.column(END).ge(from(start)).and(MAIN_SESSION.column(START).le(from(end))))
                 .filters(MAIN_SESSION.column(INSTANCE_ENV).in(new QueryComposer().columns(new ViewColumn("id", cte, JDBCType.VARCHAR, null)).compose().asColumn()))
                 .orders(MAIN_SESSION.column(START).order());

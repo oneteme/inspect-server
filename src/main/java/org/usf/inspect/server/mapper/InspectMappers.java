@@ -290,6 +290,7 @@ public final class InspectMappers {
             out.setUser(rs.getString(USER.reference()));
             out.setThreadName(rs.getString(THREAD.reference()));
             out.setStatus(rs.getBoolean(STATUS.reference()));
+            out.setType(rs.getString(TYPE.reference()));
             out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
             return out;
         };

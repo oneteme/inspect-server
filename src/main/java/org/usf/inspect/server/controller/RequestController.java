@@ -259,7 +259,7 @@ public class RequestController {
     public List<LocalRequest> getLocalRequests(
             @QueryRequestFilter(
                     view = "local_request",
-                    column = "id,name,location,start,end,user,thread,status,parent,exception.err_type,exception.err_msg",
+                    column = "id,name,location,start,end,user,thread,status,parent,type,exception.err_type,exception.err_msg",
                     join = "exception",
                     order = "start") QueryComposer request, @PathVariable String idSession)  {
         return INSPECT.execute(request.filters(LOCAL_REQUEST.column(PARENT).eq(idSession)), InspectMappers.localRequestMapper());
