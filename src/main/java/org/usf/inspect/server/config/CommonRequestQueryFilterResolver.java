@@ -9,6 +9,8 @@ import org.usf.jquery.core.QueryComposer;
 import org.usf.jquery.web.QueryRequestFilter;
 import org.usf.jquery.web.QueryRequestFilterResolver;
 
+import java.util.Objects;
+
 public class CommonRequestQueryFilterResolver implements HandlerMethodArgumentResolver {
 
     private final QueryRequestFilterResolver resolver = new QueryRequestFilterResolver();
@@ -23,7 +25,10 @@ public class CommonRequestQueryFilterResolver implements HandlerMethodArgumentRe
     public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
                                   NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
         var crp = parameter.getParameterAnnotation(QueryRequestFilter.class);
-        return resolver.requestQueryCheck(crp, webRequest.getParameterMap());
+        return resolver.requestQueryCheck(
+                Objects.requireNonNull(crp, "QueryRequestFilter annotation is required"),
+                webRequest.getParameterMap()
+        );
     }
 }
 
