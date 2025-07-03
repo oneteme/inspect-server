@@ -2,11 +2,16 @@ package org.usf.inspect.server;
 
 import static java.util.Arrays.fill;
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.joining;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
+import java.util.stream.LongStream;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -47,6 +52,26 @@ public final class Utils {
 
 	public static Instant fromNullableTimestamp(Timestamp timestamp) {
 		return ofNullable(timestamp).map(Timestamp::toInstant).orElse(null);
+	}
+
+	public static Timestamp fromNullableInstant(Instant instant) {
+		return nonNull(instant) ? Timestamp.from(instant) : null;
+	}
+
+	public static String valueOfNullable(Object o) {// do not use Objects::toString
+		return nonNull(o) ? o.toString() : null;
+	}
+
+	public static <T extends Enum<T>> String valueOfNullableList(T[] enumList) {
+		return nonNull(enumList)
+				? Arrays.stream(enumList).filter(Objects::nonNull).map(Enum::name).collect(joining(","))
+				: null;
+	}
+
+	public static String  valueOfNullableArray(long[]array){
+		return nonNull(array)
+				? LongStream.of(array).mapToObj(Long::toString).collect(joining(","))
+				: null;
 	}
 
 	public static String userAgentExtract(String userAgent) {
