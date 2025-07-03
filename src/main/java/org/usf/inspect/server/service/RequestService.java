@@ -208,41 +208,6 @@ public class RequestService {
         return Collections.emptyMap();
     }
 
-    public InstanceEnvironment getInstance(String id) {
-        return INSPECT.execute(q-> q
-        		.columns(
-                        getColumns(
-                                INSTANCE, ID, USER, TYPE, START, END, APP_NAME, VERSION, ADDRESS,
-                                ENVIRONEMENT, OS, RE, COLLECTOR, BRANCH, HASH
-                        ))
-                .filters(INSTANCE.column(ID).eq(id)), rs -> {
-            if(rs.next()) {
-                var instanceEnvironment = new InstanceEnvironment(
-                        rs.getString(APP_NAME.reference()),
-                        rs.getString(VERSION.reference()),
-                        rs.getString(ADDRESS.reference()),
-                        rs.getString(ENVIRONEMENT.reference()),
-                        rs.getString(OS.reference()),
-                        rs.getString(RE.reference()),
-                        rs.getString(USER.reference()),
-                        InstanceType.valueOf(rs.getString(TYPE.reference())),
-                        fromNullableTimestamp(rs.getTimestamp(START.reference())),
-                        rs.getString(COLLECTOR.reference()),
-                        rs.getString(BRANCH.reference()),
-                        rs.getString(HASH.reference()),
-                        fromNullableTimestamp(rs.getTimestamp(END.reference())));
-
-                instanceEnvironment.setId(rs.getString(ID.reference()));
-                return instanceEnvironment;
-            }
-            return null;
-        });
-    }
-
-    public Session getRestSession(String id) {
-        JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(Collections.singletonList(id).toArray(String[]::new));
-        return requireSingle(getRestSessions(jsf, false));
-    }
 
     public List<Session> getRestSessionsForTree(List<String> ids)  {
         JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(ids.toArray(String[]::new));
@@ -1096,19 +1061,19 @@ public class RequestService {
         		.subViewQuery(INSTANCE.view(), sub-> sub.filters(INSTANCE.column(ENVIRONEMENT).eq(environement)))
                 .filters(table.column(START).ge(from(start)))
                 .filters(table.column(START).lt(from(end)))
-                .filters(table.column(PARENT).in(sessionIdByTypeEnvironementPeriod("rest_session",environement,start,end,mask)))
+                .filters(table.column(PARENT).in(sessionIdByTypeEnvironementPeriod("rest_session", start, end, mask)))
                 .unions(new QueryComposer()
                         .distinct(true)
                         .columns(getColumns(table,HOST))
                         .filters(table.column(START).ge(from(start)))
                         .filters(table.column(START).lt(from(end)))
-                        .filters(table.column(PARENT).in(sessionIdByTypeEnvironementPeriod("main_session",environement,start,end,mask)))
+                        .filters(table.column(PARENT).in(sessionIdByTypeEnvironementPeriod("main_session", start, end, mask)))
                         .compose().asUnion(true));
       
         return INSPECT.execute(v1, toArray(rs -> rs.getString(HOST.reference()), String[]::new));
     }
 
-    public SingleQueryColumn sessionIdByTypeEnvironementPeriod(String type, String environement, Instant start, Instant end, int mask){
+    public SingleQueryColumn sessionIdByTypeEnvironementPeriod(String type, Instant start, Instant end, int mask){
         var table = TraceApiTable.valueOf(RequestType.valueOf(type).getTable());
         var v  = new QueryComposer()
                 .columns(getColumns(table,ID))
@@ -1116,11 +1081,9 @@ public class RequestService {
                 .filters(table.column(START).ge(from(start)),
                         table.column(START).lt(from(end)),
                         table.column(MASK).bitAnd(mask).gt(0));
-//                .filters(INSTANCE.column(ENVIRONEMENT).eq(environement))
 //        if(Objects.equals(type, "rest_session")){
 //            v.filters(INSTANCE.column(TYPE).eq("SERVER"));
 //        }
-
         return v.compose().asColumn();
     }
 
