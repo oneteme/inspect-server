@@ -284,7 +284,7 @@ public class RequestService {
                 .filters(REST_SESSION.column(END).ge(from(start)).and(REST_SESSION.column(START).le(from(end))))
                 .filters(REST_SESSION.column(INSTANCE_ENV).in(new QueryComposer().columns(new ViewColumn("id", cte, JDBCType.VARCHAR, null)).compose().asColumn()))
                 .orders(REST_SESSION.column(START).order());
-        return INSPECT.execute(v, InspectMappers.restSessionShallowMapper());
+        return INSPECT.execute(v, InspectMappers.restSessionDumpMapper());
     }
 
 

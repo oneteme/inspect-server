@@ -115,6 +115,28 @@ public final class InspectMappers {
         };
     }
 
+    public static RowMapper<Session> restSessionDumpMapper() {
+        return rs -> {
+            RestSession out = new RestSession();
+            out.setId(rs.getString(ID.reference()));
+            out.setMethod(rs.getString(METHOD.reference()));
+            out.setProtocol(rs.getString(PROTOCOL.reference()));
+            out.setPath(rs.getString(PATH.reference()));
+            out.setQuery(rs.getString(QUERY.reference()));
+            out.setStatus(rs.getInt(STATUS.reference()));
+            out.setInDataSize(rs.getLong(SIZE_IN.reference()));
+            out.setOutDataSize(rs.getLong(SIZE_OUT.reference()));
+            out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
+            out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+            out.setName(rs.getString(API_NAME.reference()));
+            out.setUser(rs.getString(USER.reference()));
+            out.setHost(rs.getString(HOST.reference()));
+            out.setThreadName(rs.getString(THREAD.reference()));
+            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+            return out;
+        };
+    }
+
     public static RowMapper<Session> restSessionWithInstanceMapper() {
         return rs -> {
             RestSession out = createBaseRestSession(rs);
