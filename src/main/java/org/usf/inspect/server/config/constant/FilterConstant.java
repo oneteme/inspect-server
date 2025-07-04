@@ -1,11 +1,18 @@
 package org.usf.inspect.server.config.constant;
 
-import static org.usf.inspect.server.config.TraceApiColumn.*;
-import static org.usf.jquery.core.ComparisonExpression.*;
+import static org.usf.inspect.server.config.TraceApiColumn.END;
+import static org.usf.inspect.server.config.TraceApiColumn.ERR_MSG;
+import static org.usf.inspect.server.config.TraceApiColumn.ERR_TYPE;
+import static org.usf.inspect.server.config.TraceApiColumn.START;
+import static org.usf.inspect.server.config.TraceApiColumn.STATUS;
+import static org.usf.jquery.core.ComparisonExpression.eq;
+import static org.usf.jquery.core.ComparisonExpression.ge;
+import static org.usf.jquery.core.ComparisonExpression.isNotNull;
+import static org.usf.jquery.core.ComparisonExpression.isNull;
+import static org.usf.jquery.core.ComparisonExpression.lt;
 
 import org.usf.jquery.core.ComparisonExpression;
 import org.usf.jquery.core.DBColumn;
-import org.usf.jquery.core.OperationColumn;
 import org.usf.jquery.web.ViewDecorator;
 
 import lombok.AccessLevel;
@@ -14,83 +21,83 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FilterConstant {
 
-    public static DBColumn elapsedtime2(ViewDecorator table) {
+    public static DBColumn elapsedtime2(ViewDecorator table, String... args) {
         return table.column(END).minus(table.column(START)).epoch();
     }
 
-    private static OperationColumn countStatusByType(ViewDecorator table, ComparisonExpression op) {
+    private static DBColumn countStatusByType(ViewDecorator table, ComparisonExpression op) {
         var status = table.column(STATUS);
-        return (status).beginCase().when(op, status).end().count();
+        return (status).toCase().when(op, status).end().count();
     }
 
-    public static OperationColumn countExceptions(ViewDecorator table){
-        return table.column(ERR_MSG).beginCase().when(isNotNull(),1).orElse(0).sum();
+    public static DBColumn countExceptions(ViewDecorator table, String... args){
+        return table.column(ERR_MSG).toCase().when(isNotNull(),1).orElse(0).sum();
     }
 
-    public static OperationColumn countNoExceptions(ViewDecorator table){
-        return table.column(ERR_MSG).beginCase().when(isNull(),1).orElse(0).sum();
+    public static DBColumn countNoExceptions(ViewDecorator table, String... args){
+        return table.column(ERR_MSG).toCase().when(isNull(),1).orElse(0).sum();
     }
 
-    public static DBColumn err(ViewDecorator table){ // temporary solution to be changed
+    public static DBColumn err(ViewDecorator table, String... args){ // temporary solution to be changed
         return table.column(ERR_MSG).coalesce(table.column(ERR_TYPE));
     }
 
-    public static OperationColumn countError(ViewDecorator table){
+    public static DBColumn countError(ViewDecorator table, String... args){
         return countStatusByType(table, eq(false));
     }
 
-    public static OperationColumn countSuccess(ViewDecorator table){
+    public static DBColumn countSuccess(ViewDecorator table, String... args){
         return countStatusByType(table, eq(true));
     }
 
-    public static OperationColumn countStatus200(ViewDecorator table) {
+    public static DBColumn countStatus200(ViewDecorator table, String... args) {
         return countStatusByType(table, eq(200));
     }
 
-    public static OperationColumn countStatus400(ViewDecorator table) {
+    public static DBColumn countStatus400(ViewDecorator table, String... args) {
         return countStatusByType(table, eq(400));
     }
 
-    public static OperationColumn countStatus401(ViewDecorator table) {
+    public static DBColumn countStatus401(ViewDecorator table, String... args) {
         return countStatusByType(table, eq(401));
     }
 
-    public static OperationColumn countStatus403(ViewDecorator table) {
+    public static DBColumn countStatus403(ViewDecorator table, String... args) {
         return countStatusByType(table, eq(403));
     }
 
-    public static OperationColumn countStatus404(ViewDecorator table) {
+    public static DBColumn countStatus404(ViewDecorator table, String... args) {
         return countStatusByType(table, eq(404));
     }
 
-    public static OperationColumn countStatus500(ViewDecorator table) {
+    public static DBColumn countStatus500(ViewDecorator table, String... args) {
         return countStatusByType(table, eq(500));
     }
 
-    public static OperationColumn countStatus503(ViewDecorator table) {
+    public static DBColumn countStatus503(ViewDecorator table, String... args) {
         return countStatusByType(table, eq(503));
     }
 
-    public static OperationColumn countErrorStatus(ViewDecorator table) {
+    public static DBColumn countErrorStatus(ViewDecorator table, String... args) {
         return countStatusByType(table, ge(400));
     }
 
-    public static OperationColumn countClientErrorStatus(ViewDecorator table) {
+    public static DBColumn countClientErrorStatus(ViewDecorator table, String... args) {
         return countStatusByType(table, ge(400).and(lt(500)));
     }
 
-    public static OperationColumn countServerErrorStatus(ViewDecorator table) {
+    public static DBColumn countServerErrorStatus(ViewDecorator table, String... args) {
         return countStatusByType(table, ge(500));
     }
 
-    public static OperationColumn countServerUnavailableStatus(ViewDecorator table) {
+    public static DBColumn countServerUnavailableStatus(ViewDecorator table, String... args) {
         return countStatusByType(table, eq(0));
     }
 
-    public static OperationColumn countSuccesStatus(ViewDecorator table) {
+    public static DBColumn countSuccesStatus(ViewDecorator table, String... args) {
         return countStatusByType(table, ge(200).and(lt(300)));
     }
-    public static ComparisonExpression elapsedTimeExpressions(String name) {
+    public static ComparisonExpression elapsedTimeExpressions(ViewDecorator table, String name) {
         return switch (name) {
             case "fastest" -> lt(1);
             case "fast" -> ge(1).and(lt(3));
@@ -101,28 +108,28 @@ public class FilterConstant {
         };
     }
 
-    private static OperationColumn elapsedTimeBySpeed(ComparisonExpression op, ViewDecorator table) {
-        var elapsed = elapsedtime2(table);
-        return elapsed.beginCase().when(op, elapsed).end().count();
+    private static DBColumn elapsedTimeBySpeed(ComparisonExpression op, ViewDecorator table, String... args) {
+        var elapsed = elapsedtime2(table, args);
+        return elapsed.toCase().when(op, elapsed).end().count();
     }
 
-    public static OperationColumn elapsedTimeVerySlow(ViewDecorator table) {
-        return elapsedTimeBySpeed(elapsedTimeExpressions("slowest"), table);
+    public static DBColumn elapsedTimeVerySlow(ViewDecorator table, String... args) {
+        return elapsedTimeBySpeed(elapsedTimeExpressions(table, "slowest"), table, args);
     }
 
-    public static OperationColumn elapsedTimeSlow(ViewDecorator table) {
-        return elapsedTimeBySpeed(elapsedTimeExpressions("slow"), table);
+    public static DBColumn elapsedTimeSlow(ViewDecorator table, String... args) {
+        return elapsedTimeBySpeed(elapsedTimeExpressions(table, "slow"), table, args);
     }
 
-    public static OperationColumn elapsedTimeMedium(ViewDecorator table) {
-        return elapsedTimeBySpeed(elapsedTimeExpressions("medium"), table);
+    public static DBColumn elapsedTimeMedium(ViewDecorator table, String... args) {
+        return elapsedTimeBySpeed(elapsedTimeExpressions(table, "medium"), table, args);
     }
 
-    public static OperationColumn elapsedTimeFast(ViewDecorator table) {
-        return elapsedTimeBySpeed(elapsedTimeExpressions("fast"), table);
+    public static DBColumn elapsedTimeFast(ViewDecorator table, String... args) {
+        return elapsedTimeBySpeed(elapsedTimeExpressions(table, "fast"), table, args);
     }
 
-    public static OperationColumn elapsedTimeFastest(ViewDecorator table) {
-        return elapsedTimeBySpeed(elapsedTimeExpressions("fastest"), table);
+    public static DBColumn elapsedTimeFastest(ViewDecorator table, String... args) {
+        return elapsedTimeBySpeed(elapsedTimeExpressions(table, "fastest"), table, args);
     }
 }

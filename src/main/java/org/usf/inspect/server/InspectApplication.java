@@ -1,10 +1,7 @@
 package org.usf.inspect.server;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.NamedType;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import static org.springframework.http.converter.json.Jackson2ObjectMapperBuilder.json;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -14,7 +11,11 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.usf.inspect.server.model.MainSession;
 import org.usf.inspect.server.model.RestSession;
 
-import static org.springframework.http.converter.json.Jackson2ObjectMapperBuilder.json;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsontype.NamedType;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 
 @SpringBootApplication
 @EnableTransactionManagement

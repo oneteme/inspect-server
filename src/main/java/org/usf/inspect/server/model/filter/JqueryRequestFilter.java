@@ -1,20 +1,23 @@
 package org.usf.inspect.server.model.filter;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-import org.usf.inspect.server.config.TraceApiTable;
-import org.usf.jquery.core.DBFilter;
+import static java.sql.Timestamp.from;
+import static org.usf.inspect.server.config.TraceApiColumn.ENVIRONEMENT;
+import static org.usf.inspect.server.config.TraceApiColumn.HOST;
+import static org.usf.inspect.server.config.TraceApiColumn.START;
+import static org.usf.inspect.server.config.TraceApiColumn.STATUS;
+import static org.usf.inspect.server.config.TraceApiTable.INSTANCE;
+import static org.usf.jquery.core.Utils.isEmpty;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static java.sql.Timestamp.from;
-import static org.usf.inspect.server.config.TraceApiColumn.*;
-import static org.usf.inspect.server.config.TraceApiColumn.START;
-import static org.usf.inspect.server.config.TraceApiTable.INSTANCE;
-import static org.usf.jquery.core.Utils.isEmpty;
+import org.usf.inspect.server.config.TraceApiTable;
+import org.usf.jquery.core.DBFilter;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter

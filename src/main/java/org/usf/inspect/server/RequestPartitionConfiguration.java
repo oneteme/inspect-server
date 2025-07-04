@@ -1,9 +1,10 @@
 package org.usf.inspect.server;
 
+import org.usf.inspect.server.model.Partition;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.usf.inspect.server.model.Partition;
 
 @Setter
 @Getter

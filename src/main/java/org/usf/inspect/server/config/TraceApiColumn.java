@@ -4,9 +4,9 @@ import static java.util.Objects.nonNull;
 
 import org.usf.inspect.server.config.constant.FilterConstant;
 import org.usf.jquery.core.ComparisonExpression;
-import org.usf.jquery.web.ColumnBuilder;
+import org.usf.jquery.core.DBColumn;
+import org.usf.jquery.web.Builder;
 import org.usf.jquery.web.ColumnDecorator;
-import org.usf.jquery.web.CriteriaBuilder;
 import org.usf.jquery.web.ViewDecorator;
 
 import lombok.NonNull;
@@ -76,7 +76,7 @@ public enum TraceApiColumn implements ColumnDecorator {
     BRANCH("branch"),
     HASH("hash"),
     //---
-    ELAPSEDTIME("elapsedtime", FilterConstant::elapsedtime2, CriteriaBuilder.multiArgs(FilterConstant::elapsedTimeExpressions)),
+    ELAPSEDTIME("elapsedtime", FilterConstant::elapsedtime2, Builder.multiArgsCriteria(FilterConstant::elapsedTimeExpressions)),
     COUNT_SLOWEST("elapsedTimeSlowest", FilterConstant::elapsedTimeVerySlow),
     COUNT_SLOW("elapsedTimeSlow", FilterConstant::elapsedTimeSlow),
     COUNT_MEDIUM("elapsedTimeMedium", FilterConstant::elapsedTimeMedium),
@@ -102,14 +102,14 @@ public enum TraceApiColumn implements ColumnDecorator {
     ERR("err", FilterConstant::err);
 
     private final String out; //nullable
-    private final ColumnBuilder columnTemplate;
-    private final CriteriaBuilder<ComparisonExpression> expressionFn;
+    private final Builder<ViewDecorator, DBColumn> columnTemplate;
+    private final Builder<ViewDecorator, ComparisonExpression> expressionFn;
 
     TraceApiColumn(@NonNull String tagname) {
         this(tagname, null, null);
     }
 
-    TraceApiColumn(@NonNull String tagname, @NonNull ColumnBuilder columnTemplate) {
+    TraceApiColumn(@NonNull String tagname, @NonNull Builder<ViewDecorator, DBColumn> columnTemplate) {
         this(tagname, columnTemplate, null);
     }
 
@@ -128,17 +128,17 @@ public enum TraceApiColumn implements ColumnDecorator {
     }
 
     @Override
-    public ColumnBuilder builder(ViewDecorator vd) {
+    public Builder<ViewDecorator, DBColumn> builder() {
         return nonNull(columnTemplate)
                 ? columnTemplate
-                : ColumnDecorator.super.builder(vd);
+                : ColumnDecorator.super.builder();
     }
     
     @Override
-    public CriteriaBuilder<ComparisonExpression>criteria(String name) {
+    public Builder<ViewDecorator, ComparisonExpression> criteriaBuilder(String name) {
         return "group".equals(name) && nonNull(expressionFn)
                 ? expressionFn
-                : ColumnDecorator.super.criteria(name);
+                : ColumnDecorator.super.criteriaBuilder(name);
     }
 
 }

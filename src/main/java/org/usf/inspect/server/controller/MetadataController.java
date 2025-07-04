@@ -80,7 +80,6 @@ public class MetadataController {
     @GetMapping("filter")
     List<SimpleFieldMetadata> fetchFilters() {
         return asList(
-
                 new SimpleFieldMetadata(REST_REQUEST, METHOD, METHOD.reference(), "Methode", COUNT),
                 new SimpleFieldMetadata(REST_REQUEST, PROTOCOL, PROTOCOL.reference(), "Protocole", COUNT),
                 new SimpleFieldMetadata(REST_REQUEST, HOST, HOST.reference(), "Hôte", COUNT),

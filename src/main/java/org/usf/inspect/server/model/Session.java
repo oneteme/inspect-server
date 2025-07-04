@@ -1,8 +1,8 @@
 package org.usf.inspect.server.model;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,

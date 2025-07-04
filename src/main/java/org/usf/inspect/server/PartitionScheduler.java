@@ -1,8 +1,19 @@
 package org.usf.inspect.server;
 
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
+import static java.util.Optional.ofNullable;
+import static org.usf.inspect.server.model.PartitionedTable.REQ_FTP;
+import static org.usf.inspect.server.model.PartitionedTable.REQ_HTTP;
+import static org.usf.inspect.server.model.PartitionedTable.REQ_JDBC;
+import static org.usf.inspect.server.model.PartitionedTable.REQ_LDAP;
+import static org.usf.inspect.server.model.PartitionedTable.REQ_LOCAL;
+import static org.usf.inspect.server.model.PartitionedTable.REQ_SMTP;
+import static org.usf.inspect.server.model.PartitionedTable.SES_HTTP;
+import static org.usf.inspect.server.model.PartitionedTable.SES_MAIN;
+
+import java.time.YearMonth;
+import java.util.EnumMap;
+import java.util.Map;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,14 +23,9 @@ import org.usf.inspect.server.model.Partition;
 import org.usf.inspect.server.model.PartitionedTable;
 import org.usf.inspect.server.service.ScriptService;
 
-
-import java.time.YearMonth;
-import java.util.EnumMap;
-import java.util.Map;
-
-import static java.util.Optional.ofNullable;
-import static org.usf.inspect.server.model.PartitionedTable.*;
-import static org.usf.inspect.server.model.PartitionedTable.REQ_LOCAL;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
