@@ -5,10 +5,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 import org.usf.inspect.server.model.*;
 import org.usf.inspect.server.service.RequestService;
 import org.usf.inspect.server.service.SessionQueueService;
 import java.time.Instant;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import static java.util.Objects.isNull;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
@@ -30,7 +34,9 @@ public class TraceController {
 
     private final RequestService requestService;
     private final SessionQueueService queueService;
-    
+    private final RestTemplate restTemplate = new RestTemplate();
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<String> addInstanceEnvironment(HttpServletRequest hsr, @RequestBody InstanceEnvironment instance) {
     	if(queueService.getState() == DISABLE) {
@@ -39,6 +45,15 @@ public class TraceController {
         if(isNull(instance) || isBlank(instance.getName())) {
     		return status(BAD_REQUEST).build();
     	}
+
+        executor.submit(() -> {
+            try {
+                restTemplate.postForEntity("https://inspect-server-rec-asm.calamar.had.enedis.fr/v3/trace/instance/",instance, void.class);
+                log.info("Sessions envoyées au serveur distant");
+            } catch(Exception ex) {
+                log.error("Erreur lors de l'envoi des sessions au serveur distant", ex);
+            }
+        });
         if(instance.getType() == CLIENT) {
             instance.setAddress(hsr.getRemoteAddr());
         }
@@ -58,7 +73,16 @@ public class TraceController {
                                              @RequestParam(required = false, name = "pending")  Integer pending,
                                              @RequestParam(required = false, name = "end") Instant end
                                             ) {
-    	try {
+        executor.submit(() -> {
+            try {
+                restTemplate.put(String.format("https://inspect-server-rec-asm.calamar.had.enedis.fr/v3/trace/instance/%s/session", id), sessions);
+                log.info("Sessions envoyées au serveur distant");
+            } catch(Exception ex) {
+                log.error("Erreur lors de l'envoi des sessions au serveur distant", ex);
+            }
+        });
+
+        try {
             if(end != null){
                 requestService.updateInstance(end,id);
                 log.warn("Instance with id : {} has ended", id);
