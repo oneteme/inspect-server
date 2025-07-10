@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS e_smtp_rqt (
     dh_str timestamp(6),
     dh_end timestamp(6),
     va_thr varchar,
-    va_stt boolean,
+    va_fail boolean,
     cd_prn_ses varchar,
     cd_ins varchar
 )
@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS e_ftp_rqt (
     dh_str timestamp(6),
     dh_end timestamp(6),
     va_thr varchar,
-    va_stt boolean,
+    va_fail boolean,
     cd_prn_ses varchar, -- index
     cd_ins varchar
 )
@@ -136,7 +136,7 @@ CREATE TABLE IF NOT EXISTS e_ldap_rqt (
     dh_str timestamp(6),
     dh_end timestamp(6),
     va_thr varchar,
-    va_stt boolean,
+    va_fail boolean,
     cd_prn_ses varchar, -- index
     cd_ins varchar
 )
@@ -166,7 +166,7 @@ CREATE TABLE IF NOT EXISTS e_dtb_rqt (
     va_prd_nam varchar, 
     va_prd_vrs varchar, 
     va_cmd varchar,
-    VA_STT boolean,
+    va_fail boolean,
     cd_prn_ses varchar,
     cd_ins varchar
 )
@@ -192,7 +192,7 @@ CREATE TABLE IF NOT EXISTS e_lcl_rqt (
     dh_end timestamp(6), 
     va_usr varchar,
     va_thr varchar,
-    va_stt boolean,
+    va_fail boolean,
     cd_prn_ses varchar,
     cd_ins varchar
 )

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import org.usf.inspect.core.DispatchState;
 import org.usf.inspect.core.InspectConfigurationProperties;
 import org.usf.inspect.core.ScheduledDispatchHandler;
-import org.usf.inspect.server.model.Session;
+import org.usf.inspect.server.model.Metric;
 
 import java.util.List;
 
@@ -15,18 +15,18 @@ import java.util.List;
 public class SessionQueueService {
 
     private final RequestService service;
-    private final ScheduledDispatchHandler<Session> dispatcher;
+    private final ScheduledDispatchHandler<Metric> dispatcher;
 
     public SessionQueueService(RequestService service, InspectConfigurationProperties prop) {
         this.service = service;
-		this.dispatcher = new ScheduledDispatchHandler<>(prop.getDispatch(), this::saveSessions);
+		this.dispatcher = new ScheduledDispatchHandler<>(prop.getDispatch(), this::saveMetrics);
     }
 
-    public boolean addSessions(Session[] sessions) {
-    	return dispatcher.submit(sessions);
+    public boolean addMetrics(Metric... metrics) {
+    	return dispatcher.submit(metrics);
     }
 
-    public List<Session> waitList() {
+    public List<Metric> waitList() {
     	return dispatcher.peek().toList();
     }
     
@@ -34,8 +34,8 @@ public class SessionQueueService {
     	return (int) dispatcher.peek().count();
     }
 
-    boolean saveSessions(boolean complete, int attempts, List<Session> sessions, int pending) {
-        service.addSessions(sessions);
+    boolean saveMetrics(boolean complete, int attempts, List<Metric> metrics, int pending) {
+        service.addMetrics(metrics);
         return true;
     }
     

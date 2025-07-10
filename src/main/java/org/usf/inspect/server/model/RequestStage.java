@@ -7,12 +7,12 @@ import java.time.Instant;
 
 @Getter
 @Setter
-public class RequestStage {
+public class RequestStage implements Metric {
     private String name;
     private Instant start;
     private Instant end;
     private ExceptionInfo exception;
 
-    private Long idRequest;
+    private String idRequest;
     private Integer order;
 }

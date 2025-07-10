@@ -2,6 +2,7 @@ package org.usf.inspect.server.model;
 
 import lombok.Getter;
 import lombok.Setter;
+
 import java.util.List;
 
 @Getter

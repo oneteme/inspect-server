@@ -12,7 +12,6 @@ import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static java.sql.Timestamp.from;
@@ -20,7 +19,6 @@ import static org.usf.inspect.server.Utils.fromNullableTimestamp;
 import static org.usf.inspect.server.config.TraceApiColumn.*;
 import static org.usf.inspect.server.config.TraceApiTable.MAIN_SESSION;
 import static org.usf.inspect.server.config.TraceApiTable.USER_ACTION;
-import static org.usf.inspect.server.config.constant.JoinConstant.MAIN_SESSION_JOIN;
 import static org.usf.inspect.server.config.constant.JoinConstant.USER_ACTION_JOIN;
 
 @Service

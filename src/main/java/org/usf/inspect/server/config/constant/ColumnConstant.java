@@ -18,8 +18,6 @@ public class ColumnConstant {
             case TYPE -> VA_TYP;
             case LOCATION -> VA_LCT;
             case THREAD -> VA_THR;
-            case ERR_TYPE -> VA_ERR_TYP;
-            case ERR_MSG -> VA_ERR_MSG;
             case MASK -> VA_MSK;
             case INSTANCE_ENV -> CD_INS;
             default -> null;
@@ -48,8 +46,6 @@ public class ColumnConstant {
             case API_NAME -> VA_NAM;
             case USER -> VA_USR;
             case USER_AGT -> VA_USR_AGT;
-            case ERR_TYPE -> VA_ERR_TYP;
-            case ERR_MSG -> VA_ERR_MSG;
             case CACHE_CONTROL -> VA_CCH_CTR;
             case MASK -> VA_MSK;
             case INSTANCE_ENV -> CD_INS;

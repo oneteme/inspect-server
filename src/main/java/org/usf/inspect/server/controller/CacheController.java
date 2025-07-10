@@ -63,7 +63,7 @@ public class CacheController {
 	    	template.postForLocation(host + "/cache/state/"+ DISABLE, null); //stop adding session first on remote server
 	        var arr = template.getForObject(host + "/cache", Session[].class); //import sessions from remote server cache
 	        if(nonNull(arr) && arr.length > 0) {
-	            var cnt = service.addSessions(asList(arr)); //save sessions on database (local.env == remote.env)
+	            var cnt = service.addMetrics(asList(arr)); //save sessions on database (local.env == remote.env)
 	            if(cnt != arr.length) {
 	            	log.warn("{} sessions was imported, but {} sessions was saved", arr.length, cnt);
 	            }

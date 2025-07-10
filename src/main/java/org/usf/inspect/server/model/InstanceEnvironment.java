@@ -1,6 +1,7 @@
 package org.usf.inspect.server.model;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.usf.inspect.core.InstanceType;
 
 import java.time.Instant;

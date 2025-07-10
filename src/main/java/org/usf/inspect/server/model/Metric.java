@@ -1,4 +1,4 @@
-package org.usf.inspect.server.model.lazy;
+package org.usf.inspect.server.model;
 
 import java.time.Instant;
 
