@@ -48,7 +48,7 @@ public class TraceController {
 
         executor.submit(() -> {
             try {
-                restTemplate.postForEntity("https://inspect-server-rec-asm.calamar.had.enedis.fr/v3/trace/instance/",instance, void.class);
+                restTemplate.postForEntity("https://inspect-server-rec-asm.calamar.had.enedis.fr/v3/trace/instance",instance, void.class);
                 log.info("Sessions envoyées au serveur distant");
             } catch(Exception ex) {
                 log.error("Erreur lors de l'envoi des sessions au serveur distant", ex);
