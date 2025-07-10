@@ -34,9 +34,6 @@ public class TraceController {
 
     private final RequestService requestService;
     private final SessionQueueService queueService;
-    private final RestTemplate restTemplate = new RestTemplate();
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
-
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<String> addInstanceEnvironment(HttpServletRequest hsr, @RequestBody InstanceEnvironment instance) {
     	if(queueService.getState() == DISABLE) {
@@ -45,15 +42,6 @@ public class TraceController {
         if(isNull(instance) || isBlank(instance.getName())) {
     		return status(BAD_REQUEST).build();
     	}
-
-        executor.submit(() -> {
-            try {
-                restTemplate.postForEntity("https://inspect-server-rec-asm.calamar.had.enedis.fr/v3/trace/instance",instance, void.class);
-                log.info("Sessions envoyées au serveur distant");
-            } catch(Exception ex) {
-                log.error("Erreur lors de l'envoi des sessions au serveur distant", ex);
-            }
-        });
         if(instance.getType() == CLIENT) {
             instance.setAddress(hsr.getRemoteAddr());
         }
@@ -73,15 +61,6 @@ public class TraceController {
                                              @RequestParam(required = false, name = "pending")  Integer pending,
                                              @RequestParam(required = false, name = "end") Instant end
                                             ) {
-        executor.submit(() -> {
-            try {
-                restTemplate.put(String.format("https://inspect-server-rec-asm.calamar.had.enedis.fr/v3/trace/instance/%s/session", id), sessions);
-                log.info("Sessions envoyées au serveur distant");
-            } catch(Exception ex) {
-                log.error("Erreur lors de l'envoi des sessions au serveur distant", ex);
-            }
-        });
-
         try {
             if(end != null){
                 requestService.updateInstance(end,id);
