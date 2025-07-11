@@ -48,7 +48,7 @@ public enum TraceApiColumn implements ColumnDecorator {
     ENVIRONEMENT("environement"), //ENV
     OS("os"),
     RE("re"),
-
+    FAILED("failed"),
     NAME("name"),
     NODE_NAME("nodeName"),
     TYPE("type"),
