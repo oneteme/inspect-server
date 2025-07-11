@@ -1,13 +1,13 @@
 package org.usf.inspect.server.model;
 
 
-import lombok.Getter;
-import lombok.Setter;
+import static org.usf.inspect.server.Utils.isEmpty;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.usf.inspect.server.Utils.isEmpty;
+import lombok.Getter;
+import lombok.Setter;
 
 @Setter
 @Getter
