@@ -1,19 +1,31 @@
 package org.usf.inspect.server.mapper;
 
-import org.usf.inspect.server.Utils;
-import org.usf.inspect.server.model.RestSession;
-import org.usf.inspect.server.model.Session;
-import org.usf.jquery.core.ResultSetMapper;
-
+import static org.usf.inspect.server.Utils.fromNullableTimestamp;
+import static org.usf.inspect.server.config.TraceApiColumn.API_NAME;
+import static org.usf.inspect.server.config.TraceApiColumn.APP_NAME;
+import static org.usf.inspect.server.config.TraceApiColumn.END;
+import static org.usf.inspect.server.config.TraceApiColumn.ERR_MSG;
+import static org.usf.inspect.server.config.TraceApiColumn.ERR_TYPE;
+import static org.usf.inspect.server.config.TraceApiColumn.ID;
+import static org.usf.inspect.server.config.TraceApiColumn.METHOD;
+import static org.usf.inspect.server.config.TraceApiColumn.PATH;
+import static org.usf.inspect.server.config.TraceApiColumn.PROTOCOL;
+import static org.usf.inspect.server.config.TraceApiColumn.QUERY;
+import static org.usf.inspect.server.config.TraceApiColumn.SIZE_IN;
+import static org.usf.inspect.server.config.TraceApiColumn.SIZE_OUT;
+import static org.usf.inspect.server.config.TraceApiColumn.START;
+import static org.usf.inspect.server.config.TraceApiColumn.STATUS;
+import static org.usf.inspect.server.config.TraceApiColumn.USER;
+import static org.usf.inspect.server.service.RequestService.getExceptionInfoIfNotNull;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.usf.inspect.server.Utils.*;
-import static org.usf.inspect.server.config.TraceApiColumn.*;
-import static org.usf.inspect.server.service.RequestService.getExceptionInfoIfNotNull;
+import org.usf.inspect.server.model.RestSession;
+import org.usf.inspect.server.model.Session;
+import org.usf.jquery.core.ResultSetMapper;
 
 public class RestSessionForSearchMapper implements ResultSetMapper<List<Session>> {
 
