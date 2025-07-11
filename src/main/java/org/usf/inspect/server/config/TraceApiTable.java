@@ -1,24 +1,12 @@
 package org.usf.inspect.server.config;
 
-import static java.lang.Integer.parseInt;
-import static org.usf.inspect.server.config.TraceApiColumn.HOST;
-import static org.usf.inspect.server.config.TraceApiColumn.ID;
-import static org.usf.inspect.server.config.TraceApiColumn.PARENT;
-import static org.usf.inspect.server.config.TraceApiColumn.PORT;
-import static org.usf.inspect.server.config.TraceApiColumn.START;
-import static org.usf.jquery.core.DBColumn.allColumns;
-import static org.usf.jquery.core.ViewJoin.innerJoin;
-
 import java.util.function.Function;
 
 import org.usf.inspect.server.config.constant.ColumnConstant;
 import org.usf.inspect.server.config.constant.JoinConstant;
-import org.usf.jquery.core.*;
+import org.usf.jquery.core.ViewJoin;
+import org.usf.jquery.web.Builder;
 import org.usf.jquery.web.ColumnDecorator;
-import org.usf.jquery.web.CriteriaBuilder;
-import org.usf.jquery.web.JoinBuilder;
-import org.usf.jquery.web.PartitionBuilder;
-import org.usf.jquery.web.ViewBuilder;
 import org.usf.jquery.web.ViewDecorator;
 
 import lombok.NonNull;
@@ -29,38 +17,6 @@ public enum TraceApiTable implements ViewDecorator {
 
     REST_REQUEST(ColumnConstant::restRequestColumns, JoinConstant::restRequestJoins),
     REST_SESSION(ColumnConstant::restSessionColumns, JoinConstant::restSessionJoins),
-
-    TEST(ColumnConstant::restSessionColumns){
-    	@Override
-    	public ViewBuilder builder() {
-    		return ()->
-    			new QueryBuilder().columns(allColumns(REST_SESSION.view())).asView();
-    	}
-
-    	@Override
-    	public CriteriaBuilder<DBFilter> criteria(String name) {
-    		if("crt".equals(name)) {
-    			return v-> column(PORT).gt(parseInt(v[0])).or(column(HOST).like("usf"));
-    		}
-    		return null;
-    	}
-
-    	@Override
-    	public JoinBuilder join(String name) {
-    		if("jnr".equals(name)) {
-    			return ()-> new ViewJoin[] { innerJoin(REST_REQUEST.view(), column(ID).eq(REST_REQUEST.column(PARENT))) };
-    		}
-    		return null;
-    	}
-
-    	@Override
-    	public PartitionBuilder partition(String name) {
-    		if("par".equals(name)) {
-    			return ()-> new Partition(new DBColumn[] {}, new DBOrder[] {column(START).order()});
-    		}
-    		return null;
-    	}
-    },
 //  REST_SESSION2(DataConstants::restSessionColumns),
     MAIN_SESSION(ColumnConstant::mainSessionColumns, JoinConstant::mainSessionJoins),
     DATABASE_REQUEST(ColumnConstant::databaseRequestColumns, JoinConstant::databaseRequestJoins),
@@ -79,7 +35,7 @@ public enum TraceApiTable implements ViewDecorator {
 
     @NonNull
     private final Function<TraceApiColumn, String> columnMap;
-	private final Function<String, JoinBuilder> builder;
+	private final Function<String, Builder<ViewDecorator, ViewJoin[]>> builder;
 
 	TraceApiTable(@NonNull Function<TraceApiColumn, String> columnMap) {
 		this.columnMap = columnMap;
@@ -97,7 +53,7 @@ public enum TraceApiTable implements ViewDecorator {
     }
 
 	@Override
-	public JoinBuilder join(String name) {
+	public Builder<ViewDecorator, ViewJoin[]> joinBuilder(String name) {
 		return builder == null ? null : builder.apply(name);
 	}
 }

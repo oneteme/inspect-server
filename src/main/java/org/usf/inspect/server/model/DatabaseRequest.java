@@ -1,14 +1,20 @@
 package org.usf.inspect.server.model;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.usf.inspect.jdbc.SqlCommand;
+import static org.usf.inspect.server.Utils.isEmpty;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static org.usf.inspect.server.Utils.isEmpty;
+import org.usf.inspect.jdbc.SqlCommand;
+
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter
