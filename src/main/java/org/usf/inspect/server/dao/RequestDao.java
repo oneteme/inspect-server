@@ -75,6 +75,8 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
         var frs = filterAndSave(metrics, FtpRequestStage.class, this::saveFtpRequestStages);
         var nrs = filterAndSave(metrics, NamingRequestStage.class, this::saveLdapRequestStages);
         var drs = filterAndSave(metrics, DatabaseRequestStage.class, this::saveDatabaseRequestStages);
+       // var mmr = filterAndSave(metrics, MemoryStats.class, this::saveMemoryMetrics);
+       // var log = filterAndSave(metrics, LogEntry.class, this::saveLogEntries);
         return ms + rs + rr + lr + mr + fr + nr + dr + hrs + mrs + frs + nrs + drs;
     }
 

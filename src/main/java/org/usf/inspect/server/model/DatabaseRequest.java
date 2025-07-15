@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.usf.inspect.jdbc.SqlCommand;
 
 import lombok.Getter;
@@ -18,6 +19,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
+@JsonTypeName("--")
 public class DatabaseRequest extends SessionStage {
     private String host;
     private Integer port;
