@@ -53,6 +53,42 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             ps.setString(13, instance.getHash());
         });
     }
+    public void saveInstanceTrace(InstanceTrace instanceTrace) {
+        template.update("""
+INSERT INTO E_INS_TRC (VA_PND, VA_ATP, VA_SES_SZE, DH_STR, CD_INS)
+VALUES (?, ?, ?, ?, ?::uuid);""", ps -> {
+            ps.setInt(1, instanceTrace.getPending());
+            ps.setInt(2, instanceTrace.getAttemps());
+            ps.setInt(3, instanceTrace.getSessionLength());
+            ps.setTimestamp(4, fromNullableInstant(instanceTrace.getInstant()));
+            ps.setString(5, instanceTrace.getInstanceId());
+        });
+    }
+
+    public void saveLogEntry(LogEntry logEntry) {
+        template.update("""
+INSERT INTO E_LOG_ENT(VA_LVL,VA_MSG,DH_STR,CD_SES,CD_INS)
+VALUES (?,?,?,?::uuid,?::uuid)""", ps -> {
+            ps.setString(1, String.valueOf(logEntry.getLevel()));
+            ps.setString(2, logEntry.getMessage());
+            ps.setTimestamp(3, fromNullableInstant(logEntry.getInstant()));
+            ps.setString(4, logEntry.getSessionId());
+            ps.setString(5, logEntry.getInstanceId());
+        });
+    }
+
+    public void saveMachineResourceUsage(MachineResourceUsage usage) {
+        template.update("""
+INSERT INTO E_RSC_USG(DH_STR,VA_LOW_HEP,VA_HIG_HEP,VA_LOW_MET,VA_HIG_MET,CD_INS)
+    VALUES (?,?,?,?,?,?::uuid,)""", ps -> {
+            ps.setTimestamp(1, fromNullableInstant(usage.getInstant()));
+            ps.setInt(2, usage.getLowHeap());
+            ps.setInt(3, usage.getHighHeap());
+            ps.setInt(4, usage.getLowMeta());
+            ps.setInt(5, usage.getHighMeta());
+            ps.setString(6, usage.getInstanceId());
+        });
+    }
 
     public void updateInstanceEnvironment(Instant end, String instanceId){
         template.update("UPDATE E_ENV_INS SET DH_END = ? WHERE ID_INS = ?", ps -> {
@@ -75,9 +111,9 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
         var frs = filterAndSave(metrics, FtpRequestStage.class, this::saveFtpRequestStages);
         var nrs = filterAndSave(metrics, NamingRequestStage.class, this::saveLdapRequestStages);
         var drs = filterAndSave(metrics, DatabaseRequestStage.class, this::saveDatabaseRequestStages);
-       // var mmr = filterAndSave(metrics, MemoryStats.class, this::saveMemoryMetrics);
-       // var log = filterAndSave(metrics, LogEntry.class, this::saveLogEntries);
-        return ms + rs + rr + lr + mr + fr + nr + dr + hrs + mrs + frs + nrs + drs;
+      //  var mmr = filterAndSave(metrics, MachineResourceUsage.class, usages -> saveMachineResourceUsage(usages));
+      //  var log = filterAndSave(metrics, LogEntry.class, entries -> saveLogEntry(entries));
+        return ms + rs + rr + lr + mr + fr + nr + dr + hrs + mrs + frs + nrs + drs;// + mmr + log;
     }
 
     private int saveRestSessions(List<RestSession> sessions) {
@@ -411,6 +447,8 @@ VALUES(?,?,?,?,?,?::uuid)""", treeIterator(sessions, MainSession::getUserActions
         return template.query(query, (ResultSet rs, int rowNum) -> (rs.getString("chld")), id).stream().filter(Objects::nonNull).toList();
     }
 
+
+
     private <T> Integer executeBatch(String sql, Iterator<T> it, ParameterizedPreparedStatementSetter<T> pss) {
         return template.execute(sql, (PreparedStatement ps)->{
             long rows = 0;
@@ -438,3 +476,4 @@ VALUES(?,?,?,?,?,?::uuid)""", treeIterator(sessions, MainSession::getUserActions
         return list.isEmpty() ? 0 : saveFn.applyAsInt(list);
     }
 }
+

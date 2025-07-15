@@ -243,6 +243,31 @@ CREATE TABLE IF NOT EXISTS e_usr_acn (
     cd_prn_ses varchar
 );
 
+create table if not exists e_ins_trc (
+    va_pnd int,
+    va_atp int,
+    va_ses_sze int,
+    dh_str timestamp(6),
+    cd_ins uuid
+);
+
+create table if not exists e_log_ent (
+    dh_str timestamp(6),
+    va_lvl varchar,
+    va_msg varchar,
+    cd_ses uuid,
+    cd_ins uuid
+);
+
+create table if not exists e_rsc_usg (
+     dh_str timestamp(6),
+    va_low_hep int,
+    va_hig_hep int,
+    va_low_met int,
+    va_hig_met int,
+    cd_ins uuid
+);
+
 -- Ajouter les index du cd instance dans les requests
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_main_ses_id_ses_dh_str ON e_main_ses(id_ses, dh_str);

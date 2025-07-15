@@ -9,7 +9,7 @@ import java.time.Instant;
 @Getter
 @Setter
 @JsonTypeName("--")
-public class MemoryStats {
+public class MachineResourceUsage {
     private Instant instant;
     private int lowHeap;
     private int highHeap;

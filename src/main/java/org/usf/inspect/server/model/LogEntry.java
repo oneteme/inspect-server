@@ -11,10 +11,11 @@ import java.time.Instant;
 @JsonTypeName("--")
 public class LogEntry {
 
-    private final Instant instant;
-    private final Level level;
-    private final String message;
+    private Instant instant;
+    private Level level;
+    private String message;
     private String sessionId; //nullable
+    private String instanceId;
 
     enum Level {
         INFO, WARN, ERROR;

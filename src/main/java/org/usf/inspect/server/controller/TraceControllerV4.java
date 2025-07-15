@@ -6,10 +6,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.usf.inspect.server.model.InstanceEnvironment;
+import org.usf.inspect.server.model.InstanceTrace;
 import org.usf.inspect.server.model.Session;
 import org.usf.inspect.server.service.RequestService;
 import org.usf.inspect.server.service.SessionQueueService;
 import java.time.Instant;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import static java.util.Objects.isNull;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
@@ -25,13 +29,13 @@ import static org.usf.jquery.core.Utils.isBlank;
 @Slf4j
 @CrossOrigin
 @RestController
-@RequestMapping(value = "v3/trace", produces = APPLICATION_JSON_VALUE)
+@RequestMapping(value = "v4/trace", produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 public class TraceControllerV4 {
 
     private final RequestService requestService;
     private final SessionQueueService queueService;
-
+    private final ExecutorService executor = Executors.newFixedThreadPool(15);
 
     @PutMapping("instance/{id}/session")
     public ResponseEntity<Void> addSessions( @PathVariable("id") String id,
@@ -43,14 +47,8 @@ public class TraceControllerV4 {
         try {
             if(end != null){
                 requestService.updateInstance(end, id);
-                log.warn("Instance with id : {} has ended", id);
             }
-            if(pending != null){
-                log.info("Pending sessions : {}", pending);
-            }
-            if(attemps > 1){
-                log.info("Adding metrics to the queue - attempts: {}", attemps);
-            }
+            executor.submit(()-> requestService.addInstanceTrace(new InstanceTrace(pending, attemps, sessions.length, Instant.now(),id)));
             queueService.addMetrics(sessions);
             return accepted().build();
         }

@@ -23,7 +23,6 @@ public class InstanceEnvironment {
     private final String branch;
     private final String hash;
     private Instant end;
-
     private String id;
 
     public InstanceEnvironment(String name, String version, String address, String env, String os, String re, String user, InstanceType type, Instant instant, String collector, String branch, String hash, Instant end) {

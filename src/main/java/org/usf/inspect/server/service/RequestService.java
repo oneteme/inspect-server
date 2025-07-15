@@ -77,6 +77,10 @@ public class RequestService {
         dao.updateInstanceEnvironment(end, instanceId);
     }
 
+    public void addInstanceTrace(InstanceTrace instanceTrace){
+        dao.saveInstanceTrace(instanceTrace);
+    }
+
     @TraceableStage
     @Transactional(rollbackFor = Throwable.class)
     public long addMetrics(List<Metric> metrics) {
