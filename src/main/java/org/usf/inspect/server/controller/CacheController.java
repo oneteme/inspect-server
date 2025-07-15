@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.usf.inspect.core.DispatchState;
+import org.usf.inspect.server.model.Metric;
 import org.usf.inspect.server.model.Session;
 import org.usf.inspect.server.service.RequestService;
 import org.usf.inspect.server.service.SessionQueueService;
@@ -54,7 +55,7 @@ public class CacheController {
 	}
 
     @GetMapping
-    public ResponseEntity<Collection<Session>> getCache(){
+    public ResponseEntity<Collection<Metric>> getCache(){
 		return ok(queue.waitList());
     }
 

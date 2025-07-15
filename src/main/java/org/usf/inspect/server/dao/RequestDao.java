@@ -1,4 +1,4 @@
-package org.usf.inspect.server.dao.lazy;
+package org.usf.inspect.server.dao;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import org.usf.inspect.server.model.*;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.Types;
 import java.time.Instant;
 import java.util.Collection;
@@ -36,7 +37,7 @@ public class RequestDao {
     public void saveInstanceEnvironment(InstanceEnvironment instance) {
         template.update("""
 INSERT INTO E_ENV_INS(ID_INS,VA_TYP,DH_STR,VA_APP,VA_VRS,VA_ADR,VA_ENV,VA_OS,VA_RE,VA_USR,VA_CLR,VA_BRCH,VA_HSH)
-VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
+VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             ps.setObject(1, instance.getId());
             ps.setString(2, instance.getType() != null ? instance.getType().name() : null);
             ps.setTimestamp(3, fromNullableInstant(instance.getInstant()));
@@ -80,7 +81,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     private int saveRestSessions(List<RestSession> sessions) {
         var arr = executeBatch("""
 INSERT INTO E_RST_SES(ID_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,VA_ERR_TYP,VA_ERR_MSG,VA_NAM,VA_USR,VA_USR_AGT,VA_CCH_CTR,VA_MSK,CD_INS)
-VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
+VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid)""", sessions.iterator(), (ps, ses) -> {
             var exp = ses.getException();
             ps.setObject(1, ses.getId());
             ps.setString(2, ses.getMethod());
@@ -115,7 +116,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(
     private int saveMainSessions(List<MainSession> sessions) {
         var arr = executeBatch("""
 INSERT INTO E_MAIN_SES(ID_SES,VA_NAM,VA_USR,DH_STR,DH_END,VA_TYP,VA_LCT,VA_THR,VA_ERR_TYP,VA_ERR_MSG,VA_MSK,CD_INS)
-VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
+VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?::uuid)""", sessions.iterator(), (ps, ses) -> {
             var exp = ses.getException();
             ps.setObject(1, ses.getId());
             ps.setString(2, ses.getName());
@@ -131,14 +132,14 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
             ps.setObject(12, ses.getInstanceId());
            // ses.updateCdSession();
         });
-        //saveUserActions(sessions);
+        saveUserActions(sessions);
         return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
 
     private int saveRestRequests(List<RestRequest> requests) {
         var arr = executeBatch("""
 INSERT INTO E_RST_RQT(ID_RST_RQT,CD_RMT_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,VA_BDY_CNT,CD_PRN_SES,CD_INS)
-VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, req)-> {
+VALUES(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(), (ps, req)-> {
             ps.setObject(1, req.getIdRequest());
             ps.setObject(2, req.getId());
             ps.setString(3, req.getMethod());
@@ -168,7 +169,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, 
 
         var arr = executeBatch("""
 INSERT INTO E_LCL_RQT(ID_LCL_RQT,VA_NAM,VA_LCT,DH_STR,DH_END,VA_USR,VA_THR,VA_FAIL,CD_PRN_SES,VA_TYP,CD_INS)
-VALUES(?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, req)-> {
+VALUES(?::uuid,?,?,?,?,?,?,?,?::uuid,?,?::uuid)""", requests.iterator(), (ps, req)-> {
             ps.setObject(1, req.getIdRequest());
             ps.setString(2,req.getName());
             ps.setString(3,req.getLocation());
@@ -191,7 +192,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, req)-> {
     private int saveMailRequests(List<MailRequest> requests) {
         var arr = executeBatch("""
 INSERT INTO E_SMTP_RQT(ID_SMTP_RQT,VA_HST,CD_PRT,VA_USR,DH_STR,DH_END,VA_THR,VA_FAIL,CD_PRN_SES,CD_INS)
-VALUES(?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, req)-> {
+VALUES(?::uuid,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(), (ps, req)-> {
             ps.setObject(1, req.getIdRequest());
             ps.setString(2, req.getHost());
             ps.setInt(3, req.getPort());
@@ -208,7 +209,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, req)-> {
     }
 
     private void saveMailRequestMails(List<MailRequest> requests) {
-        executeBatch("INSERT INTO E_SMTP_MAIL(VA_SBJ,VA_CNT_TYP,VA_FRM,VA_RCP,VA_RPL,VA_SZE,CD_SMTP_RQT) VALUES(?,?,?,?,?,?,?)", treeIterator(requests, MailRequest::getMails), (ps, mail)-> {
+        executeBatch("INSERT INTO E_SMTP_MAIL(VA_SBJ,VA_CNT_TYP,VA_FRM,VA_RCP,VA_RPL,VA_SZE,CD_SMTP_RQT) VALUES(?,?,?,?,?,?,?::uuid)", treeIterator(requests, MailRequest::getMails), (ps, mail)-> {
             ps.setString(1, mail.getSubject());
             ps.setString(2, mail.getContentType());
             ps.setString(3, mail.getFrom() != null ? String.join(", ", mail.getFrom()) : null);
@@ -222,7 +223,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, req)-> {
     private int saveFtpRequests(List<FtpRequest> requests){
         var arr = executeBatch("""
 INSERT INTO E_FTP_RQT(ID_FTP_RQT,VA_HST,CD_PRT,VA_PCL,VA_SRV_VRS,VA_CLT_VRS,VA_USR,DH_STR,DH_END,VA_THR,VA_FAIL,CD_PRN_SES,CD_INS)
-VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, req)-> {
+VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(), (ps, req)-> {
             ps.setObject(1, req.getIdRequest());
             ps.setString(2, req.getHost());
             ps.setInt(3, req.getPort());
@@ -244,7 +245,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, req)-> {
     private int saveLdapRequests(List<NamingRequest> requests) {
         var arr = executeBatch("""
 INSERT INTO E_LDAP_RQT(ID_LDAP_RQT,VA_HST,CD_PRT,VA_PCL,VA_USR,DH_STR,DH_END,VA_THR,VA_FAIL,CD_PRN_SES,CD_INS)
-VALUES(?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, req)-> {
+VALUES(?::uuid,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(), (ps, req)-> {
             ps.setObject(1, req.getIdRequest());
             ps.setString(2, req.getHost());
             ps.setInt(3, req.getPort());
@@ -264,7 +265,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, req)-> {
     private int saveDatabaseRequests(List<DatabaseRequest> requests) {
         var arr = executeBatch("""
 INSERT INTO E_DTB_RQT(ID_DTB_RQT,VA_HST,CD_PRT,VA_NAM,VA_SCH,DH_STR,DH_END,VA_USR,VA_THR,VA_DRV,VA_PRD_NAM,VA_PRD_VRS,VA_CMD,VA_FAIL,CD_PRN_SES,CD_INS)
-VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, req)-> {
+VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(), (ps, req)-> {
             ps.setObject(1, req.getIdRequest());
             ps.setString(2, req.getHost());
             ps.setInt(3, req.getPort());
@@ -286,7 +287,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, req)-> {
     }
 
     private int saveHttpRequestStages(List<HttpRequestStage> stages) {
-        var arr = executeBatch("INSERT INTO E_RST_STG(VA_NAM,DH_STR,DH_END,CD_ORD,CD_RST_RQT) VALUES(?,?,?,?,?)", stages.iterator(), (ps, stage)-> {
+        var arr = executeBatch("INSERT INTO E_RST_STG(VA_NAM,DH_STR,DH_END,CD_ORD,CD_RST_RQT) VALUES(?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
             ps.setString(1, stage.getName());
             ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
             ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
@@ -301,7 +302,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, req)-> {
     }
 
     private int saveMailRequestStages(List<MailRequestStage> stages) {
-        var arr = executeBatch("INSERT INTO E_SMTP_STG(VA_NAM,DH_STR,DH_END,CD_ORD,CD_SMTP_RQT) VALUES(?,?,?,?,?)", stages.iterator(), (ps, stage)-> {
+        var arr = executeBatch("INSERT INTO E_SMTP_STG(VA_NAM,DH_STR,DH_END,CD_ORD,CD_SMTP_RQT) VALUES(?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
             ps.setString(1, stage.getName());
             ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
             ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
@@ -316,7 +317,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, req)-> {
     }
 
     private int saveFtpRequestStages(List<FtpRequestStage> stages) {
-        var arr = executeBatch("INSERT INTO E_FTP_STG(VA_NAM,DH_STR,DH_END,VA_ARG,CD_ORD,CD_FTP_RQT) VALUES(?,?,?,?,?,?)", stages.iterator(), (ps, stage)-> {
+        var arr = executeBatch("INSERT INTO E_FTP_STG(VA_NAM,DH_STR,DH_END,VA_ARG,CD_ORD,CD_FTP_RQT) VALUES(?,?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
             ps.setString(1, stage.getName());
             ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
             ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
@@ -332,7 +333,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, req)-> {
     }
 
     private int saveLdapRequestStages(List<NamingRequestStage> stages) {
-        var arr = executeBatch("INSERT INTO E_LDAP_STG(VA_NAM,DH_STR,DH_END,VA_ARG,CD_ORD,CD_LDAP_RQT) VALUES(?,?,?,?,?,?)", stages.iterator(), (ps, stage)-> {
+        var arr = executeBatch("INSERT INTO E_LDAP_STG(VA_NAM,DH_STR,DH_END,VA_ARG,CD_ORD,CD_LDAP_RQT) VALUES(?,?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
             ps.setString(1, stage.getName());
             ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
             ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
@@ -348,7 +349,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, req)-> {
     }
 
     private int saveDatabaseRequestStages(List<DatabaseRequestStage> stages) {
-        var arr = executeBatch("INSERT INTO E_DTB_STG(VA_NAM,DH_STR,DH_END,VA_CNT,VA_CMD,CD_ORD,CD_DTB_RQT) VALUES(?,?,?,?,?,?,?)", stages.iterator(), (ps, stage)-> {
+        var arr = executeBatch("INSERT INTO E_DTB_STG(VA_NAM,DH_STR,DH_END,VA_CNT,VA_CMD,CD_ORD,CD_DTB_RQT) VALUES(?,?,?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
             ps.setString(1, stage.getName());
             ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
             ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
@@ -369,7 +370,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, req)-> {
             var inc = new AtomicLong(selectMaxId("E_USR_ACN", "ID_ACN"));
             executeBatch("""
 INSERT INTO E_USR_ACN(ID_ACN,VA_TYP,DH_STR,VA_NAM,VA_NDE_NAM,CD_PRN_SES)
-VALUES(?,?,?,?,?,?)""", treeIterator(sessions, MainSession::getUserActions), (ps, action) -> {
+VALUES(?,?,?,?,?,?::uuid)""", treeIterator(sessions, MainSession::getUserActions), (ps, action) -> {
                 ps.setLong(1, inc.incrementAndGet());
                 ps.setString(2, action.getType());
                 ps.setTimestamp(3, fromNullableInstant(action.getStart()));
@@ -382,7 +383,7 @@ VALUES(?,?,?,?,?,?)""", treeIterator(sessions, MainSession::getUserActions), (ps
 
     private void saveExceptions(List<ExceptionInfo> exceptions, RequestMask mask) {
         if(!isEmpty(exceptions)) {
-            executeBatch("INSERT INTO E_EXC_INF(VA_TYP,VA_ERR_TYP,VA_ERR_MSG,CD_ORD,CD_RQT) VALUES(?,?,?,?,?)", exceptions.iterator(), (ps, exp) -> {
+            executeBatch("INSERT INTO E_EXC_INF(VA_TYP,VA_ERR_TYP,VA_ERR_MSG,CD_ORD,CD_RQT) VALUES(?,?,?,?,?::uuid)", exceptions.iterator(), (ps, exp) -> {
                 ps.setString(1, mask.name());
                 ps.setString(2, exp.getType());
                 ps.setString(3, exp.getMessage());
@@ -395,6 +396,17 @@ VALUES(?,?,?,?,?,?)""", treeIterator(sessions, MainSession::getUserActions), (ps
     // TODO use RequestQueryBuilder
     private long selectMaxId(String table, String column) {
         return template.queryForObject(String.format("SELECT COALESCE(MAX(%s),0) FROM %s", column, table), Long.class);
+    }
+
+    public List<String> selectChildsById(String id) {
+        var query = "with recursive recusive(prnt,chld) as (" +
+                " select ''::varchar as prnt, ? as chld " +
+                " union all " +
+                " select  recusive.chld, E_RST_RQT.CD_RMT_SES " +
+                " from E_RST_RQT, recusive " +
+                " where recusive.chld = E_RST_RQT.CD_PRN_SES " +
+                ") select distinct(chld) from recusive";
+        return template.query(query, (ResultSet rs, int rowNum) -> (rs.getString("chld")), id).stream().filter(Objects::nonNull).toList();
     }
 
     private <T> Integer executeBatch(String sql, Iterator<T> it, ParameterizedPreparedStatementSetter<T> pss) {

@@ -21,6 +21,6 @@ public class DtoRequest extends SessionStage {
     protected String name;
     protected String command;
     protected String schema;
-    protected boolean status;
+    protected boolean failed;
     protected ExceptionInfo exception;
 }
