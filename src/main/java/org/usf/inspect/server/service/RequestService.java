@@ -83,8 +83,8 @@ public class RequestService {
 
     @TraceableStage
     @Transactional(rollbackFor = Throwable.class)
-    public long addMetrics(List<Metric> metrics) {
-        return dao.saveMetrics(metrics);
+    public long addTraceables(List<Traceable> traceables) {
+        return dao.saveTraceables(traceables);
     }
 
     public Session getMainTree(String id)  {

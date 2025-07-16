@@ -21,8 +21,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.usf.inspect.core.DispatchState;
-import org.usf.inspect.server.model.Metric;
 import org.usf.inspect.server.model.Session;
+import org.usf.inspect.server.model.Traceable;
 import org.usf.inspect.server.service.RequestService;
 import org.usf.inspect.server.service.SessionQueueService;
 
@@ -55,7 +55,7 @@ public class CacheController {
 	}
 
     @GetMapping
-    public ResponseEntity<Collection<Metric>> getCache(){
+    public ResponseEntity<Collection<Traceable>> getCache(){
 		return ok(queue.waitList());
     }
 
@@ -66,12 +66,12 @@ public class CacheController {
     }
 
     @PostMapping("{env}/import")
-    public int importSession(@PathVariable String env) {
+    public int importTraceable(@PathVariable String env) {
     	if(activeProfile.equals(env) && host != null) {
 	    	template.postForLocation(host + "/cache/state/"+ DISABLE, null); //stop adding session first on remote server
-	        var arr = template.getForObject(host + "/cache", Session[].class); //import sessions from remote server cache
+	        var arr = template.getForObject(host + "/cache", Traceable[].class); //import sessions from remote server cache
 	        if(nonNull(arr) && arr.length > 0) {
-	            var cnt = service.addMetrics(asList(arr)); //save sessions on database (local.env == remote.env)
+	            var cnt = service.addTraceables(asList(arr)); //save sessions on database (local.env == remote.env)
 	            if(cnt != arr.length) {
 	            	log.warn("{} sessions was imported, but {} sessions was saved", arr.length, cnt);
 	            }

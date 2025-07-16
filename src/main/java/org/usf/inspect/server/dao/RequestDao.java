@@ -65,29 +65,31 @@ VALUES (?, ?, ?, ?, ?::uuid);""", ps -> {
         });
     }
 
-    public void saveLogEntry(LogEntry logEntry) {
-        template.update("""
+    public int saveLogEntry(List<LogEntry> logEntries) {
+        var arr = executeBatch("""
 INSERT INTO E_LOG_ENT(VA_LVL,VA_MSG,DH_STR,CD_SES,CD_INS)
-VALUES (?,?,?,?::uuid,?::uuid)""", ps -> {
-            ps.setString(1, String.valueOf(logEntry.getLevel()));
-            ps.setString(2, logEntry.getMessage());
-            ps.setTimestamp(3, fromNullableInstant(logEntry.getInstant()));
-            ps.setString(4, logEntry.getSessionId());
-            ps.setString(5, logEntry.getInstanceId());
+VALUES (?,?,?,?::uuid,?::uuid)""", logEntries.iterator(), (ps, o)-> {
+            ps.setString(1, String.valueOf(o.getLevel()));
+            ps.setString(2, o.getMessage());
+            ps.setTimestamp(3, fromNullableInstant(o.getInstant()));
+            ps.setString(4, o.getSessionId());
+            ps.setString(5, o.getInstanceId());
         });
+        return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
 
-    public void saveMachineResourceUsage(MachineResourceUsage usage) {
-        template.update("""
+    public int saveMachineResourceUsage(List<MachineResourceUsage> usages) {
+        var arr = executeBatch("""
 INSERT INTO E_RSC_USG(DH_STR,VA_LOW_HEP,VA_HIG_HEP,VA_LOW_MET,VA_HIG_MET,CD_INS)
-    VALUES (?,?,?,?,?,?::uuid,)""", ps -> {
-            ps.setTimestamp(1, fromNullableInstant(usage.getInstant()));
-            ps.setInt(2, usage.getLowHeap());
-            ps.setInt(3, usage.getHighHeap());
-            ps.setInt(4, usage.getLowMeta());
-            ps.setInt(5, usage.getHighMeta());
-            ps.setString(6, usage.getInstanceId());
+    VALUES (?,?,?,?,?,?::uuid,)""",usages.iterator(), (ps, o)-> {
+            ps.setTimestamp(1, fromNullableInstant(o.getInstant()));
+            ps.setInt(2, o.getLowHeap());
+            ps.setInt(3, o.getHighHeap());
+            ps.setInt(4, o.getLowMeta());
+            ps.setInt(5, o.getHighMeta());
+            ps.setString(6, o.getInstanceId());
         });
+        return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
 
     public void updateInstanceEnvironment(Instant end, String instanceId){
@@ -97,23 +99,23 @@ INSERT INTO E_RSC_USG(DH_STR,VA_LOW_HEP,VA_HIG_HEP,VA_LOW_MET,VA_HIG_MET,CD_INS)
         });
     }
 
-    public long saveMetrics(List<Metric> metrics) {
-        var ms = filterAndSave(metrics, MainSession.class, this::saveMainSessions);
-        var rs = filterAndSave(metrics, RestSession.class, this::saveRestSessions);
-        var rr = filterAndSave(metrics, RestRequest.class, this::saveRestRequests);
-        var lr = filterAndSave(metrics, LocalRequest.class, this::saveLocalRequests);
-        var mr = filterAndSave(metrics, MailRequest.class, this::saveMailRequests);
-        var fr = filterAndSave(metrics, FtpRequest.class, this::saveFtpRequests);
-        var nr = filterAndSave(metrics, NamingRequest.class, this::saveLdapRequests);
-        var dr = filterAndSave(metrics, DatabaseRequest.class, this::saveDatabaseRequests);
-        var hrs = filterAndSave(metrics, HttpRequestStage.class, this::saveHttpRequestStages);
-        var mrs = filterAndSave(metrics, MailRequestStage.class, this::saveMailRequestStages);
-        var frs = filterAndSave(metrics, FtpRequestStage.class, this::saveFtpRequestStages);
-        var nrs = filterAndSave(metrics, NamingRequestStage.class, this::saveLdapRequestStages);
-        var drs = filterAndSave(metrics, DatabaseRequestStage.class, this::saveDatabaseRequestStages);
-      //  var mmr = filterAndSave(metrics, MachineResourceUsage.class, usages -> saveMachineResourceUsage(usages));
-      //  var log = filterAndSave(metrics, LogEntry.class, entries -> saveLogEntry(entries));
-        return ms + rs + rr + lr + mr + fr + nr + dr + hrs + mrs + frs + nrs + drs;// + mmr + log;
+    public long saveTraceables(List<Traceable> traceables) {
+        var ms = filterAndSave(traceables, MainSession.class, this::saveMainSessions);
+        var rs = filterAndSave(traceables, RestSession.class, this::saveRestSessions);
+        var rr = filterAndSave(traceables, RestRequest.class, this::saveRestRequests);
+        var lr = filterAndSave(traceables, LocalRequest.class, this::saveLocalRequests);
+        var mr = filterAndSave(traceables, MailRequest.class, this::saveMailRequests);
+        var fr = filterAndSave(traceables, FtpRequest.class, this::saveFtpRequests);
+        var nr = filterAndSave(traceables, NamingRequest.class, this::saveLdapRequests);
+        var dr = filterAndSave(traceables, DatabaseRequest.class, this::saveDatabaseRequests);
+        var hrs = filterAndSave(traceables, HttpRequestStage.class, this::saveHttpRequestStages);
+        var mrs = filterAndSave(traceables, MailRequestStage.class, this::saveMailRequestStages);
+        var frs = filterAndSave(traceables, FtpRequestStage.class, this::saveFtpRequestStages);
+        var nrs = filterAndSave(traceables, NamingRequestStage.class, this::saveLdapRequestStages);
+        var drs = filterAndSave(traceables, DatabaseRequestStage.class, this::saveDatabaseRequestStages);
+        var mmr = filterAndSave(traceables, MachineResourceUsage.class, this::saveMachineResourceUsage);
+        var log = filterAndSave(traceables, LogEntry.class, this::saveLogEntry);
+        return ms + rs + rr + lr + mr + fr + nr + dr + hrs + mrs + frs + nrs + drs + mmr + log;
     }
 
     private int saveRestSessions(List<RestSession> sessions) {

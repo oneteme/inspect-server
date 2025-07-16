@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.usf.inspect.server.model.InstanceEnvironment;
 import org.usf.inspect.server.model.InstanceTrace;
 import org.usf.inspect.server.model.Session;
+import org.usf.inspect.server.model.Traceable;
 import org.usf.inspect.server.service.RequestService;
 import org.usf.inspect.server.service.SessionQueueService;
 import java.time.Instant;
@@ -39,7 +40,7 @@ public class TraceControllerV4 {
 
     @PutMapping("instance/{id}/session")
     public ResponseEntity<Void> addSessions( @PathVariable("id") String id,
-                                             @RequestBody Session[] sessions,
+                                             @RequestBody Traceable[] sessions,
                                              @RequestParam(required = false, name = "pending")  Integer pending,
                                              @RequestParam(required = false, name = "end") Instant end,
                                              @RequestParam(required = false, name = "attemps") int attemps
@@ -49,7 +50,7 @@ public class TraceControllerV4 {
                 requestService.updateInstance(end, id);
             }
             executor.submit(()-> requestService.addInstanceTrace(new InstanceTrace(pending, attemps, sessions.length, Instant.now(),id)));
-            queueService.addMetrics(sessions);
+            queueService.addTraceables(sessions);
             return accepted().build();
         }
         catch (Exception e) {

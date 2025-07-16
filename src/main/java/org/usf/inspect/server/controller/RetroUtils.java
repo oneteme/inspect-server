@@ -15,7 +15,7 @@ import static org.usf.inspect.core.Session.nextId;
 @Slf4j
 public class RetroUtils {
 
-    public static void toV4(String instanceId, Session[] sessions, Consumer<Metric> consumer) {
+    public static void toV4(String instanceId, Session[] sessions, Consumer<Traceable> consumer) {
         for(Session s : sessions) {
             s.setInstanceId(instanceId);
             if(isNull(s.getId())) {
@@ -50,7 +50,7 @@ public class RetroUtils {
         }
     }
 
-    private static <T extends SessionStage> void    toV4(String instanceId, String sessionId, Collection<T> requests, Function<T, List<? extends  RequestStage>> fn, Consumer<Metric> consumer) {
+    private static <T extends SessionStage> void    toV4(String instanceId, String sessionId, Collection<T> requests, Function<T, List<? extends  RequestStage>> fn, Consumer<Traceable> consumer) {
         if(requests != null && !requests.isEmpty()) {
             for(var req : requests) {
                 req.setCdSession(sessionId);

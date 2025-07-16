@@ -3,8 +3,6 @@ package org.usf.inspect.server.controller;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.CacheControl;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.usf.inspect.server.model.InstanceEnvironment;
@@ -15,8 +13,6 @@ import org.usf.inspect.server.service.SessionQueueService;
 import java.time.Instant;
 
 import static java.util.Objects.isNull;
-import static java.util.concurrent.TimeUnit.DAYS;
-import static org.springframework.http.CacheControl.maxAge;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -73,7 +69,7 @@ public class TraceController {
             if(pending != null){
                 log.info("Pending sessions : {}", pending);
             }
-            toV4(id, sessions, queueService::addMetrics);
+            toV4(id, sessions, queueService::addTraceables);
 	        return accepted().build();
     	}
     	catch (Exception e) {

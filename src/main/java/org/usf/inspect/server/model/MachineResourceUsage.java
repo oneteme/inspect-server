@@ -9,7 +9,7 @@ import java.time.Instant;
 @Getter
 @Setter
 @JsonTypeName("--")
-public class MachineResourceUsage {
+public class MachineResourceUsage implements Traceable {
     private Instant instant;
     private int lowHeap;
     private int highHeap;

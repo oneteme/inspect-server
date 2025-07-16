@@ -9,7 +9,7 @@ import java.time.Instant;
 @Getter
 @Setter
 @JsonTypeName("--")
-public class LogEntry {
+public class LogEntry implements Traceable {
 
     private Instant instant;
     private Level level;

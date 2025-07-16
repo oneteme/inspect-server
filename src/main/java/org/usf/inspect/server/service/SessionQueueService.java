@@ -7,36 +7,36 @@ import org.springframework.stereotype.Service;
 import org.usf.inspect.core.DispatchState;
 import org.usf.inspect.core.InspectConfigurationProperties;
 import org.usf.inspect.core.ScheduledDispatchHandler;
-import org.usf.inspect.server.model.Metric;
 
 import jakarta.annotation.PreDestroy;
+import org.usf.inspect.server.model.Traceable;
 
 @Service
 @EnableConfigurationProperties(InspectConfigurationProperties.class)
 public class SessionQueueService {
 
     private final RequestService service;
-    private final ScheduledDispatchHandler<Metric> dispatcher;
+    private final ScheduledDispatchHandler<Traceable> dispatcher;
 
     public SessionQueueService(RequestService service, InspectConfigurationProperties prop) {
         this.service = service;
-		this.dispatcher = new ScheduledDispatchHandler<>(prop.getDispatch(), this::saveMetrics);
+		this.dispatcher = new ScheduledDispatchHandler<>(prop.getDispatch(), this::saveTraceables);
     }
 
-    public boolean addMetrics(Metric... metrics) {
-    	return dispatcher.submit(metrics);
+    public boolean addTraceables(Traceable... traceables) {
+    	return dispatcher.submit(traceables);
     }
 
-    public List<Metric> waitList() {
+    public List<Traceable> waitList() {
     	return dispatcher.peek().toList();
     }
-    
+
     public int waitListSize() {
     	return (int) dispatcher.peek().count();
     }
 
-    boolean saveMetrics(boolean complete, int attempts, List<Metric> metrics, int pending) {
-        service.addMetrics(metrics);
+    boolean saveTraceables(boolean complete, int attempts, List<Traceable> traceables, int pending) {
+        service.addTraceables(traceables);
         return true;
     }
     
