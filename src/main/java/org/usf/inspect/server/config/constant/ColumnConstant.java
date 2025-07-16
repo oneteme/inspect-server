@@ -79,6 +79,7 @@ public class ColumnConstant {
             case THREAD -> VA_THR;
             case PARENT -> CD_PRN_SES;
             case REMOTE -> CD_RMT_SES;
+            case INSTANCE_ENV -> CD_INS;
             default -> null;
         };
     }
@@ -97,6 +98,7 @@ public class ColumnConstant {
             case THREAD -> VA_THR;
             case FAILED -> VA_FAIL;
             case PARENT -> CD_PRN_SES;
+            case INSTANCE_ENV -> CD_INS;
             default -> null;
         };
     }
@@ -118,6 +120,7 @@ public class ColumnConstant {
             case COMMAND -> VA_CMD;
             case FAILED -> VA_FAIL;
             case PARENT -> CD_PRN_SES;
+            case INSTANCE_ENV -> CD_INS;
             default -> null;
         };
     }
@@ -126,6 +129,7 @@ public class ColumnConstant {
         return switch (column) {
             case ID -> ID_LCL_RQT;
             case NAME -> VA_NAM;
+            case TYPE -> VA_TYP;
             case LOCATION -> VA_LCT;
             case START -> DH_STR;
             case END -> DH_END;
@@ -133,7 +137,7 @@ public class ColumnConstant {
             case THREAD -> VA_THR;
             case FAILED -> VA_FAIL;
             case PARENT -> CD_PRN_SES;
-            case TYPE -> VA_TYP;
+            case INSTANCE_ENV -> CD_INS;
             default -> null;
         };
     }
@@ -174,6 +178,7 @@ public class ColumnConstant {
             case THREAD -> VA_THR;
             case FAILED -> VA_FAIL;
             case PARENT -> CD_PRN_SES;
+            case INSTANCE_ENV -> CD_INS;
             default -> null;
         };
     }
@@ -214,6 +219,7 @@ public class ColumnConstant {
             case THREAD -> VA_THR;
             case FAILED -> VA_FAIL;
             case PARENT -> CD_PRN_SES;
+            case INSTANCE_ENV -> CD_INS;
             default -> null;
         };
     }

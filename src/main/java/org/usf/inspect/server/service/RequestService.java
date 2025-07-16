@@ -589,7 +589,7 @@ public class RequestService {
         });
     }
 
-    private List<DtoRestRequest> getRestRequestsByFilter(DBFilter[] filters, ViewJoin[][] joins, String type,NamedColumn[] mainType)  { //use criteria
+    private List<DtoRestRequest> getRestRequestsByFilter(DBFilter[] filters, ViewJoin[][] joins, String type, NamedColumn[] mainType)  { //use criteria
 
         var count = getRequestCountByTable(REST_REQUEST,filters,joins);
         if(count > requestLimit){
