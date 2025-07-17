@@ -20,7 +20,7 @@ import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 import static org.springframework.http.ResponseEntity.*;
 import static org.usf.inspect.core.DispatchState.DISABLE;
 import static org.usf.inspect.core.InstanceType.CLIENT;
-import static org.usf.inspect.core.Session.nextId;
+import static org.usf.inspect.core.SessionManager.nextId;
 import static org.usf.inspect.server.controller.RetroUtils.*;
 import static org.usf.jquery.core.Utils.isBlank;
 

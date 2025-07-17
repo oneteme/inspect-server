@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static java.util.Objects.isNull;
-import static org.usf.inspect.core.Session.nextId;
+import static org.usf.inspect.core.SessionManager.nextId;
 
 @Slf4j
 public class RetroUtils {

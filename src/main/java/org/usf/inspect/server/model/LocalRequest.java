@@ -2,13 +2,12 @@ package org.usf.inspect.server.model;
 
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonTypeName;
+
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-@JsonTypeName("--")
 public class LocalRequest extends SessionStage {
     private String name;
     private String location;

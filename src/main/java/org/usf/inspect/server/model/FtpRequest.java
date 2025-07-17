@@ -5,13 +5,11 @@ import static org.usf.inspect.server.Utils.isEmpty;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-@JsonTypeName("--")
 public class FtpRequest extends SessionStage {
     private String protocol;
     private String host;
