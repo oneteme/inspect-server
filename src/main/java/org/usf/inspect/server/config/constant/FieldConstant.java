@@ -77,5 +77,6 @@ public final class FieldConstant {
     public static final String VA_SZE = "va_sze";
     public static final String VA_BRCH= "va_brch";
     public static final String VA_HSH = "va_hsh";
+    public static final String VA_FAIL= "va_fail";
 
 }

@@ -11,6 +11,6 @@ public class ExceptionInfo {
     private final String type;
     private final String message;
 
-    private Long idRequest;
+    private String idRequest;
     private Integer order;
 }

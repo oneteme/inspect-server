@@ -1,7 +1,6 @@
 package org.usf.inspect.server.dto;
 
 import java.time.Instant;
-
 import org.usf.inspect.server.model.ExceptionInfo;
 import org.usf.inspect.server.model.SessionStage;
 
@@ -22,6 +21,6 @@ public class DtoRequest extends SessionStage {
     protected String name;
     protected String command;
     protected String schema;
-    protected boolean status;
+    protected boolean failed;
     protected ExceptionInfo exception;
 }

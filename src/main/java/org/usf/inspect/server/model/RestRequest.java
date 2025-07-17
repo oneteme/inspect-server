@@ -18,9 +18,12 @@ public class RestRequest extends SessionStage {
     private int status;
     private long inDataSize;
     private long outDataSize;
+    @Deprecated(since = "v1.1", forRemoval = true)
     private ExceptionInfo exception;
     private String inContentEncoding;
     private String outContentEncoding;
+    //v1.1.0
+    private String bodyContent;
 
     private RestSession remoteTrace;
 }
