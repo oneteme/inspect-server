@@ -95,6 +95,8 @@ public class JoinConstant {
                     (view, args) -> new ViewJoin[]{leftJoin(REST_SESSION.view(), REST_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
             case MAIN_SESSION_JOIN ->
                     (view, args) -> new ViewJoin[]{leftJoin(MAIN_SESSION.view(), REST_REQUEST.column(PARENT).eq(MAIN_SESSION.column(ID)))};
+            case INSTANCE_JOIN ->
+                    (view, args) -> new ViewJoin[]{innerJoin(INSTANCE.view(), REST_REQUEST.column(INSTANCE_ENV).eq(INSTANCE.column(ID)))};
             default -> null;
         };
     }
@@ -116,6 +118,8 @@ public class JoinConstant {
                     (view, args) -> new ViewJoin[]{leftJoin(REST_SESSION.view(), DATABASE_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
             case MAIN_SESSION_JOIN ->
                     (view, args) -> new ViewJoin[]{leftJoin(MAIN_SESSION.view(), DATABASE_REQUEST.column(PARENT).eq(MAIN_SESSION.column(ID)))};
+            case INSTANCE_JOIN ->
+                    (view, args) -> new ViewJoin[]{innerJoin(INSTANCE.view(), DATABASE_REQUEST.column(INSTANCE_ENV).eq(INSTANCE.column(ID)))};
             default -> null;
         };
     }
@@ -137,6 +141,8 @@ public class JoinConstant {
                     (view, args) -> new ViewJoin[]{leftJoin(REST_SESSION.view(), FTP_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
             case MAIN_SESSION_JOIN ->
                     (view, args) -> new ViewJoin[]{leftJoin(MAIN_SESSION.view(), FTP_REQUEST.column(PARENT).eq(MAIN_SESSION.column(ID)))};
+            case INSTANCE_JOIN ->
+                    (view, args) -> new ViewJoin[]{innerJoin(INSTANCE.view(), FTP_REQUEST.column(INSTANCE_ENV).eq(INSTANCE.column(ID)))};
             default -> null;
         };
     }
@@ -158,6 +164,8 @@ public class JoinConstant {
                     (view, args) -> new ViewJoin[]{leftJoin(REST_SESSION.view(), SMTP_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
             case MAIN_SESSION_JOIN ->
                     (view, args) -> new ViewJoin[]{leftJoin(MAIN_SESSION.view(), SMTP_REQUEST.column(PARENT).eq(MAIN_SESSION.column(ID)))};
+            case INSTANCE_JOIN ->
+                    (view, args) -> new ViewJoin[]{innerJoin(INSTANCE.view(), SMTP_REQUEST.column(INSTANCE_ENV).eq(INSTANCE.column(ID)))};
             default -> null;
         };
     }
@@ -179,6 +187,8 @@ public class JoinConstant {
                     (view, args) -> new ViewJoin[]{leftJoin(REST_SESSION.view(), LDAP_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
             case MAIN_SESSION_JOIN ->
                     (view, args) -> new ViewJoin[]{leftJoin(MAIN_SESSION.view(), LDAP_REQUEST.column(PARENT).eq(MAIN_SESSION.column(ID)))};
+            case INSTANCE_JOIN ->
+                    (view, args) -> new ViewJoin[]{innerJoin(INSTANCE.view(), LDAP_REQUEST.column(INSTANCE_ENV).eq(INSTANCE.column(ID)))};
             default -> null;
         };
     }
