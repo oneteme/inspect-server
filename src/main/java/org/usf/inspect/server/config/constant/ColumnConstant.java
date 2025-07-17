@@ -146,6 +146,7 @@ public class ColumnConstant {
             case THREAD -> VA_THR;
             case PARENT -> CD_PRN_SES;
             case REMOTE -> CD_RMT_SES;
+            case INSTANCE_ENV -> CD_INS;
             default -> null;
         };
     }
@@ -164,6 +165,7 @@ public class ColumnConstant {
             case THREAD -> VA_THR;
             case STATUS -> VA_STT;
             case PARENT -> CD_PRN_SES;
+            case INSTANCE_ENV -> CD_INS;
             default -> null;
         };
     }
@@ -185,6 +187,7 @@ public class ColumnConstant {
             case COMMAND -> VA_CMD;
             case STATUS -> VA_STT;
             case PARENT -> CD_PRN_SES;
+            case INSTANCE_ENV -> CD_INS;
             default -> null;
         };
     }
@@ -201,6 +204,7 @@ public class ColumnConstant {
             case STATUS -> VA_STT;
             case PARENT -> CD_PRN_SES;
             case TYPE -> VA_TYP;
+            case INSTANCE_ENV -> CD_INS;
             default -> null;
         };
     }
@@ -241,6 +245,7 @@ public class ColumnConstant {
             case THREAD -> VA_THR;
             case STATUS -> VA_STT;
             case PARENT -> CD_PRN_SES;
+            case INSTANCE_ENV -> CD_INS;
             default -> null;
         };
     }
@@ -281,6 +286,7 @@ public class ColumnConstant {
             case THREAD -> VA_THR;
             case STATUS -> VA_STT;
             case PARENT -> CD_PRN_SES;
+            case INSTANCE_ENV -> CD_INS;
             default -> null;
         };
     }
