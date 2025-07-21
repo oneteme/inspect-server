@@ -7,6 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
+
 public final class DatabaseRequestStage extends RequestStage {
     private long[] count;
     private SqlCommand[] commands;

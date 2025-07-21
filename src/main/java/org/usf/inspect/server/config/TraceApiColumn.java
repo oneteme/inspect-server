@@ -1,10 +1,12 @@
 package org.usf.inspect.server.config;
 
 import static java.util.Objects.nonNull;
+import static org.usf.inspect.server.config.TraceApiTable.USER_ACTION;
 
 import org.usf.inspect.server.config.constant.FilterConstant;
 import org.usf.jquery.core.ComparisonExpression;
 import org.usf.jquery.core.DBColumn;
+import org.usf.jquery.core.JDBCType;
 import org.usf.jquery.web.Builder;
 import org.usf.jquery.web.ColumnDecorator;
 import org.usf.jquery.web.ViewDecorator;
@@ -15,7 +17,15 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum TraceApiColumn implements ColumnDecorator {
 
-    ID("id"),
+    ID("id"){
+        @Override
+        public JDBCType type(ViewDecorator vd) {
+            if(vd == USER_ACTION) {
+                return null;
+            }
+            return JDBCType.VARCHAR;
+        }
+    },
     METHOD("method"), //METHOD
     PROTOCOL("protocol"),
     HOST("host"),
@@ -48,7 +58,7 @@ public enum TraceApiColumn implements ColumnDecorator {
     ENVIRONEMENT("environement"), //ENV
     OS("os"),
     RE("re"),
-
+    FAILED("failed"),
     NAME("name"),
     NODE_NAME("nodeName"),
     TYPE("type"),
@@ -64,13 +74,22 @@ public enum TraceApiColumn implements ColumnDecorator {
     COMMAND("command"),
     ACTION_COUNT("actionCount"),
     ARG("arg"),
-    PARENT("parent"),
+    PARENT("parent"){
+        @Override
+        public JDBCType type(ViewDecorator vd) {
+            return JDBCType.VARCHAR;
+        }
+    },
     SERVER_VERSION("serverVersion"),
     CLIENT_VERSION("clientVersion"),
     REMOTE("remote"),
 
-    INSTANCE_ENV("instance"),
-
+    INSTANCE_ENV("instance"){
+        @Override
+        public JDBCType type(ViewDecorator vd) {
+            return JDBCType.VARCHAR;
+        }
+    },
     ORDER("order"),
     COLLECTOR("collector"),
     BRANCH("branch"),

@@ -8,26 +8,33 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
         property = "@type")
-public interface Session {
+public interface Session extends Metric {
 
     String getId(); //UUID
     void setId(String id);
 
+    @Deprecated(since = "v1.1", forRemoval = true)
     List<RestRequest> getRestRequests();
 
+    @Deprecated(since = "v1.1", forRemoval = true)
     List<DatabaseRequest> getDatabaseRequests();
 
+    @Deprecated(since = "v1.1", forRemoval = true)
     List<LocalRequest> getLocalRequests();
 
+    @Deprecated(since = "v1.1", forRemoval = true)
     List<FtpRequest> getFtpRequests();
 
+    @Deprecated(since = "v1.1", forRemoval = true)
     List<MailRequest> getMailRequests();
 
+    @Deprecated(since = "v1.1", forRemoval = true)
     List<NamingRequest> getLdapRequests();
 
     String getInstanceId(); //UUID
     void setInstanceId(String id);
 
+    @Deprecated(since = "v1.1", forRemoval = true)
     default void updateCdSession() {
         if(getRestRequests() != null) {
             for (RestRequest request : getRestRequests()) {

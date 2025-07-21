@@ -1,5 +1,6 @@
 package org.usf.inspect.server.model;
 
+
 import static org.usf.inspect.server.Utils.isEmpty;
 
 import java.util.List;
@@ -13,10 +14,18 @@ import lombok.Setter;
 public class MailRequest extends SessionStage {
     private String host;
     private Integer port;
+    @Deprecated(since = "v1.1", forRemoval = true)
     private List<MailRequestStage> actions;
     private List<Mail> mails;
 
+
+    @Deprecated(since = "v1.1", forRemoval = true)
     private boolean status;
+
+    private boolean failed;
+    public void setStatus(boolean status) {
+        failed = status;
+    }
 
     public void updateIdRequest() {
         if(!isEmpty(getActions())) {

@@ -10,10 +10,7 @@ import org.usf.jquery.core.RowMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static java.util.Optional.ofNullable;
 import static org.usf.inspect.server.Utils.fromNullableTimestamp;
@@ -40,7 +37,7 @@ public final class InspectMappers {
                     rs.getString(COLLECTOR.reference()),
                     rs.getString(BRANCH.reference()),
                     rs.getString(HASH.reference()),
-                    fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                    fromNullableTimestamp(rs.getTimestamp(END.reference())), null, null, null);
             instanceEnvironment.setId(rs.getString(ID.reference()));
             return instanceEnvironment;
         }
@@ -52,7 +49,7 @@ public final class InspectMappers {
 
     public static RestRequest createBaseRestRequest(ResultSet rs) throws SQLException {
         RestRequest out = new RestRequest();
-        out.setIdRequest(rs.getLong(ID.reference()));
+        out.setIdRequest(rs.getString(ID.reference()));
         out.setId(rs.getString(REMOTE.reference()));
         out.setProtocol(rs.getString(PROTOCOL.reference()));
         out.setHost(rs.getString(HOST.reference()));
@@ -71,7 +68,7 @@ public final class InspectMappers {
         if (rs.next()) {
            var out = new RestRequest();
             out.setCdSession(rs.getString(PARENT.reference()));
-            out.setIdRequest(rs.getLong(ID.reference()));
+            out.setIdRequest(rs.getString(ID.reference()));
             out.setId(rs.getString(REMOTE.reference()));
             out.setProtocol(rs.getString(PROTOCOL.reference()));
             out.setHost(rs.getString(HOST.reference()));
@@ -253,7 +250,7 @@ public final class InspectMappers {
 
     private static MainSession createBaseMainsession(ResultSet rs) throws SQLException {
         MainSession out = new MainSession();
-        out.setId(rs.getString(ID.reference()));
+        out.setId(((UUID) rs.getObject(ID.reference())).toString());
         out.setName(rs.getString(NAME.reference()));
         out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
         out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
@@ -262,7 +259,7 @@ public final class InspectMappers {
         out.setThreadName(rs.getString(THREAD.reference()));
         out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
         out.setUser(rs.getString(USER.reference()));
-        out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
+        out.setInstanceId(((UUID) rs.getObject(INSTANCE_ENV.reference())).toString());
         out.setMask(rs.getInt(MASK.reference()));
         return out;
     }
@@ -304,7 +301,7 @@ public final class InspectMappers {
         return rs -> {
             LocalRequest out = new LocalRequest();
             out.setCdSession(rs.getString(PARENT.reference()));
-            out.setIdRequest(rs.getLong(ID.reference()));
+            out.setIdRequest(rs.getString(ID.reference()));
             out.setName(rs.getString(NAME.reference()));
             out.setLocation(rs.getString(LOCATION.reference()));
             out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
@@ -338,7 +335,7 @@ public final class InspectMappers {
 
     private static DatabaseRequest createBaseDatabaseRequest(ResultSet rs) throws SQLException {
         DatabaseRequest out = new DatabaseRequest();
-        out.setIdRequest(rs.getLong(ID.reference()));
+        out.setIdRequest(rs.getString(ID.reference()));
         out.setHost(rs.getString(HOST.reference()));
         out.setName(rs.getString(DB.reference()));
         out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
@@ -371,7 +368,7 @@ public final class InspectMappers {
 
     private static FtpRequest createBaseFtpRequest(ResultSet rs) throws SQLException {
         FtpRequest out = new FtpRequest();
-        out.setIdRequest(rs.getLong(ID.reference()));
+        out.setIdRequest(rs.getString(ID.reference()));
         out.setHost(rs.getString(HOST.reference()));
         out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
         out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
@@ -413,7 +410,7 @@ public final class InspectMappers {
 
     private static MailRequest createBaseMailRequest(ResultSet rs) throws SQLException{
         MailRequest out = new MailRequest();
-        out.setIdRequest(rs.getLong(ID.reference()));
+        out.setIdRequest(rs.getString(ID.reference()));
         out.setHost(rs.getString(HOST.reference()));
         out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
         out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
@@ -464,7 +461,7 @@ public final class InspectMappers {
 
     private static NamingRequest createBaseLdapRequest(ResultSet rs) throws SQLException{
         NamingRequest out = new NamingRequest();
-        out.setIdRequest(rs.getLong(ID.reference()));
+        out.setIdRequest(rs.getString(ID.reference()));
         out.setHost(rs.getString(HOST.reference()));
         out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
         out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));

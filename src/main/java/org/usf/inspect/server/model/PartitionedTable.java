@@ -21,7 +21,8 @@ public enum PartitionedTable {
             "e_rst_rqt", "e_main_ses", "e_rst_ses",
             "e_smtp_rqt", "e_smtp_stg", "e_ftp_rqt",
             "e_ftp_stg", "e_ldap_rqt", "e_ldap_stg",
-            "e_dtb_rqt", "e_dtb_stg", "e_lcl_rqt"
+            "e_dtb_rqt", "e_dtb_stg", "e_lcl_rqt",
+            "e_rst_stg"
     );
 
     private final String table;
