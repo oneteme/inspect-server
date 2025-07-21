@@ -69,7 +69,7 @@ public class TraceController {
             if(pending != null){
                 log.info("Pending sessions : {}", pending);
             }
-            toV4(id, sessions, queueService::addTraceables);
+            toV4(id, sessions, queueService::addEventTraces);
 	        return accepted().build();
     	}
     	catch (Exception e) {

@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
+import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.server.model.*;
 
 import java.sql.PreparedStatement;
@@ -99,22 +100,22 @@ INSERT INTO E_RSC_USG(DH_STR,VA_LOW_HEP,VA_HIG_HEP,VA_LOW_MET,VA_HIG_MET,CD_INS)
         });
     }
 
-    public long saveTraceables(List<Traceable> traceables) {
-        var ms = filterAndSave(traceables, MainSession.class, this::saveMainSessions);
-        var rs = filterAndSave(traceables, RestSession.class, this::saveRestSessions);
-        var rr = filterAndSave(traceables, RestRequest.class, this::saveRestRequests);
-        var lr = filterAndSave(traceables, LocalRequest.class, this::saveLocalRequests);
-        var mr = filterAndSave(traceables, MailRequest.class, this::saveMailRequests);
-        var fr = filterAndSave(traceables, FtpRequest.class, this::saveFtpRequests);
-        var nr = filterAndSave(traceables, NamingRequest.class, this::saveLdapRequests);
-        var dr = filterAndSave(traceables, DatabaseRequest.class, this::saveDatabaseRequests);
-        var hrs = filterAndSave(traceables, HttpRequestStage.class, this::saveHttpRequestStages);
-        var mrs = filterAndSave(traceables, MailRequestStage.class, this::saveMailRequestStages);
-        var frs = filterAndSave(traceables, FtpRequestStage.class, this::saveFtpRequestStages);
-        var nrs = filterAndSave(traceables, NamingRequestStage.class, this::saveLdapRequestStages);
-        var drs = filterAndSave(traceables, DatabaseRequestStage.class, this::saveDatabaseRequestStages);
-        var mmr = filterAndSave(traceables, MachineResourceUsage.class, this::saveMachineResourceUsage);
-        var log = filterAndSave(traceables, LogEntry.class, this::saveLogEntry);
+    public long saveTraceables(List<EventTrace> eventTraces) {
+        var ms = filterAndSave(eventTraces, MainSession.class, this::saveMainSessions);
+        var rs = filterAndSave(eventTraces, RestSession.class, this::saveRestSessions);
+        var rr = filterAndSave(eventTraces, RestRequest.class, this::saveRestRequests);
+        var lr = filterAndSave(eventTraces, LocalRequest.class, this::saveLocalRequests);
+        var mr = filterAndSave(eventTraces, MailRequest.class, this::saveMailRequests);
+        var fr = filterAndSave(eventTraces, FtpRequest.class, this::saveFtpRequests);
+        var nr = filterAndSave(eventTraces, NamingRequest.class, this::saveLdapRequests);
+        var dr = filterAndSave(eventTraces, DatabaseRequest.class, this::saveDatabaseRequests);
+        var hrs = filterAndSave(eventTraces, HttpRequestStage.class, this::saveHttpRequestStages);
+        var mrs = filterAndSave(eventTraces, MailRequestStage.class, this::saveMailRequestStages);
+        var frs = filterAndSave(eventTraces, FtpRequestStage.class, this::saveFtpRequestStages);
+        var nrs = filterAndSave(eventTraces, NamingRequestStage.class, this::saveLdapRequestStages);
+        var drs = filterAndSave(eventTraces, DatabaseRequestStage.class, this::saveDatabaseRequestStages);
+        var mmr = filterAndSave(eventTraces, MachineResourceUsage.class, this::saveMachineResourceUsage);
+        var log = filterAndSave(eventTraces, LogEntry.class, this::saveLogEntry);
         return ms + rs + rr + lr + mr + fr + nr + dr + hrs + mrs + frs + nrs + drs + mmr + log;
     }
 

@@ -35,22 +35,22 @@ public class InspectApplication {
 		// Deprecated(since = "v1.1", forRemoval = true)
 		mapper.registerSubtypes(new NamedType(MainSession.class, "main"), new NamedType(RestSession.class, "rest"));
 
-		mapper.registerSubtypes(new NamedType(LogEntry.class, "Log"),
-								new NamedType(MachineResourceUsage.class, "rsrc-usg"),
-								new NamedType(MainSession.class, "main-ses"),
-								new NamedType(RestSession.class, "rest-ses"),
-								new NamedType(LocalRequest.class, "locl-req"),
-								new NamedType(DatabaseRequest.class, "jdbc-req"),
-								new NamedType(RestRequest.class, "rest-req"),
-								new NamedType(MailRequest.class, "mail-req"),
-								new NamedType(NamingRequest.class, "ldap-req"),
-								new NamedType(FtpRequest.class, "ftp-req"),
-								new NamedType(DatabaseRequestStage.class, "jdbc-stg"),
-								new NamedType(HttpRequestStage.class, "rest-stg"),
-								new NamedType(MailRequestStage.class, "mail-stg"),
-								new NamedType(NamingRequestStage.class, "ldap-stg"),
-								new NamedType(FtpRequestStage.class, "ftp-stg")
-				);
+		mapper.registerSubtypes(
+				new NamedType(LogEntry.class, 				"log"),
+				new NamedType(MachineResourceUsage.class, 	"rsrc-usg"),
+				new NamedType(MainSession.class,  			"main-ses"),
+				new NamedType(RestSession.class,  			"rest-ses"),
+				new NamedType(LocalRequest.class, 			"locl-req"),
+				new NamedType(DatabaseRequest.class,		"jdbc-req"),
+				new NamedType(RestRequest.class,  			"http-req"),
+				new NamedType(MailRequest.class,  			"mail-req"),
+				new NamedType(NamingRequest.class,			"ldap-req"),
+				new NamedType(FtpRequest.class,  			"ftp-req"),
+				new NamedType(DatabaseRequestStage.class,	"jdbc-stg"),
+				new NamedType(HttpRequestStage.class,  		"http-stg"),
+				new NamedType(MailRequestStage.class,  		"mail-stg"),
+				new NamedType(NamingRequestStage.class,		"ldap-stg"),
+				new NamedType(FtpRequestStage.class,  		"ftp-stg"));
 		return mapper;
 	}
 }

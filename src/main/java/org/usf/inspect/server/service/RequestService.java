@@ -30,6 +30,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.core.TraceableStage;
 import org.usf.inspect.server.RequestMask;
 import org.usf.inspect.server.config.TraceApiColumn;
@@ -83,8 +84,8 @@ public class RequestService {
 
     @TraceableStage
     @Transactional(rollbackFor = Throwable.class)
-    public long addTraceables(List<Traceable> traceables) {
-        return dao.saveTraceables(traceables);
+    public long addEventTraces(List<EventTrace> eventTraces) {
+        return dao.saveTraceables(eventTraces);
     }
 
     public Session getMainTree(String id)  {

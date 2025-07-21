@@ -10,10 +10,7 @@ import org.usf.jquery.core.RowMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static java.util.Optional.ofNullable;
 import static org.usf.inspect.server.Utils.fromNullableTimestamp;
@@ -253,7 +250,7 @@ public final class InspectMappers {
 
     private static MainSession createBaseMainsession(ResultSet rs) throws SQLException {
         MainSession out = new MainSession();
-        out.setId(rs.getString(ID.reference()));
+        out.setId(((UUID) rs.getObject(ID.reference())).toString());
         out.setName(rs.getString(NAME.reference()));
         out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
         out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
@@ -262,7 +259,7 @@ public final class InspectMappers {
         out.setThreadName(rs.getString(THREAD.reference()));
         out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
         out.setUser(rs.getString(USER.reference()));
-        out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
+        out.setInstanceId(((UUID) rs.getObject(INSTANCE_ENV.reference())).toString());
         out.setMask(rs.getInt(MASK.reference()));
         return out;
     }

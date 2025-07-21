@@ -1,6 +1,7 @@
 package org.usf.inspect.server.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.server.model.*;
 
 import java.util.Collection;
@@ -15,7 +16,7 @@ import static org.usf.inspect.core.SessionManager.nextId;
 @Slf4j
 public class RetroUtils {
 
-    public static void toV4(String instanceId, Session[] sessions, Consumer<Traceable> consumer) {
+    public static void toV4(String instanceId, Session[] sessions, Consumer<EventTrace> consumer) {
         for(Session s : sessions) {
             s.setInstanceId(instanceId);
             if(isNull(s.getId())) {
@@ -50,7 +51,7 @@ public class RetroUtils {
         }
     }
 
-    private static <T extends SessionStage> void    toV4(String instanceId, String sessionId, Collection<T> requests, Function<T, List<? extends  RequestStage>> fn, Consumer<Traceable> consumer) {
+    private static <T extends SessionStage> void toV4(String instanceId, String sessionId, Collection<T> requests, Function<T, List<? extends  RequestStage>> fn, Consumer<EventTrace> consumer) {
         if(requests != null && !requests.isEmpty()) {
             for(var req : requests) {
                 req.setCdSession(sessionId);
