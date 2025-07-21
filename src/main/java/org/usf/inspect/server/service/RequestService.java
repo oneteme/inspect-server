@@ -29,7 +29,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.usf.inspect.core.InstanceType;
+
+import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.core.TraceableStage;
 import org.usf.inspect.server.RequestMask;
 import org.usf.inspect.server.config.TraceApiColumn;
@@ -39,18 +40,7 @@ import org.usf.inspect.server.dto.DtoRequest;
 import org.usf.inspect.server.dto.DtoRestRequest;
 import org.usf.inspect.server.exception.PayloadTooLargeException;
 import org.usf.inspect.server.mapper.InspectMappers;
-import org.usf.inspect.server.model.Architecture;
-import org.usf.inspect.server.model.DatabaseRequest;
-import org.usf.inspect.server.model.ExceptionInfo;
-import org.usf.inspect.server.model.FtpRequest;
-import org.usf.inspect.server.model.InstanceEnvironment;
-import org.usf.inspect.server.model.MailRequest;
-import org.usf.inspect.server.model.MainSession;
-import org.usf.inspect.server.model.NamingRequest;
-import org.usf.inspect.server.model.RequestType;
-import org.usf.inspect.server.model.RestRequest;
-import org.usf.inspect.server.model.RestSession;
-import org.usf.inspect.server.model.Session;
+import org.usf.inspect.server.model.*;
 import org.usf.inspect.server.model.filter.JqueryMainSessionFilter;
 import org.usf.inspect.server.model.filter.JqueryRequestFilter;
 import org.usf.inspect.server.model.filter.JqueryRequestSessionFilter;
@@ -85,13 +75,17 @@ public class RequestService {
     }
 
     public void updateInstance(Instant end,String instanceId){
-        dao.updateInstanceEnvironment(end,instanceId);
+        dao.updateInstanceEnvironment(end, instanceId);
+    }
+
+    public void addInstanceTrace(InstanceTrace instanceTrace){
+        dao.saveInstanceTrace(instanceTrace);
     }
 
     @TraceableStage
     @Transactional(rollbackFor = Throwable.class)
-    public long addSessions(List<Session> sessions) {
-        return dao.saveSessions(sessions);
+    public long addEventTraces(List<EventTrace> eventTraces) {
+        return dao.saveTraceables(eventTraces);
     }
 
     public Session getMainTree(String id)  {
@@ -242,6 +236,7 @@ public class RequestService {
                                 START, END, USER, ERR_TYPE, ERR_MSG
                         ))
                 .columns(getColumns(INSTANCE, APP_NAME))
+//                .joins(REST_SESSION.join(INSTANCE_JOIN))
                 .filters(REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
         if(jsf != null) {
             v.filters(jsf.filters(REST_SESSION).toArray(DBFilter[]::new));
@@ -558,7 +553,7 @@ public class RequestService {
             while (rs.next()) {
                 RestRequest out = new RestRequest();
                 out.setCdSession(rs.getString(PARENT.reference()));
-                out.setIdRequest(rs.getLong(ID.reference()));
+                out.setIdRequest(rs.getString(ID.reference()));
                 out.setId(rs.getString(REMOTE.reference()));
                 out.setProtocol(rs.getString(PROTOCOL.reference()));
                 out.setHost(rs.getString(HOST.reference()));
@@ -595,7 +590,7 @@ public class RequestService {
         });
     }
 
-    private List<DtoRestRequest> getRestRequestsByFilter(DBFilter[] filters, ViewJoin[][] joins, String type,NamedColumn[] mainType)  { //use criteria
+    private List<DtoRestRequest> getRestRequestsByFilter(DBFilter[] filters, ViewJoin[][] joins, String type, NamedColumn[] mainType)  { //use criteria
 
         var count = getRequestCountByTable(REST_REQUEST,filters,joins);
         if(count > requestLimit){
@@ -616,7 +611,7 @@ public class RequestService {
             List<DtoRestRequest> outs = new ArrayList<>();
             while (rs.next()) {
                 DtoRestRequest out = new DtoRestRequest();
-                out.setIdRequest(rs.getLong(ID.reference()));
+                out.setIdRequest(rs.getString(ID.reference()));
                 out.setId(rs.getString(REMOTE.reference()));
                 out.setParent(rs.getString(PARENT.reference()));
                 out.setProtocol(rs.getString(PROTOCOL.reference()));
@@ -683,7 +678,7 @@ public class RequestService {
                 .columns(DBColumn.constant(type).as("sessiontype"))
                 .columns(
                         getColumns(
-                                DATABASE_REQUEST, ID, HOST ,DB, START, END, THREAD, COMMAND, STATUS, SCHEMA, PARENT
+                                DATABASE_REQUEST, ID, HOST ,DB, START, END, THREAD, COMMAND, FAILED, SCHEMA, PARENT
                         ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(Stream.of(joins).flatMap(Arrays::stream).toArray(ViewJoin[]::new))
@@ -693,14 +688,14 @@ public class RequestService {
             List<DtoRequest> outs = new ArrayList<>();
             while (rs.next()) {
                 DtoRequest out = new DtoRequest();
-                out.setIdRequest(rs.getLong(ID.reference()));
+                out.setIdRequest(rs.getString(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setName(rs.getString(DB.reference()));
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setCommand(rs.getString(COMMAND.reference()));
-                out.setStatus(rs.getBoolean(STATUS.reference()));
+                out.setFailed(rs.getBoolean(FAILED.reference()));
                 out.setSchema(rs.getString(SCHEMA.reference()));
                 out.setId(rs.getString(PARENT.reference()));
                 out.setType(rs.getString(TYPE.reference()));
@@ -717,7 +712,7 @@ public class RequestService {
                 .columns(
                     getColumns(
                             DATABASE_REQUEST, ID, HOST, PORT, DB, START, END, USER, THREAD, DRIVER,
-                            DB_NAME, DB_VERSION, COMMAND, STATUS, SCHEMA, PARENT
+                            DB_NAME, DB_VERSION, COMMAND, FAILED, SCHEMA, PARENT
                     ))
                 .filters(filter)
                 .orders(DATABASE_REQUEST.column(START).order());
@@ -726,7 +721,7 @@ public class RequestService {
             while (rs.next()) {
                 DatabaseRequest out = new DatabaseRequest();
                 out.setCdSession(rs.getString(PARENT.reference()));
-                out.setIdRequest(rs.getLong(ID.reference()));
+                out.setIdRequest(rs.getString(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setPort(rs.getInt(PORT.reference()));
                 out.setName(rs.getString(DB.reference()));
@@ -739,7 +734,7 @@ public class RequestService {
                 out.setProductVersion(rs.getString(DB_VERSION.reference()));
                 out.setActions(new ArrayList<>());
                 out.setCommand(rs.getString(COMMAND.reference()));
-                out.setStatus(rs.getBoolean(STATUS.reference()));
+                out.setFailed(rs.getBoolean(FAILED.reference()));
                 out.setSchema(rs.getString(SCHEMA.reference()));
                 outs.add(out);
             }
@@ -793,7 +788,7 @@ public class RequestService {
                 .columns(DBColumn.constant(type).as("sessiontype"))
                 .columns(
                         getColumns(
-                                FTP_REQUEST, ID, HOST, START, END, THREAD, STATUS, PARENT
+                                FTP_REQUEST, ID, HOST, START, END, THREAD, FAILED, PARENT
                         )
                 )
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
@@ -804,12 +799,12 @@ public class RequestService {
             List<DtoRequest> outs = new ArrayList<>();
             while (rs.next()) {
                 DtoRequest out = new DtoRequest();
-                out.setIdRequest(rs.getLong(ID.reference()));
+                out.setIdRequest(rs.getString(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setThreadName(rs.getString(THREAD.reference()));
-                out.setStatus(rs.getBoolean(STATUS.reference()));
+                out.setFailed(rs.getBoolean(FAILED.reference()));
                 out.setId(rs.getString(PARENT.reference()));
                 out.setType(rs.getString(TYPE.reference()));
                 out.setSessionType(rs.getString("sessiontype"));
@@ -824,7 +819,7 @@ public class RequestService {
         var v = new QueryComposer()
                 .columns(
                     getColumns(
-                            FTP_REQUEST, ID, HOST, PORT, PROTOCOL, SERVER_VERSION, CLIENT_VERSION, START, END, USER, THREAD, STATUS, PARENT
+                            FTP_REQUEST, ID, HOST, PORT, PROTOCOL, SERVER_VERSION, CLIENT_VERSION, START, END, USER, THREAD, FAILED, PARENT
                     )
                 )
                 .filters(filter)
@@ -834,7 +829,7 @@ public class RequestService {
             while (rs.next()) {
                 FtpRequest out = new FtpRequest();
                 out.setCdSession(rs.getString(PARENT.reference()));
-                out.setIdRequest(rs.getLong(ID.reference()));
+                out.setIdRequest(rs.getString(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setPort(rs.getInt(PORT.reference()));
                 out.setProtocol(rs.getString(PROTOCOL.reference()));
@@ -845,7 +840,7 @@ public class RequestService {
                 out.setUser(rs.getString(USER.reference()));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setActions(new ArrayList<>());
-                out.setStatus(rs.getBoolean(STATUS.reference()));
+                out.setFailed(rs.getBoolean(FAILED.reference()));
                 outs.add(out);
             }
             return outs;
@@ -896,7 +891,7 @@ public class RequestService {
                 .columns(DBColumn.constant(type).as("sessiontype"))
                 .columns(
                         getColumns(
-                                SMTP_REQUEST, ID, HOST, START, END, THREAD, STATUS, PARENT
+                                SMTP_REQUEST, ID, HOST, START, END, THREAD, FAILED, PARENT
                         ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(Stream.of(joins).flatMap(Arrays::stream).toArray(ViewJoin[]::new))
@@ -906,12 +901,12 @@ public class RequestService {
             List<DtoRequest> outs = new ArrayList<>();
             while (rs.next()) {
                 DtoRequest out = new DtoRequest();
-                out.setIdRequest(rs.getLong(ID.reference()));
+                out.setIdRequest(rs.getString(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setThreadName(rs.getString(THREAD.reference()));
-                out.setStatus(rs.getBoolean(STATUS.reference()));
+                out.setFailed(rs.getBoolean(FAILED.reference()));
                 out.setId(rs.getString(PARENT.reference()));
                 out.setType(rs.getString(TYPE.reference()));
                 out.setSessionType(rs.getString("sessiontype"));
@@ -926,7 +921,7 @@ public class RequestService {
         var v = new QueryComposer()
                 .columns(
                     getColumns(
-                            SMTP_REQUEST, ID, HOST, PORT, START, END, USER, THREAD, STATUS, PARENT
+                            SMTP_REQUEST, ID, HOST, PORT, START, END, USER, THREAD, FAILED, PARENT
                     ))
                 .filters(filter)
                 .orders(SMTP_REQUEST.column(START).order());
@@ -935,7 +930,7 @@ public class RequestService {
             while (rs.next()) {
                 MailRequest out = new MailRequest();
                 out.setCdSession(rs.getString(PARENT.reference()));
-                out.setIdRequest(rs.getLong(ID.reference()));
+                out.setIdRequest(rs.getString(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setPort(rs.getInt(PORT.reference()));
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
@@ -943,7 +938,7 @@ public class RequestService {
                 out.setUser(rs.getString(USER.reference()));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setActions(new ArrayList<>());
-                out.setStatus(rs.getBoolean(STATUS.reference()));
+                out.setFailed(rs.getBoolean(FAILED.reference()));
                 outs.add(out);
             }
             return outs;
@@ -996,7 +991,7 @@ public class RequestService {
                 .columns(DBColumn.constant(type).as("sessiontype"))
                 .columns(
                         getColumns(
-                                LDAP_REQUEST, ID, HOST, START, END, THREAD, STATUS, PARENT
+                                LDAP_REQUEST, ID, HOST, START, END, THREAD, FAILED, PARENT
                         ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(Stream.of(joins).flatMap(Arrays::stream).toArray(ViewJoin[]::new))
@@ -1006,12 +1001,12 @@ public class RequestService {
             List<DtoRequest> outs = new ArrayList<>();
             while (rs.next()) {
                 DtoRequest out = new DtoRequest();
-                out.setIdRequest(rs.getLong(ID.reference()));
+                out.setIdRequest(rs.getString(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setThreadName(rs.getString(THREAD.reference()));
-                out.setStatus(rs.getBoolean(STATUS.reference()));
+                out.setFailed(rs.getBoolean(FAILED.reference()));
                 out.setId(rs.getString(PARENT.reference()));
                 out.setType(rs.getString(TYPE.reference()));
                 out.setSessionType(rs.getString("sessiontype"));
@@ -1026,7 +1021,7 @@ public class RequestService {
         var v = new QueryComposer()
                 .columns(
                     getColumns(
-                            LDAP_REQUEST, ID, HOST, PORT, PROTOCOL, START, END, USER, THREAD, STATUS, PARENT
+                            LDAP_REQUEST, ID, HOST, PORT, PROTOCOL, START, END, USER, THREAD, FAILED, PARENT
                     ))
                 .filters(filter)
                 .orders(LDAP_REQUEST.column(START).order());
@@ -1035,7 +1030,7 @@ public class RequestService {
             while (rs.next()) {
                 NamingRequest out = new NamingRequest();
                 out.setCdSession(rs.getString(PARENT.reference()));
-                out.setIdRequest(rs.getLong(ID.reference()));
+                out.setIdRequest(rs.getString(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));
                 out.setPort(rs.getInt(PORT.reference()));
                 out.setProtocol(rs.getString(PROTOCOL.reference()));
@@ -1044,7 +1039,7 @@ public class RequestService {
                 out.setUser(rs.getString(USER.reference()));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setActions(new ArrayList<>());
-                out.setStatus(rs.getBoolean(STATUS.reference()));
+                out.setFailed(rs.getBoolean(FAILED.reference()));
                 outs.add(out);
             }
             return outs;
@@ -1069,7 +1064,7 @@ public class RequestService {
                         .filters(table.column(START).lt(from(end)))
                         .filters(table.column(PARENT).in(sessionIdByTypeEnvironementPeriod("main_session", start, end, mask)))
                         .compose().asUnion(true));
-      
+
         return INSPECT.execute(v1, toArray(rs -> rs.getString(HOST.reference()), String[]::new));
     }
 
@@ -1079,8 +1074,9 @@ public class RequestService {
                 .columns(getColumns(table,ID))
                 .joins(table.join(INSTANCE_JOIN))
                 .filters(table.column(START).ge(from(start)),
-                        table.column(START).lt(from(end)),
-                        table.column(MASK).bitAnd(mask).gt(0));
+                        table.column(START).lt(from(end))
+                       /* ,table.column(MASK).bitAnd(mask).gt(0)*/
+                );
 //        if(Objects.equals(type, "rest_session")){
 //            v.filters(INSTANCE.column(TYPE).eq("SERVER"));
 //        }

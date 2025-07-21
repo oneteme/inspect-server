@@ -1,78 +1,11 @@
 package org.usf.inspect.server.config.constant;
 
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_DTB_RQT;
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_FTP_RQT;
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_INS;
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_LDAP_RQT;
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_ORD;
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_PRN_SES;
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_PRT;
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_RMT_SES;
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_RQT;
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_SMTP_RQT;
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_STT;
-import static org.usf.inspect.server.config.constant.FieldConstant.DH_END;
-import static org.usf.inspect.server.config.constant.FieldConstant.DH_STR;
-import static org.usf.inspect.server.config.constant.FieldConstant.ID_DTB_RQT;
-import static org.usf.inspect.server.config.constant.FieldConstant.ID_FTP_RQT;
-import static org.usf.inspect.server.config.constant.FieldConstant.ID_INS;
-import static org.usf.inspect.server.config.constant.FieldConstant.ID_LCL_RQT;
-import static org.usf.inspect.server.config.constant.FieldConstant.ID_LDAP_RQT;
-import static org.usf.inspect.server.config.constant.FieldConstant.ID_RST_RQT;
-import static org.usf.inspect.server.config.constant.FieldConstant.ID_SES;
-import static org.usf.inspect.server.config.constant.FieldConstant.ID_SMTP_RQT;
-import static org.usf.inspect.server.config.constant.FieldConstant.ID_USR_ACN;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_ADR;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_APP;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_ARG;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_ATH_SCH;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_BRCH;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_CCH_CTR;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_CLR;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_CLT_VRS;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_CMD;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_CNT;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_CNT_TYP;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_DRV;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_ENV;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_ERR_MSG;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_ERR_TYP;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_FRM;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_HSH;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_HST;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_I_CNT_ENC;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_I_SZE;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_LCT;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_MSK;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_MTH;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_NAM;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_NDE_NAM;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_OS;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_O_CNT_ENC;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_O_SZE;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_PCL;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_PRD_NAM;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_PRD_VRS;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_PTH;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_QRY;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_RCP;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_RE;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_RPL;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_SBJ;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_SCH;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_SRV_VRS;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_STT;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_SZE;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_THR;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_TYP;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_USR;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_USR_AGT;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_VRS;
-
 import org.usf.inspect.server.config.TraceApiColumn;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+
+import static org.usf.inspect.server.config.constant.FieldConstant.*;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ColumnConstant {
@@ -108,6 +41,8 @@ public class ColumnConstant {
             case STATUS -> CD_STT;
             case SIZE_IN -> VA_I_SZE;
             case SIZE_OUT -> VA_O_SZE;
+            case ERR_TYPE -> VA_ERR_TYP;
+            case ERR_MSG -> VA_ERR_MSG;
             case CONTENT_ENCODING_IN -> VA_I_CNT_ENC;
             case CONTENT_ENCODING_OUT -> VA_O_CNT_ENC;
             case START -> DH_STR;
@@ -116,8 +51,6 @@ public class ColumnConstant {
             case API_NAME -> VA_NAM;
             case USER -> VA_USR;
             case USER_AGT -> VA_USR_AGT;
-            case ERR_TYPE -> VA_ERR_TYP;
-            case ERR_MSG -> VA_ERR_MSG;
             case CACHE_CONTROL -> VA_CCH_CTR;
             case MASK -> VA_MSK;
             case INSTANCE_ENV -> CD_INS;
@@ -163,7 +96,7 @@ public class ColumnConstant {
             case START -> DH_STR;
             case END -> DH_END;
             case THREAD -> VA_THR;
-            case STATUS -> VA_STT;
+            case FAILED -> VA_FAIL;
             case PARENT -> CD_PRN_SES;
             case INSTANCE_ENV -> CD_INS;
             default -> null;
@@ -185,7 +118,7 @@ public class ColumnConstant {
             case DB_NAME -> VA_PRD_NAM;
             case DB_VERSION -> VA_PRD_VRS;
             case COMMAND -> VA_CMD;
-            case STATUS -> VA_STT;
+            case FAILED -> VA_FAIL;
             case PARENT -> CD_PRN_SES;
             case INSTANCE_ENV -> CD_INS;
             default -> null;
@@ -196,14 +129,14 @@ public class ColumnConstant {
         return switch (column) {
             case ID -> ID_LCL_RQT;
             case NAME -> VA_NAM;
+            case TYPE -> VA_TYP;
             case LOCATION -> VA_LCT;
             case START -> DH_STR;
             case END -> DH_END;
             case USER -> VA_USR;
             case THREAD -> VA_THR;
-            case STATUS -> VA_STT;
+            case FAILED -> VA_FAIL;
             case PARENT -> CD_PRN_SES;
-            case TYPE -> VA_TYP;
             case INSTANCE_ENV -> CD_INS;
             default -> null;
         };
@@ -243,7 +176,7 @@ public class ColumnConstant {
             case END -> DH_END;
             case USER -> VA_USR;
             case THREAD -> VA_THR;
-            case STATUS -> VA_STT;
+            case FAILED -> VA_FAIL;
             case PARENT -> CD_PRN_SES;
             case INSTANCE_ENV -> CD_INS;
             default -> null;
@@ -284,7 +217,7 @@ public class ColumnConstant {
             case END -> DH_END;
             case USER -> VA_USR;
             case THREAD -> VA_THR;
-            case STATUS -> VA_STT;
+            case FAILED -> VA_FAIL;
             case PARENT -> CD_PRN_SES;
             case INSTANCE_ENV -> CD_INS;
             default -> null;

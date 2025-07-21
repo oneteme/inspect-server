@@ -5,41 +5,41 @@ import java.util.List;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Service;
 import org.usf.inspect.core.DispatchState;
-import org.usf.inspect.core.InspectConfigurationProperties;
-import org.usf.inspect.core.ScheduledDispatchHandler;
-import org.usf.inspect.server.model.Session;
+import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.core.InspectCollectorConfiguration;
+//import org.usf.inspect.core.ScheduledDispatchHandler;
 
 import jakarta.annotation.PreDestroy;
 
 @Service
-@EnableConfigurationProperties(InspectConfigurationProperties.class)
+//@EnableConfigurationProperties(InspectCollectorConfiguration.class)
 public class SessionQueueService {
 
-    private final RequestService service;
-    private final ScheduledDispatchHandler<Session> dispatcher;
+    /* private final RequestService service;
+    private final ScheduledDispatchHandler<EventTrace> dispatcher;
 
     public SessionQueueService(RequestService service, InspectConfigurationProperties prop) {
         this.service = service;
-		this.dispatcher = new ScheduledDispatchHandler<>(prop.getDispatch(), this::saveSessions);
+		this.dispatcher = new ScheduledDispatchHandler<>(prop.getDispatch(), this::saveEventTraces);
     }
 
-    public boolean addSessions(Session[] sessions) {
-    	return dispatcher.submit(sessions);
+    public boolean addEventTraces(EventTrace... eventTraces) {
+    	return dispatcher.submit(eventTraces);
     }
 
-    public List<Session> waitList() {
+    public List<EventTrace> waitList() {
     	return dispatcher.peek().toList();
     }
-    
+
     public int waitListSize() {
     	return (int) dispatcher.peek().count();
     }
 
-    boolean saveSessions(boolean complete, int attempts, List<Session> sessions, int pending) {
-        service.addSessions(sessions);
+    boolean saveEventTraces(boolean complete, int attempts, List<EventTrace> eventTraces, int pending) {
+        service.addEventTraces(eventTraces);
         return true;
     }
-    
+
     public void enableSave(DispatchState state) {
     	dispatcher.updateState(state);
     }
@@ -51,5 +51,5 @@ public class SessionQueueService {
     @PreDestroy
     void destroy() {
 		dispatcher.complete();
-	}
+	}*/
 }

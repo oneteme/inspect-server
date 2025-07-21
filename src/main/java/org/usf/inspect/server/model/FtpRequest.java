@@ -16,9 +16,18 @@ public class FtpRequest extends SessionStage {
     private Integer port;
     private String serverVersion;
     private String clientVersion;
+    @Deprecated(since = "v1.1", forRemoval = true)
     private List<FtpRequestStage> actions;
 
+
+    @Deprecated(since = "v1.1", forRemoval = true)
     private boolean status;
+
+    private boolean failed;
+    public void setStatus(boolean status) {
+        failed = status;
+    }
+
 
     public void updateIdRequest() {
         if (!isEmpty(getActions())) {
@@ -29,4 +38,6 @@ public class FtpRequest extends SessionStage {
             }
         }
     }
+
+
 }

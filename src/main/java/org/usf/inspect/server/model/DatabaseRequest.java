@@ -26,9 +26,19 @@ public class DatabaseRequest extends SessionStage {
     private String driverVersion;
     private String productName;
     private String productVersion;
+    @Deprecated(since = "v1.1", forRemoval = true)
     private List<DatabaseRequestStage> actions;
     private String command;
+
+
+
+    @Deprecated(since = "v1.1", forRemoval = true)
     private boolean status;
+
+    private boolean failed;
+    public void setStatus(boolean status) {
+        failed = status;
+    }
 
     public String mainCommand(){
         Set<SqlCommand> r = Optional.ofNullable(actions).orElseGet(Collections::emptyList).stream().map(DatabaseRequestStage::getCommands).filter(Objects::nonNull).flatMap(Arrays::stream).collect(Collectors.toSet());
