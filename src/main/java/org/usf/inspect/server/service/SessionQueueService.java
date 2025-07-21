@@ -36,7 +36,7 @@ public class SessionQueueService {
     }
 
     boolean saveEventTraces(boolean complete, int attempts, List<EventTrace> eventTraces, int pending) {
-        service.addEventTraces(traceables);
+        service.addEventTraces(eventTraces);
         return true;
     }
     
