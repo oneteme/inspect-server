@@ -36,9 +36,9 @@ public class TraceController {
     
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<String> addInstanceEnvironment(HttpServletRequest hsr, @RequestBody InstanceEnvironment instance) {
-    	if(queueService.getState() == DISABLE) {
+    	/*if(queueService.getState() == DISABLE) {
             return status(SERVICE_UNAVAILABLE).build();
-        }
+        }*/
         if(isNull(instance) || isBlank(instance.getName())) {
     		return status(BAD_REQUEST).build();
     	}
@@ -69,7 +69,7 @@ public class TraceController {
             if(pending != null){
                 log.info("Pending sessions : {}", pending);
             }
-            toV4(id, sessions, queueService::addEventTraces);
+            //toV4(id, sessions, queueService::addEventTraces);
 	        return accepted().build();
     	}
     	catch (Exception e) {

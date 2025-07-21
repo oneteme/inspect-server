@@ -46,14 +46,14 @@ public class CacheController {
                 .build();
 	}
 
-    @GetMapping
+    /*@GetMapping
     public ResponseEntity<Collection<EventTrace>> getCache(){
 		return ok(queue.waitList());
-    }
+    }*/
 
     @PostMapping("state/{state}")
     public ResponseEntity<Void> updateState(@PathVariable DispatchState state){
-		queue.enableSave(state);
+		//queue.enableSave(state);
 		return ok().build();
     }
 

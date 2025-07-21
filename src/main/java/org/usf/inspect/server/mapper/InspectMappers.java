@@ -37,7 +37,7 @@ public final class InspectMappers {
                     rs.getString(COLLECTOR.reference()),
                     rs.getString(BRANCH.reference()),
                     rs.getString(HASH.reference()),
-                    fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                    fromNullableTimestamp(rs.getTimestamp(END.reference())), null, null, null);
             instanceEnvironment.setId(rs.getString(ID.reference()));
             return instanceEnvironment;
         }

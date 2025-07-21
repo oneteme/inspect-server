@@ -40,7 +40,7 @@ public class TraceControllerV4 {
                 requestService.updateInstance(end, id);
             }
             executor.submit(()-> requestService.addInstanceTrace(new InstanceTrace(pending, attemps, sessions.length, Instant.now(),id)));
-            queueService.addEventTraces(sessions);
+            //queueService.addEventTraces(sessions);
             return accepted().build();
         }
         catch (Exception e) {

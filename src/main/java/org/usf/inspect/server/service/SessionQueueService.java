@@ -6,16 +6,16 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.stereotype.Service;
 import org.usf.inspect.core.DispatchState;
 import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.InspectConfigurationProperties;
-import org.usf.inspect.core.ScheduledDispatchHandler;
+import org.usf.inspect.core.InspectCollectorConfiguration;
+//import org.usf.inspect.core.ScheduledDispatchHandler;
 
 import jakarta.annotation.PreDestroy;
 
 @Service
-@EnableConfigurationProperties(InspectConfigurationProperties.class)
+//@EnableConfigurationProperties(InspectCollectorConfiguration.class)
 public class SessionQueueService {
 
-    private final RequestService service;
+    /* private final RequestService service;
     private final ScheduledDispatchHandler<EventTrace> dispatcher;
 
     public SessionQueueService(RequestService service, InspectConfigurationProperties prop) {
@@ -39,7 +39,7 @@ public class SessionQueueService {
         service.addEventTraces(eventTraces);
         return true;
     }
-    
+
     public void enableSave(DispatchState state) {
     	dispatcher.updateState(state);
     }
@@ -51,5 +51,5 @@ public class SessionQueueService {
     @PreDestroy
     void destroy() {
 		dispatcher.complete();
-	}
+	}*/
 }
