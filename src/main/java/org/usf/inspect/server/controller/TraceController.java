@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.usf.inspect.core.EventTraceScheduledDispatcher;
 import org.usf.inspect.server.model.InstanceEnvironment;
 import org.usf.inspect.server.model.Session;
 import org.usf.inspect.server.service.RequestService;
@@ -19,6 +20,7 @@ import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 import static org.springframework.http.ResponseEntity.*;
 import static org.usf.inspect.core.InstanceType.CLIENT;
 import static org.usf.inspect.core.SessionManager.nextId;
+import static org.usf.inspect.server.controller.RetroUtils.toV4;
 import static org.usf.jquery.core.Utils.isBlank;
 
 @Slf4j
@@ -29,7 +31,7 @@ import static org.usf.jquery.core.Utils.isBlank;
 public class TraceController {
 
     private final RequestService requestService;
-    private final SessionQueueService queueService;
+    private final EventTraceScheduledDispatcher dispatcher;
     
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<String> addInstanceEnvironment(HttpServletRequest hsr, @RequestBody InstanceEnvironment instance) {
@@ -66,7 +68,7 @@ public class TraceController {
             if(pending != null){
                 log.info("Pending sessions : {}", pending);
             }
-            //toV4(id, sessions, queueService::addEventTraces);
+            toV4(id, sessions, dispatcher::emit);
 	        return accepted().build();
     	}
     	catch (Exception e) {

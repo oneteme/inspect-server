@@ -13,8 +13,14 @@ public class SessionStage implements Metric {
         private Instant end;
         private String threadName;
 
+        @Deprecated(since = "v1.1", forRemoval = true)
         private String idRequest;
+        @Deprecated(since = "v1.1", forRemoval = true)
         private String cdSession;
         private String instanceId;
+
+        private String sessionId;
+        private String id;à
+
         private boolean isCompleted;
 }

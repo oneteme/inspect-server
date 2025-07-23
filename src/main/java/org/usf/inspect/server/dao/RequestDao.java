@@ -95,7 +95,7 @@ VALUES (?,?,?,?::uuid,?::uuid)""", logEntries.iterator(), (ps, o)-> {
     public int saveMachineResourceUsage(List<MachineResourceUsage> usages) {
         var arr = executeBatch("""
 INSERT INTO E_RSC_USG(DH_STR,VA_LOW_HEP,VA_HIG_HEP,VA_LOW_MET,VA_HIG_MET,CD_INS)
-    VALUES (?,?,?,?,?,?::uuid,)""",usages.iterator(), (ps, o)-> {
+    VALUES (?,?,?,?,?,?::uuid)""",usages.iterator(), (ps, o)-> {
             ps.setTimestamp(1, fromNullableInstant(o.getInstant()));
             ps.setInt(2, o.getLowHeap());
             ps.setInt(3, o.getHighHeap());
