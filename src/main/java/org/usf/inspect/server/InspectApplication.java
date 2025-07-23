@@ -1,6 +1,10 @@
 package org.usf.inspect.server;
 
+import static java.util.Arrays.asList;
 import static org.springframework.http.converter.json.Jackson2ObjectMapperBuilder.json;
+
+import java.nio.file.Path;
+import java.util.Arrays;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -9,6 +13,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.usf.inspect.core.DispatcherAgent;
+import org.usf.inspect.core.EventTraceDumper;
 import org.usf.inspect.core.EventTraceScheduledDispatcher;
 import org.usf.inspect.core.RestRemoteServerProperties;
 import org.usf.inspect.core.SchedulingProperties;
@@ -75,12 +80,13 @@ public class InspectApplication {
 	}
 	
 	@Bean
-	EventTraceScheduledDispatcher dispatcher(DispatcherAgent agent) {
+	EventTraceScheduledDispatcher dispatcher(DispatcherAgent agent, ObjectMapper mapper) {
 		var trc = new TracingProperties();
 		trc.setDelayIfPending(0); //save immediately
 		trc.setQueueCapacity(1_000_000);
 		var scd = new SchedulingProperties();
 		scd.setDelay(30); //30s
-		return new EventTraceScheduledDispatcher(trc, scd, agent);
+		var dump = new EventTraceDumper(trc.getDumpDirectory(), mapper);
+		return new EventTraceScheduledDispatcher(trc, scd, agent, asList(dump));
 	}
 }
