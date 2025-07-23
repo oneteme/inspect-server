@@ -28,7 +28,6 @@ import org.usf.inspect.server.model.NamingRequest;
 import org.usf.inspect.server.model.NamingRequestStage;
 import org.usf.inspect.server.model.RestRequest;
 import org.usf.inspect.server.model.RestSession;
-import org.usf.inspect.server.service.SessionQueueService;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;

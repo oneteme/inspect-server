@@ -1,21 +1,29 @@
 package org.usf.inspect.server.controller;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.server.model.InstanceTrace;
-import org.usf.inspect.server.service.RequestService;
-import org.usf.inspect.server.service.SessionQueueService;
+import static java.time.Instant.now;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.springframework.http.ResponseEntity.accepted;
+import static org.springframework.http.ResponseEntity.internalServerError;
 
 import java.time.Instant;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-import static org.springframework.http.ResponseEntity.accepted;
-import static org.springframework.http.ResponseEntity.internalServerError;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.core.EventTraceScheduledDispatcher;
+import org.usf.inspect.server.model.InstanceTrace;
+import org.usf.inspect.server.service.RequestService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @CrossOrigin
@@ -25,22 +33,22 @@ import static org.springframework.http.ResponseEntity.internalServerError;
 public class TraceControllerV4 {
 
     private final RequestService requestService;
-    private final SessionQueueService queueService;
+    private final EventTraceScheduledDispatcher dispatcher;
     private final ExecutorService executor = Executors.newFixedThreadPool(15);
 
     @PutMapping("instance/{id}/session")
     public ResponseEntity<Void> addSessions( @PathVariable("id") String id,
                                              @RequestBody EventTrace[] sessions,
                                              @RequestParam(required = false, name = "pending")  Integer pending,
-                                             @RequestParam(required = false, name = "end") Instant end,
-                                             @RequestParam(required = false, name = "attemps") int attemps
+                                             @RequestParam(required = false, name = "attempts") int attemps,
+                                             @RequestParam(required = false, name = "end") Instant end
     ) {
         try {
             if(end != null){
                 requestService.updateInstance(end, id);
             }
-            executor.submit(()-> requestService.addInstanceTrace(new InstanceTrace(pending, attemps, sessions.length, Instant.now(),id)));
-            //queueService.addEventTraces(sessions);
+            executor.submit(()-> requestService.addInstanceTrace(new InstanceTrace(pending, attemps, sessions.length, now(), id))); //now !!!???
+            dispatcher.emitAll(sessions);
             return accepted().build();
         }
         catch (Exception e) {
