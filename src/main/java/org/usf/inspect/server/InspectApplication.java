@@ -10,6 +10,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.usf.inspect.core.DispatcherAgent;
 import org.usf.inspect.core.EventTraceScheduledDispatcher;
+import org.usf.inspect.core.RestRemoteServerProperties;
 import org.usf.inspect.core.SchedulingProperties;
 import org.usf.inspect.core.TracingProperties;
 import org.usf.inspect.server.model.DatabaseRequest;
@@ -68,7 +69,8 @@ public class InspectApplication {
 				new NamedType(HttpRequestStage.class,  		"http-stg"),
 				new NamedType(MailRequestStage.class,  		"mail-stg"),
 				new NamedType(NamingRequestStage.class,		"ldap-stg"),
-				new NamedType(FtpRequestStage.class,  		"ftp-stg"));
+				new NamedType(FtpRequestStage.class,  		"ftp-stg"),
+				new NamedType(RestRemoteServerProperties.class, "rest-rmt"));
 		return mapper;
 	}
 	
