@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.usf.inspect.core.Dispatcher;
 import org.usf.inspect.core.DispatcherAgent;
 import org.usf.inspect.core.EventTraceScheduledDispatcher;
 import org.usf.inspect.core.SchedulingProperties;
@@ -74,7 +73,7 @@ public class InspectApplication {
 	}
 	
 	@Bean
-	Dispatcher dispatcher(DispatcherAgent agent) {
+	EventTraceScheduledDispatcher dispatcher(DispatcherAgent agent) {
 		var trc = new TracingProperties();
 		trc.setDelayIfPending(0); //save immediately
 		trc.setQueueCapacity(1_000_000);
