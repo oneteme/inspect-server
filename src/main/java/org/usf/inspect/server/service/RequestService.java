@@ -62,13 +62,12 @@ import lombok.Setter;
 @Service
 @RequiredArgsConstructor
 @Setter
-@ConfigurationProperties(prefix = "inspect")
 public class RequestService {
 
     private final JdbcTemplate template;
     private final DataSource ds;
     private final RequestDao dao;
-    private int requestLimit= 300000;
+    private int requestLimit = 300000;
 
     public void addInstance(InstanceEnvironment instance) {
         dao.saveInstanceEnvironment(instance);

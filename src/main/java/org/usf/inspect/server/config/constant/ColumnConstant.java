@@ -263,6 +263,9 @@ public class ColumnConstant {
             case COLLECTOR -> VA_CLR;
             case BRANCH -> VA_BRCH;
             case HASH -> VA_HSH;
+            case CONFIGURATION -> VA_CNF;
+            case RESOURCE -> VA_RSR;
+            case ADDITIONAL_PROPERTIES -> VA_ADD_PRP;
             default -> null;
         };
     }
@@ -275,6 +278,40 @@ public class ColumnConstant {
             case NODE_NAME -> VA_NDE_NAM;
             case START -> DH_STR;
             case PARENT -> CD_PRN_SES;
+            default -> null;
+        };
+    }
+
+    public static String instanceTraceColumns(TraceApiColumn column) {
+        return switch (column) {
+            case PENDING -> VA_PND;
+            case ATTEMPTS -> VA_ATP;
+            case SIZE_SESSION -> VA_SES_SZE;
+            case START -> DH_STR;
+            case INSTANCE_ENV -> CD_INS;
+            default -> null;
+        };
+    }
+
+    public static String logEntryColumns(TraceApiColumn column) {
+        return switch (column) {
+            case LOG_LEVEL -> VA_LVL;
+            case LOG_MESSAGE -> VA_MSG;
+            case START -> DH_STR;
+            case PARENT -> CD_PRN_SES;
+            case INSTANCE_ENV -> CD_INS;
+            default -> null;
+        };
+    }
+
+    public static String resourceUsageColumns(TraceApiColumn column) {
+        return switch (column) {
+            case LOW_HEAP -> VA_LOW_HEP;
+            case HIGH_HEAP -> VA_HIG_HEP;
+            case LOW_META -> VA_LOW_MET;
+            case HIGH_META -> VA_HIG_MET;
+            case START -> DH_STR;
+            case INSTANCE_ENV -> CD_INS;
             default -> null;
         };
     }

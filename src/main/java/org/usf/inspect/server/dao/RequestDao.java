@@ -1,6 +1,7 @@
 package org.usf.inspect.server.dao;
 
-import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
@@ -28,17 +29,22 @@ import static org.usf.inspect.server.Utils.*;
 import static org.usf.inspect.server.model.RequestMask.*;
 
 @Repository
-@RequiredArgsConstructor
 @Slf4j
 public class RequestDao {
     private final JdbcTemplate template;
+    private final ObjectMapper mapper;
 
     private static final int BATCH_SIZE = 1_000;
 
+    public RequestDao(JdbcTemplate template, ObjectMapper mapper) {
+        this.template = template;
+        this.mapper = mapper;
+    }
+
     public void saveInstanceEnvironment(InstanceEnvironment instance) {
         template.update("""
-INSERT INTO E_ENV_INS(ID_INS,VA_TYP,DH_STR,VA_APP,VA_VRS,VA_ADR,VA_ENV,VA_OS,VA_RE,VA_USR,VA_CLR,VA_BRCH,VA_HSH)
-VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
+INSERT INTO E_ENV_INS(ID_INS,VA_TYP,DH_STR,VA_APP,VA_VRS,VA_ADR,VA_ENV,VA_OS,VA_RE,VA_USR,VA_CLR,VA_BRCH,VA_HSH,VA_CNF,VA_RSR,VA_ADD_PRP)
+VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?::json,?::json,?::json)""", ps -> {
             ps.setObject(1, instance.getId());
             ps.setString(2, instance.getType() != null ? instance.getType().name() : null);
             ps.setTimestamp(3, fromNullableInstant(instance.getInstant()));
@@ -52,6 +58,13 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             ps.setString(11, instance.getCollector());
             ps.setString(12, instance.getBranch());
             ps.setString(13, instance.getHash());
+            try {
+                ps.setObject(14, instance.getConfiguration() != null ? mapper.writeValueAsString(instance.getConfiguration()) : null);
+                ps.setObject(15, instance.getResource() != null ? mapper.writeValueAsString(instance.getResource()) : null);
+                ps.setObject(16, instance.getAdditionalProperties() != null ? mapper.writeValueAsString(instance.getAdditionalProperties()) : null);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
         });
     }
     public void saveInstanceTrace(InstanceTrace instanceTrace) {
@@ -59,7 +72,7 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
 INSERT INTO E_INS_TRC (VA_PND, VA_ATP, VA_SES_SZE, DH_STR, CD_INS)
 VALUES (?, ?, ?, ?, ?::uuid);""", ps -> {
             ps.setInt(1, instanceTrace.getPending());
-            ps.setInt(2, instanceTrace.getAttemps());
+            ps.setInt(2, instanceTrace.getAttempts());
             ps.setInt(3, instanceTrace.getSessionLength());
             ps.setTimestamp(4, fromNullableInstant(instanceTrace.getInstant()));
             ps.setString(5, instanceTrace.getInstanceId());

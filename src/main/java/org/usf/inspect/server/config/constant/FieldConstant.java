@@ -77,6 +77,17 @@ public final class FieldConstant {
     public static final String VA_SZE = "va_sze";
     public static final String VA_BRCH= "va_brch";
     public static final String VA_HSH = "va_hsh";
+    public static final String VA_ADD_PRP = "va_add_prp";
+    public static final String VA_CNF = "va_cnf";
+    public static final String VA_RSR = "va_rsr";
+    public static final String VA_PND = "va_pnd";
+    public static final String VA_ATP = "va_atp";
+    public static final String VA_SES_SZE = "va_ses_sze";
+    public static final String VA_LVL = "va_lvl";
+    public static final String VA_MSG = "va_msg";
+    public static final String VA_LOW_HEP = "va_low_hep";
+    public static final String VA_HIG_HEP = "va_hig_hep";
+    public static final String VA_LOW_MET = "va_low_met";
+    public static final String VA_HIG_MET = "va_hig_met";
     public static final String VA_FAIL= "va_fail";
-
 }

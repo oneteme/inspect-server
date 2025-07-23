@@ -11,7 +11,7 @@ import java.time.Instant;
 @AllArgsConstructor
 public class InstanceTrace {
     private Integer pending;
-    private int attemps;
+    private int attempts;
     private int sessionLength;
     private Instant instant;
     private String  instanceId;

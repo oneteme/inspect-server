@@ -1,7 +1,11 @@
 package org.usf.inspect.server.mapper;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import org.usf.inspect.core.InspectCollectorConfiguration;
 import org.usf.inspect.core.InstanceType;
 import org.usf.inspect.jdbc.SqlCommand;
 import org.usf.inspect.server.RequestMask;
@@ -23,26 +27,71 @@ import static org.usf.inspect.server.service.RequestService.valueOfNullabletoEnu
 public final class InspectMappers {
 
     public static InstanceEnvironment instanceEnvironmentMapper(ResultSet rs) throws SQLException {
+        var mapper = new ObjectMapper();
         if(rs.next()) {
-            var instanceEnvironment = new InstanceEnvironment(
-                    rs.getString(APP_NAME.reference()),
-                    rs.getString(VERSION.reference()),
-                    rs.getString(ADDRESS.reference()),
-                    rs.getString(ENVIRONEMENT.reference()),
-                    rs.getString(OS.reference()),
-                    rs.getString(RE.reference()),
-                    rs.getString(USER.reference()),
-                    InstanceType.valueOf(rs.getString(TYPE.reference())),
-                    fromNullableTimestamp(rs.getTimestamp(START.reference())),
-                    rs.getString(COLLECTOR.reference()),
-                    rs.getString(BRANCH.reference()),
-                    rs.getString(HASH.reference()),
-                    fromNullableTimestamp(rs.getTimestamp(END.reference())), null, null, null);
+            InstanceEnvironment instanceEnvironment;
+            try {
+                instanceEnvironment = new InstanceEnvironment(
+                        rs.getString(APP_NAME.reference()),
+                        rs.getString(VERSION.reference()),
+                        rs.getString(ADDRESS.reference()),
+                        rs.getString(ENVIRONEMENT.reference()),
+                        rs.getString(OS.reference()),
+                        rs.getString(RE.reference()),
+                        rs.getString(USER.reference()),
+                        InstanceType.valueOf(rs.getString(TYPE.reference())),
+                        fromNullableTimestamp(rs.getTimestamp(START.reference())),
+                        rs.getString(COLLECTOR.reference()),
+                        rs.getString(BRANCH.reference()),
+                        rs.getString(HASH.reference()),
+                        fromNullableTimestamp(rs.getTimestamp(END.reference())),
+                        rs.getString(ADDITIONAL_PROPERTIES.reference()) != null ? mapper.readValue(rs.getString(ADDITIONAL_PROPERTIES.reference()), new TypeReference<Map<String, String>>() {}) : null,
+                        rs.getString(CONFIGURATION.reference()) != null ? mapper.readValue(rs.getString(CONFIGURATION.reference()), InspectCollectorConfiguration.class) : null,
+                        rs.getString(RESOURCE.reference()) != null ? mapper.readValue(rs.getString(RESOURCE.reference()), MachineResourceUsage.class) : null
+                );
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
             instanceEnvironment.setId(rs.getString(ID.reference()));
             return instanceEnvironment;
         }
         return null;
     }
+
+    public static RowMapper<InstanceTrace> instanceTraceMapper() {
+        return rs ->
+            new InstanceTrace(
+                    rs.getInt(PENDING.reference()),
+                    rs.getInt(ATTEMPTS.reference()),
+                    rs.getInt(SIZE_SESSION.reference()),
+                    fromNullableTimestamp(rs.getTimestamp(START.reference())),
+                    rs.getString(INSTANCE_ENV.reference())
+            );
+    }
+
+    public static RowMapper<MachineResourceUsage> instanceResourceUsageMapper() {
+        return rs ->
+                new MachineResourceUsage(
+                        fromNullableTimestamp(rs.getTimestamp(START.reference())),
+                        rs.getInt(LOW_HEAP.reference()),
+                        rs.getInt(HIGH_HEAP.reference()),
+                        rs.getInt(LOW_META.reference()),
+                        rs.getInt(HIGH_META.reference()),
+                        rs.getString(INSTANCE_ENV.reference())
+                );
+    }
+
+    public static RowMapper<LogEntry> instanceLogEntryMapper() {
+        return rs ->
+                new LogEntry(
+                        fromNullableTimestamp(rs.getTimestamp(START.reference())),
+                        LogEntry.Level.valueOf(rs.getString(LOG_LEVEL.reference())),
+                        rs.getString(LOG_MESSAGE.reference()),
+                        rs.getString(PARENT.reference()),
+                        rs.getString(INSTANCE_ENV.reference())
+                );
+    }
+
     public static RowMapper<RestRequest> restRequestLazyMapper() {
        return InspectMappers::createBaseRestRequest;
     }
@@ -250,7 +299,7 @@ public final class InspectMappers {
 
     private static MainSession createBaseMainsession(ResultSet rs) throws SQLException {
         MainSession out = new MainSession();
-        out.setId(((UUID) rs.getObject(ID.reference())).toString());
+        out.setId(rs.getString(ID.reference()));
         out.setName(rs.getString(NAME.reference()));
         out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
         out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
@@ -259,7 +308,7 @@ public final class InspectMappers {
         out.setThreadName(rs.getString(THREAD.reference()));
         out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
         out.setUser(rs.getString(USER.reference()));
-        out.setInstanceId(((UUID) rs.getObject(INSTANCE_ENV.reference())).toString());
+        out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
         out.setMask(rs.getInt(MASK.reference()));
         return out;
     }

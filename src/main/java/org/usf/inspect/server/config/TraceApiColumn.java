@@ -17,15 +17,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum TraceApiColumn implements ColumnDecorator {
 
-    ID("id"){
-        @Override
-        public JDBCType type(ViewDecorator vd) {
-            if(vd == USER_ACTION) {
-                return null;
-            }
-            return JDBCType.VARCHAR;
-        }
-    },
+    ID("id"),
     METHOD("method"), //METHOD
     PROTOCOL("protocol"),
     HOST("host"),
@@ -94,6 +86,18 @@ public enum TraceApiColumn implements ColumnDecorator {
     COLLECTOR("collector"),
     BRANCH("branch"),
     HASH("hash"),
+    ADDITIONAL_PROPERTIES("additionalProperties"),
+    CONFIGURATION("configuration"),
+    RESOURCE("resource"),
+    PENDING("pending"),
+    ATTEMPTS("attempts"),
+    SIZE_SESSION("sizeSession"),
+    LOG_LEVEL("logLevel"),
+    LOG_MESSAGE("logMessage"),
+    LOW_HEAP("lowHeap"),
+    HIGH_HEAP("highHeap"),
+    LOW_META("lowMeta"),
+    HIGH_META("highMeta"),
     //---
     ELAPSEDTIME("elapsedtime", FilterConstant::elapsedtime2, Builder.multiArgsCriteria(FilterConstant::elapsedTimeExpressions)),
     COUNT_SLOWEST("elapsedTimeSlowest", FilterConstant::elapsedTimeVerySlow),

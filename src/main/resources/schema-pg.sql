@@ -231,7 +231,10 @@ CREATE TABLE IF NOT EXISTS e_env_ins (
     va_usr varchar,
     va_clr varchar,
     va_brch varchar,
-    va_hsh varchar
+    va_hsh varchar,
+    va_cnf json,
+    va_rsr json,
+    va_add_prp json
 );
 
 CREATE TABLE IF NOT EXISTS e_usr_acn (
@@ -255,12 +258,12 @@ create table if not exists e_log_ent (
     dh_str timestamp(6),
     va_lvl varchar,
     va_msg varchar,
-    cd_ses uuid,
+    cd_prn_ses uuid,
     cd_ins uuid
 );
 
 create table if not exists e_rsc_usg (
-     dh_str timestamp(6),
+    dh_str timestamp(6),
     va_low_hep int,
     va_hig_hep int,
     va_low_met int,
@@ -308,3 +311,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_env_ins_id_ins ON e_env_ins(id_ins);
 CREATE INDEX IF NOT EXISTS idx_env_ins_va_app_va_env ON e_env_ins(va_app, va_env);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_usr_acn_id_acn_dh_str ON e_usr_acn(id_acn);
 CREATE INDEX IF NOT EXISTS idx_usr_acn_cd_prn_ses ON e_usr_acn(cd_prn_ses);
+CREATE INDEX IF NOT EXISTS idx_ins_trc_cd_ins ON e_ins_trc(cd_ins);
+CREATE INDEX IF NOT EXISTS idx_log_ent_cd_ins ON e_log_ent(cd_ins);
+CREATE INDEX IF NOT EXISTS idx_log_ent_cd_ses ON e_log_ent(cd_prn_ses);
+CREATE INDEX IF NOT EXISTS idx_rsc_usg_cd_ins ON e_rsc_usg(cd_ins);

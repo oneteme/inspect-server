@@ -33,13 +33,13 @@ public class TraceControllerV4 {
                                              @RequestBody EventTrace[] sessions,
                                              @RequestParam(required = false, name = "pending")  Integer pending,
                                              @RequestParam(required = false, name = "end") Instant end,
-                                             @RequestParam(required = false, name = "attemps") int attemps
+                                             @RequestParam(required = false, name = "attempts") int attempts
     ) {
         try {
             if(end != null){
                 requestService.updateInstance(end, id);
             }
-            executor.submit(()-> requestService.addInstanceTrace(new InstanceTrace(pending, attemps, sessions.length, Instant.now(),id)));
+            executor.submit(()-> requestService.addInstanceTrace(new InstanceTrace(pending, attempts, sessions.length, Instant.now(),id)));
             //queueService.addEventTraces(sessions);
             return accepted().build();
         }
