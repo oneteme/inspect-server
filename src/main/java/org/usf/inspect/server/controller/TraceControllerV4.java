@@ -48,12 +48,13 @@ public class TraceControllerV4 {
                 requestService.updateInstance(end, id);
             }
             executor.submit(()-> requestService.addInstanceTrace(new InstanceTrace(pending, attemps, sessions.length, now(), id))); //now !!!???
-            dispatcher.emitAll(sessions);
-            return accepted().build();
+            if(dispatcher.emitAll(sessions)) {
+            	return accepted().build();
+            }
         }
         catch (Exception e) {
             log.error("trace session", e);
-            return internalServerError().build();
         }
+        return internalServerError().build();
     }
 }

@@ -20,8 +20,8 @@ public class SessionQueueService implements DispatcherAgent {
 	
 
 	@Override
-	public void register(InstanceEnvironment instance) {
-		
+	public void dispatch(InstanceEnvironment instance) {
+		service.addInstance(null); //cast or change
 	}
 
 	@Override
