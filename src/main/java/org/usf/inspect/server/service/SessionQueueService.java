@@ -1,55 +1,36 @@
 package org.usf.inspect.server.service;
 
+import java.io.File;
 import java.util.List;
 
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Service;
-import org.usf.inspect.core.DispatchState;
+import org.usf.inspect.core.DispatcherAgent;
 import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.InspectCollectorConfiguration;
 //import org.usf.inspect.core.ScheduledDispatchHandler;
+import org.usf.inspect.core.InstanceEnvironment;
 
-import jakarta.annotation.PreDestroy;
+import lombok.RequiredArgsConstructor;
 
 @Service
 //@EnableConfigurationProperties(InspectCollectorConfiguration.class)
-public class SessionQueueService {
+@RequiredArgsConstructor
+public class SessionQueueService implements DispatcherAgent {
+	
+	private final RequestService service;
+	
 
-    /* private final RequestService service;
-    private final ScheduledDispatchHandler<EventTrace> dispatcher;
+	@Override
+	public void register(InstanceEnvironment instance) {
+		
+	}
 
-    public SessionQueueService(RequestService service, InspectConfigurationProperties prop) {
-        this.service = service;
-		this.dispatcher = new ScheduledDispatchHandler<>(prop.getDispatch(), this::saveEventTraces);
-    }
+	@Override
+	public void dispatch(boolean complete, int attemps, int pending, List<EventTrace> traces) {
+		service.addEventTraces(traces);
+	}
 
-    public boolean addEventTraces(EventTrace... eventTraces) {
-    	return dispatcher.submit(eventTraces);
-    }
-
-    public List<EventTrace> waitList() {
-    	return dispatcher.peek().toList();
-    }
-
-    public int waitListSize() {
-    	return (int) dispatcher.peek().count();
-    }
-
-    boolean saveEventTraces(boolean complete, int attempts, List<EventTrace> eventTraces, int pending) {
-        service.addEventTraces(eventTraces);
-        return true;
-    }
-
-    public void enableSave(DispatchState state) {
-    	dispatcher.updateState(state);
-    }
-
-    public DispatchState getState() {
-        return dispatcher.getState();
-    }
-
-    @PreDestroy
-    void destroy() {
-		dispatcher.complete();
-	}*/
+	@Override
+	public void dispatch(File dumpFile) {
+		
+	}
 }

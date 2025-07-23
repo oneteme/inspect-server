@@ -8,7 +8,26 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.usf.inspect.server.model.*;
+import org.usf.inspect.core.DispatcherAgent;
+import org.usf.inspect.core.EventTraceScheduledDispatcher;
+import org.usf.inspect.core.RestRemoteServerProperties;
+import org.usf.inspect.core.SchedulingProperties;
+import org.usf.inspect.core.TracingProperties;
+import org.usf.inspect.server.model.DatabaseRequest;
+import org.usf.inspect.server.model.DatabaseRequestStage;
+import org.usf.inspect.server.model.FtpRequest;
+import org.usf.inspect.server.model.FtpRequestStage;
+import org.usf.inspect.server.model.HttpRequestStage;
+import org.usf.inspect.server.model.LocalRequest;
+import org.usf.inspect.server.model.LogEntry;
+import org.usf.inspect.server.model.MachineResourceUsage;
+import org.usf.inspect.server.model.MailRequest;
+import org.usf.inspect.server.model.MailRequestStage;
+import org.usf.inspect.server.model.MainSession;
+import org.usf.inspect.server.model.NamingRequest;
+import org.usf.inspect.server.model.NamingRequestStage;
+import org.usf.inspect.server.model.RestRequest;
+import org.usf.inspect.server.model.RestSession;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,7 +46,7 @@ public class InspectApplication {
 
 	@Bean
 	@Primary
-	public ObjectMapper mapper(){
+	ObjectMapper mapper(){
 		var mapper = json()
 				.modules(new JavaTimeModule(), new ParameterNamesModule())
 				.build()
@@ -50,7 +69,18 @@ public class InspectApplication {
 				new NamedType(HttpRequestStage.class,  		"http-stg"),
 				new NamedType(MailRequestStage.class,  		"mail-stg"),
 				new NamedType(NamingRequestStage.class,		"ldap-stg"),
-				new NamedType(FtpRequestStage.class,  		"ftp-stg"));
+				new NamedType(FtpRequestStage.class,  		"ftp-stg"),
+				new NamedType(RestRemoteServerProperties.class, "rest-rmt"));
 		return mapper;
+	}
+	
+	@Bean
+	EventTraceScheduledDispatcher dispatcher(DispatcherAgent agent) {
+		var trc = new TracingProperties();
+		trc.setDelayIfPending(0); //save immediately
+		trc.setQueueCapacity(1_000_000);
+		var scd = new SchedulingProperties();
+		scd.setDelay(30); //30s
+		return new EventTraceScheduledDispatcher(trc, scd, agent);
 	}
 }
