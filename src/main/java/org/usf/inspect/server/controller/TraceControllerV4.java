@@ -51,7 +51,7 @@ public class TraceControllerV4 {
 
     @PutMapping("instance/{id}/session")
     public ResponseEntity<Void> addSessions( @PathVariable("id") String id,
-                                             @RequestParam(required = false)  Integer pending,
+                                             @RequestParam(required = false) Integer pending,
                                              @RequestParam(required = false) Integer attempts,
                                              @RequestParam(required = false) Instant end,
                                              @RequestBody EventTrace[] sessions) {
