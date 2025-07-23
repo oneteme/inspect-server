@@ -41,10 +41,9 @@ public class TraceController {
         if(isNull(instance) || isBlank(instance.getName())) {
     		return status(BAD_REQUEST).build();
     	}
-        if(instance.getType() == CLIENT) {
-            instance.setAddress(hsr.getRemoteAddr());
+        if(instance.getType() != CLIENT) {
+        	instance.setId(nextId());
         }
-        instance.setId(nextId());
         try {
             requestService.addInstance(instance);
             return ok(instance.getId());
