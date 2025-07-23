@@ -51,11 +51,10 @@ public class TraceControllerV4 {
 
     @PutMapping("instance/{id}/session")
     public ResponseEntity<Void> addSessions( @PathVariable("id") String id,
-                                             @RequestBody EventTrace[] sessions,
                                              @RequestParam(required = false)  Integer pending,
-                                             @RequestParam(required = false) int attempts,
-                                             @RequestParam(required = false) Instant end
-    ) {
+                                             @RequestParam(required = false) Integer attempts,
+                                             @RequestParam(required = false) Instant end,
+                                             @RequestBody EventTrace[] sessions) {
         try {
             if(end != null){
                 requestService.updateInstance(end, id);
