@@ -28,7 +28,7 @@ public class DatabaseDispatcherAgent implements DispatcherAgent {
 	}
 
 	@Override
-	public void dispatch(boolean complete, int attemps, int pending, List<EventTrace> traces) {
+	public void dispatch(boolean complete, int attempts, int pending, List<EventTrace> traces) {
 		service.addEventTraces(traces);
 	}
 
