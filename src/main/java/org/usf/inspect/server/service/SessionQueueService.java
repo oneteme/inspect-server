@@ -21,7 +21,7 @@ public class SessionQueueService implements DispatcherAgent {
 
 	@Override
 	public void dispatch(InstanceEnvironment instance) {
-		service.addInstance(null); //cast or change
+		service.addInstance(instance); //cast or change
 	}
 
 	@Override
@@ -30,7 +30,7 @@ public class SessionQueueService implements DispatcherAgent {
 	}
 
 	@Override
-	public void dispatch(File dumpFile) {
+	public void dispatch(int attemps, File dumpFile) {
 		
 	}
 }

@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.core.InstanceEnvironment;
 import org.usf.inspect.core.TraceableStage;
 import org.usf.inspect.server.RequestMask;
 import org.usf.inspect.server.config.TraceApiColumn;
@@ -65,7 +66,6 @@ import lombok.Setter;
 public class RequestService {
 
     private final JdbcTemplate template;
-    private final DataSource ds;
     private final RequestDao dao;
     private int requestLimit = 300000;
 

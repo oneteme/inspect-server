@@ -1,42 +1,31 @@
 package org.usf.inspect.server.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.core.EventTraceScheduledDispatcher;
+import org.usf.inspect.core.InstanceEnvironment;
+import org.usf.inspect.server.model.InstanceEventTrace;
+import org.usf.inspect.server.model.InstanceTrace;
+import org.usf.inspect.server.service.RequestService;
+
+import java.time.Instant;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import static java.time.Instant.now;
 import static java.util.Objects.isNull;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
-import static org.springframework.http.ResponseEntity.accepted;
-import static org.springframework.http.ResponseEntity.internalServerError;
-import static org.springframework.http.ResponseEntity.ok;
-import static org.springframework.http.ResponseEntity.status;
+import static org.springframework.http.ResponseEntity.*;
 import static org.usf.inspect.core.InstanceType.CLIENT;
 import static org.usf.inspect.core.SessionManager.nextId;
 import static org.usf.jquery.core.Utils.isBlank;
-
-import java.time.Instant;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.EventTraceScheduledDispatcher;
-import org.usf.inspect.core.InstanceEnvironment;
-import org.usf.inspect.core.SessionManager;
-import org.usf.inspect.server.model.InstanceTrace;
-import org.usf.inspect.server.service.RequestService;
-
-import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @CrossOrigin
@@ -50,17 +39,18 @@ public class TraceControllerV4 {
     private final ExecutorService executor = Executors.newFixedThreadPool(15);
 
     @PutMapping("instance/{id}/session")
-    public ResponseEntity<Void> addSessions( @PathVariable("id") String id,
-                                             @RequestParam(required = false) Integer pending,
-                                             @RequestParam(required = false) Integer attempts,
-                                             @RequestParam(required = false) Instant end,
-                                             @RequestBody EventTrace[] sessions) {
+    public ResponseEntity<Void> addSessions(
+            @PathVariable("id") String id,
+            @RequestParam(required = false) Integer pending,
+            @RequestParam(required = false) Integer attempts,
+            @RequestParam(required = false) Instant end,
+            @RequestBody InstanceEventTrace[] eventTraces) {
         try {
             if(end != null){
                 requestService.updateInstance(end, id);
             }
-            executor.submit(()-> requestService.addInstanceTrace(new InstanceTrace(pending, attempts, sessions.length, now(), id))); //now !!!???
-            if(dispatcher.emitAll(sessions)) {
+            executor.submit(()-> requestService.addInstanceTrace(new InstanceTrace(pending, attempts, eventTraces.length, now(), id))); //now !!!???
+            if(dispatcher.emitAll(eventTraces)) {
             	return accepted().build();
             }
         }
@@ -73,15 +63,14 @@ public class TraceControllerV4 {
     
     
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
-    public ResponseEntity<String> addInstanceEnvironment(HttpServletRequest hsr, @RequestBody InstanceEnvironment instance) {
-    	/*if(queueService.getState() == DISABLE) {
-            return status(SERVICE_UNAVAILABLE).build();
-        }*/
+    public ResponseEntity<String> addInstanceEnvironment(
+            HttpServletRequest hsr,
+            @RequestBody InstanceEnvironment instance) {
         if(isNull(instance) || isBlank(instance.getName())) { //env !?
     		return status(BAD_REQUEST).build();
     	}
         if(instance.getType() == CLIENT) {
-        	update(instance, hsr.getRemoteAddr(), nextId());
+        	instance = update(instance, hsr.getRemoteAddr(), nextId());
         }
         try {
         	if(dispatcher.dispatch(instance)) {
@@ -94,10 +83,14 @@ public class TraceControllerV4 {
         return status(SERVICE_UNAVAILABLE).build();
     }
     
-    static InstanceEnvironment update(InstanceEnvironment instance, String addrr, String id) {
-    	
-    	//TODO complete nextId(), setAddrr 
-    	
-    	return instance;
+    static InstanceEnvironment update(InstanceEnvironment instance, String addr, String id) {
+    	var ins = new InstanceEnvironment(id, instance.getInstant(), instance.getType(),
+                instance.getName(), instance.getVersion(), instance.getEnv(), addr,
+                instance.getOs(), instance.getRe(), instance.getUser(), instance.getBranch(),
+                instance.getHash(), instance.getCollector(),
+                instance.getAdditionalProperties(), instance.getConfiguration());
+        ins.setResource(instance.getResource());
+        ins.setEnd(instance.getEnd());
+    	return ins;
     }
 }

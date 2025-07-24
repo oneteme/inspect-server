@@ -1,10 +1,8 @@
 package org.usf.inspect.server.model;
 
-import org.usf.inspect.core.EventTrace;
-
 import java.time.Instant;
 
-public interface  Metric extends EventTrace {
+public interface Metric extends InstanceEventTrace {
     Instant getStart();
 
     Instant getEnd();

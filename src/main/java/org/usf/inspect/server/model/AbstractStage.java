@@ -7,12 +7,13 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class RequestStage implements Metric {
+public class AbstractStage implements Metric {
     private String name;
     private Instant start;
     private Instant end;
     private ExceptionInfo exception;
 
-    private String idRequest;
+    private String requestId;
     private Integer order;
+    private String instanceId;
 }

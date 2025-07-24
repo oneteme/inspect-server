@@ -18,7 +18,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class DatabaseRequest extends SessionStage {
+public class DatabaseRequest extends AbstractRequest {
     private String host;
     private Integer port;
     private String name;
@@ -30,12 +30,8 @@ public class DatabaseRequest extends SessionStage {
     private List<DatabaseRequestStage> actions;
     private String command;
 
-
-
-    @Deprecated(since = "v1.1", forRemoval = true)
-    private boolean status;
-
     private boolean failed;
+
     public void setStatus(boolean status) {
         failed = status;
     }
@@ -52,15 +48,5 @@ public class DatabaseRequest extends SessionStage {
             return "SQL";
         }
         return null;
-    }
-
-    public void updateIdRequest() {
-        if(!isEmpty(getActions())) {
-            var inc = new AtomicInteger(0);
-            for(DatabaseRequestStage stage: getActions()) {
-                stage.setIdRequest(getIdRequest());
-                stage.setOrder(inc.incrementAndGet());
-            }
-        }
     }
 }

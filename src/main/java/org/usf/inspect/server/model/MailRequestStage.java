@@ -6,6 +6,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class MailRequestStage extends RequestStage {
+public class MailRequestStage extends AbstractStage {
 
 }

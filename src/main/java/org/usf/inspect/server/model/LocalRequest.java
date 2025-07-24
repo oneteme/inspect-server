@@ -8,7 +8,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class LocalRequest extends SessionStage {
+public class LocalRequest extends AbstractRequest {
     private String name;
     private String location;
     private String type;

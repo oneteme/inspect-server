@@ -5,6 +5,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class FtpRequestStage extends RequestStage {
+public class FtpRequestStage extends AbstractStage {
     private String[] args;
 }

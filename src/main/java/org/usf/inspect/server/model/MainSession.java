@@ -9,11 +9,10 @@ import java.util.List;
 
 @Getter
 @Setter
-public class MainSession  implements Session {
+public class MainSession implements Session {
     @Delegate
     @JsonIgnore
     private final LocalRequest localRequest= new LocalRequest();
-    private String id;
     @Deprecated(since = "v1.1", forRemoval = true)
     private List<RestRequest> restRequests;
     @Deprecated(since = "v1.1", forRemoval = true)

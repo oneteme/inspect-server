@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.core.InstanceEnvironment;
 import org.usf.inspect.server.model.*;
 
 import java.sql.PreparedStatement;
@@ -346,7 +347,7 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(
             ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
             ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
             ps.setInt(4, stage.getOrder());
-            ps.setObject(5, stage.getIdRequest());
+            ps.setObject(5, stage.getRequestId());
         });
         saveExceptions(stages.stream()
                 .map(HttpRequestStage::getException)
@@ -361,7 +362,7 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(
             ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
             ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
             ps.setInt(4, stage.getOrder());
-            ps.setObject(5, stage.getIdRequest());
+            ps.setObject(5, stage.getRequestId());
         });
         saveExceptions(stages.stream()
                 .map(MailRequestStage::getException)
@@ -377,7 +378,7 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(
             ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
             ps.setString(4, stage.getArgs() != null ? String.join(", ", stage.getArgs()) : null);
             ps.setInt(5, stage.getOrder());
-            ps.setObject(6, stage.getIdRequest());
+            ps.setObject(6, stage.getRequestId());
         });
         saveExceptions(stages.stream()
                 .map(FtpRequestStage::getException)
@@ -393,7 +394,7 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(
             ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
             ps.setString(4, stage.getArgs() != null ? String.join(", ", stage.getArgs()) : null);
             ps.setInt(5, stage.getOrder());
-            ps.setObject(6, stage.getIdRequest());
+            ps.setObject(6, stage.getRequestId());
         });
         saveExceptions(stages.stream()
                 .map(NamingRequestStage::getException)
@@ -410,7 +411,7 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(
             ps.setString(4, valueOfNullableArray(stage.getCount()));
             ps.setString(5,valueOfNullableList(stage.getCommands()));
             ps.setInt(6, stage.getOrder());
-            ps.setObject(7, stage.getIdRequest());
+            ps.setObject(7, stage.getRequestId());
         });
         saveExceptions(stages.stream()
                 .map(DatabaseRequestStage::getException)
@@ -442,7 +443,7 @@ VALUES(?,?,?,?,?,?::uuid)""", treeIterator(sessions, MainSession::getUserActions
                 ps.setString(2, exp.getType());
                 ps.setString(3, exp.getMessage());
                 ps.setObject(4, exp.getOrder(), Types.INTEGER);
-                ps.setString(5, exp.getIdRequest());
+                ps.setString(5, exp.getRequestId());
             });
         }
     }

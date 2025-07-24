@@ -40,7 +40,7 @@ public class RetroUtils {
                         e.setBodyContent(e.getException().getMessage());
                         stage.setException(null);
                     }else {
-                        e.getException().setIdRequest(e.getIdRequest());
+                        e.getException().setRequestId(e.getId());
                         stage.setException(e.getException());
                     }
                 }
@@ -51,18 +51,18 @@ public class RetroUtils {
         }
     }
 
-    private static <T extends SessionStage> void toV4(String instanceId, String sessionId, Collection<T> requests, Function<T, List<? extends  RequestStage>> fn, Consumer<EventTrace> consumer) {
+    private static <T extends AbstractRequest> void toV4(String instanceId, String sessionId, Collection<T> requests, Function<T, List<? extends AbstractStage>> fn, Consumer<EventTrace> consumer) {
         if(requests != null && !requests.isEmpty()) {
             for(var req : requests) {
-                req.setCdSession(sessionId);
-                req.setIdRequest(nextId());
+                req.setSessionId(sessionId);
+                req.setId(nextId());
                 req.setInstanceId(instanceId);
                 // Ajouter le is completed
                 consumer.accept(req);
                 if(fn != null) {
                     var inc = new AtomicInteger(0);
                     for(var stage : fn.apply(req)) {
-                        stage.setIdRequest(req.getIdRequest());
+                        stage.setRequestId(req.getId());
                         stage.setOrder(inc.incrementAndGet());
                         if(stage.getException() != null) {
                             stage.getException().setOrder(stage.getOrder());
@@ -74,7 +74,7 @@ public class RetroUtils {
         }
     }
 
-    private static <T extends RequestStage> boolean isCompleted(List<T> stage) {
+    private static <T extends AbstractStage> boolean isCompleted(List<T> stage) {
         return stage == null || stage.stream().allMatch(a -> isNull(a.getException()));
     }
 }

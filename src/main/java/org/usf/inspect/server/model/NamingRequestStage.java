@@ -5,6 +5,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class NamingRequestStage extends RequestStage {
+public class NamingRequestStage extends AbstractStage {
     private String[] args;
 }

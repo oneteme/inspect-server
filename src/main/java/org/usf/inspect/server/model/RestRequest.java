@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class RestRequest extends SessionStage {
+public class RestRequest extends AbstractRequest {
     private String id;
     private String method;
     private String protocol;

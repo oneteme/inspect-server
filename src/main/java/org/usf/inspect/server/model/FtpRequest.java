@@ -10,7 +10,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class FtpRequest extends SessionStage {
+public class FtpRequest extends AbstractRequest {
     private String protocol;
     private String host;
     private Integer port;
@@ -33,7 +33,7 @@ public class FtpRequest extends SessionStage {
         if (!isEmpty(getActions())) {
             var inc = new AtomicInteger(0);
             for(FtpRequestStage stage: getActions()) {
-                stage.setIdRequest(getIdRequest());
+                stage.setRequestId(getIdRequest());
                 stage.setOrder(inc.incrementAndGet());
             }
         }

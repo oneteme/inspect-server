@@ -11,7 +11,7 @@ import lombok.Setter;
 
 @Setter
 @Getter
-public class MailRequest extends SessionStage {
+public class MailRequest extends AbstractRequest {
     private String host;
     private Integer port;
     @Deprecated(since = "v1.1", forRemoval = true)
@@ -31,7 +31,7 @@ public class MailRequest extends SessionStage {
         if(!isEmpty(getActions())) {
             var inc = new AtomicInteger(0);
             for (MailRequestStage stage : getActions()) {
-                stage.setIdRequest(getIdRequest());
+                stage.setRequestId(getIdRequest());
                 stage.setOrder(inc.incrementAndGet());
             }
         }
