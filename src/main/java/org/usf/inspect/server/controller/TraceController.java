@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.usf.inspect.server.model.InstanceEnvironment;
 import org.usf.inspect.server.model.Session;
 import org.usf.inspect.server.service.RequestService;
-import org.usf.inspect.server.service.SessionQueueService;
+import org.usf.inspect.server.service.DatabaseDispatcherAgent;
 
 import java.time.Instant;
 
@@ -32,7 +32,7 @@ import static org.usf.jquery.core.Utils.isBlank;
 public class TraceController {
 
     private final RequestService requestService;
-    private final SessionQueueService queueService;
+    private final DatabaseDispatcherAgent queueService;
     
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<String> addInstanceEnvironment(HttpServletRequest hsr, @RequestBody InstanceEnvironment instance) {

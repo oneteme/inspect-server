@@ -11,7 +11,7 @@ import org.springframework.web.client.RestTemplate;
 import org.usf.inspect.core.DispatchState;
 import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.server.service.RequestService;
-import org.usf.inspect.server.service.SessionQueueService;
+import org.usf.inspect.server.service.DatabaseDispatcherAgent;
 
 import java.util.Collection;
 
@@ -29,7 +29,7 @@ import static org.usf.inspect.core.DispatchState.DISABLE;
 public class CacheController {
 
     private final RequestService service;
-    private final SessionQueueService queue;
+    private final DatabaseDispatcherAgent queue;
     private final RestTemplate template;
     
     @Value("${spring.profiles.active:}")
@@ -37,7 +37,7 @@ public class CacheController {
 
 	private String host = null;
 
-	public CacheController(ObjectMapper mapper, RequestService service, SessionQueueService queue) {
+	public CacheController(ObjectMapper mapper, RequestService service, DatabaseDispatcherAgent queue) {
 		this.service = service;
 		this.queue = queue;
 		this.template = new RestTemplateBuilder()

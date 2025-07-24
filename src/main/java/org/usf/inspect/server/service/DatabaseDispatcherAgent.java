@@ -1,7 +1,5 @@
 package org.usf.inspect.server.service;
 
-import static java.util.Arrays.asList;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -12,16 +10,16 @@ import org.usf.inspect.core.DispatcherAgent;
 import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.core.InstanceEnvironment;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
-//@EnableConfigurationProperties(InspectCollectorConfiguration.class)
 @RequiredArgsConstructor
-public class SessionQueueService implements DispatcherAgent {
+public class DatabaseDispatcherAgent implements DispatcherAgent {
 	
-	private final RequestService service;
+	private final RequestService service; //inject dao
 	private final ObjectMapper mapper;
 
 	@Override
@@ -35,10 +33,10 @@ public class SessionQueueService implements DispatcherAgent {
 	}
 
 	@Override
-	public void dispatch(File dumpFile) { //TODO dump file dispatch attempts !?
+	public void dispatch(int attempts, File dumpFile) {
 		try {
-			var traces = mapper.readValue(dumpFile, EventTrace[].class);
-			dispatch(false, 0, 0, asList(traces));
+			var traces = mapper.readValue(dumpFile, new TypeReference<List<EventTrace>>() {});
+			dispatch(false, attempts, 0, traces);
 		} catch (IOException e) {
 			throw new DispatchException("cannot dispatch dumpFile " + dumpFile.getName(), e);
 		}
