@@ -10,10 +10,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.usf.inspect.core.DispatchState;
 import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.core.EventTraceScheduledDispatcher;
 import org.usf.inspect.server.service.RequestService;
-import org.usf.inspect.server.service.SessionQueueService;
+import org.usf.inspect.server.service.DatabaseDispatcherAgent;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
 import static java.util.Objects.nonNull;
@@ -29,7 +31,7 @@ import static org.usf.inspect.core.DispatchState.DISABLE;
 public class CacheController {
 
     private final RequestService service;
-    private final SessionQueueService queue;
+    private final EventTraceScheduledDispatcher dispatcher;
     private final RestTemplate template;
     
     @Value("${spring.profiles.active:}")
@@ -37,23 +39,23 @@ public class CacheController {
 
 	private String host = null;
 
-	public CacheController(ObjectMapper mapper, RequestService service, SessionQueueService queue) {
+	public CacheController(ObjectMapper mapper, RequestService service, EventTraceScheduledDispatcher dispatcher) {
 		this.service = service;
-		this.queue = queue;
+		this.dispatcher = dispatcher;
 		this.template = new RestTemplateBuilder()
 				.messageConverters(new MappingJackson2HttpMessageConverter(mapper))
                 .defaultHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                 .build();
 	}
 
-    /*@GetMapping
+    @GetMapping
     public ResponseEntity<Collection<EventTrace>> getCache(){
-		return ok(queue.waitList());
-    }*/
+		return ok(dispatcher.peek().collect(Collectors.toList()));
+    }
 
     @PostMapping("state/{state}")
     public ResponseEntity<Void> updateState(@PathVariable DispatchState state){
-		//queue.enableSave(state);
+		dispatcher.setState(state);
 		return ok().build();
     }
 

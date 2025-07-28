@@ -11,7 +11,7 @@ import static org.usf.inspect.server.config.constant.FieldConstant.*;
 public class ColumnConstant {
     public static String mainSessionColumns(TraceApiColumn column) {
         return switch (column) {
-            case ID -> ID_SES ;
+            case ID -> ID_SES;
             case NAME -> VA_NAM;
             case START -> DH_STR;
             case END -> DH_END;
@@ -78,7 +78,6 @@ public class ColumnConstant {
             case END -> DH_END;
             case THREAD -> VA_THR;
             case PARENT -> CD_PRN_SES;
-            case REMOTE -> CD_RMT_SES;
             case INSTANCE_ENV -> CD_INS;
             default -> null;
         };
@@ -297,6 +296,7 @@ public class ColumnConstant {
         return switch (column) {
             case LOG_LEVEL -> VA_LVL;
             case LOG_MESSAGE -> VA_MSG;
+            case STACKTRACE -> VA_STK;
             case START -> DH_STR;
             case PARENT -> CD_PRN_SES;
             case INSTANCE_ENV -> CD_INS;

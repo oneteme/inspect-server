@@ -10,9 +10,12 @@ import org.usf.inspect.core.EventTraceScheduledDispatcher;
 import org.usf.inspect.core.InstanceEnvironment;
 import org.usf.inspect.server.model.InstanceEventTrace;
 import org.usf.inspect.server.model.InstanceTrace;
+import org.usf.inspect.server.model.Session;
+import org.usf.inspect.server.model.wrapper.MainSessionWrapper;
 import org.usf.inspect.server.service.RequestService;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -37,29 +40,6 @@ public class TraceControllerV4 {
     private final RequestService requestService;
     private final EventTraceScheduledDispatcher dispatcher;
     private final ExecutorService executor = Executors.newFixedThreadPool(15);
-
-    @PutMapping("instance/{id}/session")
-    public ResponseEntity<Void> addSessions(
-            @PathVariable("id") String id,
-            @RequestParam(required = false) Integer pending,
-            @RequestParam(required = false) Integer attempts,
-            @RequestParam(required = false) Instant end,
-            @RequestBody InstanceEventTrace[] eventTraces) {
-        try {
-            if(end != null){
-                requestService.updateInstance(end, id);
-            }
-            executor.submit(()-> requestService.addInstanceTrace(new InstanceTrace(pending, attempts, eventTraces.length, now(), id))); //now !!!???
-            if(dispatcher.emitAll(eventTraces)) {
-            	return accepted().build();
-            }
-        }
-        catch (Exception e) {
-            log.error("trace session", e);
-            return internalServerError().build();
-        }
-        return status(SERVICE_UNAVAILABLE).build();
-    }
     
     
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
@@ -82,7 +62,39 @@ public class TraceControllerV4 {
         }
         return status(SERVICE_UNAVAILABLE).build();
     }
-    
+
+    @PutMapping("instance/{id}/session")
+    public ResponseEntity<Void> addSessions(
+            @PathVariable("id") String id,
+            @RequestParam(required = false) Integer pending,
+            @RequestParam(required = false) Integer attempts,
+            @RequestParam(required = false) Instant end,
+            @RequestBody EventTrace[] eventTraces) {
+        try {
+            if(end != null){
+                executor.submit(()-> requestService.updateInstance(end, id));
+            }
+            executor.submit(()-> requestService.addInstanceTrace(new InstanceTrace(pending, attempts, eventTraces.length, now(), id))); //now !!!???
+
+            Arrays.stream(eventTraces).forEach(e -> {
+                if(e instanceof InstanceEventTrace ie) {
+                    ie.setInstanceId(id);
+                } else if(e instanceof Session s) {
+                    s.setInstanceId(id);
+                }
+            });
+
+            if(dispatcher.emitAll(eventTraces)) {
+                return accepted().build();
+            }
+        }
+        catch (Exception e) {
+            log.error("trace session", e);
+            return internalServerError().build();
+        }
+        return status(SERVICE_UNAVAILABLE).build();
+    }
+
     static InstanceEnvironment update(InstanceEnvironment instance, String addr, String id) {
     	var ins = new InstanceEnvironment(id, instance.getInstant(), instance.getType(),
                 instance.getName(), instance.getVersion(), instance.getEnv(), addr,

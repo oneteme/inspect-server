@@ -85,6 +85,7 @@ public final class FieldConstant {
     public static final String VA_SES_SZE = "va_ses_sze";
     public static final String VA_LVL = "va_lvl";
     public static final String VA_MSG = "va_msg";
+    public static final String VA_STK = "va_stk";
     public static final String VA_LOW_HEP = "va_low_hep";
     public static final String VA_HIG_HEP = "va_hig_hep";
     public static final String VA_LOW_MET = "va_low_met";

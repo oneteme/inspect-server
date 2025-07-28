@@ -1,15 +1,14 @@
 package org.usf.inspect.server.dto;
 
-import java.time.Instant;
-import org.usf.inspect.server.model.ExceptionInfo;
-import org.usf.inspect.server.model.AbstractRequest;
-
 import lombok.Getter;
 import lombok.Setter;
+import org.usf.inspect.server.model.wrapper.ExceptionInfoWrapper;
+
+import java.time.Instant;
 
 @Setter
 @Getter
-public class DtoRequest extends AbstractRequest {
+public class DtoRequest {
     protected String id;
     protected String type;
     protected String sessionType;
@@ -22,5 +21,7 @@ public class DtoRequest extends AbstractRequest {
     protected String command;
     protected String schema;
     protected boolean failed;
-    protected ExceptionInfo exception;
+    protected ExceptionInfoWrapper exception;
+    protected String user;
+    protected String sessionId;
 }

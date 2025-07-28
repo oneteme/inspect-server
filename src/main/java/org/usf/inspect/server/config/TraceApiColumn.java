@@ -94,6 +94,7 @@ public enum TraceApiColumn implements ColumnDecorator {
     SIZE_SESSION("sizeSession"),
     LOG_LEVEL("logLevel"),
     LOG_MESSAGE("logMessage"),
+    STACKTRACE("stacktrace"),
     LOW_HEAP("lowHeap"),
     HIGH_HEAP("highHeap"),
     LOW_META("lowMeta"),

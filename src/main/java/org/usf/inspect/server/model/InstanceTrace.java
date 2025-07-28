@@ -1,19 +1,18 @@
 package org.usf.inspect.server.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
 
 @Getter
 @Setter
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class InstanceTrace {
-    private Integer pending;
-    private int attempts;
-    private int sessionLength;
-    private Instant instant;
-    private String  instanceId;
-
+    private final Integer pending;
+    private final int attempts;
+    private final int sessionLength;
+    private final Instant instant;
+    private final String  instanceId;
 }

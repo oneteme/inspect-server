@@ -6,9 +6,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
-import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.core.*;
+import org.usf.inspect.core.ExceptionInfo;
 import org.usf.inspect.core.InstanceEnvironment;
 import org.usf.inspect.server.model.*;
+import org.usf.inspect.server.model.wrapper.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -68,6 +70,14 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?::json,?::json,?::json)""", ps -> {
             }
         });
     }
+
+    public void updateInstanceEnvironment(Instant end, String instanceId){
+        template.update("UPDATE E_ENV_INS SET DH_END = ? WHERE ID_INS = ?", ps -> {
+            ps.setTimestamp(1,fromNullableInstant(end));
+            ps.setString(2,instanceId);
+        });
+    }
+
     public void saveInstanceTrace(InstanceTrace instanceTrace) {
         template.update("""
 INSERT INTO E_INS_TRC (VA_PND, VA_ATP, VA_SES_SZE, DH_STR, CD_INS)
@@ -80,7 +90,7 @@ VALUES (?, ?, ?, ?, ?::uuid);""", ps -> {
         });
     }
 
-    public int saveLogEntry(List<LogEntry> logEntries) {
+    public int saveLogEntry(List<LogEntryWrapper> logEntries) {
         var arr = executeBatch("""
 INSERT INTO E_LOG_ENT(VA_LVL,VA_MSG,DH_STR,CD_SES,CD_INS)
 VALUES (?,?,?,?::uuid,?::uuid)""", logEntries.iterator(), (ps, o)-> {
@@ -93,7 +103,7 @@ VALUES (?,?,?,?::uuid,?::uuid)""", logEntries.iterator(), (ps, o)-> {
         return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
 
-    public int saveMachineResourceUsage(List<MachineResourceUsage> usages) {
+    public int saveMachineResourceUsage(List<MachineResourceUsageWrapper> usages) {
         var arr = executeBatch("""
 INSERT INTO E_RSC_USG(DH_STR,VA_LOW_HEP,VA_HIG_HEP,VA_LOW_MET,VA_HIG_MET,CD_INS)
     VALUES (?,?,?,?,?,?::uuid)""",usages.iterator(), (ps, o)-> {
@@ -107,33 +117,28 @@ INSERT INTO E_RSC_USG(DH_STR,VA_LOW_HEP,VA_HIG_HEP,VA_LOW_MET,VA_HIG_MET,CD_INS)
         return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
 
-    public void updateInstanceEnvironment(Instant end, String instanceId){
-        template.update("UPDATE E_ENV_INS SET DH_END = ? WHERE ID_INS = ?", ps -> {
-            ps.setTimestamp(1,fromNullableInstant(end));
-            ps.setString(2,instanceId);
-        });
-    }
+
 
     public long saveTraceables(List<EventTrace> eventTraces) {
-        var ms = filterAndSave(eventTraces, MainSession.class, this::saveMainSessions);
-        var rs = filterAndSave(eventTraces, RestSession.class, this::saveRestSessions);
-        var rr = filterAndSave(eventTraces, RestRequest.class, this::saveRestRequests);
-        var lr = filterAndSave(eventTraces, LocalRequest.class, this::saveLocalRequests);
-        var mr = filterAndSave(eventTraces, MailRequest.class, this::saveMailRequests);
-        var fr = filterAndSave(eventTraces, FtpRequest.class, this::saveFtpRequests);
-        var nr = filterAndSave(eventTraces, NamingRequest.class, this::saveLdapRequests);
-        var dr = filterAndSave(eventTraces, DatabaseRequest.class, this::saveDatabaseRequests);
+        var ms = filterAndSave(eventTraces, MainSessionWrapper.class, this::saveMainSessions);
+        var rs = filterAndSave(eventTraces, RestSessionWrapper.class, this::saveRestSessions);
+        var rr = filterAndSave(eventTraces, RestRequestWrapper.class, this::saveRestRequests);
+        var lr = filterAndSave(eventTraces, LocalRequestWrapper.class, this::saveLocalRequests);
+        var mr = filterAndSave(eventTraces, MailRequestWrapper.class, this::saveMailRequests);
+        var fr = filterAndSave(eventTraces, FtpRequestWrapper.class, this::saveFtpRequests);
+        var nr = filterAndSave(eventTraces, NamingRequestWrapper.class, this::saveLdapRequests);
+        var dr = filterAndSave(eventTraces, DatabaseRequestWrapper.class, this::saveDatabaseRequests);
         var hrs = filterAndSave(eventTraces, HttpRequestStage.class, this::saveHttpRequestStages);
         var mrs = filterAndSave(eventTraces, MailRequestStage.class, this::saveMailRequestStages);
         var frs = filterAndSave(eventTraces, FtpRequestStage.class, this::saveFtpRequestStages);
         var nrs = filterAndSave(eventTraces, NamingRequestStage.class, this::saveLdapRequestStages);
         var drs = filterAndSave(eventTraces, DatabaseRequestStage.class, this::saveDatabaseRequestStages);
-        var mmr = filterAndSave(eventTraces, MachineResourceUsage.class, this::saveMachineResourceUsage);
-        var log = filterAndSave(eventTraces, LogEntry.class, this::saveLogEntry);
+        var mmr = filterAndSave(eventTraces, MachineResourceUsageWrapper.class, this::saveMachineResourceUsage);
+        var log = filterAndSave(eventTraces, LogEntryWrapper.class, this::saveLogEntry);
         return ms + rs + rr + lr + mr + fr + nr + dr + hrs + mrs + frs + nrs + drs + mmr + log;
     }
 
-    private int saveRestSessions(List<RestSession> sessions) {
+    private int saveRestSessions(List<RestSessionWrapper> sessions) {
         var arr = executeBatch("""
 INSERT INTO E_RST_SES(ID_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,VA_ERR_TYP,VA_ERR_MSG,VA_NAM,VA_USR,VA_USR_AGT,VA_CCH_CTR,VA_MSK,CD_INS)
 VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid)""", sessions.iterator(), (ps, ses) -> {
@@ -163,12 +168,11 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid)""", sessio
             ps.setString(23, ses.getCacheControl());
             ps.setInt(24, mask(ses));
             ps.setObject(25, ses.getInstanceId());
-            //ses.updateCdSession();
         });
         return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
 
-    private int saveMainSessions(List<MainSession> sessions) {
+    private int saveMainSessions(List<MainSessionWrapper> sessions) {
         var arr = executeBatch("""
 INSERT INTO E_MAIN_SES(ID_SES,VA_NAM,VA_USR,DH_STR,DH_END,VA_TYP,VA_LCT,VA_THR,VA_ERR_TYP,VA_ERR_MSG,VA_MSK,CD_INS)
 VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?::uuid)""", sessions.iterator(), (ps, ses) -> {
@@ -185,47 +189,45 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?::uuid)""", sessions.iterator(), (ps, ses) -
             ps.setString(10, nonNull(exp) ? exp.getMessage() : null);
             ps.setInt(11, mask(ses));
             ps.setObject(12, ses.getInstanceId());
-           // ses.updateCdSession();
         });
         saveUserActions(sessions);
         return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
 
-    private int saveRestRequests(List<RestRequest> requests) {
+    private int saveRestRequests(List<RestRequestWrapper> requests) {
         var arr = executeBatch("""
-INSERT INTO E_RST_RQT(ID_RST_RQT,CD_RMT_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,VA_BDY_CNT,CD_PRN_SES,CD_INS)
-VALUES(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(), (ps, req)-> {
-            ps.setObject(1, req.getIdRequest());
-            ps.setObject(2, req.getId());
-            ps.setString(3, req.getMethod());
-            ps.setString(4, req.getProtocol());
-            ps.setString(5, req.getHost());
-            ps.setInt(6, req.getPort());
-            ps.setString(7, req.getPath());
-            ps.setString(8, req.getQuery());
-            ps.setString(9, contentTypeExtract(req.getContentType()));
-            ps.setString(10, req.getAuthScheme());
-            ps.setInt(11, req.getStatus());
-            ps.setLong(12, req.getInDataSize());
-            ps.setLong(13, req.getOutDataSize());
-            ps.setString(14, req.getInContentEncoding());
-            ps.setString(15, req.getOutContentEncoding());
-            ps.setTimestamp(16, fromNullableInstant(req.getStart()));
-            ps.setTimestamp(17, fromNullableInstant(req.getEnd()));
-            ps.setString(18, req.getThreadName());
-            ps.setString(19, req.getBodyContent());
-            ps.setObject(20, req.getCdSession());
-            ps.setObject(21, req.getInstanceId());
+INSERT INTO E_RST_RQT(ID_RST_RQT,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,VA_BDY_CNT,CD_PRN_SES,CD_INS)
+VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(), (ps, req)-> {
+            ps.setObject(1, req.getId());
+            ps.setString(2, req.getMethod());
+            ps.setString(3, req.getProtocol());
+            ps.setString(4, req.getHost());
+            ps.setInt(5, req.getPort());
+            ps.setString(6, req.getPath());
+            ps.setString(7, req.getQuery());
+            ps.setString(8, contentTypeExtract(req.getContentType()));
+            ps.setString(9, req.getAuthScheme());
+            ps.setInt(10, req.getStatus());
+            ps.setLong(11, req.getInDataSize());
+            ps.setLong(12, req.getOutDataSize());
+            ps.setString(13, req.getInContentEncoding());
+            ps.setString(14, req.getOutContentEncoding());
+            ps.setTimestamp(15, fromNullableInstant(req.getStart()));
+            ps.setTimestamp(16, fromNullableInstant(req.getEnd()));
+            ps.setString(17, req.getThreadName());
+            ps.setString(18, req.getBodyContent());
+            ps.setObject(19, req.getSessionId());
+            ps.setObject(20, req.getInstanceId());
         });
         return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
 
-    private int saveLocalRequests(List<LocalRequest> requests){
+    private int saveLocalRequests(List<LocalRequestWrapper> requests){
 
         var arr = executeBatch("""
 INSERT INTO E_LCL_RQT(ID_LCL_RQT,VA_NAM,VA_LCT,DH_STR,DH_END,VA_USR,VA_THR,VA_FAIL,CD_PRN_SES,VA_TYP,CD_INS)
 VALUES(?::uuid,?,?,?,?,?,?,?,?::uuid,?,?::uuid)""", requests.iterator(), (ps, req)-> {
-            ps.setObject(1, req.getIdRequest());
+            ps.setObject(1, req.getId());
             ps.setString(2,req.getName());
             ps.setString(3,req.getLocation());
             ps.setTimestamp(4,fromNullableInstant(req.getStart()));
@@ -233,22 +235,27 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?::uuid,?,?::uuid)""", requests.iterator(), (ps, re
             ps.setString(6,req.getUser());
             ps.setString(7,req.getThreadName());
             ps.setBoolean(8, isNull(req.getException()));
-            ps.setObject(9, req.getCdSession());
+            ps.setObject(9, req.getSessionId());
             ps.setString(10, req.getType());
             ps.setObject(11, req.getInstanceId());
         });
         saveExceptions(requests.stream()
-                .map(LocalRequest::getException)
-                .filter(Objects::nonNull)
+                .filter(s -> nonNull(s.getException()))
+                .map(s -> {
+                    var e = new ExceptionInfoWrapper(s.getException().getType(), s.getException().getMessage(), s.getException().getStackTraceRows(), s.getException().getCause());
+                    e.setRequestId(s.getId());
+                    e.setOrder(1);
+                    return e;
+                })
                 .toList(), LOCAL);
         return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
 
-    private int saveMailRequests(List<MailRequest> requests) {
+    private int saveMailRequests(List<MailRequestWrapper> requests) {
         var arr = executeBatch("""
 INSERT INTO E_SMTP_RQT(ID_SMTP_RQT,VA_HST,CD_PRT,VA_USR,DH_STR,DH_END,VA_THR,VA_FAIL,CD_PRN_SES,CD_INS)
 VALUES(?::uuid,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(), (ps, req)-> {
-            ps.setObject(1, req.getIdRequest());
+            ps.setObject(1, req.getId());
             ps.setString(2, req.getHost());
             ps.setInt(3, req.getPort());
             ps.setString(4, req.getUser());
@@ -256,30 +263,41 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(), (ps, req)
             ps.setTimestamp(6, fromNullableInstant(req.getEnd()));
             ps.setString(7, req.getThreadName());
             ps.setBoolean(8, req.isFailed());
-            ps.setObject(9, req.getCdSession());
+            ps.setObject(9, req.getSessionId());
             ps.setObject(10, req.getInstanceId());
-            // req.updateIdRequest();
         });
+        saveMailRequestMails(requests.stream().filter(r -> nonNull(r.getMails()))
+                .flatMap(r -> r.getMails().stream().map(m -> {
+                    var mail = new MailWrapper();
+                    mail.setRecipients(m.getRecipients());
+                    mail.setFrom(m.getFrom());
+                    mail.setReplyTo(m.getReplyTo());
+                    mail.setSubject(m.getSubject());
+                    mail.setSize(m.getSize());
+                    mail.setContentType(m.getContentType());
+                    mail.setRequestId(r.getId());
+                    return mail;
+                })).toList());
         return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
 
-    private void saveMailRequestMails(List<MailRequest> requests) {
-        executeBatch("INSERT INTO E_SMTP_MAIL(VA_SBJ,VA_CNT_TYP,VA_FRM,VA_RCP,VA_RPL,VA_SZE,CD_SMTP_RQT) VALUES(?,?,?,?,?,?,?::uuid)", treeIterator(requests, MailRequest::getMails), (ps, mail)-> {
+    private void saveMailRequestMails(List<MailWrapper> mails) {
+        executeBatch("INSERT INTO E_SMTP_MAIL(VA_SBJ,VA_CNT_TYP,VA_FRM,VA_RCP,VA_RPL,VA_SZE,CD_SMTP_RQT) VALUES(?,?,?,?,?,?,?::uuid)", mails.iterator(), (ps, mail)-> {
             ps.setString(1, mail.getSubject());
             ps.setString(2, mail.getContentType());
             ps.setString(3, mail.getFrom() != null ? String.join(", ", mail.getFrom()) : null);
             ps.setString(4, mail.getRecipients() != null ? String.join(", ", mail.getRecipients()) : null);
             ps.setString(5, mail.getReplyTo() != null ? String.join(", ", mail.getReplyTo()) : null);
             ps.setInt(6,mail.getSize());
-            ps.setObject(7, mail.getIdRequest());
+            ps.setObject(7, mail.getRequestId());
         });
     }
 
-    private int saveFtpRequests(List<FtpRequest> requests){
+    private int saveFtpRequests(List<FtpRequestWrapper> requests){
         var arr = executeBatch("""
 INSERT INTO E_FTP_RQT(ID_FTP_RQT,VA_HST,CD_PRT,VA_PCL,VA_SRV_VRS,VA_CLT_VRS,VA_USR,DH_STR,DH_END,VA_THR,VA_FAIL,CD_PRN_SES,CD_INS)
 VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(), (ps, req)-> {
-            ps.setObject(1, req.getIdRequest());
+            ps.setObject(1, req.getId());
             ps.setString(2, req.getHost());
             ps.setInt(3, req.getPort());
             ps.setString(4, req.getProtocol());
@@ -290,18 +308,17 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(), (ps
             ps.setTimestamp(9, fromNullableInstant(req.getEnd()));
             ps.setString(10, req.getThreadName());
             ps.setBoolean(11, req.isFailed());
-            ps.setObject(12, req.getCdSession());
+            ps.setObject(12, req.getSessionId());
             ps.setObject(13, req.getInstanceId());
-            //req.updateIdRequest();
         });
         return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
 
-    private int saveLdapRequests(List<NamingRequest> requests) {
+    private int saveLdapRequests(List<NamingRequestWrapper> requests) {
         var arr = executeBatch("""
 INSERT INTO E_LDAP_RQT(ID_LDAP_RQT,VA_HST,CD_PRT,VA_PCL,VA_USR,DH_STR,DH_END,VA_THR,VA_FAIL,CD_PRN_SES,CD_INS)
 VALUES(?::uuid,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(), (ps, req)-> {
-            ps.setObject(1, req.getIdRequest());
+            ps.setObject(1, req.getId());
             ps.setString(2, req.getHost());
             ps.setInt(3, req.getPort());
             ps.setString(4, req.getProtocol());
@@ -310,18 +327,17 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(), (ps, re
             ps.setTimestamp(7, fromNullableInstant(req.getEnd()));
             ps.setString(8, req.getThreadName());
             ps.setBoolean(9, req.isFailed());
-            ps.setObject(10, req.getCdSession());
+            ps.setObject(10, req.getSessionId());
             ps.setObject(11, req.getInstanceId());
-            //req.updateIdRequest();
         });
         return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
 
-    private int saveDatabaseRequests(List<DatabaseRequest> requests) {
+    private int saveDatabaseRequests(List<DatabaseRequestWrapper> requests) {
         var arr = executeBatch("""
 INSERT INTO E_DTB_RQT(ID_DTB_RQT,VA_HST,CD_PRT,VA_NAM,VA_SCH,DH_STR,DH_END,VA_USR,VA_THR,VA_DRV,VA_PRD_NAM,VA_PRD_VRS,VA_CMD,VA_FAIL,CD_PRN_SES,CD_INS)
 VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(), (ps, req)-> {
-            ps.setObject(1, req.getIdRequest());
+            ps.setObject(1, req.getId());
             ps.setString(2, req.getHost());
             ps.setInt(3, req.getPort());
             ps.setString(4, req.getName());
@@ -335,7 +351,7 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(
             ps.setString(12, req.getProductVersion());
             ps.setString(13, req.mainCommand());
             ps.setBoolean(14, req.isFailed());
-            ps.setObject(15, req.getCdSession());
+            ps.setObject(15, req.getSessionId());
             ps.setObject(16, req.getInstanceId());
         });
         return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
@@ -350,8 +366,13 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(
             ps.setObject(5, stage.getRequestId());
         });
         saveExceptions(stages.stream()
-                .map(HttpRequestStage::getException)
-                .filter(Objects::nonNull)
+                .filter(s -> nonNull(s.getException()))
+                .map(s -> {
+                    var e = new ExceptionInfoWrapper(s.getException().getType(), s.getException().getMessage(), s.getException().getStackTraceRows(), s.getException().getCause());
+                    e.setRequestId(s.getRequestId());
+                    e.setOrder(s.getOrder());
+                    return e;
+                })
                 .toList(), REST);
         return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
@@ -365,8 +386,13 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(
             ps.setObject(5, stage.getRequestId());
         });
         saveExceptions(stages.stream()
-                .map(MailRequestStage::getException)
-                .filter(Objects::nonNull)
+                .filter(s -> nonNull(s.getException()))
+                .map(s -> {
+                    var e = new ExceptionInfoWrapper(s.getException().getType(), s.getException().getMessage(), s.getException().getStackTraceRows(), s.getException().getCause());
+                    e.setRequestId(s.getRequestId());
+                    e.setOrder(s.getOrder());
+                    return e;
+                })
                 .toList(), SMTP);
         return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
@@ -381,8 +407,13 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(
             ps.setObject(6, stage.getRequestId());
         });
         saveExceptions(stages.stream()
-                .map(FtpRequestStage::getException)
-                .filter(Objects::nonNull)
+                .filter(s -> nonNull(s.getException()))
+                .map(s -> {
+                    var e = new ExceptionInfoWrapper(s.getException().getType(), s.getException().getMessage(), s.getException().getStackTraceRows(), s.getException().getCause());
+                    e.setRequestId(s.getRequestId());
+                    e.setOrder(s.getOrder());
+                    return e;
+                })
                 .toList(), FTP);
         return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
@@ -397,8 +428,13 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(
             ps.setObject(6, stage.getRequestId());
         });
         saveExceptions(stages.stream()
-                .map(NamingRequestStage::getException)
-                .filter(Objects::nonNull)
+                .filter(s -> nonNull(s.getException()))
+                .map(s -> {
+                    var e = new ExceptionInfoWrapper(s.getException().getType(), s.getException().getMessage(), s.getException().getStackTraceRows(), s.getException().getCause());
+                    e.setRequestId(s.getRequestId());
+                    e.setOrder(s.getOrder());
+                    return e;
+                })
                 .toList(), LDAP);
         return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
@@ -414,18 +450,23 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(
             ps.setObject(7, stage.getRequestId());
         });
         saveExceptions(stages.stream()
-                .map(DatabaseRequestStage::getException)
-                .filter(Objects::nonNull)
+                .filter(s -> nonNull(s.getException()))
+                .map(s -> {
+                    var e = new ExceptionInfoWrapper(s.getException().getType(), s.getException().getMessage(), s.getException().getStackTraceRows(), s.getException().getCause());
+                    e.setRequestId(s.getRequestId());
+                    e.setOrder(s.getOrder());
+                    return e;
+                })
                 .toList(), JDBC);
         return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
 
-    private void saveUserActions(List<MainSession> sessions) {
+    private void saveUserActions(List<MainSessionWrapper> sessions) {
         if(sessions.stream().anyMatch(s-> !isEmpty(s.getUserActions()))) {
             var inc = new AtomicLong(selectMaxId("E_USR_ACN", "ID_ACN"));
             executeBatch("""
 INSERT INTO E_USR_ACN(ID_ACN,VA_TYP,DH_STR,VA_NAM,VA_NDE_NAM,CD_PRN_SES)
-VALUES(?,?,?,?,?,?::uuid)""", treeIterator(sessions, MainSession::getUserActions), (ps, action) -> {
+VALUES(?,?,?,?,?,?::uuid)""", treeIterator(sessions, MainSessionWrapper::getUserActions), (ps, action) -> {
                 ps.setLong(1, inc.incrementAndGet());
                 ps.setString(2, action.getType());
                 ps.setTimestamp(3, fromNullableInstant(action.getStart()));
@@ -436,7 +477,7 @@ VALUES(?,?,?,?,?,?::uuid)""", treeIterator(sessions, MainSession::getUserActions
         }
     }
 
-    private void saveExceptions(List<ExceptionInfo> exceptions, RequestMask mask) {
+    private void saveExceptions(List<ExceptionInfoWrapper> exceptions, RequestMask mask) {
         if(!isEmpty(exceptions)) {
             executeBatch("INSERT INTO E_EXC_INF(VA_TYP,VA_ERR_TYP,VA_ERR_MSG,CD_ORD,CD_RQT) VALUES(?,?,?,?,?::uuid)", exceptions.iterator(), (ps, exp) -> {
                 ps.setString(1, mask.name());

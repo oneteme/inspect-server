@@ -8,7 +8,9 @@ import org.springframework.web.bind.annotation.*;
 import org.usf.inspect.core.EventTraceScheduledDispatcher;
 import org.usf.inspect.core.InstanceEnvironment;
 import org.usf.inspect.server.model.Session;
+import org.usf.inspect.server.model.wrapper.DatabaseRequestWrapper;
 import org.usf.inspect.server.service.RequestService;
+import org.usf.inspect.server.service.DatabaseDispatcherAgent;
 
 import java.time.Instant;
 
@@ -36,7 +38,7 @@ public class TraceController {
             HttpServletRequest hsr,
             @RequestBody InstanceEnvironment instance) {
         if(instance.getType() != CLIENT) {
-            TraceControllerV4.update(instance, instance.getAddress(), nextId());
+            instance = TraceControllerV4.update(instance, instance.getAddress(), nextId());
         }
         return traceControllerV4.addInstanceEnvironment(hsr, instance);
     }
@@ -47,20 +49,13 @@ public class TraceController {
             @RequestParam(required = false, name = "pending")  Integer pending,
             @RequestParam(required = false, name = "end") Instant end,
             @RequestBody Session[] sessions) {
-    	try {
-            if(end != null){
-                requestService.updateInstance(end, id);
-                log.warn("Instance with id : {} has ended", id);
-            }
-            if(pending != null){
-                log.info("Pending sessions : {}", pending);
-            }
-            toV4(id, sessions, dispatcher::emit);
-	        return accepted().build();
-    	}
-    	catch (Exception e) {
-        	log.error("trace session", e);
-    		return internalServerError().build();
-    	}
+	        return traceControllerV4.addSessions(id, pending, 0, end, toV4(sessions));
+    }
+
+    @PutMapping("instance/{id}/db")
+    public void addSessions(
+            @RequestBody DatabaseRequestWrapper[] sessions) {
+        //return traceControllerV4.addSessions(id, pending, 0, end, toV4(sessions));
+        log.info(sessions.length + " sessions added");
     }
 }
