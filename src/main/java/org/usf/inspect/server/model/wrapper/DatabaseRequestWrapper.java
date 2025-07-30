@@ -1,6 +1,7 @@
 package org.usf.inspect.server.model.wrapper;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;
@@ -15,17 +16,18 @@ import java.util.stream.Collectors;
 
 @Getter
 @Setter
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = DatabaseRequestWrapper.class)
 public final class DatabaseRequestWrapper extends InstanceEventTrace implements Wrapper<DatabaseRequest> {
 
     @Delegate
     @JsonIgnore
     private final DatabaseRequest request = new DatabaseRequest();
 
-    @Deprecated(since = "v1.1", forRemoval = true)
-    private List<DatabaseRequestStage> actions;
+    @Deprecated(since = "v1.1")
+    private List<DatabaseRequestStageWrapper> actions;
 
     public String mainCommand(){
-        Set<SqlCommand> r = Optional.ofNullable(actions).orElseGet(Collections::emptyList).stream().map(DatabaseRequestStage::getCommands).filter(Objects::nonNull).flatMap(Arrays::stream).collect(Collectors.toSet());
+        Set<SqlCommand> r = Optional.ofNullable(actions).orElseGet(Collections::emptyList).stream().map(DatabaseRequestStageWrapper::getCommands).filter(Objects::nonNull).flatMap(Arrays::stream).collect(Collectors.toSet());
         if(r.size() == 1) {
             var s = r.iterator().next();
             if (s != null) {

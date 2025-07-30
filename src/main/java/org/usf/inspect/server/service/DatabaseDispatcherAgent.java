@@ -2,6 +2,7 @@ package org.usf.inspect.server.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -28,14 +29,14 @@ public class DatabaseDispatcherAgent implements DispatcherAgent {
 	}
 
 	@Override
-	public void dispatch(boolean complete, int attemps, int pending, List<EventTrace> traces) {
-		service.addEventTraces(traces);
+	public void dispatch(boolean complete, int attempts, int pending, EventTrace[] traces) {
+		service.addEventTraces(Arrays.asList(traces));
 	}
 
 	@Override
 	public void dispatch(int attempts, File dumpFile) {
 		try {
-			var traces = mapper.readValue(dumpFile, new TypeReference<List<EventTrace>>() {});
+			var traces = mapper.readValue(dumpFile, new TypeReference<EventTrace[]>() {});
 			dispatch(false, attempts, 0, traces);
 		} catch (IOException e) {
 			throw new DispatchException("cannot dispatch dumpFile " + dumpFile.getName(), e);

@@ -1,11 +1,12 @@
 package org.usf.inspect.server.model.wrapper;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
-import org.usf.inspect.core.*;
+import org.usf.inspect.core.CompletableMetric;
 import org.usf.inspect.core.ExceptionInfo;
+import org.usf.inspect.core.RestSession;
 import org.usf.inspect.server.model.Session;
+
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
@@ -34,6 +35,14 @@ public class RestSessionWrapper implements Session {
     private String re;
     private String address;
     private Integer mask;
+
+    public void setRequestsMask(int requestsMask) {
+        restSession.setRequestsMask(requestsMask);
+    }
+
+    public int getRequestsMask() {
+        return restSession.getRequestsMask();
+    }
 
     public void setException(ExceptionInfo exception) {
         restSession.setException(exception);
@@ -195,22 +204,18 @@ public class RestSessionWrapper implements Session {
         return restSession.wasCompleted();
     }
 
-    @Override
     public String getId() {
         return restSession.getId();
     }
 
-    @Override
     public void setId(String id) {
         restSession.setId(id);
     }
 
-    @Override
     public Instant getEnd() {
         return restSession.getEnd();
     }
 
-    @Override
     public Instant getStart() {
         return restSession.getStart();
     }

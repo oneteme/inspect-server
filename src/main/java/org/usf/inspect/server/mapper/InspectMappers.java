@@ -65,6 +65,7 @@ public final class InspectMappers {
                     rs.getInt(PENDING.reference()),
                     rs.getInt(ATTEMPTS.reference()),
                     rs.getInt(SIZE_SESSION.reference()),
+                    null,
                     fromNullableTimestamp(rs.getTimestamp(START.reference())),
                     rs.getString(INSTANCE_ENV.reference())
             );

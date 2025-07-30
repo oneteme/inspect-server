@@ -260,6 +260,7 @@ create table if not exists e_ins_trc (
     va_atp int,
     va_ses_sze int,
     dh_str timestamp(6),
+    va_fln varchar,
     cd_ins uuid
 );
 

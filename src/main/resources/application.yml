@@ -33,7 +33,7 @@ logging:
 inspect:
   enabled: false
   dispatch:
-    delay: 30
+    delay: 10
     unit: SECONDS
     buffer-max-size: -1 #inspect-server only
   track:

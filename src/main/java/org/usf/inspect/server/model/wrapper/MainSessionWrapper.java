@@ -29,12 +29,30 @@ public class MainSessionWrapper implements Session {
     private List<NamingRequestWrapper> ldapRequests;
     private List<UserAction> userActions;
 
+    private List<ExceptionInfo> exceptions;
+
     private String instanceId;
     private String appName;
     private String os;
     private String re;
     private String address;
     private Integer mask;
+
+
+    public void setRequestsMask(int requestsMask) {
+        mainSession.setRequestsMask(requestsMask);
+    }
+
+    public int getRequestsMask() {
+        return mainSession.getRequestsMask();
+    }
+
+    public ExceptionInfo getException(){
+        if(exceptions != null && !exceptions.isEmpty()){
+            return exceptions.getLast();
+        }
+        return mainSession.getException();
+    }
 
     public String getName() {
         return mainSession.getName();
@@ -46,10 +64,6 @@ public class MainSessionWrapper implements Session {
 
     public String getLocation() {
         return mainSession.getLocation();
-    }
-
-    public ExceptionInfo getException() {
-        return mainSession.getException();
     }
 
     public void setName(String name) {
@@ -72,12 +86,10 @@ public class MainSessionWrapper implements Session {
         return mainSession.getUser();
     }
 
-    @Override
     public Instant getStart() {
         return mainSession.getStart();
     }
 
-    @Override
     public Instant getEnd() {
         return mainSession.getEnd();
     }
@@ -90,7 +102,6 @@ public class MainSessionWrapper implements Session {
         return mainSession.getSessionId();
     }
 
-    @Override
     public String getId() {
         return mainSession.getId();
     }
@@ -115,7 +126,6 @@ public class MainSessionWrapper implements Session {
         mainSession.setSessionId(sessionId);
     }
 
-    @Override
     public void setId(String id) {
         mainSession.setId(id);
     }

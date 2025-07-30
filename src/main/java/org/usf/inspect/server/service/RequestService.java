@@ -61,7 +61,6 @@ import lombok.Setter;
 
 @Service
 @RequiredArgsConstructor
-@Setter
 public class RequestService {
 
     private final JdbcTemplate template;
@@ -83,7 +82,7 @@ public class RequestService {
     @TraceableStage
     @Transactional(rollbackFor = Throwable.class)
     public long addEventTraces(List<EventTrace> eventTraces) {
-        return dao.saveTraceables(eventTraces);
+        return dao.saveEventTraces(eventTraces);
     }
 
     public Session getMainTree(String id)  {

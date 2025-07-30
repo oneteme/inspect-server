@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.usf.inspect.core.*;
 import org.usf.inspect.server.model.wrapper.*;
 
+import static java.time.Duration.ofSeconds;
 import static java.util.Arrays.asList;
 import static org.springframework.http.converter.json.Jackson2ObjectMapperBuilder.json;
 
@@ -40,6 +41,7 @@ public class InspectApplication {
 		mapper.registerSubtypes(
 				new NamedType(LogEntryWrapper.class, 			"log"),
 				new NamedType(MachineResourceUsageWrapper.class,"rsrc-usg"),
+				new NamedType(MachineResourceUsage.class,		"rsrc-usg"),
 				new NamedType(MainSessionWrapper.class,  		"main-ses"),
 				new NamedType(RestSessionWrapper.class,  		"rest-ses"),
 				new NamedType(LocalRequestWrapper.class, 		"locl-req"),
@@ -48,12 +50,12 @@ public class InspectApplication {
 				new NamedType(MailRequestWrapper.class,  		"mail-req"),
 				new NamedType(NamingRequestWrapper.class,		"ldap-req"),
 				new NamedType(FtpRequestWrapper.class,  		"ftp-req"),
-				new NamedType(DatabaseRequestStage.class,		"jdbc-stg"),
-				new NamedType(HttpRequestStage.class,  			"http-stg"),
-				new NamedType(HttpSessionStage.class,  			"sess-stg"),
-				new NamedType(MailRequestStage.class,  			"mail-stg"),
-				new NamedType(NamingRequestStage.class,			"ldap-stg"),
-				new NamedType(FtpRequestStage.class,  			"ftp-stg"),
+				new NamedType(DatabaseRequestStageWrapper.class,		"jdbc-stg"),
+				new NamedType(HttpRequestStageWrapper.class,  			"http-stg"),
+				new NamedType(HttpSessionStageWrapper.class,  			"sess-stg"),
+				new NamedType(MailRequestStageWrapper.class,  			"mail-stg"),
+				new NamedType(NamingRequestStageWrapper.class,			"ldap-stg"),
+				new NamedType(FtpRequestStageWrapper.class,  			"ftp-stg"),
 				new NamedType(RestRemoteServerProperties.class, "rest-rmt"));
 		return mapper;
 	}
@@ -64,8 +66,8 @@ public class InspectApplication {
 		trc.setDelayIfPending(0); //save immediately
 		trc.setQueueCapacity(1_000_000);
 		var scd = new SchedulingProperties();
-		scd.setDelay(30); //30s
-		var dump = new EventTraceDumper(trc.getDumpDirectory(), mapper);
+		scd.setInterval(ofSeconds(30)); //30s
+		var dump = new EventTraceDumper(trc.getDump().getLocation(), mapper);
 		return new EventTraceScheduledDispatcher(trc, scd, agent, asList(dump));
 	}
 }

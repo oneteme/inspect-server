@@ -69,12 +69,13 @@ public class TraceControllerV4 {
             @RequestParam(required = false) Integer pending,
             @RequestParam(required = false) Integer attempts,
             @RequestParam(required = false) Instant end,
+            @RequestParam(required = false) String fileName,
             @RequestBody EventTrace[] eventTraces) {
         try {
             if(end != null){
                 executor.submit(()-> requestService.updateInstance(end, id));
             }
-            executor.submit(()-> requestService.addInstanceTrace(new InstanceTrace(pending, attempts, eventTraces.length, now(), id))); //now !!!???
+            executor.submit(()-> requestService.addInstanceTrace(new InstanceTrace(pending, attempts, eventTraces.length, fileName, now(), id))); //now !!!???
 
             Arrays.stream(eventTraces).forEach(e -> {
                 if(e instanceof InstanceEventTrace ie) {
