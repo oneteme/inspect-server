@@ -27,7 +27,7 @@ public class RestSessionWrapper implements Session {
     @Deprecated(since = "v1.1", forRemoval = true)
     private List<MailRequestWrapper> mailRequests;
     @Deprecated(since = "v1.1", forRemoval = true)
-    private List<NamingRequestWrapper> ldapRequests;
+    private List<DirectoryRequestWrapper> ldapRequests;
 
     private String instanceId;
     private String appName;

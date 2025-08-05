@@ -5,8 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;
-import org.usf.inspect.core.NamingRequest;
-import org.usf.inspect.core.NamingRequestStage;
+import org.usf.inspect.core.DirectoryRequest;
 import org.usf.inspect.server.model.InstanceEventTrace;
 import org.usf.inspect.server.model.Wrapper;
 
@@ -14,17 +13,17 @@ import java.util.List;
 
 @Getter
 @Setter
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = NamingRequestWrapper.class)
-public class NamingRequestWrapper extends InstanceEventTrace implements Wrapper<NamingRequest> {
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = DirectoryRequestWrapper.class)
+public class DirectoryRequestWrapper extends InstanceEventTrace implements Wrapper<DirectoryRequest> {
     @Delegate
     @JsonIgnore
-    private final NamingRequest request = new NamingRequest();
+    private final DirectoryRequest request = new DirectoryRequest();
 
     @Deprecated(since = "v1.1")
-    private List<NamingRequestStageWrapper> actions;
+    private List<DirectoryRequestStageWrapper> actions;
 
     @Override
-    public NamingRequest unwrap() {
+    public DirectoryRequest unwrap() {
         return request;
     }
 }

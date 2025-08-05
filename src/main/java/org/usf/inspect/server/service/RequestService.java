@@ -57,7 +57,6 @@ import org.usf.jquery.web.ColumnDecorator;
 import org.usf.jquery.web.ViewDecorator;
 
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 
 @Service
 @RequiredArgsConstructor
@@ -942,15 +941,15 @@ public class RequestService {
         });
     }
 
-    public NamingRequestWrapper getLdapRequestsComplete(long id) {
+    public DirectoryRequestWrapper getLdapRequestsComplete(long id) {
         return requireSingle(getLdapRequestsComplete(LDAP_REQUEST.column(ID).eq(id)));
     }
 
-    public List<NamingRequestWrapper> getLdapRequestsComplete(List<String> cdSession)  {
+    public List<DirectoryRequestWrapper> getLdapRequestsComplete(List<String> cdSession)  {
         return getLdapRequestsComplete(LDAP_REQUEST.column(PARENT).in(cdSession.toArray()));
     }
 
-    public List<NamingRequestWrapper> getLdapRequestsComplete(String cdSession)  {
+    public List<DirectoryRequestWrapper> getLdapRequestsComplete(String cdSession)  {
         return getLdapRequestsComplete(LDAP_REQUEST.column(PARENT).eq(cdSession));
     }
 
@@ -1014,7 +1013,7 @@ public class RequestService {
         });
     }
 
-    private List<NamingRequestWrapper> getLdapRequestsComplete(DBFilter filter) {
+    private List<DirectoryRequestWrapper> getLdapRequestsComplete(DBFilter filter) {
         var v = new QueryComposer()
                 .columns(
                     getColumns(
@@ -1023,9 +1022,9 @@ public class RequestService {
                 .filters(filter)
                 .orders(LDAP_REQUEST.column(START).order());
         return INSPECT.execute(v, rs -> {
-            List<NamingRequestWrapper> outs = new ArrayList<>();
+            List<DirectoryRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
-                NamingRequestWrapper out = new NamingRequestWrapper();
+                DirectoryRequestWrapper out = new DirectoryRequestWrapper();
                 out.setSessionId(rs.getString(PARENT.reference()));
                 out.setId(rs.getString(ID.reference()));
                 out.setHost(rs.getString(HOST.reference()));

@@ -1,7 +1,6 @@
 package org.usf.inspect.server.config;
 
 import static java.util.Objects.nonNull;
-import static org.usf.inspect.server.config.TraceApiTable.USER_ACTION;
 
 import org.usf.inspect.server.config.constant.FilterConstant;
 import org.usf.jquery.core.ComparisonExpression;
@@ -95,10 +94,12 @@ public enum TraceApiColumn implements ColumnDecorator {
     LOG_LEVEL("logLevel"),
     LOG_MESSAGE("logMessage"),
     STACKTRACE("stacktrace"),
-    LOW_HEAP("lowHeap"),
-    HIGH_HEAP("highHeap"),
-    LOW_META("lowMeta"),
-    HIGH_META("highMeta"),
+    USED_HEAP("usedHeap"),
+    COMMITED_HEAP("commitedHeap"),
+    USED_META("usedMeta"),
+    COMMITED_META("commitedMeta"),
+    USED_DISK_SPACE("usedDiskSpace"),
+    FILENAME("filename"),
     //---
     ELAPSEDTIME("elapsedtime", FilterConstant::elapsedtime2, Builder.multiArgsCriteria(FilterConstant::elapsedTimeExpressions)),
     COUNT_SLOWEST("elapsedTimeSlowest", FilterConstant::elapsedTimeVerySlow),

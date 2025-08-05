@@ -59,7 +59,7 @@ public class RequestController {
     @GetMapping("instance/{idInstance}/trace")
     public List<InstanceTrace> getInstanceTraces(
             @QueryRequestFilter(view = "instance_trace",
-                    column = "pending,attempts,size_session,start,instance_env") QueryComposer request,
+                    column = "pending,attempts,size_session,filename,start,instance_env") QueryComposer request,
             @PathVariable String idInstance)  {
         return INSPECT.execute(request.filters(INSTANCE_TRACE.column(INSTANCE_ENV).varchar().eq(idInstance)), InspectMappers.instanceTraceMapper());
     }
@@ -478,7 +478,7 @@ public class RequestController {
 
 
     @GetMapping("session/{idSession}/request/ldap")
-    public ResponseEntity<List<NamingRequestWrapper>> getLdapRequests(
+    public ResponseEntity<List<DirectoryRequestWrapper>> getLdapRequests(
             @QueryRequestFilter(
                     view = "ldap_request",
                     column = "id,host,start,end,thread,status",
@@ -488,7 +488,7 @@ public class RequestController {
     }
 
     @GetMapping("session/{idSession}/request/ldap/{idLdap}")
-    public ResponseEntity<NamingRequestWrapper> getLdapRequests(
+    public ResponseEntity<DirectoryRequestWrapper> getLdapRequests(
             @QueryRequestFilter(
                     view = "ldap_request",
                     column = "id,host,port,protocol,start,end,user,thread,status,parent",
@@ -502,7 +502,7 @@ public class RequestController {
 
 
     @GetMapping("session/{idSession}/request/ldap/{idLdap}/stage")
-    public ResponseEntity<List<NamingRequestStage>> getLdapRequestStages(
+    public ResponseEntity<List<DirectoryRequestStage>> getLdapRequestStages(
             @QueryRequestFilter(
                     view = "ldap_stage",
                     column = "name,start,end,arg,parent,exception.err_type,exception.err_msg",

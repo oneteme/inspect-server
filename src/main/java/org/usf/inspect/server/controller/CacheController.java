@@ -8,11 +8,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
-import org.usf.inspect.core.DispatchState;
+import org.usf.inspect.core.BasicDispatchState;
 import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.core.EventTraceScheduledDispatcher;
 import org.usf.inspect.server.service.RequestService;
-import org.usf.inspect.server.service.DatabaseDispatcherAgent;
 
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -22,7 +21,7 @@ import static java.util.Objects.nonNull;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.ResponseEntity.ok;
-import static org.usf.inspect.core.DispatchState.DISABLE;
+import static org.usf.inspect.core.BasicDispatchState.*;
 
 @Slf4j
 @CrossOrigin
@@ -54,7 +53,7 @@ public class CacheController {
     }
 
     @PostMapping("state/{state}")
-    public ResponseEntity<Void> updateState(@PathVariable DispatchState state){
+    public ResponseEntity<Void> updateState(@PathVariable BasicDispatchState state){
 		dispatcher.setState(state);
 		return ok().build();
     }

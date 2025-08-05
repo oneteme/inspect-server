@@ -41,6 +41,6 @@ public class TraceController {
             @RequestParam(required = false, name = "pending")  Integer pending,
             @RequestParam(required = false, name = "end") Instant end,
             @RequestBody Session[] sessions) {
-	        return traceControllerV4.addSessions(id, pending, 0, end, null, toV4(sessions));
+	        return traceControllerV4.addSessions(id, pending, -1, end, null, toV4(sessions));
     }
 }

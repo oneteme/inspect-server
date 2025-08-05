@@ -6,13 +6,14 @@ import org.usf.inspect.core.ExceptionInfo;
 import org.usf.inspect.core.MainSession;
 import org.usf.inspect.server.model.Session;
 import org.usf.inspect.server.model.UserAction;
+import org.usf.inspect.server.model.Wrapper;
 
 import java.time.Instant;
 import java.util.List;
 
 @Getter
 @Setter
-public class MainSessionWrapper implements Session {
+public class MainSessionWrapper implements Wrapper<MainSession>, Session {
     private final MainSession mainSession = new MainSession();
 
     @Deprecated(since = "v1.1", forRemoval = true)
@@ -26,7 +27,7 @@ public class MainSessionWrapper implements Session {
     @Deprecated(since = "v1.1", forRemoval = true)
     private List<MailRequestWrapper> mailRequests;
     @Deprecated(since = "v1.1", forRemoval = true)
-    private List<NamingRequestWrapper> ldapRequests;
+    private List<DirectoryRequestWrapper> ldapRequests;
     private List<UserAction> userActions;
 
     private List<ExceptionInfo> exceptions;
@@ -138,5 +139,10 @@ public class MainSessionWrapper implements Session {
     @Override
     public boolean wasCompleted() {
         return mainSession.wasCompleted();
+    }
+
+    @Override
+    public MainSession unwrap() {
+        return mainSession;
     }
 }

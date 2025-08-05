@@ -286,6 +286,7 @@ public class ColumnConstant {
             case PENDING -> VA_PND;
             case ATTEMPTS -> VA_ATP;
             case SIZE_SESSION -> VA_SES_SZE;
+            case FILENAME -> VA_FILENAME;
             case START -> DH_STR;
             case INSTANCE_ENV -> CD_INS;
             default -> null;
@@ -306,10 +307,11 @@ public class ColumnConstant {
 
     public static String resourceUsageColumns(TraceApiColumn column) {
         return switch (column) {
-            case LOW_HEAP -> VA_LOW_HEP;
-            case HIGH_HEAP -> VA_HIG_HEP;
-            case LOW_META -> VA_LOW_MET;
-            case HIGH_META -> VA_HIG_MET;
+            case USED_HEAP -> VA_USED_HEP;
+            case COMMITED_HEAP -> VA_COMMITED_HEP;
+            case USED_META -> VA_USED_MET;
+            case COMMITED_META -> VA_COMMITED_MET;
+            case USED_DISK_SPACE -> VA_USED_DISK_SPACE;
             case START -> DH_STR;
             case INSTANCE_ENV -> CD_INS;
             default -> null;

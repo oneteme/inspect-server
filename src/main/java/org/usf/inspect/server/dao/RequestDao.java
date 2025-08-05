@@ -111,36 +111,135 @@ VALUES (?,?,?::json,?,?::uuid,?::uuid)""", logEntries.iterator(), (ps, o)-> {
 
     public int saveMachineResourceUsage(List<MachineResourceUsageWrapper> usages) {
         var arr = executeBatch("""
-INSERT INTO E_RSC_USG(DH_STR,VA_LOW_HEP,VA_HIG_HEP,VA_LOW_MET,VA_HIG_MET,CD_INS)
-    VALUES (?,?,?,?,?,?::uuid)""",usages.iterator(), (ps, o)-> {
+INSERT INTO E_RSC_USG(DH_STR,va_usd_hep,va_cmt_hep,va_usd_met,va_cmt_met,va_usd_dsk,CD_INS)
+    VALUES (?,?,?,?,?,?,?::uuid)""",usages.iterator(), (ps, o)-> {
             ps.setTimestamp(1, fromNullableInstant(o.getInstant()));
-            ps.setInt(2, o.getLowHeap());
-            ps.setInt(3, o.getHighHeap());
-            ps.setInt(4, o.getLowMeta());
-            ps.setInt(5, o.getHighMeta());
-            ps.setString(6, o.getInstanceId());
+            ps.setInt(2, o.getUsedHeap());
+            ps.setInt(3, o.getCommitedHeap());
+            ps.setInt(4, o.getUsedMeta());
+            ps.setInt(5, o.getCommitedMeta());
+            ps.setInt(6, o.getUsedDiskSpace());
+            ps.setString(7, o.getInstanceId());
         });
         return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
 
     public long saveEventTraces(List<EventTrace> eventTraces) {
         var ms = filterAndSave(eventTraces, MainSessionWrapper.class, this::saveMainSessions);
+        filterAndSave(eventTraces, RestSessionWrapper.class, this::upsertRestSessions);
+
         var rs = filterAndSave(eventTraces, RestSessionWrapper.class, this::saveRestSessions);
         var rr = filterAndSave(eventTraces, RestRequestWrapper.class, this::saveRestRequests);
         var lr = filterAndSave(eventTraces, LocalRequestWrapper.class, this::saveLocalRequests);
         var mr = filterAndSave(eventTraces, MailRequestWrapper.class, this::saveMailRequests);
         var fr = filterAndSave(eventTraces, FtpRequestWrapper.class, this::saveFtpRequests);
-        var nr = filterAndSave(eventTraces, NamingRequestWrapper.class, this::saveLdapRequests);
+        var nr = filterAndSave(eventTraces, DirectoryRequestWrapper.class, this::saveLdapRequests);
         var dr = filterAndSave(eventTraces, DatabaseRequestWrapper.class, this::mergeDatabaseRequests);
+        //filterAndSave(eventTraces, DatabaseRequestWrapper.class, this::upsertDatabaseRequests);
         var hrs = filterAndSave(eventTraces, HttpRequestStageWrapper.class, this::saveHttpRequestStages);
         var hss = filterAndSave(eventTraces, HttpSessionStageWrapper.class, this::saveHttpSessionStages);
         var mrs = filterAndSave(eventTraces, MailRequestStageWrapper.class, this::saveMailRequestStages);
         var frs = filterAndSave(eventTraces, FtpRequestStageWrapper.class, this::saveFtpRequestStages);
-        var nrs = filterAndSave(eventTraces, NamingRequestStageWrapper.class, this::saveLdapRequestStages);
+        var nrs = filterAndSave(eventTraces, DirectoryRequestStageWrapper.class, this::saveLdapRequestStages);
         var drs = filterAndSave(eventTraces, DatabaseRequestStageWrapper.class, this::saveDatabaseRequestStages);
         var mmr = filterAndSave(eventTraces, MachineResourceUsageWrapper.class, this::saveMachineResourceUsage);
         var log = filterAndSave(eventTraces, LogEntryWrapper.class, this::saveLogEntry);
         return ms + rs + rr + lr + mr + fr + nr + dr + hrs + hss + mrs + frs + nrs + drs + mmr + log;
+    }
+
+    public int upsertRestSessions(List<RestSessionWrapper> sessions) {
+        List<String> completableMetrics = template.queryForList(
+                "select id_cmp_mtc from e_cmp_mtc where va_typ = ?",
+                String.class,
+                "REST_SESSION"
+        );
+
+        var sessionToUpdate = sessions.stream().filter(s -> completableMetrics.contains(s.getId())).toList();
+        var sessionToInsert = sessions.stream().filter(s -> !completableMetrics.contains(s.getId())).toList();
+
+        if(!sessionToUpdate.isEmpty()) {
+            executeBatch("""
+update e_rst_ses set va_mth = ?, va_pcl = ?, va_hst = ?, cd_prt = ?, va_pth = ?, va_qry = ?, va_cnt_typ = ?, va_ath_sch = ?, cd_stt = ?, va_i_sze = ?, va_o_sze = ?, va_i_cnt_enc = ?, va_o_cnt_enc = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_err_typ = ?, va_err_msg = ?, va_nam = ?, va_usr = ?, va_usr_agt = ?, va_cch_ctr = ?, va_msk = ?
+where id_ses = ?::uuid""", sessionToUpdate.iterator(), (ps, ses) -> {
+                var exp = ses.getException();
+                ps.setString(1, ses.getMethod());
+                ps.setString(2, ses.getProtocol());
+                ps.setString(3, ses.getHost());
+                ps.setInt(4, ses.getPort());
+                ps.setString(5, ses.getPath());
+                ps.setString(6, ses.getQuery());
+                ps.setString(7, contentTypeExtract(ses.getContentType()));
+                ps.setString(8, ses.getAuthScheme());
+                ps.setInt(9, ses.getStatus());
+                ps.setLong(10, ses.getInDataSize());
+                ps.setLong(11, ses.getOutDataSize());
+                ps.setString(12, ses.getInContentEncoding());
+                ps.setString(13, ses.getOutContentEncoding());
+                ps.setTimestamp(14, fromNullableInstant(ses.getStart()));
+                ps.setTimestamp(15, fromNullableInstant(ses.getEnd()));
+                ps.setString(16, ses.getThreadName());
+                ps.setString(17, nonNull(exp) ? exp.getType() : null);
+                ps.setString(18, nonNull(exp) ? exp.getMessage() : null);
+                ps.setString(19, ses.getName());
+                ps.setString(20, ses.getUser());
+                ps.setString(21, userAgentExtract(ses.getUserAgent()));
+                ps.setString(22, ses.getCacheControl());
+                ps.setInt(23, ses.getRequestsMask());
+                ps.setObject(24, ses.getId());
+            });
+
+            var cmpMetrics = sessionToUpdate.stream()
+                    .filter(s  -> nonNull(s.getEnd()))
+                    .map(RestSessionWrapper::getId).toList(); //Insertion des sessions uncompleted
+            var inClause = "?::uuid" + ", ?::uuid".repeat(cmpMetrics.size() - 1);
+            template.update(String.format("delete from e_cmp_mtc where id_cmp_mtc in (%s) and va_typ = 'REST_SESSION'", inClause), ps -> {
+                var n = 1;
+                for (String cmpMetric : cmpMetrics) {
+                    ps.setObject(n++, cmpMetric);
+                }
+            });
+        }
+
+        if(!sessionToInsert.isEmpty()) {
+            executeBatch("""
+INSERT INTO E_RST_SES(ID_SES,VA_MTH,VA_PCL,VA_HST,CD_PRT,VA_PTH,VA_QRY,VA_CNT_TYP,VA_ATH_SCH,CD_STT,VA_I_SZE,VA_O_SZE,VA_I_CNT_ENC,VA_O_CNT_ENC,DH_STR,DH_END,VA_THR,VA_ERR_TYP,VA_ERR_MSG,VA_NAM,VA_USR,VA_USR_AGT,VA_CCH_CTR,VA_MSK,CD_INS)
+VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid)""", sessionToInsert.iterator(), (ps, ses) -> {
+                var exp = ses.getException();
+                ps.setObject(1, ses.getId());
+                ps.setString(2, ses.getMethod());
+                ps.setString(3, ses.getProtocol());
+                ps.setString(4, ses.getHost());
+                ps.setInt(5, ses.getPort());
+                ps.setString(6, ses.getPath());
+                ps.setString(7, ses.getQuery());
+                ps.setString(8, contentTypeExtract(ses.getContentType()));
+                ps.setString(9, ses.getAuthScheme());
+                ps.setInt(10, ses.getStatus());
+                ps.setLong(11, ses.getInDataSize());
+                ps.setLong(12, ses.getOutDataSize());
+                ps.setString(13, ses.getInContentEncoding());
+                ps.setString(14, ses.getOutContentEncoding());
+                ps.setTimestamp(15, fromNullableInstant(ses.getStart()));
+                ps.setTimestamp(16, fromNullableInstant(ses.getEnd()));
+                ps.setString(17, ses.getThreadName());
+                ps.setString(18, nonNull(exp) ? exp.getType() : null);
+                ps.setString(19, nonNull(exp) ? exp.getMessage() : null);
+                ps.setString(20, ses.getName());
+                ps.setString(21, ses.getUser());
+                ps.setString(22, userAgentExtract(ses.getUserAgent()));
+                ps.setString(23, ses.getCacheControl());
+                ps.setInt(24, ses.getRequestsMask());
+                ps.setObject(25, ses.getInstanceId());
+            });
+
+            var cmpMetrics = sessionToInsert.stream()
+                    .filter(s  -> isNull(s.getEnd()))
+                    .map(RestSessionWrapper::getId).toList(); //Insertion des sessions uncompleted
+            executeBatch("insert into e_cmp_mtc(id_cmp_mtc,va_typ) values(?::uuid,'REST_SESSION')", cmpMetrics.iterator(), (ps, id) -> {
+                ps.setObject(1, id);
+            });
+        }
+        return 0;
     }
 
     private int saveRestSessions(List<RestSessionWrapper> sessions) {
@@ -311,7 +410,7 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(), (ps
         return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
 
-    private int saveLdapRequests(List<NamingRequestWrapper> requests) {
+    private int saveLdapRequests(List<DirectoryRequestWrapper> requests) {
         var arr = executeBatch("""
 INSERT INTO E_LDAP_RQT(ID_LDAP_RQT,VA_HST,CD_PRT,VA_PCL,VA_USR,DH_STR,DH_END,VA_THR,VA_FAIL,CD_PRN_SES,CD_INS)
 VALUES(?::uuid,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(), (ps, req)-> {
@@ -328,6 +427,84 @@ VALUES(?::uuid,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", requests.iterator(), (ps, re
             ps.setObject(11, req.getInstanceId());
         });
         return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
+    }
+
+    public int upsertDatabaseRequests(List<DatabaseRequestWrapper> requests) {
+        List<String> completableMetrics = template.queryForList(
+                "select id_cmp_mtc from e_cmp_mtc where va_typ = ?",
+                String.class,
+                "JDBC_REQUEST"
+        );
+
+        var toUpdate = requests.stream().filter(s -> completableMetrics.contains(s.getId())).toList();
+        var toInsert = requests.stream().filter(s -> !completableMetrics.contains(s.getId())).toList();
+
+        if(!toUpdate.isEmpty()) {
+            executeBatch("""
+update e_dtb_rqt set va_hst = ?, cd_prt = ?, va_nam = ?, va_sch = ?, dh_str = ?, dh_end = ?, va_usr = ?, va_thr = ?, va_drv = ?, va_prd_nam = ?, va_prd_vrs = ?, va_cmd = ?, va_fail = ?
+where id_dtb_rqt = ?::uuid""", toUpdate.iterator(), (ps, req) -> {
+                ps.setString(1, req.getHost());
+                ps.setInt(2, req.getPort());
+                ps.setString(3, req.getName());
+                ps.setString(4, req.getSchema());
+                ps.setTimestamp(5, fromNullableInstant(req.getStart()));
+                ps.setTimestamp(6, fromNullableInstant(req.getEnd()));
+                ps.setString(7, req.getUser());
+                ps.setString(8, req.getThreadName());
+                ps.setString(9, req.getDriverVersion());
+                ps.setString(10, req.getProductName());
+                ps.setString(11, req.getProductVersion());
+                ps.setString(12, req.getCommand()); // TODO use commands on DatabaseRequest
+                ps.setBoolean(13, req.isFailed());
+                ps.setObject(14, req.getId());
+            });
+
+            var cmpMetrics = toUpdate.stream()
+                    .filter(s  -> nonNull(s.getEnd()))
+                    .map(DatabaseRequestWrapper::getId).toList(); //Insertion des sessions uncompleted
+            var inClause = "?::uuid" + ", ?::uuid".repeat(cmpMetrics.size() - 1);
+            var rows = template.update(String.format("delete from e_cmp_mtc where id_cmp_mtc in (%s) and va_typ = 'JDBC_REQUEST'", inClause), ps -> {
+                var n = 1;
+                for (String cmpMetric : cmpMetrics) {
+                    ps.setObject(n++, cmpMetric);
+                }
+            });
+            log.debug("{} rows deleted", rows);
+        }
+
+        if(!toInsert.isEmpty()) {
+            executeBatch("""
+INSERT INTO E_DTB_RQT(ID_DTB_RQT,VA_HST,CD_PRT,VA_NAM,VA_SCH,DH_STR,DH_END,VA_USR,VA_THR,VA_DRV,VA_PRD_NAM,VA_PRD_VRS,VA_CMD,VA_FAIL,CD_PRN_SES,CD_INS)
+VALUES(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert.iterator(), (ps, req) -> {
+                ps.setObject(1, req.getId());
+                ps.setString(2, req.getHost());
+                ps.setInt(3, req.getPort());
+                ps.setString(4, req.getName());
+                ps.setString(5, req.getSchema());
+                ps.setTimestamp(6, fromNullableInstant(req.getStart()));
+                ps.setTimestamp(7, fromNullableInstant(req.getEnd()));
+                ps.setString(8, req.getUser());
+                ps.setString(9, req.getThreadName());
+                ps.setString(10, req.getDriverVersion());
+                ps.setString(11, req.getProductName());
+                ps.setString(12, req.getProductVersion());
+                ps.setString(13, req.getCommand()); // TODO use commands on DatabaseRequest
+                ps.setBoolean(14, req.isFailed());
+                ps.setObject(15, req.getSessionId());
+                ps.setObject(16, req.getInstanceId());
+            });
+
+            var cmpMetrics = toInsert.stream()
+                    .filter(s  -> isNull(s.getEnd()))
+                    .map(DatabaseRequestWrapper::getId).toList(); //Insertion des sessions uncompleted
+            if(!cmpMetrics.isEmpty()) {
+                executeBatch("insert into e_cmp_mtc(id_cmp_mtc,va_typ) values(?::uuid,'JDBC_REQUEST')", cmpMetrics.iterator(), (ps, id) -> {
+                    ps.setObject(1, id);
+                });
+            }
+        }
+
+        return 0;
     }
 
     private int saveDatabaseRequests(List<DatabaseRequestWrapper> requests) {
@@ -437,7 +614,7 @@ MERGE INTO E_DTB_RQT USING
         return Stream.of(arr).mapToInt(o-> IntStream.of(o).sum()).sum();
     }
 
-    private int saveLdapRequestStages(List<NamingRequestStageWrapper> stages) {
+    private int saveLdapRequestStages(List<DirectoryRequestStageWrapper> stages) {
         var arr = executeBatch("INSERT INTO E_LDAP_STG(VA_NAM,DH_STR,DH_END,VA_ARG,CD_ORD,CD_LDAP_RQT) VALUES(?,?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
             ps.setString(1, stage.getName());
             ps.setTimestamp(2, fromNullableInstant(stage.getStart()));

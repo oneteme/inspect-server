@@ -275,11 +275,17 @@ create table if not exists e_log_ent (
 
 create table if not exists e_rsc_usg (
     dh_str timestamp(6),
-    va_low_hep int,
-    va_hig_hep int,
-    va_low_met int,
-    va_hig_met int,
+    va_usd_hep int,
+    va_cmt_hep int,
+    va_usd_met int,
+    va_cmt_met int,
+    va_usd_dsk int,
     cd_ins uuid
+);
+
+create table if not exists e_cmp_mtc (
+    id_cmp_mtc uuid,
+    va_typ smallint
 );
 
 -- Ajouter les index du cd instance dans les requests
@@ -326,3 +332,4 @@ CREATE INDEX IF NOT EXISTS idx_ins_trc_cd_ins ON e_ins_trc(cd_ins);
 CREATE INDEX IF NOT EXISTS idx_log_ent_cd_ins ON e_log_ent(cd_ins);
 CREATE INDEX IF NOT EXISTS idx_log_ent_cd_prn_ses ON e_log_ent(cd_prn_ses);
 CREATE INDEX IF NOT EXISTS idx_rsc_usg_cd_ins ON e_rsc_usg(cd_ins);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_cmp_mtc_id_cmp_mtc_va_typ ON e_cmp_mtc(id_cmp_mtc, va_typ);

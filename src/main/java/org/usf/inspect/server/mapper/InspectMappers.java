@@ -8,20 +8,22 @@ import lombok.RequiredArgsConstructor;
 import org.usf.inspect.core.*;
 import org.usf.inspect.jdbc.SqlCommand;
 import org.usf.inspect.server.RequestMask;
-import org.usf.inspect.server.model.*;
+import org.usf.inspect.server.model.InstanceTrace;
 import org.usf.inspect.server.model.Session;
+import org.usf.inspect.server.model.UserAction;
 import org.usf.inspect.server.model.wrapper.*;
 import org.usf.jquery.core.RowMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import static java.util.Optional.ofNullable;
 import static org.usf.inspect.server.Utils.fromNullableTimestamp;
 import static org.usf.inspect.server.config.TraceApiColumn.*;
-import static org.usf.inspect.server.config.TraceApiColumn.ID;
-import static org.usf.inspect.server.service.RequestService.getExceptionInfoIfNotNull;
 import static org.usf.inspect.server.service.RequestService.valueOfNullabletoEnumList;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
@@ -49,7 +51,7 @@ public final class InspectMappers {
                         rs.getString(ADDITIONAL_PROPERTIES.reference()) != null ? mapper.readValue(rs.getString(ADDITIONAL_PROPERTIES.reference()), new TypeReference<Map<String, String>>() {}) : null,
                         rs.getString(CONFIGURATION.reference()) != null ? mapper.readValue(rs.getString(CONFIGURATION.reference()), InspectCollectorConfiguration.class) : null
                 );
-                instanceEnvironment.setResource(rs.getString(RESOURCE.reference()) != null ? mapper.readValue(rs.getString(RESOURCE.reference()), MachineResourceUsage.class) : null);
+                instanceEnvironment.setResource(rs.getString(RESOURCE.reference()) != null ? mapper.readValue(rs.getString(RESOURCE.reference()), MachineResource.class) : null);
                 instanceEnvironment.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
@@ -65,7 +67,7 @@ public final class InspectMappers {
                     rs.getInt(PENDING.reference()),
                     rs.getInt(ATTEMPTS.reference()),
                     rs.getInt(SIZE_SESSION.reference()),
-                    null,
+                    rs.getString(FILENAME.reference()),
                     fromNullableTimestamp(rs.getTimestamp(START.reference())),
                     rs.getString(INSTANCE_ENV.reference())
             );
@@ -75,10 +77,11 @@ public final class InspectMappers {
         return rs ->
                 new MachineResourceUsage(
                         fromNullableTimestamp(rs.getTimestamp(START.reference())),
-                        rs.getInt(LOW_HEAP.reference()),
-                        rs.getInt(HIGH_HEAP.reference()),
-                        rs.getInt(LOW_META.reference()),
-                        rs.getInt(HIGH_META.reference())
+                        rs.getInt(USED_HEAP.reference()),
+                        rs.getInt(COMMITED_HEAP.reference()),
+                        rs.getInt(USED_META.reference()),
+                        0,
+                        rs.getInt(COMMITED_META.reference())
                 );
     }
 
@@ -512,12 +515,12 @@ public final class InspectMappers {
         };
     }
 
-    public static RowMapper<NamingRequestWrapper> ldapRequestLazyMapper(){
+    public static RowMapper<DirectoryRequestWrapper> ldapRequestLazyMapper(){
         return InspectMappers::createBaseLdapRequest;
     }
 
-    private static NamingRequestWrapper createBaseLdapRequest(ResultSet rs) throws SQLException{
-        NamingRequestWrapper out = new NamingRequestWrapper();
+    private static DirectoryRequestWrapper createBaseLdapRequest(ResultSet rs) throws SQLException{
+        DirectoryRequestWrapper out = new DirectoryRequestWrapper();
         out.setId(rs.getString(ID.reference()));
         out.setHost(rs.getString(HOST.reference()));
         out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
@@ -528,9 +531,9 @@ public final class InspectMappers {
         return out;
     }
 
-    public static NamingRequestWrapper ldapRequestCompleteMapper(ResultSet rs) throws SQLException {
+    public static DirectoryRequestWrapper ldapRequestCompleteMapper(ResultSet rs) throws SQLException {
         if (rs.next()) {
-            NamingRequestWrapper out = createBaseLdapRequest(rs);
+            DirectoryRequestWrapper out = createBaseLdapRequest(rs);
             out.setSessionId(rs.getString(PARENT.reference()));
             out.setPort(rs.getInt(PORT.reference()));
             out.setProtocol(rs.getString(PROTOCOL.reference()));
@@ -540,9 +543,9 @@ public final class InspectMappers {
         return null;
     }
     
-    public static RowMapper<NamingRequestStage> ldapRequestStageMapper(){
+    public static RowMapper<DirectoryRequestStage> ldapRequestStageMapper(){
         return rs -> {
-            var out = new NamingRequestStage();
+            var out = new DirectoryRequestStage();
             out.setName(rs.getString(NAME.reference()));
             out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));

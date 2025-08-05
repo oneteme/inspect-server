@@ -86,9 +86,11 @@ public final class FieldConstant {
     public static final String VA_LVL = "va_lvl";
     public static final String VA_MSG = "va_msg";
     public static final String VA_STK = "va_stk";
-    public static final String VA_LOW_HEP = "va_low_hep";
-    public static final String VA_HIG_HEP = "va_hig_hep";
-    public static final String VA_LOW_MET = "va_low_met";
-    public static final String VA_HIG_MET = "va_hig_met";
+    public static final String VA_USED_HEP = "va_usd_hep";
+    public static final String VA_COMMITED_HEP = "va_cmt_hep";
+    public static final String VA_USED_MET = "va_usd_met";
+    public static final String VA_COMMITED_MET = "va_cmt_met";
+    public static final String VA_USED_DISK_SPACE = "va_usd_dsk";
     public static final String VA_FAIL= "va_fail";
+    public static final String VA_FILENAME= "va_fln";
 }

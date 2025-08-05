@@ -1,7 +1,6 @@
 package org.usf.inspect.server;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -41,20 +40,19 @@ public class InspectApplication {
 		mapper.registerSubtypes(
 				new NamedType(LogEntryWrapper.class, 			"log"),
 				new NamedType(MachineResourceUsageWrapper.class,"rsrc-usg"),
-				new NamedType(MachineResourceUsage.class,		"rsrc-usg"),
 				new NamedType(MainSessionWrapper.class,  		"main-ses"),
 				new NamedType(RestSessionWrapper.class,  		"rest-ses"),
 				new NamedType(LocalRequestWrapper.class, 		"locl-req"),
 				new NamedType(DatabaseRequestWrapper.class,		"jdbc-req"),
 				new NamedType(RestRequestWrapper.class,  		"http-req"),
 				new NamedType(MailRequestWrapper.class,  		"mail-req"),
-				new NamedType(NamingRequestWrapper.class,		"ldap-req"),
+				new NamedType(DirectoryRequestWrapper.class,	"ldap-req"),
 				new NamedType(FtpRequestWrapper.class,  		"ftp-req"),
 				new NamedType(DatabaseRequestStageWrapper.class,		"jdbc-stg"),
 				new NamedType(HttpRequestStageWrapper.class,  			"http-stg"),
 				new NamedType(HttpSessionStageWrapper.class,  			"sess-stg"),
 				new NamedType(MailRequestStageWrapper.class,  			"mail-stg"),
-				new NamedType(NamingRequestStageWrapper.class,			"ldap-stg"),
+				new NamedType(DirectoryRequestStageWrapper.class,			"ldap-stg"),
 				new NamedType(FtpRequestStageWrapper.class,  			"ftp-stg"),
 				new NamedType(RestRemoteServerProperties.class, "rest-rmt"));
 		return mapper;

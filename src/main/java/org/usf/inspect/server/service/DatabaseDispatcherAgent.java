@@ -1,36 +1,34 @@
 package org.usf.inspect.server.service;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.usf.inspect.core.DispatchException;
 import org.usf.inspect.core.DispatcherAgent;
 import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.core.InstanceEnvironment;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.RequiredArgsConstructor;
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
 
 @Service
 @RequiredArgsConstructor
 public class DatabaseDispatcherAgent implements DispatcherAgent {
-	
-	private final RequestService service; //inject dao
+
+	private final TraceService traceService;
 	private final ObjectMapper mapper;
 
 	@Override
 	public void dispatch(InstanceEnvironment instance) {
-		service.addInstance(instance);
+		traceService.addInstance(instance);
 	}
 
 	@Override
-	public void dispatch(boolean complete, int attempts, int pending, EventTrace[] traces) {
-		service.addEventTraces(Arrays.asList(traces));
+	public Collection<EventTrace> dispatch(boolean complete, int attempts, int pending, EventTrace[] traces) {
+		return traceService.addTraces(Arrays.asList(traces));
 	}
 
 	@Override

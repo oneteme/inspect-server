@@ -19,7 +19,7 @@ public interface Session extends CompletableMetric {
 
     List<MailRequestWrapper> getMailRequests();
 
-    List<NamingRequestWrapper> getLdapRequests();
+    List<DirectoryRequestWrapper> getLdapRequests();
 
     void setInstanceId(String instanceId);
     String getInstanceId();

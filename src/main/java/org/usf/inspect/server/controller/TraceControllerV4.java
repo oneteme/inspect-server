@@ -13,6 +13,7 @@ import org.usf.inspect.server.model.InstanceTrace;
 import org.usf.inspect.server.model.Session;
 import org.usf.inspect.server.model.wrapper.MainSessionWrapper;
 import org.usf.inspect.server.service.RequestService;
+import org.usf.inspect.server.service.TraceService;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -37,7 +38,7 @@ import static org.usf.jquery.core.Utils.isBlank;
 @RequiredArgsConstructor
 public class TraceControllerV4 {
 
-    private final RequestService requestService;
+    private final TraceService traceService;
     private final EventTraceScheduledDispatcher dispatcher;
     private final ExecutorService executor = Executors.newFixedThreadPool(15);
     
@@ -73,9 +74,9 @@ public class TraceControllerV4 {
             @RequestBody EventTrace[] eventTraces) {
         try {
             if(end != null){
-                executor.submit(()-> requestService.updateInstance(end, id));
+                executor.submit(()-> traceService.updateInstance(end, id));
             }
-            executor.submit(()-> requestService.addInstanceTrace(new InstanceTrace(pending, attempts, eventTraces.length, fileName, now(), id))); //now !!!???
+            executor.submit(()-> traceService.addInstanceTrace(new InstanceTrace(pending, attempts, eventTraces.length, fileName, now(), id))); //now !!!???
 
             Arrays.stream(eventTraces).forEach(e -> {
                 if(e instanceof InstanceEventTrace ie) {

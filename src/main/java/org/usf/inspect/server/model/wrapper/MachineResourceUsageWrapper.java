@@ -12,7 +12,7 @@ public class MachineResourceUsageWrapper extends InstanceEventTrace {
     @JsonIgnore
     private final MachineResourceUsage machineResourceUsage;
 
-    MachineResourceUsageWrapper(Instant instant, int lowHeap, int highHeap, int lowMeta, int highMeta) {
-        this.machineResourceUsage = new MachineResourceUsage(instant, lowHeap, highHeap, lowMeta, highMeta);
+    MachineResourceUsageWrapper(Instant instant, int usedHeap, int commitedHeap, int usedMeta, int commitedMeta, int usedDiskSpace) {
+        this.machineResourceUsage = new MachineResourceUsage(instant, usedHeap, commitedHeap, usedMeta, commitedMeta, usedDiskSpace);
     }
 }

@@ -260,11 +260,17 @@ CREATE TABLE IF NOT EXISTS E_LOG_ENT (
     CD_INS UUID
 );
 
-CREATE TABLE IF NOT EXISTS E_RSC_USG (
-    DH_STR TIMESTAMP(6),
-    VA_LOW_HEP INT,
-    VA_HIG_HEP INT,
-    VA_LOW_MET INT,
-    VA_HIG_MET INT,
-    CD_INS UUID
+create table if not exists e_rsc_usg (
+    dh_str timestamp(6),
+    va_usd_hep int,
+    va_cmt_hep int,
+    va_usd_met int,
+    va_cmt_met int,
+    va_usd_dsk int,
+    cd_ins uuid
+);
+
+create table if not exists e_cmp_mtc (
+    id_cmp_mtc uuid,
+    cd_typ smallint
 );
