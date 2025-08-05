@@ -85,11 +85,11 @@ public final class InspectMappers {
                 );
     }
 
-    public static RowMapper<LogEntryWrapper> instanceLogEntryMapper() {
+    public static RowMapper<LogEntry> instanceLogEntryMapper() {
         var mapper = new ObjectMapper();
         return rs -> {
             try {
-                var log = new LogEntryWrapper(
+                var log = new LogEntry(
                         fromNullableTimestamp(rs.getTimestamp(START.reference())),
                         LogEntry.Level.valueOf(rs.getString(LOG_LEVEL.reference())),
                         rs.getString(LOG_MESSAGE.reference()),

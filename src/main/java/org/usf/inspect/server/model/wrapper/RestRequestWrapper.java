@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;
+import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.core.ExceptionInfo;
 import org.usf.inspect.core.RestRequest;
 import org.usf.inspect.server.model.InstanceEventTrace;
@@ -13,7 +14,7 @@ import org.usf.inspect.server.model.Wrapper;
 @Getter
 @Setter
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = RestRequestWrapper.class)
-public class RestRequestWrapper extends InstanceEventTrace implements Wrapper<RestRequest> {
+public class RestRequestWrapper implements EventTrace, Wrapper<RestRequest> {
 
     @Delegate
     @JsonIgnore

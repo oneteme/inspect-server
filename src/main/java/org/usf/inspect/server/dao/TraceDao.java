@@ -6,21 +6,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
-import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.*;
-import org.usf.inspect.server.model.InstanceEventTrace;
 import org.usf.inspect.server.model.InstanceTrace;
-import org.usf.inspect.server.model.Wrapper;
-import org.usf.inspect.server.model.wrapper.*;
+import org.usf.inspect.server.model.wrapper.MailWrapper;
 
 import java.sql.PreparedStatement;
-import java.sql.Types;
 import java.time.Instant;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -30,14 +25,13 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static org.usf.inspect.server.Utils.*;
 import static org.usf.inspect.server.dao.RequestCompletableType.*;
-import static org.usf.inspect.server.dao.RequestCompletableType.MAIN_SESSION;
 import static org.usf.inspect.server.model.RequestMask.LOCAL;
 
 
 @Slf4j
 @Repository
 @RequiredArgsConstructor
-public class NewRequestDao {
+public class TraceDao {
     private final JdbcTemplate template;
     private final ObjectMapper mapper;
 
@@ -90,7 +84,7 @@ values (?, ?, ?, ?, ?, ?::uuid)""", ps -> {
         });
     }
 
-    public void saveLogEntries(List<LogEntryWrapper> logEntries) {
+    public void saveLogEntries(List<LogEntry> logEntries) {
         executeBatch("""
 insert into e_log_ent(va_lvl,va_msg,va_stk,dh_str,cd_prn_ses,cd_ins)
 values (?,?,?::json,?,?::uuid,?::uuid)""", logEntries.iterator(), (ps, o)-> {
@@ -107,7 +101,7 @@ values (?,?,?::json,?,?::uuid,?::uuid)""", logEntries.iterator(), (ps, o)-> {
         });
     }
 
-    public void saveMachineResourceUsages(List<MachineResourceUsageWrapper> usages) {
+    public void saveMachineResourceUsages(List<MachineResourceUsage> usages) {
         executeBatch("""
 insert into e_rsc_usg(dh_str,va_usd_hep,va_cmt_hep,va_usd_met,va_cmt_met,va_usd_dsk,cd_ins)
 values (?,?,?,?,?,?,?::uuid)""",usages.iterator(), (ps, o)-> {
@@ -122,7 +116,7 @@ values (?,?,?,?,?,?,?::uuid)""",usages.iterator(), (ps, o)-> {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveRestSessions(List<RestSessionWrapper> sessions) {
+    public void saveRestSessions(List<RestSession> sessions) {
         completableProcess(REST_SESSION, sessions, toUpdate ->
                 executeBatch("""
 update e_rst_ses set va_mth = ?, va_pcl = ?, va_hst = ?, cd_prt = ?, va_pth = ?, va_qry = ?, va_cnt_typ = ?, va_ath_sch = ?, cd_stt = ?, va_i_sze = ?, va_o_sze = ?, va_i_cnt_enc = ?, va_o_cnt_enc = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_err_typ = ?, va_err_msg = ?, va_nam = ?, va_usr = ?, va_usr_agt = ?, va_cch_ctr = ?, va_msk = ?
@@ -182,11 +176,11 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid)""", toInse
             ps.setString(23, ses.getCacheControl());
             ps.setInt(24, ses.getRequestsMask());
             ps.setString(25, ses.getInstanceId());
-        }), s -> s.getRestSession().getRest());
+        }), RestSession::getId, s -> nonNull(s.getEnd()));
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveMainSessions(List<MainSessionWrapper> sessions) {
+    public void saveMainSessions(List<MainSession> sessions) {
         completableProcess(MAIN_SESSION, sessions, toUpdate ->
                 executeBatch("""
 update e_main_ses set va_nme = ?, va_usr = ?, dh_str = ?, dh_end = ?, va_typ = ?, va_lct = ?, va_thr = ?, va_err_typ = ?, va_err_msg = ?, va_msk = ?
@@ -220,11 +214,11 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?::uuid)""", toInsert, (ps, ses) -> {
             ps.setString(10, nonNull(exp) ? exp.getMessage() : null);
             ps.setInt(11, ses.getRequestsMask());
             ps.setString(12, ses.getInstanceId());
-        }), m -> m.getMainSession().getLocal());
+        }), MainSession::getId, s -> nonNull(s.getEnd()));
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveRestRequests(List<RestRequestWrapper> requests) {
+    public void saveRestRequests(List<RestRequest> requests) {
         completableProcess(REST_REQUEST, requests, toUpdate ->
                 executeBatch("""
 update e_rst_rqt set va_mth = ?, va_pcl = ?, va_hst = ?, cd_prt = ?, va_pth = ?, va_qry = ?, va_cnt_typ = ?, va_ath_sch = ?, cd_stt = ?, va_i_sze = ?, va_o_sze = ?, va_i_cnt_enc = ?, va_o_cnt_enc = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_bdy_cnt = ?
@@ -271,11 +265,11 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, 
             ps.setString(18, req.getBodyContent());
             ps.setString(19, req.getSessionId());
             ps.setString(20, req.getInstanceId());
-        }), RestRequestWrapper::unwrap);
+        }), RestRequest::getId, s -> nonNull(s.getEnd()));
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveLocalRequests(List<LocalRequestWrapper> requests){
+    public void saveLocalRequests(List<LocalRequest> requests){
         completableProcess(LOCAL_REQUEST, requests, toUpdate ->
                 executeBatch("""
 update e_lcl_rqt set va_nam = ?, va_lct = ?, dh_str = ?, dh_end = ?, va_usr = ?, va_thr = ?, va_fail = ?, va_typ = ?
@@ -304,12 +298,12 @@ values(?::uuid,?,?,?,?,?,?,?,?::uuid,?,?::uuid)""", toInsert, (ps, req) -> {
             ps.setString(9, req.getSessionId());
             ps.setString(10, req.getType());
             ps.setString(11, req.getInstanceId());
-        }), LocalRequestWrapper::unwrap);
+        }), LocalRequest::getId, s -> nonNull(s.getEnd()));
         saveLocalRequestExceptions(requests);
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveMailRequests(List<MailRequestWrapper> requests) {
+    public void saveMailRequests(List<MailRequest> requests) {
         completableProcess(SMTP_REQUEST, requests, toUpdate ->
                 executeBatch("""
 update e_smtp_rqt set va_hst = ?, cd_prt = ?, va_usr = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_fail = ?
@@ -336,7 +330,7 @@ values(?::uuid,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
             ps.setBoolean(8, req.isFailed());
             ps.setString(9, req.getSessionId());
             ps.setString(10, req.getInstanceId());
-        }), MailRequestWrapper::unwrap);
+        }), MailRequest::getId, s -> nonNull(s.getEnd()));
         saveMailRequestMails(requests.stream().filter(r -> nonNull(r.getMails()))
                 .flatMap(r -> r.getMails().stream().map(m -> {
                     var mail = new MailWrapper();
@@ -364,7 +358,7 @@ values(?::uuid,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveFtpRequests(List<FtpRequestWrapper> requests){
+    public void saveFtpRequests(List<FtpRequest> requests){
         completableProcess(FTP_REQUEST, requests, toUpdate ->
                 executeBatch("""
 update e_ftp_rqt set va_hst = ?, cd_prt = ?, va_pcl = ?, va_srv_vrs = ?, va_clt_vrs = ?, va_usr = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_fail = ?
@@ -397,11 +391,11 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
                     ps.setBoolean(11, req.isFailed());
                     ps.setString(12, req.getSessionId());
                     ps.setString(13, req.getInstanceId());
-                }), FtpRequestWrapper::unwrap);
+                }), FtpRequest::getId, s -> nonNull(s.getEnd()));
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveLdapRequests(List<DirectoryRequestWrapper> requests) {
+    public void saveLdapRequests(List<DirectoryRequest> requests) {
         completableProcess(LDAP_REQUEST, requests, toUpdate ->
                 executeBatch("""
 update e_ldap_rqt set va_hst = ?, cd_prt = ?, va_pcl = ?, va_usr = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_fail = ?
@@ -430,13 +424,13 @@ values(?::uuid,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
                 ps.setBoolean(9, req.isFailed());
                 ps.setString(10, req.getSessionId());
                 ps.setString(11, req.getInstanceId());
-            }), DirectoryRequestWrapper::unwrap
+            }), DirectoryRequest::getId, s -> nonNull(s.getEnd())
         );
     }
 
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveDatabaseRequests(List<DatabaseRequestWrapper> requests) {
+    public void saveDatabaseRequests(List<DatabaseRequest> requests) {
         completableProcess(JDBC_REQUEST, requests, toUpdate ->
                 executeBatch("""
 update e_dtb_rqt set va_hst = ?, cd_prt = ?, va_nam = ?, va_sch = ?, dh_str = ?, dh_end = ?, va_usr = ?, va_thr = ?, va_drv = ?, va_prd_nam = ?, va_prd_vrs = ?, va_cmd = ?, va_fail = ?
@@ -475,32 +469,33 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req
                 ps.setBoolean(14, req.isFailed());
                 ps.setString(15, req.getSessionId());
                 ps.setString(16, req.getInstanceId());
-            }), DatabaseRequestWrapper::unwrap
+            }), DatabaseRequest::getId, s -> nonNull(s.getEnd())
         );
     }
 
-    private <T, U extends AbstractRequest> void completableProcess(
+    private <T> void completableProcess(
             RequestCompletableType type,
             List<T> items,
             Consumer<Iterator<T>> updateBatchExecutor,
             Consumer<Iterator<T>> insertBatchExecutor,
-            Function<T, U> clazz
+            Function<T, String> idExtractor,
+            Predicate<T> endCondition
     ) {
         List<String> completableMetrics = template.queryForList(
                 "select id_cmp_mtc from e_cmp_mtc where cd_typ = ?",
                 String.class,
                 type.getValue()
         );
-        var toUpdate = items.stream().filter(s -> completableMetrics.contains(clazz.apply(s).getId())).toList();
-        var toInsert = items.stream().filter(s -> !completableMetrics.contains(clazz.apply(s).getId())).toList();
+        var toUpdate = items.stream().filter(s -> completableMetrics.contains(idExtractor.apply(s))).toList();
+        var toInsert = items.stream().filter(s -> !completableMetrics.contains(idExtractor.apply(s))).toList();
 
         if(!toUpdate.isEmpty()) {
 
             updateBatchExecutor.accept(toUpdate.iterator());
 
             var completedMetrics = toUpdate.stream()
-                    .filter(s -> nonNull(clazz.apply(s).getEnd()))
-                    .map(s -> clazz.apply(s).getId()).toList(); //Insertion des sessions uncompleted
+                    .filter(endCondition)
+                    .map(idExtractor).toList(); //Insertion des sessions uncompleted
             if(!completedMetrics.isEmpty()) {
                 var inClause = "?::uuid" + ", ?::uuid".repeat(completedMetrics.size() - 1);
                 template.update(String.format("delete from e_cmp_mtc where id in (%s) and cd_typ = %s", inClause, type.getValue()), ps -> {
@@ -514,11 +509,11 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req
 
         if(!toInsert.isEmpty()) {
 
-            insertBatchExecutor.accept(toUpdate.iterator());
+            insertBatchExecutor.accept(toInsert.iterator());
 
             var uncompletedMetrics = toInsert.stream()
-                    .filter(s -> isNull(clazz.apply(s).getEnd()))
-                    .map(s -> clazz.apply(s).getId()).toList(); //Insertion des sessions uncompleted
+                    .filter(s -> !endCondition.test(s))
+                    .map(idExtractor).toList(); //Insertion des sessions uncompleted
             if(!uncompletedMetrics.isEmpty()) {
                 executeBatch(String.format("insert into e_cmp_mtc(id_cmp_mtc,cd_typ) values(?::uuid, %s)", type.getValue()), uncompletedMetrics.iterator(), (ps, id) -> {
                     ps.setString(1, id);
@@ -528,7 +523,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveHttpRequestStages(List<HttpRequestStageWrapper> stages) {
+    public void saveHttpRequestStages(List<HttpRequestStage> stages) {
         executeBatch("insert into e_rst_rqt_stg(va_nam,dh_str,dh_end,cd_ord,cd_rst_rqt) values(?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
             ps.setString(1, stage.getName());
             ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
@@ -540,7 +535,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveHttpSessionStages(List<HttpSessionStageWrapper> stages) {
+    public void saveHttpSessionStages(List<HttpSessionStage> stages) {
         executeBatch("insert into e_rst_ses_stg(va_nam,dh_str,dh_end,cd_ord,cd_prn_ses) values(?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
             ps.setString(1, stage.getName());
             ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
@@ -551,7 +546,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveMailRequestStages(List<MailRequestStageWrapper> stages) {
+    public void saveMailRequestStages(List<MailRequestStage> stages) {
         executeBatch("insert into e_smtp_stg(va_nam,dh_str,dh_end,cd_ord,cd_smtp_rqt) values(?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
             ps.setString(1, stage.getName());
             ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
@@ -563,7 +558,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveFtpRequestStages(List<FtpRequestStageWrapper> stages) {
+    public void saveFtpRequestStages(List<FtpRequestStage> stages) {
         executeBatch("insert into e_ftp_stg(va_nam,dh_str,dh_end,va_arg,cd_ord,cd_ftp_rqt) values(?,?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
             ps.setString(1, stage.getName());
             ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
@@ -576,7 +571,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveLdapRequestStages(List<DirectoryRequestStageWrapper> stages) {
+    public void saveLdapRequestStages(List<DirectoryRequestStage> stages) {
         executeBatch("insert into e_ldap_stg(va_nam,dh_str,dh_end,va_arg,cd_ord,cd_ldap_rqt) values(?,?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
             ps.setString(1, stage.getName());
             ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
@@ -589,7 +584,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveDatabaseRequestStages(List<DatabaseRequestStageWrapper> stages) {
+    public void saveDatabaseRequestStages(List<DatabaseRequestStage> stages) {
         executeBatch("insert into e_dtb_stg(va_nam,dh_str,dh_end,va_cnt,va_cmd,cd_ord,cd_dtb_rqt) values(?,?,?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
             ps.setString(1, stage.getName());
             ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
@@ -602,9 +597,8 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req
         saveExceptions(stages, RequestMask.JDBC);
     }
 
-    private void saveExceptions(List<? extends Wrapper<? extends AbstractStage>> stages, RequestMask mask) {
+    private void saveExceptions(List<? extends AbstractStage> stages, RequestMask mask) {
         var exceptions = stages.stream()
-                .map(Wrapper::unwrap)
                 .filter(e -> nonNull(e.getException()))
                 .toList();
         if(!isEmpty(exceptions)) {
@@ -624,9 +618,8 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req
         }
     }
 
-    private void saveLocalRequestExceptions(List<LocalRequestWrapper> stages) {
+    private void saveLocalRequestExceptions(List<LocalRequest> stages) {
         var exceptions = stages.stream()
-                .map(Wrapper::unwrap)
                 .filter(e -> nonNull(e.getException()))
                 .toList();
         if(!isEmpty(exceptions)) {

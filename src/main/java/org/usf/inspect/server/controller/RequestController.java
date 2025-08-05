@@ -73,7 +73,7 @@ public class RequestController {
     }
 
     @GetMapping("session/{idSession}/log/entry")
-    public List<LogEntryWrapper> getSessionLogEntries(
+    public List<LogEntry> getSessionLogEntries(
             @QueryRequestFilter(view = "log_entry",
                     column = "start,log_level,log_message,parent,instance_env") QueryComposer request,
             @PathVariable String idSession)  {

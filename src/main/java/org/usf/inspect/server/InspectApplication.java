@@ -38,23 +38,23 @@ public class InspectApplication {
 		mapper.registerSubtypes(new NamedType(MainSessionWrapper.class, "main"), new NamedType(RestSessionWrapper.class, "rest"));
 
 		mapper.registerSubtypes(
-				new NamedType(LogEntryWrapper.class, 			"log"),
-				new NamedType(MachineResourceUsageWrapper.class,"rsrc-usg"),
-				new NamedType(MainSessionWrapper.class,  		"main-ses"),
-				new NamedType(RestSessionWrapper.class,  		"rest-ses"),
-				new NamedType(LocalRequestWrapper.class, 		"locl-req"),
-				new NamedType(DatabaseRequestWrapper.class,		"jdbc-req"),
-				new NamedType(RestRequestWrapper.class,  		"http-req"),
-				new NamedType(MailRequestWrapper.class,  		"mail-req"),
-				new NamedType(DirectoryRequestWrapper.class,	"ldap-req"),
-				new NamedType(FtpRequestWrapper.class,  		"ftp-req"),
-				new NamedType(DatabaseRequestStageWrapper.class,		"jdbc-stg"),
-				new NamedType(HttpRequestStageWrapper.class,  			"http-stg"),
-				new NamedType(HttpSessionStageWrapper.class,  			"sess-stg"),
-				new NamedType(MailRequestStageWrapper.class,  			"mail-stg"),
-				new NamedType(DirectoryRequestStageWrapper.class,			"ldap-stg"),
-				new NamedType(FtpRequestStageWrapper.class,  			"ftp-stg"),
-				new NamedType(RestRemoteServerProperties.class, "rest-rmt"));
+				new NamedType(LogEntry.class, 					"log"),
+				new NamedType(MachineResourceUsage.class,		"rsrc-usg"),
+				new NamedType(MainSession.class,  				"main-ses"),
+				new NamedType(RestSession.class,  				"rest-ses"),
+				new NamedType(LocalRequest.class, 				"locl-req"),
+				new NamedType(DatabaseRequest.class,			"jdbc-req"),
+				new NamedType(RestRequest.class,  				"http-req"),
+				new NamedType(MailRequest.class,  				"mail-req"),
+				new NamedType(DirectoryRequest.class,			"ldap-req"),
+				new NamedType(FtpRequest.class,  				"ftp-req"),
+				new NamedType(DatabaseRequestStage.class,		"jdbc-stg"),
+				new NamedType(HttpRequestStage.class,  			"http-stg"),
+				new NamedType(HttpSessionStage.class,  			"sess-stg"),
+				new NamedType(MailRequestStage.class,  			"mail-stg"),
+				new NamedType(DirectoryRequestStage.class,		"ldap-stg"),
+				new NamedType(FtpRequestStage.class,  			"ftp-stg"),
+				new NamedType(RestRemoteServerProperties.class,	"rest-rmt"));
 		return mapper;
 	}
 	

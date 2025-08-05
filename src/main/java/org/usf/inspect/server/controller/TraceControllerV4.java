@@ -5,9 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.EventTraceScheduledDispatcher;
-import org.usf.inspect.core.InstanceEnvironment;
+import org.usf.inspect.core.*;
 import org.usf.inspect.server.model.InstanceEventTrace;
 import org.usf.inspect.server.model.InstanceTrace;
 import org.usf.inspect.server.model.Session;
@@ -79,10 +77,14 @@ public class TraceControllerV4 {
             executor.submit(()-> traceService.addInstanceTrace(new InstanceTrace(pending, attempts, eventTraces.length, fileName, now(), id))); //now !!!???
 
             Arrays.stream(eventTraces).forEach(e -> {
-                if(e instanceof InstanceEventTrace ie) {
+                if(e instanceof AbstractRequest ie) {
                     ie.setInstanceId(id);
-                } else if(e instanceof Session s) {
-                    s.setInstanceId(id);
+                } else if(e instanceof AbstractSession ie) {
+                    ie.setInstanceId(id);
+                } else if(e instanceof LogEntry ie) {
+                    ie.setInstanceId(id);
+                } else if(e instanceof MachineResourceUsage ie) {
+                    ie.setInstanceId(id);
                 }
             });
 

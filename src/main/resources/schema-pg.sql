@@ -247,12 +247,11 @@ CREATE TABLE IF NOT EXISTS e_env_ins (
 );
 
 CREATE TABLE IF NOT EXISTS e_usr_acn (
-    id_acn bigint,
     va_typ varchar,
     dh_str timestamp(6),
     va_nam varchar,
     va_nde_nam varchar,
-    cd_prn_ses varchar
+    cd_prn_ses uuid
 );
 
 create table if not exists e_ins_trc (

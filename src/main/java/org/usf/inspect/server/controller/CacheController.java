@@ -12,6 +12,7 @@ import org.usf.inspect.core.BasicDispatchState;
 import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.core.EventTraceScheduledDispatcher;
 import org.usf.inspect.server.service.RequestService;
+import org.usf.inspect.server.service.TraceService;
 
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -29,7 +30,7 @@ import static org.usf.inspect.core.BasicDispatchState.*;
 @RequestMapping(value = "cache", produces = APPLICATION_JSON_VALUE)
 public class CacheController {
 
-    private final RequestService service;
+    private final TraceService service;
     private final EventTraceScheduledDispatcher dispatcher;
     private final RestTemplate template;
     
@@ -38,7 +39,7 @@ public class CacheController {
 
 	private String host = null;
 
-	public CacheController(ObjectMapper mapper, RequestService service, EventTraceScheduledDispatcher dispatcher) {
+	public CacheController(ObjectMapper mapper, TraceService service, EventTraceScheduledDispatcher dispatcher) {
 		this.service = service;
 		this.dispatcher = dispatcher;
 		this.template = new RestTemplateBuilder()
@@ -64,9 +65,9 @@ public class CacheController {
 	    	template.postForLocation(host + "/cache/state/"+ DISABLE, null); //stop adding session first on remote server
 	        var arr = template.getForObject(host + "/cache", EventTrace[].class); //import sessions from remote server cache
 	        if(nonNull(arr) && arr.length > 0) {
-	            var cnt = service.addEventTraces(asList(arr)); //save sessions on database (local.env == remote.env)
-	            if(cnt != arr.length) {
-	            	log.warn("{} sessions was imported, but {} sessions was saved", arr.length, cnt);
+	            var cnt = service.addTraces(asList(arr)); //save sessions on database (local.env == remote.env)
+	            if(!cnt.isEmpty()) {
+	            	log.warn("{} sessions was imported, but {} sessions was not saved", arr.length, cnt);
 	            }
 	            return arr.length;
 	        }

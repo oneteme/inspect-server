@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;
 import org.usf.inspect.core.Mail;
+import org.usf.inspect.core.MailRequest;
 
 @Setter
 @Getter

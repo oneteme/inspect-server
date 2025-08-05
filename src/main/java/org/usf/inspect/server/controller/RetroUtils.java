@@ -1,14 +1,9 @@
 package org.usf.inspect.server.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.usf.inspect.core.AbstractRequest;
-import org.usf.inspect.core.AbstractStage;
-import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.HttpAction;
+import org.usf.inspect.core.*;
 import org.usf.inspect.server.model.Session;
 import org.usf.inspect.server.model.Wrapper;
-import org.usf.inspect.server.model.wrapper.HttpRequestStageWrapper;
-import org.usf.inspect.server.model.wrapper.HttpSessionStageWrapper;
 import org.usf.inspect.server.model.wrapper.MainSessionWrapper;
 import org.usf.inspect.server.model.wrapper.RestSessionWrapper;
 
@@ -20,12 +15,13 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static org.usf.inspect.core.SessionManager.nextId;
 
 @Slf4j
 public class RetroUtils {
 
-    public static EventTrace[] toV4(Session[] sessions) {
+    public static EventTrace[] toV4(Session[] sessions, String instanceId) {
         List<EventTrace> traces = new ArrayList<>();
         for(Session s : sessions) {
             if(isNull(s.getId())) {
@@ -38,23 +34,23 @@ public class RetroUtils {
             }
             toV4(s.getId(), s.getDatabaseRequests(), d -> {
                 d.setCommand(d.mainCommand());
-                d.setFailed(!isCompleted(d.getActions()));
+                d.setFailed(isFailed(d.getActions()));
                 return d.getActions();
             }, traces::add);
             toV4(s.getId(), s.getFtpRequests(), f -> {
-                f.setFailed(!isCompleted(f.getActions()));
+                f.setFailed(isFailed(f.getActions()));
                 return f.getActions();
             }, traces::add);
             toV4(s.getId(), s.getLdapRequests(), n -> {
-                n.setFailed(!isCompleted(n.getActions()));
+                n.setFailed(isFailed(n.getActions()));
                 return n.getActions();
             }, traces::add);
             toV4(s.getId(), s.getMailRequests(), m -> {
-                m.setFailed(!isCompleted(m.getActions()));
+                m.setFailed(isFailed(m.getActions()));
                 return m.getActions();
             }, traces::add);
             toV4(s.getId(), s.getRestRequests(), (e) -> {
-                var stage = new HttpRequestStageWrapper();
+                var stage = new HttpRequestStage();
                 stage.setName(HttpAction.PROCESS.name());
                 stage.setStart(e.getStart());
                 stage.setEnd(e.getEnd());
@@ -69,7 +65,7 @@ public class RetroUtils {
                 return List.of(stage);
             }, traces::add);
             toV4(s.getId(), s.getLocalRequests(), null, traces::add);
-            var stage = new HttpSessionStageWrapper();
+            var stage = new HttpSessionStage();
             stage.setName(HttpAction.PROCESS.name());
             stage.setStart(s.getStart());
             stage.setEnd(s.getEnd());
@@ -81,23 +77,18 @@ public class RetroUtils {
         return traces.toArray(EventTrace[]::new);
     }
 
-    private static <T extends Wrapper<? extends AbstractRequest> & EventTrace, U extends  Wrapper<? extends AbstractStage> & EventTrace> void toV4(String sessionId, Collection<T> requests, Function<T, List<U>> fn, Consumer<EventTrace> consumer) {
+    private static <T extends Wrapper<? extends AbstractRequest>, U extends AbstractStage> void toV4(String sessionId, Collection<T> requests, Function<T, List<U>> fn, Consumer<EventTrace> consumer) {
         if(requests != null && !requests.isEmpty()) {
             for(var o : requests) {
                 var req = o.unwrap();
                 req.setSessionId(sessionId);
                 req.setId(nextId());
-                // Ajouter le is completed
-                consumer.accept(o);
+                consumer.accept(req);
                 if(fn != null) {
                     var inc = new AtomicInteger(0);
                     for(var s : fn.apply(o)) {
-                        var stage = s.unwrap();
-                        stage.setRequestId(req.getId());
-                        stage.setOrder(inc.incrementAndGet());
-//                        if(stage.getException() != null) {
-//                            stage.getException().setOrder(stage.getOrder());
-//                        }
+                        s.setRequestId(req.getId());
+                        s.setOrder(inc.incrementAndGet());
                         consumer.accept(s);
                     }
                 }
@@ -105,8 +96,8 @@ public class RetroUtils {
         }
     }
 
-    private static <T extends Wrapper<? extends AbstractStage>> boolean isCompleted(List<T> stage) {
-        return stage == null || stage.stream().allMatch(a -> isNull(a.unwrap().getException()));
+    private static <T extends AbstractStage> boolean isFailed(List<T> stage) {
+        return stage != null && stage.stream().anyMatch(a -> nonNull(a.getException()));
     }
 }
 

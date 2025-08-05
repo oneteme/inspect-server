@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;
 import org.usf.inspect.core.DirectoryRequest;
+import org.usf.inspect.core.DirectoryRequestStage;
+import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.server.model.InstanceEventTrace;
 import org.usf.inspect.server.model.Wrapper;
 
@@ -14,13 +16,13 @@ import java.util.List;
 @Getter
 @Setter
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = DirectoryRequestWrapper.class)
-public class DirectoryRequestWrapper extends InstanceEventTrace implements Wrapper<DirectoryRequest> {
+public class DirectoryRequestWrapper implements EventTrace, Wrapper<DirectoryRequest> {
     @Delegate
     @JsonIgnore
     private final DirectoryRequest request = new DirectoryRequest();
 
     @Deprecated(since = "v1.1")
-    private List<DirectoryRequestStageWrapper> actions;
+    private List<DirectoryRequestStage> actions;
 
     @Override
     public DirectoryRequest unwrap() {

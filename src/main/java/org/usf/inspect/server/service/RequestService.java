@@ -66,24 +66,6 @@ public class RequestService {
     private final RequestDao dao;
     private int requestLimit = 300000;
 
-    public void addInstance(InstanceEnvironment instance) {
-        dao.saveInstanceEnvironment(instance);
-    }
-
-    public void updateInstance(Instant end,String instanceId){
-        dao.updateInstanceEnvironment(end, instanceId);
-    }
-
-    public void addInstanceTrace(InstanceTrace instanceTrace){
-        dao.saveInstanceTrace(instanceTrace);
-    }
-
-    @TraceableStage
-    @Transactional(rollbackFor = Throwable.class)
-    public long addEventTraces(List<EventTrace> eventTraces) {
-        return dao.saveEventTraces(eventTraces);
-    }
-
     public Session getMainTree(String id)  {
         List<String> prntIds = dao.selectChildsById(id);
         List<Session> prntIncList = getRestSessionsForTree(prntIds); // todo : optimise
