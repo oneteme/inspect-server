@@ -70,7 +70,7 @@ public class TraceService {
                 .map(clazz::cast)
                 .toList();
         if(!list.isEmpty()) {
-            log.debug("Tracing {} {}", list.size(), clazz.getSimpleName());
+            log.debug("Saving {} {}", list.size(), clazz.getSimpleName());
             try {
                 saveFn.accept(list);
                 list = Collections.emptyList();

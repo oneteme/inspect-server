@@ -4,8 +4,10 @@ import lombok.Getter;
 import lombok.Setter;
 import org.usf.inspect.core.CompletableMetric;
 import org.usf.inspect.core.ExceptionInfo;
+import org.usf.inspect.core.MainSession;
 import org.usf.inspect.core.RestSession;
 import org.usf.inspect.server.model.Session;
+import org.usf.inspect.server.model.Wrapper;
 
 import java.net.URI;
 import java.time.Instant;
@@ -13,7 +15,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class RestSessionWrapper implements Session {
+public class RestSessionWrapper implements Wrapper<RestSession>, Session {
     private final RestSession restSession = new RestSession();
 
     @Deprecated(since = "v1.1", forRemoval = true)
@@ -247,5 +249,10 @@ public class RestSessionWrapper implements Session {
     @Override
     public CompletableMetric copy() {
         throw new UnsupportedOperationException("Copying of RestSessionWrapper is not supported");
+    }
+
+    @Override
+    public RestSession unwrap() {
+        return restSession;
     }
 }

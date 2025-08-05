@@ -24,13 +24,24 @@ public class RetroUtils {
     public static EventTrace[] toV4(Session[] sessions, String instanceId) {
         List<EventTrace> traces = new ArrayList<>();
         for(Session s : sessions) {
-            if(isNull(s.getId())) {
-                if(s instanceof MainSessionWrapper) {
-                    s.setId(nextId()); // safe id set for web collectors
+            s.setInstanceId(instanceId);
+            if(s instanceof MainSessionWrapper) {
+                if(isNull(s.getId())) {
+                    s.setId(nextId());
                 }
-                else if(s instanceof RestSessionWrapper) {
+                traces.add(((MainSessionWrapper) s).unwrap());
+            } else if (s instanceof RestSessionWrapper) {
+                if(isNull(s.getId())) {
                     log.warn("RestSesstion.id is null : {}", s);
                 }
+                var stage = new HttpSessionStage();
+                stage.setName(HttpAction.PROCESS.name());
+                stage.setStart(s.getStart());
+                stage.setEnd(s.getEnd());
+                stage.setRequestId(s.getId());
+                stage.setOrder(1);
+                traces.add(stage);
+                traces.add(((RestSessionWrapper) s).unwrap());
             }
             toV4(s.getId(), s.getDatabaseRequests(), d -> {
                 d.setCommand(d.mainCommand());
@@ -65,14 +76,6 @@ public class RetroUtils {
                 return List.of(stage);
             }, traces::add);
             toV4(s.getId(), s.getLocalRequests(), null, traces::add);
-            var stage = new HttpSessionStage();
-            stage.setName(HttpAction.PROCESS.name());
-            stage.setStart(s.getStart());
-            stage.setEnd(s.getEnd());
-            stage.setRequestId(s.getId());
-            stage.setOrder(1);
-            traces.add(stage);
-            traces.add(s);
         }
         return traces.toArray(EventTrace[]::new);
     }
