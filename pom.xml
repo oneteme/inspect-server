@@ -98,12 +98,4 @@
 		</profile>
 	</profiles>
 	
-	<repositories>
-		<repository>
-			<id>ossrh</id>
-			<name>ossrh</name>
-			<url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
-		</repository>
-	</repositories>
-
 </project>
