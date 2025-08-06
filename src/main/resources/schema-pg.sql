@@ -284,7 +284,7 @@ create table if not exists e_rsc_usg (
 
 create table if not exists e_cmp_mtc (
     id_cmp_mtc uuid,
-    va_typ smallint
+    cd_typ smallint
 );
 
 -- Ajouter les index du cd instance dans les requests

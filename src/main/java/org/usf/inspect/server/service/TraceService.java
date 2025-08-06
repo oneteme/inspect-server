@@ -5,9 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.usf.inspect.core.*;
 import org.usf.inspect.server.dao.TraceDao;
+import org.usf.inspect.server.model.InstanceEnvironmentUpdated;
 import org.usf.inspect.server.model.InstanceTrace;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,14 +30,6 @@ public class TraceService {
         dao.saveInstanceEnvironment(instance);
     }
 
-    public void updateInstance(Instant end, String instanceId){
-        dao.updateInstanceEnvironment(end, instanceId);
-    }
-
-    public void addInstanceTrace(InstanceTrace instanceTrace){
-        dao.saveInstanceTrace(instanceTrace);
-    }
-
     public List<EventTrace> addTraces(List<EventTrace> eventTraces) {
         var cf = new ArrayList<CompletableFuture<Collection<EventTrace>>>();
         cf.add(supplyAsync(() -> filterAndApply(eventTraces, MainSession.class, dao::saveMainSessions), executor));
@@ -56,6 +48,8 @@ public class TraceService {
         cf.add(supplyAsync(() -> filterAndApply(eventTraces, DatabaseRequestStage.class, dao::saveDatabaseRequestStages), executor));
         cf.add(supplyAsync(() -> filterAndApply(eventTraces, MachineResourceUsage.class, dao::saveMachineResourceUsages), executor));
         cf.add(supplyAsync(() -> filterAndApply(eventTraces, LogEntry.class, dao::saveLogEntries), executor));
+        cf.add(supplyAsync(() -> filterAndApply(eventTraces, InstanceEnvironmentUpdated.class, dao::updateInstanceEnvironments), executor));
+        cf.add(supplyAsync(() -> filterAndApply(eventTraces, InstanceTrace.class, dao::saveInstanceTraces), executor));
         return allOf(cf.toArray(CompletableFuture[]::new)).thenApply(v->
                 cf.stream()
                     .map(CompletableFuture::join)
@@ -70,12 +64,12 @@ public class TraceService {
                 .map(clazz::cast)
                 .toList();
         if(!list.isEmpty()) {
-            log.debug("Saving {} {}", list.size(), clazz.getSimpleName());
+            log.debug("saving {} {}", list.size(), clazz.getSimpleName());
             try {
                 saveFn.accept(list);
                 list = Collections.emptyList();
             } catch (Exception e) {
-                log.error("Error while saving {} {}, because {}: {}", list.size(), clazz.getSimpleName(), e.getClass().getSimpleName(), e.getMessage());
+                log.error("error while saving {} {}, because {}: {}", list.size(), clazz.getSimpleName(), e.getClass().getSimpleName(), e.getMessage());
             }
         }
         return (List<EventTrace>) list;
