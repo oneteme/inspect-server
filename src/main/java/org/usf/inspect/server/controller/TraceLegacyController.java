@@ -50,6 +50,6 @@ public class TraceLegacyController {
             @RequestParam(required = false) Integer pending,
             @RequestParam(required = false) Instant end,
             @RequestBody Session[] sessions) { //maybe null !
-        return tracer.addSessions(id, pending, -1, end, null, toV4(sessions, id));
+        return tracer.addSessions(id, pending, -1, end, null, toV4(sessions));
     }
 }

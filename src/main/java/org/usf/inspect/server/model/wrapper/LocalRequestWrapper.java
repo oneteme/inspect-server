@@ -6,15 +6,12 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;
 import org.usf.inspect.core.LocalRequest;
-import org.usf.inspect.server.model.InstanceEventTrace;
 import org.usf.inspect.server.model.Wrapper;
-
-import java.util.List;
 
 @Getter
 @Setter
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = LocalRequestWrapper.class)
-public class LocalRequestWrapper extends InstanceEventTrace implements Wrapper<LocalRequest> {
+public class LocalRequestWrapper implements Wrapper<LocalRequest> {
     @Delegate
     @JsonIgnore
     private final LocalRequest request = new LocalRequest();

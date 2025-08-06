@@ -1,5 +1,8 @@
 package org.usf.inspect.server.controller;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.usf.inspect.core.*;
 import org.usf.inspect.server.model.Session;
@@ -19,29 +22,27 @@ import static java.util.Objects.nonNull;
 import static org.usf.inspect.core.SessionManager.nextId;
 
 @Slf4j
-public class RetroUtils {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class RetroUtils {
 
-    public static EventTrace[] toV4(Session[] sessions, String instanceId) {
+    public static EventTrace[] toV4(Session[] sessions) {
         List<EventTrace> traces = new ArrayList<>();
         for(Session s : sessions) {
-            s.setInstanceId(instanceId);
-            if(s instanceof MainSessionWrapper) {
+            if(s instanceof MainSessionWrapper ms) {
                 if(isNull(s.getId())) {
                     s.setId(nextId());
                 }
-                traces.add(((MainSessionWrapper) s).unwrap());
-            } else if (s instanceof RestSessionWrapper) {
+                traces.add(ms.unwrap());
+            } else if (s instanceof RestSessionWrapper rs) {
                 if(isNull(s.getId())) {
                     log.warn("RestSesstion.id is null : {}", s);
                 }
-                var stage = new HttpSessionStage();
-                stage.setName(HttpAction.PROCESS.name());
-                stage.setStart(s.getStart());
-                stage.setEnd(s.getEnd());
+                var restSession = rs.unwrap();
+                var stage = restSession.createStage(HttpAction.PROCESS, restSession.getStart(), restSession.getEnd(), null);
                 stage.setRequestId(s.getId());
-                stage.setOrder(1);
+                stage.setOrder(0);
                 traces.add(stage);
-                traces.add(((RestSessionWrapper) s).unwrap());
+                traces.add(restSession);
             }
             toV4(s.getId(), s.getDatabaseRequests(), d -> {
                 d.setCommand(d.mainCommand());
@@ -61,10 +62,7 @@ public class RetroUtils {
                 return m.getActions();
             }, traces::add);
             toV4(s.getId(), s.getRestRequests(), (e) -> {
-                var stage = new HttpRequestStage();
-                stage.setName(HttpAction.PROCESS.name());
-                stage.setStart(e.getStart());
-                stage.setEnd(e.getEnd());
+                var stage = e.unwrap().createStage(HttpAction.PROCESS, e.getStart(), e.getEnd(), null);
                 if(e.getException() != null) {
                     if(e.getException().getType() == null){
                         e.setBodyContent(e.getException().getMessage());
@@ -91,7 +89,7 @@ public class RetroUtils {
                     var inc = new AtomicInteger(0);
                     for(var s : fn.apply(o)) {
                         s.setRequestId(req.getId());
-                        s.setOrder(inc.incrementAndGet());
+                        s.setOrder(inc.getAndIncrement());
                         consumer.accept(s);
                     }
                 }

@@ -9,11 +9,12 @@ import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.*;
+import org.usf.inspect.server.model.InstanceEnvironmentUpdated;
 import org.usf.inspect.server.model.InstanceTrace;
 import org.usf.inspect.server.model.wrapper.MailWrapper;
 
 import java.sql.PreparedStatement;
-import java.time.Instant;
+import java.sql.Types;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Consumer;
@@ -64,19 +65,19 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?::json,?::json,?::json)""", ps -> {
         });
     }
 
-    public void updateInstanceEnvironment(Instant end, String instanceId){
-        template.update("update e_env_ins set dh_end = ? where id_ins = ?", ps -> {
-            ps.setTimestamp(1,fromNullableInstant(end));
-            ps.setString(2,instanceId);
+    public void updateInstanceEnvironments(List<InstanceEnvironmentUpdated> instances){
+        executeBatch("update e_env_ins set dh_end = ? where id_ins = ?", instances.iterator(), (ps, instance) -> {
+            ps.setTimestamp(1, fromNullableInstant(instance.getEnd()));
+            ps.setString(2, instance.getId());
         });
     }
 
-    public void saveInstanceTrace(InstanceTrace instanceTrace) {
-        template.update("""
+    public void saveInstanceTraces(List<InstanceTrace> instanceTraces) {
+        executeBatch("""
 insert into e_ins_trc (va_pnd, va_atp, va_ses_sze, dh_str, va_fln, cd_ins)
-values (?, ?, ?, ?, ?, ?::uuid)""", ps -> {
-            ps.setInt(1, instanceTrace.getPending());
-            ps.setInt(2, instanceTrace.getAttempts());
+values (?, ?, ?, ?, ?, ?::uuid)""", instanceTraces.iterator(), (ps, instanceTrace) -> {
+            ps.setObject(1, instanceTrace.getPending(), Types.INTEGER);
+            ps.setObject(2, instanceTrace.getAttempts(), Types.INTEGER);
             ps.setInt(3, instanceTrace.getSessionLength());
             ps.setTimestamp(4, fromNullableInstant(instanceTrace.getInstant()));
             ps.setString(5, instanceTrace.getFileName());
@@ -294,7 +295,7 @@ values(?::uuid,?,?,?,?,?,?,?,?::uuid,?,?::uuid)""", toInsert, (ps, req) -> {
             ps.setTimestamp(5,fromNullableInstant(req.getEnd()));
             ps.setString(6,req.getUser());
             ps.setString(7,req.getThreadName());
-            ps.setBoolean(8, !isNull(req.getException()));
+            ps.setBoolean(8, nonNull(req.getException()));
             ps.setString(9, req.getSessionId());
             ps.setString(10, req.getType());
             ps.setString(11, req.getInstanceId());
@@ -482,9 +483,8 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req
             Predicate<T> endCondition
     ) {
         List<String> completableMetrics = template.queryForList(
-                "select id_cmp_mtc from e_cmp_mtc where cd_typ = ?",
-                String.class,
-                type.getValue()
+                String.format("select id_cmp_mtc from e_cmp_mtc where cd_typ = %s", type.getValue()),
+                String.class
         );
         var toUpdate = items.stream().filter(s -> completableMetrics.contains(idExtractor.apply(s))).toList();
         var toInsert = items.stream().filter(s -> !completableMetrics.contains(idExtractor.apply(s))).toList();
@@ -633,24 +633,24 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req
                         } catch (JsonProcessingException e) {
                             throw new RuntimeException(e);
                         }
-                        ps.setInt(5, 1);
+                        ps.setInt(5, 0);
                         ps.setString(6, exp.getId());
                     });
         }
     }
 
-    private <T> Integer executeBatch(String sql, Iterator<T> it, ParameterizedPreparedStatementSetter<T> pss) {
-        return template.execute(sql, (PreparedStatement ps)->{
+    private <T> void executeBatch(String sql, Iterator<T> it, ParameterizedPreparedStatementSetter<T> pss) {
+        template.execute(sql, (PreparedStatement ps) -> {
             long rows = 0;
             var n = 0;
-            while(it.hasNext()) {
+            while (it.hasNext()) {
                 pss.setValues(ps, it.next());
                 ps.addBatch();
-                if(++n % BATCH_SIZE == 0) {
+                if (++n % BATCH_SIZE == 0) {
                     rows += IntStream.of(ps.executeBatch()).sum();
                 }
             }
-            if(n % BATCH_SIZE != 0) {
+            if (n % BATCH_SIZE != 0) {
                 rows += IntStream.of(ps.executeBatch()).sum();
             }
             log.debug("{} batch added, {} rows inserted", n, rows);
