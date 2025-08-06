@@ -1,46 +1,122 @@
 package org.usf.inspect.server.controller;
 
+import static java.time.Instant.now;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
+import static org.springframework.http.ResponseEntity.accepted;
+import static org.springframework.http.ResponseEntity.internalServerError;
+import static org.springframework.http.ResponseEntity.ok;
+import static org.springframework.http.ResponseEntity.status;
+import static org.usf.inspect.core.InstanceType.CLIENT;
+import static org.usf.inspect.core.SessionManager.nextId;
+import static org.usf.jquery.core.Utils.isBlank;
+
+import java.time.Instant;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.usf.inspect.core.AbstractRequest;
+import org.usf.inspect.core.AbstractSession;
+import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.core.EventTraceScheduledDispatcher;
+import org.usf.inspect.core.InstanceEnvironment;
+import org.usf.inspect.core.LogEntry;
+import org.usf.inspect.core.MachineResourceUsage;
+import org.usf.inspect.server.model.InstanceTrace;
+import org.usf.inspect.server.service.TraceService;
+
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.usf.inspect.core.InstanceEnvironment;
-import org.usf.inspect.server.model.Session;
-
-import java.time.Instant;
-
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
-import static org.usf.inspect.core.InstanceType.CLIENT;
-import static org.usf.inspect.core.SessionManager.nextId;
-import static org.usf.inspect.server.controller.RetroUtils.toV4;
 
 @Slf4j
 @CrossOrigin
 @RestController
-@RequestMapping(value = "v3/trace", produces = APPLICATION_JSON_VALUE)
+@RequestMapping(value = "v4/trace", produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 public class TraceController {
 
-    private final TraceControllerV4 traceControllerV4;
-
+    private final TraceService traceService;
+    private final EventTraceScheduledDispatcher dispatcher;
+    private final ExecutorService executor = Executors.newFixedThreadPool(15);
+    
+    private static final EventTrace[] EMTY_TRACE = new EventTrace[0]; 
+    
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<String> addInstanceEnvironment(
-            HttpServletRequest hsr,
+    		HttpServletRequest hsr,
             @RequestBody InstanceEnvironment instance) {
-        if(instance.getType() != CLIENT) {
-            instance = TraceControllerV4.update(instance, instance.getAddress(), nextId());
+        if(isBlank(instance.getName())) { //env !?
+    		return status(BAD_REQUEST).build();
+    	}
+        if(instance.getType() == CLIENT) {
+        	instance = update(instance, hsr.getRemoteAddr(), nextId());
         }
-        return traceControllerV4.addInstanceEnvironment(hsr, instance);
+        try {
+    		return dispatcher.dispatch(instance) 
+    		? ok(instance.getId())
+        	: status(SERVICE_UNAVAILABLE).build();
+        } catch(Exception e) {
+        	log.error("post instance", e);
+        	return internalServerError().build();
+        }
     }
 
     @PutMapping("instance/{id}/session")
     public ResponseEntity<Void> addSessions(
-            @PathVariable("id") String id,
-            @RequestParam(required = false, name = "pending")  Integer pending,
-            @RequestParam(required = false, name = "end") Instant end,
-            @RequestBody Session[] sessions) {
-	        return traceControllerV4.addSessions(id, pending, -1, end, null, toV4(sessions, id));
+            @PathVariable String id,
+            @RequestParam(required = false) Integer pending, //TODO Integer -> int
+            @RequestParam(required = false) Integer attempts, //TODO Integer -> int
+            @RequestParam(required = false) Instant end,
+            @RequestParam(required = false) String filename,
+            @RequestBody EventTrace[] body) { 
+        try {
+            if(end != null){
+                executor.submit(()-> traceService.updateInstance(end, id));
+            }
+            var traces = body == null ? EMTY_TRACE : body;            
+            executor.submit(()-> traceService.addInstanceTrace(new InstanceTrace(pending, attempts, traces.length, filename, now(), id))); //now !!!???
+
+            for(var e : traces) {
+                if(e instanceof AbstractRequest req) {
+                    req.setInstanceId(id);
+                } else if(e instanceof AbstractSession ses) {
+                    ses.setInstanceId(id);
+                } else if(e instanceof LogEntry ie) {
+                    ie.setInstanceId(id);
+                } else if(e instanceof MachineResourceUsage rsc) {
+                    rsc.setInstanceId(id);
+                }
+            }
+            return dispatcher.emitAll(traces) 
+                		? accepted().build()
+        				: status(SERVICE_UNAVAILABLE).build();
+        }
+        catch (Exception e) {
+            log.error("put sessions", e);
+            return internalServerError().build();
+        }
+    }
+
+    static InstanceEnvironment update(InstanceEnvironment instance, String addr, String id) {
+    	var ins = new InstanceEnvironment(id, instance.getInstant(), instance.getType(),
+                instance.getName(), instance.getVersion(), instance.getEnv(), addr,
+                instance.getOs(), instance.getRe(), instance.getUser(), instance.getBranch(),
+                instance.getHash(), instance.getCollector(),
+                instance.getAdditionalProperties(), instance.getConfiguration());
+        ins.setResource(instance.getResource());
+        ins.setEnd(instance.getEnd());
+    	return ins;
     }
 }

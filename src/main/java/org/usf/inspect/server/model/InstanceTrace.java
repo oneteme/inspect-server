@@ -10,10 +10,11 @@ import java.time.Instant;
 @Setter
 @RequiredArgsConstructor
 public class InstanceTrace {
+	
     private final Integer pending;
     private final int attempts;
     private final int sessionLength;
     private final String fileName;
     private final Instant instant;
-    private final String  instanceId;
+    private final String instanceId;
 }
