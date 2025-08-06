@@ -86,10 +86,10 @@ public final class RetroUtils {
                 req.setId(nextId());
                 consumer.accept(req);
                 if(fn != null) {
-                    var inc = new AtomicInteger(0);
+                    var inc = 0;
                     for(var s : fn.apply(o)) {
                         s.setRequestId(req.getId());
-                        s.setOrder(inc.getAndIncrement());
+                        s.setOrder(inc++);
                         consumer.accept(s);
                     }
                 }
