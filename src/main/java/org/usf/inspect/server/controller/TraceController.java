@@ -5,6 +5,7 @@ import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 import static org.springframework.http.ResponseEntity.accepted;
 import static org.springframework.http.ResponseEntity.internalServerError;
 import static org.springframework.http.ResponseEntity.ok;
@@ -56,7 +57,7 @@ public class TraceController {
     
     private static final EventTrace[] EMTY_TRACE = new EventTrace[0]; 
     
-    @PostMapping("instance")
+    @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<String> addInstanceEnvironment(
     		HttpServletRequest hsr,
             @RequestBody InstanceEnvironment instance) {
