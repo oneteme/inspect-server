@@ -98,4 +98,12 @@
 		</profile>
 	</profiles>
 	
+	<repositories>
+		<repository>
+			<id>ossrh</id>
+			<name>ossrh</name>
+			<url>https://central.sonatype.com/repository/maven-snapshots/</url>
+		</repository>
+	</repositories>
+
 </project>
