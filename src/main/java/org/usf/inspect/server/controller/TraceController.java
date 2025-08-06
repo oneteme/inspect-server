@@ -17,8 +17,10 @@ import static java.time.Instant.now;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
-import static org.springframework.http.ResponseEntity.*;
+import static org.springframework.http.ResponseEntity.accepted;
+import static org.springframework.http.ResponseEntity.internalServerError;
+import static org.springframework.http.ResponseEntity.ok;
+import static org.springframework.http.ResponseEntity.status;
 import static org.usf.inspect.core.InstanceType.CLIENT;
 import static org.usf.inspect.core.SessionManager.nextId;
 import static org.usf.jquery.core.Utils.isBlank;
@@ -34,7 +36,7 @@ public class TraceController {
 
     private static final EventTrace[] EMPTY_TRACE = new EventTrace[0];
     
-    @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
+    @PostMapping("instance")
     public ResponseEntity<String> addInstanceEnvironment(
     		HttpServletRequest hsr,
             @RequestBody InstanceEnvironment instance) {
@@ -62,7 +64,7 @@ public class TraceController {
             @RequestParam(required = false) Instant end,
             @RequestParam(required = false) String filename,
             @RequestBody EventTrace[] body) { 
-    	Instant now = now();
+    	var now = now();
         try {
             var traces = body == null ? EMPTY_TRACE : body; //avoid NullPointerException
             var copy = new EventTrace[traces.length + (end != null ? 2 : 1)];
