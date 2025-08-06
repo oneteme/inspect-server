@@ -87,10 +87,10 @@ public class TraceController {
     	Instant now = now();
         try {
             if(end != null){
-                executor.submit(()-> traceService.updateInstance(end, id));
+                executor.submit(()-> traceService.updateInstance(end, id)); //dispatch.state = PROPAGE|DISABLE
             }
-            var traces = body == null ? EMTY_TRACE : body;            
-            executor.submit(()-> traceService.addInstanceTrace(new InstanceTrace(pending, attempts, traces.length, filename, now, id)));
+            var traces = body == null ? EMTY_TRACE : body; //avoid NullPointerException   
+            executor.submit(()-> traceService.addInstanceTrace(new InstanceTrace(pending, attempts, traces.length, filename, now, id))); //dispatch.state = PROPAGE|DISABLE
 
             for(var e : traces) {
                 if(e instanceof AbstractRequest req) {
