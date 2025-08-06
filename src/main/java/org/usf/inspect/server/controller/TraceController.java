@@ -1,6 +1,7 @@
 package org.usf.inspect.server.controller;
 
 import static java.time.Instant.now;
+import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -16,7 +17,6 @@ import static org.usf.jquery.core.Utils.isBlank;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -52,7 +52,7 @@ public class TraceController {
 
     private final TraceService traceService;
     private final EventTraceScheduledDispatcher dispatcher;
-    private final ExecutorService executor = Executors.newFixedThreadPool(15);
+    private final ExecutorService executor = newFixedThreadPool(15);
     
     private static final EventTrace[] EMTY_TRACE = new EventTrace[0]; 
     
@@ -91,16 +91,15 @@ public class TraceController {
             }
             var traces = body == null ? EMTY_TRACE : body; //avoid NullPointerException   
             executor.submit(()-> traceService.addInstanceTrace(new InstanceTrace(pending, attempts, traces.length, filename, now, id))); //dispatch.state = PROPAGE|DISABLE
-
             for(var e : traces) {
                 if(e instanceof AbstractRequest req) {
                     req.setInstanceId(id);
                 } else if(e instanceof AbstractSession ses) {
                     ses.setInstanceId(id);
-                } else if(e instanceof LogEntry ie) {
-                    ie.setInstanceId(id);
-                } else if(e instanceof MachineResourceUsage rsc) {
-                    rsc.setInstanceId(id);
+                } else if(e instanceof MachineResourceUsage usg) {
+                    usg.setInstanceId(id);
+                } else if(e instanceof LogEntry ent) {
+                    ent.setInstanceId(id);
                 } //stages dosn't need instance id
             }
             return dispatcher.emitAll(traces) 
