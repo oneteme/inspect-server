@@ -5,7 +5,6 @@ import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 import static org.springframework.http.ResponseEntity.accepted;
 import static org.springframework.http.ResponseEntity.internalServerError;
 import static org.springframework.http.ResponseEntity.ok;
@@ -50,13 +49,14 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class TraceController {
 
-    private final TraceService traceService;
+	private static final ExecutorService executor = newFixedThreadPool(15);
+
+	private final TraceService traceService;
     private final EventTraceScheduledDispatcher dispatcher;
-    private final ExecutorService executor = newFixedThreadPool(15);
     
     private static final EventTrace[] EMTY_TRACE = new EventTrace[0]; 
     
-    @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
+    @PostMapping("instance")
     public ResponseEntity<String> addInstanceEnvironment(
     		HttpServletRequest hsr,
             @RequestBody InstanceEnvironment instance) {
@@ -84,7 +84,7 @@ public class TraceController {
             @RequestParam(required = false) Instant end,
             @RequestParam(required = false) String filename,
             @RequestBody EventTrace[] body) { 
-    	Instant now = now();
+    	var now = now();
         try {
             if(end != null){
                 executor.submit(()-> traceService.updateInstance(end, id)); //dispatch.state = PROPAGE|DISABLE
