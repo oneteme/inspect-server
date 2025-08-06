@@ -1,28 +1,26 @@
 package org.usf.inspect.server.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
-import org.usf.inspect.core.BasicDispatchState;
-import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.EventTraceScheduledDispatcher;
-import org.usf.inspect.server.service.RequestService;
-import org.usf.inspect.server.service.TraceService;
-
-import java.util.Collection;
-import java.util.stream.Collectors;
-
 import static java.util.Arrays.asList;
 import static java.util.Objects.nonNull;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-import static org.springframework.http.ResponseEntity.ok;
-import static org.usf.inspect.core.BasicDispatchState.*;
+import static org.usf.inspect.core.BasicDispatchState.DISABLE;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
+import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.server.service.TraceService;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @CrossOrigin
@@ -31,7 +29,6 @@ import static org.usf.inspect.core.BasicDispatchState.*;
 public class CacheController {
 
     private final TraceService service;
-    private final EventTraceScheduledDispatcher dispatcher;
     private final RestTemplate template;
     
     @Value("${spring.profiles.active:}")
@@ -39,25 +36,13 @@ public class CacheController {
 
 	private String host = null;
 
-	public CacheController(ObjectMapper mapper, TraceService service, EventTraceScheduledDispatcher dispatcher) {
+	public CacheController(ObjectMapper mapper, TraceService service) {
 		this.service = service;
-		this.dispatcher = dispatcher;
 		this.template = new RestTemplateBuilder()
 				.messageConverters(new MappingJackson2HttpMessageConverter(mapper))
                 .defaultHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                 .build();
 	}
-
-    @GetMapping
-    public ResponseEntity<Collection<EventTrace>> getCache(){
-		return ok(dispatcher.peek().collect(Collectors.toList()));
-    }
-
-    @PostMapping("state/{state}")
-    public ResponseEntity<Void> updateState(@PathVariable BasicDispatchState state){
-		dispatcher.setState(state);
-		return ok().build();
-    }
 
     @PostMapping("{env}/import")
     public int importTraceable(@PathVariable String env) {

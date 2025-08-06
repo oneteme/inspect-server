@@ -14,11 +14,13 @@ import static org.usf.inspect.core.SessionManager.nextId;
 import static org.usf.jquery.core.Utils.isBlank;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.usf.inspect.core.AbstractRequest;
 import org.usf.inspect.core.AbstractSession;
+import org.usf.inspect.core.BasicDispatchState;
 import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.core.EventTraceScheduledDispatcher;
 import org.usf.inspect.core.InstanceEnvironment;
@@ -81,12 +84,13 @@ public class TraceController {
             @RequestParam(required = false) Instant end,
             @RequestParam(required = false) String filename,
             @RequestBody EventTrace[] body) { 
+    	Instant now = now();
         try {
             if(end != null){
                 executor.submit(()-> traceService.updateInstance(end, id));
             }
             var traces = body == null ? EMTY_TRACE : body;            
-            executor.submit(()-> traceService.addInstanceTrace(new InstanceTrace(pending, attempts, traces.length, filename, now(), id))); //now !!!???
+            executor.submit(()-> traceService.addInstanceTrace(new InstanceTrace(pending, attempts, traces.length, filename, now, id)));
 
             for(var e : traces) {
                 if(e instanceof AbstractRequest req) {
@@ -97,7 +101,7 @@ public class TraceController {
                     ie.setInstanceId(id);
                 } else if(e instanceof MachineResourceUsage rsc) {
                     rsc.setInstanceId(id);
-                }
+                } //stages dosn't need instance id
             }
             return dispatcher.emitAll(traces) 
                 		? accepted().build()
@@ -107,6 +111,16 @@ public class TraceController {
             log.error("put sessions", e);
             return internalServerError().build();
         }
+    }
+    
+    @GetMapping("queue")
+    public List<EventTrace> peekQueue(){
+		return dispatcher.peek().toList();
+    }
+
+    @PostMapping("state/{state}")
+    public void updateState(@PathVariable BasicDispatchState state){
+		dispatcher.setState(state);
     }
 
     static InstanceEnvironment update(InstanceEnvironment instance, String addr, String id) {
