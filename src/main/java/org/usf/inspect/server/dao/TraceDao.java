@@ -494,7 +494,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req
 
             var updated = updateBatchExecutor.applyAsInt(toUpdate.iterator());
             if(updated != toUpdate.size()) {
-                log.warn("Not all {} {} were inserted, only {} were inserted", type.name(), toInsert.size(), updated);
+                log.warn("Not all {} {} were updated, only {} were updated", type.name(), toUpdate.size(), updated);
             }
             var completedMetrics = toUpdate.stream()
                     .filter(endCondition)
