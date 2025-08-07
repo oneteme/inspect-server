@@ -14,20 +14,15 @@ import java.util.List;
 
 @Getter
 @Setter
+@Deprecated(since = "v1.1")
 public class RestSessionWrapper implements Wrapper<RestSession>, Session {
     private final RestSession restSession = new RestSession();
 
-    @Deprecated(since = "v1.1", forRemoval = true)
     private List<RestRequestWrapper> restRequests;
-    @Deprecated(since = "v1.1", forRemoval = true)
     private List<DatabaseRequestWrapper> databaseRequests;
-    @Deprecated(since = "v1.1", forRemoval = true)
     private List<LocalRequestWrapper> localRequests;
-    @Deprecated(since = "v1.1", forRemoval = true)
     private List<FtpRequestWrapper> ftpRequests;
-    @Deprecated(since = "v1.1", forRemoval = true)
     private List<MailRequestWrapper> mailRequests;
-    @Deprecated(since = "v1.1", forRemoval = true)
     private List<DirectoryRequestWrapper> ldapRequests;
 
     private String appName;

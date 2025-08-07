@@ -5,25 +5,21 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;
+import org.usf.inspect.core.DatabaseRequestStage;
 import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.FtpRequest;
 import org.usf.inspect.server.model.Wrapper;
-
-import java.util.List;
 
 @Getter
 @Setter
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = FtpRequestWrapper.class)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = DatabaseRequestStageWrapper.class)
 @Deprecated(since = "v1.1")
-public class FtpRequestWrapper implements EventTrace, Wrapper<FtpRequest> {
+public class DatabaseRequestStageWrapper implements EventTrace, Wrapper<DatabaseRequestStage> {
     @Delegate
     @JsonIgnore
-    private final FtpRequest request = new FtpRequest();
-
-    private List<FtpRequestStageWrapper> actions;
+    private final DatabaseRequestStage stage = new DatabaseRequestStage();
 
     @Override
-    public FtpRequest unwrap() {
-        return request;
+    public DatabaseRequestStage unwrap() {
+        return stage;
     }
 }

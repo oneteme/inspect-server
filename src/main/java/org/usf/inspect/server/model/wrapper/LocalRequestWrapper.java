@@ -11,6 +11,7 @@ import org.usf.inspect.server.model.Wrapper;
 @Getter
 @Setter
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = LocalRequestWrapper.class)
+@Deprecated(since = "v1.1")
 public class LocalRequestWrapper implements Wrapper<LocalRequest> {
     @Delegate
     @JsonIgnore

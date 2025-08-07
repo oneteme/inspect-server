@@ -16,13 +16,13 @@ import java.util.List;
 @Setter
 @Getter
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = MailRequestWrapper.class)
+@Deprecated(since = "v1.1")
 public class MailRequestWrapper implements EventTrace, Wrapper<MailRequest> {
     @Delegate
     @JsonIgnore
     private final MailRequest request = new MailRequest();
 
-    @Deprecated(since = "v1.1")
-    private List<MailRequestStage> actions;
+    private List<MailRequestStageWrapper> actions;
 
     @Override
     public MailRequest unwrap() {

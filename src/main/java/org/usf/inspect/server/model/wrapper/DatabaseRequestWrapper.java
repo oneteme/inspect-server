@@ -17,17 +17,17 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = DatabaseRequestWrapper.class)
+@Deprecated(since = "v1.1")
 public final class DatabaseRequestWrapper implements EventTrace, Wrapper<DatabaseRequest> {
 
     @Delegate
     @JsonIgnore
     private final DatabaseRequest request = new DatabaseRequest();
 
-    @Deprecated(since = "v1.1")
-    private List<DatabaseRequestStage> actions;
+    private List<DatabaseRequestStageWrapper> actions;
 
     public String mainCommand(){
-        Set<SqlCommand> r = Optional.ofNullable(actions).orElseGet(Collections::emptyList).stream().map(DatabaseRequestStage::getCommands).filter(Objects::nonNull).flatMap(Arrays::stream).collect(Collectors.toSet());
+        Set<SqlCommand> r = Optional.ofNullable(actions).orElseGet(Collections::emptyList).stream().map(DatabaseRequestStageWrapper::getCommands).filter(Objects::nonNull).flatMap(Arrays::stream).collect(Collectors.toSet());
         if(r.size() == 1) {
             var s = r.iterator().next();
             if (s != null) {

@@ -13,20 +13,15 @@ import java.util.List;
 
 @Getter
 @Setter
+@Deprecated(since = "v1.1")
 public class MainSessionWrapper implements Wrapper<MainSession>, Session {
     private final MainSession mainSession = new MainSession();
 
-    @Deprecated(since = "v1.1", forRemoval = true)
     private List<RestRequestWrapper> restRequests;
-    @Deprecated(since = "v1.1", forRemoval = true)
     private List<DatabaseRequestWrapper> databaseRequests;
-    @Deprecated(since = "v1.1", forRemoval = true)
     private List<LocalRequestWrapper> localRequests;
-    @Deprecated(since = "v1.1", forRemoval = true)
     private List<FtpRequestWrapper> ftpRequests;
-    @Deprecated(since = "v1.1", forRemoval = true)
     private List<MailRequestWrapper> mailRequests;
-    @Deprecated(since = "v1.1", forRemoval = true)
     private List<DirectoryRequestWrapper> ldapRequests;
     private List<UserAction> userActions;
 

@@ -15,13 +15,13 @@ import java.util.List;
 @Getter
 @Setter
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = DirectoryRequestWrapper.class)
+@Deprecated(since = "v1.1")
 public class DirectoryRequestWrapper implements EventTrace, Wrapper<DirectoryRequest> {
     @Delegate
     @JsonIgnore
     private final DirectoryRequest request = new DirectoryRequest();
 
-    @Deprecated(since = "v1.1")
-    private List<DirectoryRequestStage> actions;
+    private List<DirectoryRequestStageWrapper> actions;
 
     @Override
     public DirectoryRequest unwrap() {

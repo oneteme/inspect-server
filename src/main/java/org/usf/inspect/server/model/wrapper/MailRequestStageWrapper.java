@@ -6,24 +6,20 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;
 import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.FtpRequest;
+import org.usf.inspect.core.MailRequestStage;
 import org.usf.inspect.server.model.Wrapper;
-
-import java.util.List;
 
 @Getter
 @Setter
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = FtpRequestWrapper.class)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = MailRequestStageWrapper.class)
 @Deprecated(since = "v1.1")
-public class FtpRequestWrapper implements EventTrace, Wrapper<FtpRequest> {
+public class MailRequestStageWrapper implements EventTrace, Wrapper<MailRequestStage> {
     @Delegate
     @JsonIgnore
-    private final FtpRequest request = new FtpRequest();
-
-    private List<FtpRequestStageWrapper> actions;
+    private MailRequestStage stage = new MailRequestStage();
 
     @Override
-    public FtpRequest unwrap() {
-        return request;
+    public MailRequestStage unwrap() {
+        return stage;
     }
 }
