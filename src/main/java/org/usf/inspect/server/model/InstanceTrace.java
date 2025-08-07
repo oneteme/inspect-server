@@ -14,7 +14,7 @@ public class InstanceTrace implements EventTrace {
 	
     private final Integer pending;
     private final Integer attempts;
-    private final int sessionLength;
+    private final int traceCount;
     private final String fileName;
     private final Instant instant;
     private final String instanceId;

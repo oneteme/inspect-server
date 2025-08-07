@@ -17,7 +17,6 @@ import java.sql.PreparedStatement;
 import java.sql.Types;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
@@ -79,7 +78,7 @@ insert into e_ins_trc (va_pnd, va_atp, va_ses_sze, dh_str, va_fln, cd_ins)
 values (?, ?, ?, ?, ?, ?::uuid)""", instanceTraces.iterator(), (ps, instanceTrace) -> {
             ps.setObject(1, instanceTrace.getPending(), Types.INTEGER);
             ps.setObject(2, instanceTrace.getAttempts(), Types.INTEGER);
-            ps.setInt(3, instanceTrace.getSessionLength());
+            ps.setInt(3, instanceTrace.getTraceCount());
             ps.setTimestamp(4, fromNullableInstant(instanceTrace.getInstant()));
             ps.setString(5, instanceTrace.getFileName());
             ps.setString(6, instanceTrace.getInstanceId());
