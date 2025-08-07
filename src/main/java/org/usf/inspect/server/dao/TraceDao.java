@@ -67,7 +67,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?::json,?::json,?::json)""", ps -> {
     }
 
     public void updateInstanceEnvironments(List<InstanceEnvironmentUpdated> instances){
-        executeBatch("update e_env_ins set dh_end = ? where id_ins = ?", instances.iterator(), (ps, instance) -> {
+        executeBatch("update e_env_ins set dh_end = ? where id_ins = ?::uuid", instances.iterator(), (ps, instance) -> {
             ps.setTimestamp(1, fromNullableInstant(instance.getEnd()));
             ps.setString(2, instance.getId());
         });
