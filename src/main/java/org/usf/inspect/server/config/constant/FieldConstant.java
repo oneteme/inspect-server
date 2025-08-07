@@ -18,7 +18,6 @@ public final class FieldConstant {
     public static final String ID_RST_RQT = "id_rst_rqt";
     public static final String ID_LDAP_RQT = "id_ldap_rqt";
     public static final String CD_LDAP_RQT = "cd_ldap_rqt";
-    public static final String ID_USR_ACN = "id_acn";
 
     public static final String ID_INS = "id_ins";
     public static final String CD_INS = "cd_ins";

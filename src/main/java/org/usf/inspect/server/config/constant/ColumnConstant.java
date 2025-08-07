@@ -271,7 +271,6 @@ public class ColumnConstant {
 
     public static String userActionColumns(TraceApiColumn column){
         return switch (column) {
-            case ID -> ID_USR_ACN;
             case TYPE -> VA_TYP;
             case NAME -> VA_NAM;
             case NODE_NAME -> VA_NDE_NAM;

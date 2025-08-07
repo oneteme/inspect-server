@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.ToIntFunction;
 import java.util.stream.IntStream;
 
 import static java.util.Objects.isNull;
@@ -477,8 +478,8 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req
     private <T> void completableProcess(
             RequestCompletableType type,
             List<T> items,
-            Consumer<Iterator<T>> updateBatchExecutor,
-            Consumer<Iterator<T>> insertBatchExecutor,
+            ToIntFunction<Iterator<T>> updateBatchExecutor,
+            ToIntFunction<Iterator<T>> insertBatchExecutor,
             Function<T, String> idExtractor,
             Predicate<T> endCondition
     ) {
@@ -491,8 +492,10 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req
 
         if(!toUpdate.isEmpty()) {
 
-            updateBatchExecutor.accept(toUpdate.iterator());
-
+            var updated = updateBatchExecutor.applyAsInt(toUpdate.iterator());
+            if(updated != toUpdate.size()) {
+                log.warn("Not all {} {} were inserted, only {} were inserted", type.name(), toInsert.size(), updated);
+            }
             var completedMetrics = toUpdate.stream()
                     .filter(endCondition)
                     .map(idExtractor).toList(); //Insertion des sessions uncompleted
@@ -509,8 +512,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req
 
         if(!toInsert.isEmpty()) {
 
-            insertBatchExecutor.accept(toInsert.iterator());
-
+            insertBatchExecutor.applyAsInt(toInsert.iterator());
             var uncompletedMetrics = toInsert.stream()
                     .filter(s -> !endCondition.test(s))
                     .map(idExtractor).toList(); //Insertion des sessions uncompleted
@@ -639,8 +641,8 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req
         }
     }
 
-    private <T> void executeBatch(String sql, Iterator<T> it, ParameterizedPreparedStatementSetter<T> pss) {
-        template.execute(sql, (PreparedStatement ps) -> {
+    private <T> int executeBatch(String sql, Iterator<T> it, ParameterizedPreparedStatementSetter<T> pss) {
+        return template.execute(sql, (PreparedStatement ps) -> {
             long rows = 0;
             var n = 0;
             while (it.hasNext()) {
