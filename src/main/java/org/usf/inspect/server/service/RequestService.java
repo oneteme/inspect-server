@@ -200,7 +200,7 @@ public class RequestService {
      * @deprecated
      */
     @Deprecated
-    public List<Session> getRestSessionsForSearch(JqueryRequestSessionFilter jsf) {
+    public List<RestSessionWrapper> getRestSessionsForSearch(JqueryRequestSessionFilter jsf) {
 
         var count = getRestSessionCountForSearch(jsf);
         if(count > requestLimit){

@@ -80,8 +80,8 @@ public final class InspectMappers {
                         rs.getInt(USED_HEAP.reference()),
                         rs.getInt(COMMITED_HEAP.reference()),
                         rs.getInt(USED_META.reference()),
-                        0,
-                        rs.getInt(COMMITED_META.reference())
+                        rs.getInt(COMMITED_META.reference()),
+                        rs.getInt(USED_DISK_SPACE.reference())
                 );
     }
 
@@ -104,14 +104,13 @@ public final class InspectMappers {
         };
     }
 
-    public static RowMapper<RestRequestWrapper> restRequestLazyMapper() {
+    public static RowMapper<RestRequest> restRequestLazyMapper() {
        return InspectMappers::createBaseRestRequest;
     }
 
-    public static RestRequestWrapper createBaseRestRequest(ResultSet rs) throws SQLException {
-        RestRequestWrapper out = new RestRequestWrapper();
+    public static RestRequest createBaseRestRequest(ResultSet rs) throws SQLException {
+        RestRequest out = new RestRequest();
         out.setId(rs.getString(ID.reference()));
-        out.setId(rs.getString(REMOTE.reference()));
         out.setProtocol(rs.getString(PROTOCOL.reference()));
         out.setHost(rs.getString(HOST.reference()));
         out.setPath(rs.getString(PATH.reference()));
@@ -125,9 +124,9 @@ public final class InspectMappers {
         return out;
     }
 
-    public static RestRequestWrapper restRequestMapperComplete(ResultSet rs) throws SQLException {
+    public static RestRequest restRequestMapperComplete(ResultSet rs) throws SQLException {
         if (rs.next()) {
-           var out = new RestRequestWrapper();
+           var out = new RestRequest();
             out.setSessionId(rs.getString(PARENT.reference()));
             out.setId(rs.getString(ID.reference()));
             out.setProtocol(rs.getString(PROTOCOL.reference()));
@@ -151,7 +150,7 @@ public final class InspectMappers {
         return null;
     }
     
-    public static RowMapper<Session> restSessionShallowMapper() {
+    public static RowMapper<RestSessionWrapper> restSessionShallowMapper() {
         return rs -> {
             RestSessionWrapper out = new RestSessionWrapper();
             out.setId(rs.getString(ID.reference()));
@@ -267,7 +266,7 @@ public final class InspectMappers {
     }
 
     private static void setMainSessionMasks(MainSessionWrapper out) {
-        if (RequestMask.JDBC.is(out.getMask())) {
+        if (RequestMask.JDBC.is(out.getRequestsMask())) {
             out.setDatabaseRequests(new ArrayList<>());
         }
         if (RequestMask.LOCAL.is(out.getMask())) {

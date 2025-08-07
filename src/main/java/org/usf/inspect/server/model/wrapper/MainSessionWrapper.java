@@ -32,7 +32,6 @@ public class MainSessionWrapper implements Wrapper<MainSession>, Session {
 
     private List<ExceptionInfo> exceptions;
 
-    private String instanceId;
     private String appName;
     private String os;
     private String re;
@@ -129,6 +128,14 @@ public class MainSessionWrapper implements Wrapper<MainSession>, Session {
 
     public void setId(String id) {
         mainSession.setId(id);
+    }
+
+    public void setInstanceId(String instanceId) {
+        mainSession.setInstanceId(instanceId);
+    }
+
+    public String getInstanceId() {
+        return mainSession.getInstanceId();
     }
 
     @Override

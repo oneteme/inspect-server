@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.usf.inspect.core.CompletableMetric;
 import org.usf.inspect.core.ExceptionInfo;
-import org.usf.inspect.core.MainSession;
 import org.usf.inspect.core.RestSession;
 import org.usf.inspect.server.model.Session;
 import org.usf.inspect.server.model.Wrapper;
@@ -31,7 +30,6 @@ public class RestSessionWrapper implements Wrapper<RestSession>, Session {
     @Deprecated(since = "v1.1", forRemoval = true)
     private List<DirectoryRequestWrapper> ldapRequests;
 
-    private String instanceId;
     private String appName;
     private String os;
     private String re;
@@ -212,6 +210,14 @@ public class RestSessionWrapper implements Wrapper<RestSession>, Session {
 
     public void setId(String id) {
         restSession.setId(id);
+    }
+
+    public void setInstanceId(String instanceId) {
+        restSession.setInstanceId(instanceId);
+    }
+
+    public String getInstanceId() {
+        return restSession.getInstanceId();
     }
 
     public Instant getEnd() {

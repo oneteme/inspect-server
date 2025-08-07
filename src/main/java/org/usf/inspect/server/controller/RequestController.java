@@ -81,7 +81,7 @@ public class RequestController {
     }
 
     @GetMapping("request/rest/{idRequest}")
-    public ResponseEntity<RestRequestWrapper> getRestRequestById (
+    public ResponseEntity<RestRequest> getRestRequestById (
             @QueryRequestFilter(view = "rest_request",
                                 column = "id,protocol,auth,host,port,path,query,method,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,remote,parent,exception.err_type,exception.err_msg",
                                 join = "exception",
@@ -159,7 +159,7 @@ public class RequestController {
 
 
     @GetMapping("session/rest")
-    public List<Session> getRestSessions(
+    public List<RestSessionWrapper> getRestSessions(
             @RequestParam(required = false, name = "method") String[] methods,
             @RequestParam(required = false, name = "protocol") String[] protocols,
             @RequestParam(required = false, name = "host") String[] hosts,
@@ -175,7 +175,7 @@ public class RequestController {
             @RequestParam(required = false, name = "user") String[] users,
             @RequestParam(required = false, name = "appname") String[] appNames,
             @RequestParam(required = false, name = "env") String[] environments,
-            @RequestParam(required = false, name = "rangestatus") String [] rangestatus)  {
+            @RequestParam(required = false, name = "rangestatus") String[] rangestatus)  {
 
         JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, appNames, environments, users, start, end, methods, protocols, hosts, ports, medias, auths, status, apiNames, path, query,rangestatus);
         return requestService.getRestSessionsForSearch(jsf);
@@ -271,7 +271,7 @@ public class RequestController {
     }
 
     @GetMapping("session/{idSession}/request/rest")
-    public ResponseEntity<List<RestRequestWrapper>>  getRestRequests(
+    public ResponseEntity<List<RestRequest>>  getRestRequests(
             @QueryRequestFilter(
                 view = "rest_request",
                 column = "id,protocol,host,path,query,method,status,start,end,thread,remote,parent,exception.err_type,exception.err_msg",

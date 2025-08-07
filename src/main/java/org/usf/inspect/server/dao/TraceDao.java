@@ -184,7 +184,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid)""", toInse
     public void saveMainSessions(List<MainSession> sessions) {
         completableProcess(MAIN_SESSION, sessions, toUpdate ->
                 executeBatch("""
-update e_main_ses set va_nme = ?, va_usr = ?, dh_str = ?, dh_end = ?, va_typ = ?, va_lct = ?, va_thr = ?, va_err_typ = ?, va_err_msg = ?, va_msk = ?
+update e_main_ses set va_nam = ?, va_usr = ?, dh_str = ?, dh_end = ?, va_typ = ?, va_lct = ?, va_thr = ?, va_err_typ = ?, va_err_msg = ?, va_msk = ?
 where id_ses = ?::uuid""", toUpdate, (ps, ses) -> {
             var exp = ses.getException();
             ps.setString(1, ses.getName());
