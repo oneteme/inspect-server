@@ -68,7 +68,7 @@ public class TraceController {
             @RequestBody EventTrace[] body) {
     	var now = now();
     	try {
-    		var traces = nonNull(body) ? EMPTY_TRACE : body; //avoid NullPointerException
+    		var traces = nonNull(body) ? body : EMPTY_TRACE ; //avoid NullPointerException
     		var copy = new EventTrace[traces.length + (nonNull(end) ? 2 : 1)];
     		arraycopy(traces, 0, copy, 0, traces.length);
     		if(nonNull(end)){
