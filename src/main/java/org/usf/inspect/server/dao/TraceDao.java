@@ -498,7 +498,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req
                     .map(idExtractor).toList(); //Insertion des sessions uncompleted
             if(!completedMetrics.isEmpty()) {
                 var inClause = "?::uuid" + ", ?::uuid".repeat(completedMetrics.size() - 1);
-                template.update(String.format("delete from e_cmp_mtc where id in (%s) and cd_typ = %s", inClause, type.getValue()), ps -> {
+                template.update(String.format("delete from e_cmp_mtc where id_cmp_mtc in (%s) and cd_typ = %s", inClause, type.getValue()), ps -> {
                     var n = 1;
                     for (String cmpMetric : completedMetrics) {
                         ps.setString(n++, cmpMetric);
