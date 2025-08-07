@@ -102,7 +102,7 @@
 		<repository>
 			<id>ossrh</id>
 			<name>ossrh</name>
-			<url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+			<url>https://central.sonatype.com/repository/maven-snapshots/</url>
 		</repository>
 	</repositories>
 

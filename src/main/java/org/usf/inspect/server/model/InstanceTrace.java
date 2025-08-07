@@ -8,7 +8,7 @@ import org.usf.inspect.core.EventTrace;
 import java.time.Instant;
 
 @Getter
-@Setter
+@Setter //immutable !
 @RequiredArgsConstructor
 public class InstanceTrace implements EventTrace {
 	

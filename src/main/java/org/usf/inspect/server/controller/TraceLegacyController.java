@@ -45,7 +45,7 @@ public class TraceLegacyController {
     }
 
     @PutMapping("instance/{id}/session")
-    public ResponseEntity<Void> addSessions(
+    public ResponseEntity<Object> addSessions(
             @PathVariable String id,
             @RequestParam(required = false) Integer pending,
             @RequestParam(required = false) Instant end,
