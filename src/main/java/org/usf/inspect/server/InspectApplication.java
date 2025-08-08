@@ -67,7 +67,7 @@ public class InspectApplication {
 	@Bean
 	@Primary
 	@ConfigurationProperties(prefix = "inspect.server")
-	InspectServerConfiguration inspectConfigurationProperties() {
+	InspectServerConfiguration serverConfigurationProperties() {
 		return new InspectServerConfiguration();
 	}
 
