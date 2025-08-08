@@ -2,19 +2,16 @@ package org.usf.inspect.server.controller;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.usf.inspect.core.*;
 import org.usf.inspect.server.model.Session;
 import org.usf.inspect.server.model.Wrapper;
-import org.usf.inspect.server.model.wrapper.HttpRequestStageWrapper;
 import org.usf.inspect.server.model.wrapper.MainSessionWrapper;
 import org.usf.inspect.server.model.wrapper.RestSessionWrapper;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -63,10 +60,7 @@ public final class RetroUtils {
                 return m.getActions();
             }, traces::add);
             toV4(s.getId(), s.getRestRequests(), (e) -> {
-                var stage = new HttpRequestStageWrapper();
-                stage.setName(HttpAction.PROCESS.name());
-                stage.setStart(e.getStart());
-                stage.setEnd(e.getEnd());
+                var stage = e.createStage(HttpAction.PROCESS, e.getStart(), e.getEnd(), null);
                 if(e.getException() != null) {
                     if(e.getException().getType() == null){
                         e.setBodyContent(e.getException().getMessage());
@@ -82,7 +76,7 @@ public final class RetroUtils {
         return traces.toArray(EventTrace[]::new);
     }
 
-    private static <T extends Wrapper<? extends AbstractRequest>, U extends Wrapper<? extends AbstractStage> & EventTrace> void toV4(String sessionId, Collection<T> requests, Function<T, List<U>> fn, Consumer<EventTrace> consumer) {
+    private static <T extends Wrapper<? extends AbstractRequest>, U extends AbstractStage> void toV4(String sessionId, Collection<T> requests, Function<T, List<U>> fn, Consumer<EventTrace> consumer) {
         if(requests != null && !requests.isEmpty()) {
             for(var o : requests) {
                 var req = o.unwrap();
@@ -92,18 +86,17 @@ public final class RetroUtils {
                 if(fn != null) {
                     var inc = 0;
                     for(var s : fn.apply(o)) {
-                        var stage = s.unwrap();
-                        stage.setRequestId(req.getId());
-                        stage.setOrder(inc++);
-                        consumer.accept(stage);
+                        s.setRequestId(req.getId());
+                        s.setOrder(inc++);
+                        consumer.accept(s);
                     }
                 }
             }
         }
     }
 
-    private static <T extends Wrapper<? extends AbstractStage>> boolean isFailed(List<T> stage) {
-        return stage != null && stage.stream().map(s -> s.unwrap()).anyMatch(a -> nonNull(a.getException()));
+    private static <T extends AbstractStage> boolean isFailed(List<T> stage) {
+        return stage != null && stage.stream().anyMatch(a -> nonNull(a.getException()));
     }
 }
 

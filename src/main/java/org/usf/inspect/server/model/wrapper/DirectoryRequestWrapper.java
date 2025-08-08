@@ -21,7 +21,7 @@ public class DirectoryRequestWrapper implements EventTrace, Wrapper<DirectoryReq
     @JsonIgnore
     private final DirectoryRequest request = new DirectoryRequest();
 
-    private List<DirectoryRequestStageWrapper> actions;
+    private List<DirectoryRequestStage> actions;
 
     @Override
     public DirectoryRequest unwrap() {

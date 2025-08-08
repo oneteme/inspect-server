@@ -7,6 +7,7 @@ import lombok.Setter;
 import lombok.experimental.Delegate;
 import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.core.FtpRequest;
+import org.usf.inspect.core.FtpRequestStage;
 import org.usf.inspect.server.model.Wrapper;
 
 import java.util.List;
@@ -20,7 +21,7 @@ public class FtpRequestWrapper implements EventTrace, Wrapper<FtpRequest> {
     @JsonIgnore
     private final FtpRequest request = new FtpRequest();
 
-    private List<FtpRequestStageWrapper> actions;
+    private List<FtpRequestStage> actions;
 
     @Override
     public FtpRequest unwrap() {

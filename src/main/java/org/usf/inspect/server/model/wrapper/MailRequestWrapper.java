@@ -22,7 +22,7 @@ public class MailRequestWrapper implements EventTrace, Wrapper<MailRequest> {
     @JsonIgnore
     private final MailRequest request = new MailRequest();
 
-    private List<MailRequestStageWrapper> actions;
+    private List<MailRequestStage> actions;
 
     @Override
     public MailRequest unwrap() {

@@ -24,10 +24,10 @@ public final class DatabaseRequestWrapper implements EventTrace, Wrapper<Databas
     @JsonIgnore
     private final DatabaseRequest request = new DatabaseRequest();
 
-    private List<DatabaseRequestStageWrapper> actions;
+    private List<DatabaseRequestStage> actions;
 
     public String mainCommand(){
-        Set<SqlCommand> r = Optional.ofNullable(actions).orElseGet(Collections::emptyList).stream().map(DatabaseRequestStageWrapper::getCommands).filter(Objects::nonNull).flatMap(Arrays::stream).collect(Collectors.toSet());
+        Set<SqlCommand> r = Optional.ofNullable(actions).orElseGet(Collections::emptyList).stream().map(DatabaseRequestStage::getCommands).filter(Objects::nonNull).flatMap(Arrays::stream).collect(Collectors.toSet());
         if(r.size() == 1) {
             var s = r.iterator().next();
             if (s != null) {
