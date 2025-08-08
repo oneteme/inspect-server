@@ -1,257 +1,275 @@
--- NAMING RULE : [A-Z]{2}_[A-Z]{3}(_[A-Z]{3})* (ENGLISH)
-
-CREATE TABLE IF NOT EXISTS E_MAIN_SES ( --E_MAIN_SES
-	ID_SES UUID,
-	VA_TYP VARCHAR,  --VA_TYP
-	VA_NAM VARCHAR, --VA_NME
-	VA_USR VARCHAR,
-	DH_STR TIMESTAMP(6), --DH_STR
-	DH_END TIMESTAMP(6), --DH_END
-	VA_LCT VARCHAR,  --VA_LCT
-	VA_THR VARCHAR, --VA_THR
-	VA_ERR_TYP VARCHAR,  --VA_ERR_TYP
-	VA_ERR_MSG VARCHAR,
-	VA_MSK INT,
-	CD_INS UUID --CD_INS
+CREATE TABLE IF NOT EXISTS e_main_ses (
+    id_ses UUID,
+    va_typ varchar,
+    va_nam varchar,
+    va_usr varchar,
+    dh_str timestamp(6),
+    dh_end timestamp(6),
+    va_lct varchar,
+    va_thr varchar,
+    va_err_typ varchar,
+    va_err_msg varchar,
+    va_msk int,
+    cd_ins UUID
 );
 
-CREATE TABLE IF NOT EXISTS E_RST_SES ( --E_RST_SES
-	ID_SES UUID,
-	VA_MTH VARCHAR,
-	VA_PCL VARCHAR, --VA_PCL
-	VA_HST VARCHAR,
-	CD_PRT INT,
-	VA_PTH VARCHAR,
-	VA_QRY VARCHAR,
-	VA_CNT_TYP VARCHAR,
-	VA_ATH_SCH VARCHAR, --VA_ATH_SCH
-	CD_STT INT,
-	VA_I_SZE BIGINT,
-	VA_O_SZE BIGINT,
-	VA_I_CNT_ENC VARCHAR,
-	VA_O_CNT_ENC VARCHAR,
-	DH_STR TIMESTAMP(6), --DH_STR
-	DH_END TIMESTAMP(6), --DH_END
-    VA_BDY_CNT VARCHAR,
-	VA_THR VARCHAR,  --VA_THR
-	VA_ERR_TYP VARCHAR, --VA_ERR_TYP
-	VA_ERR_MSG VARCHAR,
-	VA_NAM VARCHAR, --VA_NAM
-	VA_USR VARCHAR,
-	VA_USR_AGT VARCHAR,
-	VA_CCH_CTR VARCHAR,
-	VA_MSK INT,
-	CD_INS UUID --CD_INS
+CREATE TABLE IF NOT EXISTS e_rst_ses (
+    id_ses UUID,
+    va_mth varchar,
+    va_pcl varchar,
+    va_hst varchar,
+    cd_prt int,
+    va_pth varchar,
+    va_qry varchar,
+    va_cnt_typ varchar,
+    va_ath_sch varchar,
+    cd_stt int,
+    va_i_sze bigint,
+    va_o_sze bigint,
+    va_i_cnt_enc varchar,
+    va_o_cnt_enc varchar,
+    dh_str timestamp(6),
+    dh_end timestamp(6),
+    va_bdy_cnt varchar,
+    va_thr varchar,
+    va_err_typ varchar,
+    va_err_msg varchar,
+    va_nam varchar,
+    va_usr varchar,
+    va_usr_agt varchar,
+    va_cch_ctr varchar,
+    va_msk int,
+    cd_ins UUID
 );
 
-CREATE TABLE IF NOT EXISTS E_RST_RQT ( --E_RST_RQT
-    ID_RST_RQT UUID, -- INDEX
-	VA_MTH VARCHAR,
-	VA_PCL VARCHAR,  --VA_PCL
-	VA_HST VARCHAR,
-	CD_PRT INT,
-	VA_PTH VARCHAR,
-	VA_QRY VARCHAR,
-	VA_CNT_TYP VARCHAR,
-	VA_ATH_SCH VARCHAR, --VA_ATH_SCH : SCHEME
-	CD_STT INT,
-	VA_I_SZE BIGINT,
-	VA_O_SZE BIGINT,
-	VA_I_CNT_ENC VARCHAR,
-	VA_O_CNT_ENC VARCHAR,
-	DH_STR TIMESTAMP(6),   --DH_STR
-	DH_END TIMESTAMP(6),   --DH_END
-    VA_BDY_CNT VARCHAR,
-	VA_THR VARCHAR,   --VA_THR
-	CD_PRN_SES UUID, -- PARENT -- INDEX
-	CD_RMT_SES UUID, -- NULL  --CD_RMT_SES : REMOTE SESSION -- INDEX
-    CD_INS UUID
-);
-CREATE TABLE IF NOT EXISTS E_RST_STG (
-    VA_NAM VARCHAR,
-    DH_STR TIMESTAMP(6),
-    DH_END TIMESTAMP(6),
-    CD_ORD SMALLINT,
-    CD_RST_RQT UUID
+CREATE TABLE IF NOT EXISTS e_rst_ses_stg (
+    va_nam varchar,
+    dh_str timestamp(6),
+    dh_end timestamp(6),
+    cd_ord smallint,
+    cd_prn_ses UUID
 );
 
-CREATE TABLE IF NOT EXISTS E_SMTP_RQT (
-    ID_SMTP_RQT UUID,
-    VA_HST VARCHAR,
-    CD_PRT INT,
-    VA_USR VARCHAR,
-    DH_STR TIMESTAMP(6),
-    DH_END TIMESTAMP(6),
-    VA_THR VARCHAR,
-    VA_FAIL BOOLEAN,
-    CD_PRN_SES UUID, -- INDEX
-    CD_INS UUID
+CREATE TABLE IF NOT EXISTS e_rst_rqt (
+    id_rst_rqt UUID,
+    va_mth varchar,
+    va_pcl varchar,
+    va_hst varchar,
+    cd_prt int,
+    va_pth varchar,
+    va_qry varchar,
+    va_cnt_typ varchar,
+    va_ath_sch varchar,
+    cd_stt int,
+    va_i_sze bigint,
+    va_o_sze bigint,
+    va_i_cnt_enc varchar,
+    va_o_cnt_enc varchar,
+    dh_str timestamp(6),
+    dh_end timestamp(6),
+    va_bdy_cnt varchar,
+    va_thr varchar,
+    cd_prn_ses UUID,
+    cd_ins UUID
 );
 
-CREATE TABLE IF NOT EXISTS E_SMTP_MAIL (
-    VA_SBJ VARCHAR,
-    VA_CNT_TYP VARCHAR,
-    VA_FRM VARCHAR,
-    VA_RCP VARCHAR,
-    VA_RPL VARCHAR,
-    VA_SZE BIGINT,
-    CD_SMTP_RQT UUID -- INDEX
+CREATE TABLE IF NOT EXISTS e_rst_rqt_stg (
+    va_nam varchar,
+    dh_str timestamp(6),
+    dh_end timestamp(6),
+    cd_ord smallint,
+    cd_rst_rqt UUID
 );
 
-CREATE TABLE IF NOT EXISTS E_SMTP_STG (
-	VA_NAM VARCHAR,
-	DH_STR TIMESTAMP(6),
-	DH_END TIMESTAMP(6),
-	CD_ORD INT,
-	CD_SMTP_RQT UUID -- INDEX
+CREATE TABLE IF NOT EXISTS e_smtp_rqt (
+    id_smtp_rqt UUID,
+    va_hst varchar,
+    cd_prt int,
+    va_usr varchar,
+    dh_str timestamp(6),
+    dh_end timestamp(6),
+    va_thr varchar,
+    va_fail boolean,
+    cd_prn_ses UUID,
+    cd_ins UUID
 );
 
-CREATE TABLE IF NOT EXISTS E_FTP_RQT (
-    ID_FTP_RQT UUID,
-    VA_HST VARCHAR,
-    CD_PRT INT,
-    VA_PCL VARCHAR,
-    VA_SRV_VRS VARCHAR,
-    VA_CLT_VRS VARCHAR,
-    VA_USR VARCHAR,
-    DH_STR TIMESTAMP(6),
-    DH_END TIMESTAMP(6),
-    VA_THR VARCHAR,
-    VA_FAIL BOOLEAN,
-    CD_PRN_SES UUID, -- INDEX
-    CD_INS UUID
+CREATE TABLE IF NOT EXISTS e_smtp_stg (
+    va_nam varchar,
+    dh_str timestamp(6),
+    dh_end timestamp(6),
+    cd_ord smallint,
+    cd_smtp_rqt UUID
 );
 
-CREATE TABLE IF NOT EXISTS E_FTP_STG (
-	VA_NAM VARCHAR,
-	DH_STR TIMESTAMP(6),
-	DH_END TIMESTAMP(6),
-	VA_ARG VARCHAR,
-	CD_ORD SMALLINT,
-	CD_FTP_RQT UUID -- INDEX
+CREATE TABLE IF NOT EXISTS e_smtp_mail (
+    va_sbj varchar,
+    va_cnt_typ varchar,
+    va_frm varchar,
+    va_rcp varchar,
+    va_rpl varchar,
+    va_sze bigint,
+    cd_smtp_rqt UUID
 );
 
-CREATE TABLE IF NOT EXISTS E_LDAP_RQT (
-    ID_LDAP_RQT UUID,
-    VA_HST VARCHAR,
-    CD_PRT INT,
-    VA_PCL VARCHAR,
-    VA_USR VARCHAR,
-    DH_STR TIMESTAMP(6),
-    DH_END TIMESTAMP(6),
-    VA_THR VARCHAR,
-    VA_FAIL BOOLEAN,
-    CD_PRN_SES UUID, -- INDEX
-    CD_INS UUID
+CREATE TABLE IF NOT EXISTS e_ftp_rqt (
+    id_ftp_rqt UUID,
+    va_hst varchar,
+    cd_prt int,
+    va_pcl varchar,
+    va_srv_vrs varchar,
+    va_clt_vrs varchar,
+    va_usr varchar,
+    dh_str timestamp(6),
+    dh_end timestamp(6),
+    va_thr varchar,
+    va_fail boolean,
+    cd_prn_ses UUID, -- index
+    cd_ins UUID
 );
 
-CREATE TABLE IF NOT EXISTS E_LDAP_STG (
-	VA_NAM VARCHAR,
-	DH_STR TIMESTAMP(6),
-	DH_END TIMESTAMP(6),
-	VA_ARG VARCHAR,
-	CD_ORD SMALLINT,
-	CD_LDAP_RQT UUID -- INDEX
+CREATE TABLE IF NOT EXISTS e_ftp_stg (
+    va_nam varchar,
+    dh_str timestamp(6),
+    dh_end timestamp(6),
+    va_arg varchar,
+    cd_ord smallint,
+    cd_ftp_rqt UUID -- index
 );
 
-CREATE TABLE IF NOT EXISTS E_DTB_RQT ( --E_DTB_RQT
-	ID_DTB_RQT UUID, --ID_DTB_RQT
-	VA_HST VARCHAR,
-	CD_PRT INT,
-	VA_NAM VARCHAR,  --VA_DTB
-    VA_SCH VARCHAR,
-	DH_STR TIMESTAMP(6), --DH_STR
-	DH_END TIMESTAMP(6), --DH_END
-	VA_USR VARCHAR,
-	VA_THR VARCHAR, --VA_THR
-	VA_DRV VARCHAR,
-	VA_PRD_NAM VARCHAR, --VA_PRD_NAM
-	VA_PRD_VRS VARCHAR, --VA_PRD_VRS
-	VA_CMD VARCHAR,
-    VA_FAIL BOOLEAN, --VA_CPT
-	CD_PRN_SES UUID, -- INDEX
-    CD_INS UUID
+CREATE TABLE IF NOT EXISTS e_ldap_rqt (
+    id_ldap_rqt UUID,
+    va_hst varchar,
+    cd_prt int,
+    va_pcl varchar,
+    va_usr varchar,
+    dh_str timestamp(6),
+    dh_end timestamp(6),
+    va_thr varchar,
+    va_fail boolean,
+    cd_prn_ses UUID, -- index
+    cd_ins UUID
 );
 
-CREATE TABLE IF NOT EXISTS E_DTB_STG ( -- E_DTB_STG
-	VA_NAM VARCHAR, --VA_NAME
-	DH_STR TIMESTAMP(6),   --DH_STR
-	DH_END TIMESTAMP(6),   --DH_END
-	VA_CNT VARCHAR, --VA_CNT
-    VA_CMD VARCHAR,
-	CD_ORD SMALLINT,
-	CD_DTB_RQT UUID --CD_DTB_RQT -- INDEX
+CREATE TABLE IF NOT EXISTS e_ldap_stg (
+    va_nam varchar,
+    dh_str timestamp(6),
+    dh_end timestamp(6),
+    va_arg varchar,
+    cd_ord smallint,
+    cd_ldap_rqt UUID
 );
 
-CREATE TABLE IF NOT EXISTS E_LCL_RQT ( --E_LCL_RQS
-    ID_LCL_RQT UUID,
-    VA_TYP VARCHAR,
-    VA_NAM VARCHAR,  --VA_NAM
-    VA_LCT VARCHAR,   --VA_LCT
-    DH_STR TIMESTAMP(6),  --DH_STR
-    DH_END TIMESTAMP(6),  --DH_END
-    VA_USR VARCHAR,
-    VA_THR VARCHAR,  --VA_THR
-    VA_FAIL BOOLEAN,
-    CD_PRN_SES UUID, -- INDEX
-    CD_INS UUID
+CREATE TABLE IF NOT EXISTS e_dtb_rqt (
+    id_dtb_rqt UUID,
+    va_she varchar,
+    va_hst varchar,
+    cd_prt int,
+    va_nam varchar,
+    va_sha varchar,
+    dh_str timestamp(6),
+    dh_end timestamp(6),
+    va_usr varchar,
+    va_thr varchar,
+    va_drv varchar,
+    va_prd_nam varchar,
+    va_prd_vrs varchar,
+    va_cmd varchar,
+    va_fail boolean,
+    cd_prn_ses UUID,
+    cd_ins UUID
 );
 
-CREATE TABLE IF NOT EXISTS E_EXC_INF (
-    VA_TYP VARCHAR, -- INDEX
-    VA_ERR_TYP VARCHAR,
-    VA_ERR_MSG VARCHAR,
-    CD_ORD SMALLINT,
-    CD_RQT UUID -- INDEX
+CREATE TABLE IF NOT EXISTS e_dtb_stg (
+    va_nam varchar,
+    dh_str timestamp(6),
+    dh_end timestamp(6),
+    va_cnt varchar,
+    va_cmd varchar,
+    cd_ord smallint,
+    cd_dtb_rqt UUID
 );
 
-CREATE TABLE IF NOT EXISTS E_ENV_INS (
-    ID_INS UUID, --ID_INS -- INDEX
-    VA_TYP VARCHAR,
-    DH_STR TIMESTAMP(6), --DH_STR
-    DH_END TIMESTAMP(6),
-    VA_APP VARCHAR, --VA_APP
-    VA_VRS VARCHAR,
-    VA_ADR VARCHAR, --VA_ADR
-    VA_ENV VARCHAR,
-    VA_OS VARCHAR,
-    VA_RE VARCHAR,
-    VA_USR VARCHAR,
-    VA_CLR VARCHAR, --VA_CLT
-    VA_BRCH VARCHAR,
-    VA_HSH VARCHAR
+CREATE TABLE IF NOT EXISTS e_lcl_rqt (
+    id_lcl_rqt UUID,
+    va_typ varchar,
+    va_nam varchar,
+    va_lct varchar,
+    dh_str timestamp(6),
+    dh_end timestamp(6),
+    va_usr varchar,
+    va_thr varchar,
+    va_fail boolean,
+    cd_prn_ses UUID,
+    cd_ins UUID
 );
 
-CREATE TABLE IF NOT EXISTS E_USR_ACN (
-    ID_ACN BIGINT,
-    VA_TYP VARCHAR,
-    DH_STR TIMESTAMP(6),
-    VA_NAM VARCHAR,
-    VA_NDE_NAM VARCHAR,
-    CD_PRN_SES VARCHAR
+CREATE TABLE IF NOT EXISTS e_exc_inf (
+    va_typ varchar,
+    va_err_typ varchar,
+    va_err_msg varchar,
+    va_stk json,
+    cd_ord smallint,
+    cd_rqt UUID
 );
 
-CREATE TABLE IF NOT EXISTS E_INS_TRC (
-    VA_PND INT,
-    VA_ATP INT,
-    VA_SES_SZE INT,
-    DH_STR TIMESTAMP(6),
-    CD_INS UUID
+CREATE TABLE IF NOT EXISTS e_env_ins (
+    id_ins UUID,
+    va_typ varchar,
+    dh_str timestamp(6),
+    dh_end timestamp(6),
+    va_app varchar,
+    va_vrs varchar,
+    va_adr varchar,
+    va_env varchar,
+    va_os varchar,
+    va_re varchar,
+    va_usr varchar,
+    va_clr varchar,
+    va_brch varchar,
+    va_hsh varchar,
+    va_cnf json,
+    va_rsr json,
+    va_add_prp json
 );
 
-CREATE TABLE IF NOT EXISTS E_LOG_ENT (
-    DH_STR TIMESTAMP(6),
-    VA_LVL VARCHAR,
-    VA_MSG VARCHAR,
-    CD_SES UUID,
-    CD_INS UUID
+CREATE TABLE IF NOT EXISTS e_usr_acn (
+    va_typ varchar,
+    dh_str timestamp(6),
+    va_nam varchar,
+    va_nde_nam varchar,
+    cd_prn_ses uuid
 );
 
-CREATE TABLE IF NOT EXISTS E_RSC_USG (
-    DH_STR TIMESTAMP(6),
-    VA_LOW_HEP INT,
-    VA_HIG_HEP INT,
-    VA_LOW_MET INT,
-    VA_HIG_MET INT,
-    CD_INS UUID
+create table if not exists e_ins_trc (
+    va_pnd int,
+    va_atp int,
+    va_ses_sze int,
+    dh_str timestamp(6),
+    va_fln varchar,
+    cd_ins uuid
+);
+
+create table if not exists e_log_ent (
+    dh_str timestamp(6),
+    va_lvl varchar,
+    va_msg varchar,
+    va_stk json,
+    cd_prn_ses uuid,
+    cd_ins uuid
+);
+
+create table if not exists e_rsc_usg (
+    dh_str timestamp(6),
+    va_usd_hep int,
+    va_cmt_hep int,
+    va_usd_met int,
+    va_cmt_met int,
+    va_usd_dsk int,
+    cd_ins uuid
+);
+
+create table if not exists e_cmp_mtc (
+    id_cmp_mtc uuid,
+    cd_typ smallint
 );

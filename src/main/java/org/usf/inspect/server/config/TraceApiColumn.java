@@ -1,7 +1,6 @@
 package org.usf.inspect.server.config;
 
 import static java.util.Objects.nonNull;
-import static org.usf.inspect.server.config.TraceApiTable.USER_ACTION;
 
 import org.usf.inspect.server.config.constant.FilterConstant;
 import org.usf.jquery.core.ComparisonExpression;
@@ -17,15 +16,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum TraceApiColumn implements ColumnDecorator {
 
-    ID("id"){
-        @Override
-        public JDBCType type(ViewDecorator vd) {
-            if(vd == USER_ACTION) {
-                return null;
-            }
-            return JDBCType.VARCHAR;
-        }
-    },
+    ID("id"),
     METHOD("method"), //METHOD
     PROTOCOL("protocol"),
     HOST("host"),
@@ -67,6 +58,7 @@ public enum TraceApiColumn implements ColumnDecorator {
     ERR_MSG("errorMessage"),
     DB("db"),
     SCHEMA("schema"),
+    SCHEME("scheme"),
     DRIVER("driver"),
     DB_NAME("dbName"),
     DB_VERSION("dbVersion"),
@@ -94,6 +86,21 @@ public enum TraceApiColumn implements ColumnDecorator {
     COLLECTOR("collector"),
     BRANCH("branch"),
     HASH("hash"),
+    ADDITIONAL_PROPERTIES("additionalProperties"),
+    CONFIGURATION("configuration"),
+    RESOURCE("resource"),
+    PENDING("pending"),
+    ATTEMPTS("attempts"),
+    SIZE_SESSION("sizeSession"),
+    LOG_LEVEL("logLevel"),
+    LOG_MESSAGE("logMessage"),
+    STACKTRACE("stacktrace"),
+    USED_HEAP("usedHeap"),
+    COMMITED_HEAP("commitedHeap"),
+    USED_META("usedMeta"),
+    COMMITED_META("commitedMeta"),
+    USED_DISK_SPACE("usedDiskSpace"),
+    FILENAME("filename"),
     //---
     ELAPSEDTIME("elapsedtime", FilterConstant::elapsedtime2, Builder.multiArgsCriteria(FilterConstant::elapsedTimeExpressions)),
     COUNT_SLOWEST("elapsedTimeSlowest", FilterConstant::elapsedTimeVerySlow),

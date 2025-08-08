@@ -31,9 +31,12 @@ public enum TraceApiTable implements ViewDecorator {
     LOCAL_REQUEST(ColumnConstant::localRequestColumns, JoinConstant::localRequestJoins),
     EXCEPTION(ColumnConstant::exceptionColumns, JoinConstant::exceptionJoins),
     INSTANCE(ColumnConstant::instanceColumns, JoinConstant::instanceJoins),
-	USER_ACTION(ColumnConstant::userActionColumns, JoinConstant::userActionJoins);
+	USER_ACTION(ColumnConstant::userActionColumns, JoinConstant::userActionJoins),
+	INSTANCE_TRACE(ColumnConstant::instanceTraceColumns),
+	LOG_ENTRY(ColumnConstant::logEntryColumns),
+	RESOURCE_USAGE(ColumnConstant::resourceUsageColumns);
 
-    @NonNull
+	@NonNull
     private final Function<TraceApiColumn, String> columnMap;
 	private final Function<String, Builder<ViewDecorator, ViewJoin[]>> builder;
 

@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 public final class FieldConstant {
    
 	public static final String ID_SES = "id_ses";
-    public static final String CD_RMT_SES = "cd_rmt_ses";
     public static final String CD_PRN_SES = "cd_prn_ses";
     public static final String CD_DTB_RQT = "cd_dtb_rqt";
     public static final String ID_DTB_RQT = "id_dtb_rqt";
@@ -19,7 +18,6 @@ public final class FieldConstant {
     public static final String ID_RST_RQT = "id_rst_rqt";
     public static final String ID_LDAP_RQT = "id_ldap_rqt";
     public static final String CD_LDAP_RQT = "cd_ldap_rqt";
-    public static final String ID_USR_ACN = "id_acn";
 
     public static final String ID_INS = "id_ins";
     public static final String CD_INS = "cd_ins";
@@ -34,14 +32,14 @@ public final class FieldConstant {
     public static final String VA_CNT_TYP = "va_cnt_typ";
     public static final String VA_ATH_SCH = "va_ath_sch";
     public static final String CD_STT = "cd_stt";
-    public static final String VA_STT = "va_stt";
     public static final String VA_I_SZE = "va_i_sze";
     public static final String VA_O_SZE = "va_o_sze";
     public static final String VA_I_CNT_ENC = "va_i_cnt_enc";
     public static final String VA_O_CNT_ENC = "va_o_cnt_enc";
     public static final String VA_NAM = "va_nam";
     public static final String VA_NDE_NAM = "va_nde_nam";
-    public static final String VA_SCH = "va_sch";
+    public static final String VA_SHA = "va_sha";
+    public static final String VA_SHE = "va_she";
     public static final String DH_STR = "dh_str";
     public static final String DH_END = "dh_end";
     public static final String VA_USR = "va_usr";
@@ -77,6 +75,20 @@ public final class FieldConstant {
     public static final String VA_SZE = "va_sze";
     public static final String VA_BRCH= "va_brch";
     public static final String VA_HSH = "va_hsh";
+    public static final String VA_ADD_PRP = "va_add_prp";
+    public static final String VA_CNF = "va_cnf";
+    public static final String VA_RSR = "va_rsr";
+    public static final String VA_PND = "va_pnd";
+    public static final String VA_ATP = "va_atp";
+    public static final String VA_SES_SZE = "va_ses_sze";
+    public static final String VA_LVL = "va_lvl";
+    public static final String VA_MSG = "va_msg";
+    public static final String VA_STK = "va_stk";
+    public static final String VA_USED_HEP = "va_usd_hep";
+    public static final String VA_COMMITED_HEP = "va_cmt_hep";
+    public static final String VA_USED_MET = "va_usd_met";
+    public static final String VA_COMMITED_MET = "va_cmt_met";
+    public static final String VA_USED_DISK_SPACE = "va_usd_dsk";
     public static final String VA_FAIL= "va_fail";
-
+    public static final String VA_FILENAME= "va_fln";
 }

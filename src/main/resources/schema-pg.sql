@@ -44,6 +44,15 @@ CREATE TABLE IF NOT EXISTS e_rst_ses (
 )
 PARTITION BY RANGE (dh_str);
 
+CREATE TABLE IF NOT EXISTS e_rst_ses_stg (
+    va_nam varchar,
+    dh_str timestamp(6),
+    dh_end timestamp(6),
+    cd_ord smallint,
+    cd_prn_ses UUID
+)
+PARTITION BY RANGE (dh_str);
+
 CREATE TABLE IF NOT EXISTS e_rst_rqt (
     id_rst_rqt UUID,
     va_mth varchar,
@@ -64,12 +73,11 @@ CREATE TABLE IF NOT EXISTS e_rst_rqt (
     va_bdy_cnt varchar,
     va_thr varchar,
     cd_prn_ses UUID,
-    cd_rmt_ses UUID,
     cd_ins UUID
 )
 PARTITION BY RANGE (dh_str);
 
-CREATE TABLE IF NOT EXISTS e_rst_stg (
+CREATE TABLE IF NOT EXISTS e_rst_rqt_stg (
     va_nam varchar,
     dh_str timestamp(6),
     dh_end timestamp(6),
@@ -82,6 +90,7 @@ CREATE TABLE IF NOT EXISTS e_smtp_rqt (
     id_smtp_rqt UUID,
     va_hst varchar,
     cd_prt int,
+    va_pcl varchar,
     va_usr varchar,
     dh_str timestamp(6),
     dh_end timestamp(6),
@@ -165,10 +174,11 @@ PARTITION BY RANGE (dh_str);
 
 CREATE TABLE IF NOT EXISTS e_dtb_rqt (
     id_dtb_rqt UUID,
+    va_she varchar,
     va_hst varchar,
     cd_prt int,
     va_nam varchar,
-    va_sch varchar,
+    va_sha varchar,
     dh_str timestamp(6), 
     dh_end timestamp(6), 
     va_usr varchar,
@@ -213,6 +223,7 @@ CREATE TABLE IF NOT EXISTS e_exc_inf (
     va_typ varchar, 
     va_err_typ varchar,
     va_err_msg varchar,
+    va_stk json,
     cd_ord smallint,
     cd_rqt UUID
 );
@@ -231,16 +242,18 @@ CREATE TABLE IF NOT EXISTS e_env_ins (
     va_usr varchar,
     va_clr varchar,
     va_brch varchar,
-    va_hsh varchar
+    va_hsh varchar,
+    va_cnf json,
+    va_rsr json,
+    va_add_prp json
 );
 
 CREATE TABLE IF NOT EXISTS e_usr_acn (
-    id_acn bigint,
     va_typ varchar,
     dh_str timestamp(6),
     va_nam varchar,
     va_nde_nam varchar,
-    cd_prn_ses varchar
+    cd_prn_ses uuid
 );
 
 create table if not exists e_ins_trc (
@@ -248,6 +261,7 @@ create table if not exists e_ins_trc (
     va_atp int,
     va_ses_sze int,
     dh_str timestamp(6),
+    va_fln varchar,
     cd_ins uuid
 );
 
@@ -255,31 +269,37 @@ create table if not exists e_log_ent (
     dh_str timestamp(6),
     va_lvl varchar,
     va_msg varchar,
-    cd_ses uuid,
+    va_stk json,
+    cd_prn_ses uuid,
     cd_ins uuid
 );
 
 create table if not exists e_rsc_usg (
-     dh_str timestamp(6),
-    va_low_hep int,
-    va_hig_hep int,
-    va_low_met int,
-    va_hig_met int,
+    dh_str timestamp(6),
+    va_usd_hep int,
+    va_cmt_hep int,
+    va_usd_met int,
+    va_cmt_met int,
+    va_usd_dsk int,
     cd_ins uuid
 );
 
--- Ajouter les index du cd instance dans les requests
+create table if not exists e_cmp_mtc (
+    id_cmp_mtc uuid,
+    cd_typ smallint
+);
 
+-- Ajouter les index du cd instance dans les requests
 CREATE UNIQUE INDEX IF NOT EXISTS idx_main_ses_id_ses_dh_str ON e_main_ses(id_ses, dh_str);
 CREATE INDEX IF NOT EXISTS idx_main_ses_cd_ins ON e_main_ses(cd_ins);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_rst_ses_id_ses_dh_str ON e_rst_ses(id_ses, dh_str);
 CREATE INDEX IF NOT EXISTS idx_rst_ses_cd_ins ON e_rst_ses(cd_ins);
+CREATE INDEX IF NOT EXISTS idx_rst_ses_stg_cd_prn_ses ON e_rst_ses_stg(cd_prn_ses);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_rst_rqt_id_rst_rqt_dh_str ON e_rst_rqt(id_rst_rqt, dh_str);
 CREATE INDEX IF NOT EXISTS idx_rst_rqt_cd_prn_ses ON e_rst_rqt(cd_prn_ses);
-CREATE INDEX IF NOT EXISTS idx_rst_rqt_cd_rmt_ses ON e_rst_rqt(cd_rmt_ses);
 CREATE INDEX IF NOT EXISTS idx_rst_rqt_va_hst ON e_rst_rqt(va_hst);
 CREATE INDEX IF NOT EXISTS idx_rst_rqt_cd_ins ON e_rst_rqt(cd_ins);
-CREATE INDEX IF NOT EXISTS idx_rst_stg_cd_rst_rqt ON e_rst_stg(cd_rst_rqt);
+CREATE INDEX IF NOT EXISTS idx_rst_rqt_stg_cd_rst_rqt ON e_rst_rqt_stg(cd_rst_rqt);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_smtp_rqt_id_smtp_rqt_dh_str ON e_smtp_rqt(id_smtp_rqt, dh_str);
 CREATE INDEX IF NOT EXISTS idx_smtp_rqt_cd_prn_ses ON e_smtp_rqt(cd_prn_ses);
 CREATE INDEX IF NOT EXISTS idx_smtp_rqt_va_hst ON e_smtp_rqt(va_hst);
@@ -306,5 +326,9 @@ CREATE INDEX IF NOT EXISTS idx_lcl_rqt_cd_prn_ses ON e_lcl_rqt(cd_prn_ses);
 CREATE INDEX IF NOT EXISTS idx_exc_inf_cd_rqt ON e_exc_inf(cd_rqt);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_env_ins_id_ins ON e_env_ins(id_ins);
 CREATE INDEX IF NOT EXISTS idx_env_ins_va_app_va_env ON e_env_ins(va_app, va_env);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_usr_acn_id_acn_dh_str ON e_usr_acn(id_acn);
 CREATE INDEX IF NOT EXISTS idx_usr_acn_cd_prn_ses ON e_usr_acn(cd_prn_ses);
+CREATE INDEX IF NOT EXISTS idx_ins_trc_cd_ins ON e_ins_trc(cd_ins);
+CREATE INDEX IF NOT EXISTS idx_log_ent_cd_ins ON e_log_ent(cd_ins);
+CREATE INDEX IF NOT EXISTS idx_log_ent_cd_prn_ses ON e_log_ent(cd_prn_ses);
+CREATE INDEX IF NOT EXISTS idx_rsc_usg_cd_ins ON e_rsc_usg(cd_ins);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_cmp_mtc_id_cmp_mtc_va_typ ON e_cmp_mtc(id_cmp_mtc, cd_typ);
