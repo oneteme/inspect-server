@@ -12,4 +12,5 @@ import org.usf.inspect.core.TracingProperties;
 public final class InspectServerConfiguration {
     private SchedulingProperties scheduling = new SchedulingProperties();
     private TracingProperties tracing = new TracingProperties();
+    private PartitionProperties partition = new PartitionProperties();
 }
