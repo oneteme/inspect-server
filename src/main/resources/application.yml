@@ -1,5 +1,5 @@
 server:
-  port: 9000
+  port: 9001
   compression:
     enabled: true
     mime-types: application/json
@@ -24,32 +24,55 @@ spring:
     console:
       enabled: true
       path: /h2
+
+#  flyway:
+#    table: flyw_hist
+#    url: jdbc:h2:mem:testdb;DATABASE_TO_LOWER=TRUE;
+#    user: sa
+#    password:
+#    mixed: true
+#    enabled: true #true
+
 logging:
   level:
     org.usf.jquery: DEBUG
-    org.usf.inspect: DEBUG
+    org.usf.inspect: trace
     org.springframework.jdbc.core: DEBUG
 
 inspect:
-  enabled: true
-  dispatch:
-    delay: 30
-    unit: SECONDS
-    buffer-max-size: -1 #inspect-server only
-  track:
-    rest-session:
-      excludes:
-        method: OPTIONS
-        path: /favicon.ico
-   #main-session: false
-   #jdbc-request: false
-   #rest-request: false
-  purge:
-    enabled : false
-    schedule: "0 0 1 * * ?"
-    depth: 90 #en jour
-    #env
-      #ppd: 120
+  collector: 
+    enabled: false #default=false, enables the collector
+    debug-mode: true #default=false, enables collector debug mode
+    scheduling:
+      interval: 10s #default=60s, interval between trace dispatches
+    monitoring:
+      http-route:
+        excludes:
+          method: OPTIONS #default=[], exclude OPTIONS requests
+          path: /favicon.ico #default=[], exclude matching request paths
+      resources: #memory, cpu, storage, ... 
+        enabled: true
+        disk: "c:/"
+      exception:
+        max-stack-trace-rows: -1
+        max-cause-depth: -1
+        #class-name-pattern: fr.enedis.nova.*
+    tracing:
+      queue-capacity: 1000 #default=10000, queue capacity for trace dispatching
+      delay-if-pending: 10 #default=30, delay in seconds before dispatch trace if processing is still pending
+      dump:
+        enabled: false
+        #location: c:/dev #default=/tmp
+      remote:
+        mode: REST #default=null, trace dispatch type (e.g., REST)
+        host: http://localhost:9000 #default=localhost, target dispatch host
+        retention-max-age: 10d #default=30d, maximum age of traces in days
+#  purge:
+#    enabled : false
+#    schedule: "0 0 1 * * ?"
+#    depth: 90 #en jour
+#    #env
+#      #ppd: 120
   partition:
     enabled: false
     schedule: "0 0 0 L * ?"

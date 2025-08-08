@@ -11,7 +11,7 @@ import static org.usf.inspect.server.config.constant.FieldConstant.*;
 public class ColumnConstant {
     public static String mainSessionColumns(TraceApiColumn column) {
         return switch (column) {
-            case ID -> ID_SES ;
+            case ID -> ID_SES;
             case NAME -> VA_NAM;
             case START -> DH_STR;
             case END -> DH_END;
@@ -78,7 +78,6 @@ public class ColumnConstant {
             case END -> DH_END;
             case THREAD -> VA_THR;
             case PARENT -> CD_PRN_SES;
-            case REMOTE -> CD_RMT_SES;
             case INSTANCE_ENV -> CD_INS;
             default -> null;
         };
@@ -106,10 +105,11 @@ public class ColumnConstant {
     public static String databaseRequestColumns(TraceApiColumn column) {
         return switch (column) {
             case ID -> ID_DTB_RQT;
+            case SCHEME -> VA_SHE;
             case HOST -> VA_HST;
             case PORT -> CD_PRT;
             case DB -> VA_NAM;
-            case SCHEMA -> VA_SCH;
+            case SCHEMA -> VA_SHA;
             case START -> DH_STR;
             case END -> DH_END;
             case USER -> VA_USR;
@@ -263,18 +263,57 @@ public class ColumnConstant {
             case COLLECTOR -> VA_CLR;
             case BRANCH -> VA_BRCH;
             case HASH -> VA_HSH;
+            case CONFIGURATION -> VA_CNF;
+            case RESOURCE -> VA_RSR;
+            case ADDITIONAL_PROPERTIES -> VA_ADD_PRP;
             default -> null;
         };
     }
 
     public static String userActionColumns(TraceApiColumn column){
         return switch (column) {
-            case ID -> ID_USR_ACN;
             case TYPE -> VA_TYP;
             case NAME -> VA_NAM;
             case NODE_NAME -> VA_NDE_NAM;
             case START -> DH_STR;
             case PARENT -> CD_PRN_SES;
+            default -> null;
+        };
+    }
+
+    public static String instanceTraceColumns(TraceApiColumn column) {
+        return switch (column) {
+            case PENDING -> VA_PND;
+            case ATTEMPTS -> VA_ATP;
+            case SIZE_SESSION -> VA_SES_SZE;
+            case FILENAME -> VA_FILENAME;
+            case START -> DH_STR;
+            case INSTANCE_ENV -> CD_INS;
+            default -> null;
+        };
+    }
+
+    public static String logEntryColumns(TraceApiColumn column) {
+        return switch (column) {
+            case LOG_LEVEL -> VA_LVL;
+            case LOG_MESSAGE -> VA_MSG;
+            case STACKTRACE -> VA_STK;
+            case START -> DH_STR;
+            case PARENT -> CD_PRN_SES;
+            case INSTANCE_ENV -> CD_INS;
+            default -> null;
+        };
+    }
+
+    public static String resourceUsageColumns(TraceApiColumn column) {
+        return switch (column) {
+            case USED_HEAP -> VA_USED_HEP;
+            case COMMITED_HEAP -> VA_COMMITED_HEP;
+            case USED_META -> VA_USED_MET;
+            case COMMITED_META -> VA_COMMITED_MET;
+            case USED_DISK_SPACE -> VA_USED_DISK_SPACE;
+            case START -> DH_STR;
+            case INSTANCE_ENV -> CD_INS;
             default -> null;
         };
     }

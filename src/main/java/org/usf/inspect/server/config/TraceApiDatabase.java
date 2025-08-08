@@ -31,6 +31,9 @@ public enum TraceApiDatabase implements DatabaseDecorator {
 			case EXCEPTION: yield "e_exc_inf";
 			case INSTANCE: yield "e_env_ins";
 			case USER_ACTION: yield "e_usr_acn";
+			case INSTANCE_TRACE: yield "e_ins_trc";
+			case LOG_ENTRY: yield "e_log_ent";
+			case RESOURCE_USAGE: yield "e_rsc_usg";
 			default: yield null;
 		};
 	}

@@ -18,18 +18,18 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class DatabaseDispatcherAgent implements DispatcherAgent {
-	
-	private final RequestService service; //inject dao
+
+	private final TraceService service;
 	private final ObjectMapper mapper;
 
 	@Override
 	public void dispatch(InstanceEnvironment instance) {
-		service.addInstance(null); //cast or change
+		service.addInstance(instance);
 	}
 
 	@Override
-	public void dispatch(boolean complete, int attempts, int pending, List<EventTrace> traces) {
-		service.addEventTraces(traces);
+	public List<EventTrace> dispatch(boolean complete, int attempts, int pending, List<EventTrace> traces) {
+		return service.addTraces(traces);
 	}
 
 	@Override
