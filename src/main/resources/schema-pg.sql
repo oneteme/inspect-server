@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS e_smtp_rqt (
     id_smtp_rqt UUID,
     va_hst varchar,
     cd_prt int,
+    va_pcl varchar,
     va_usr varchar,
     dh_str timestamp(6),
     dh_end timestamp(6),
@@ -173,10 +174,11 @@ PARTITION BY RANGE (dh_str);
 
 CREATE TABLE IF NOT EXISTS e_dtb_rqt (
     id_dtb_rqt UUID,
+    va_she varchar,
     va_hst varchar,
     cd_prt int,
     va_nam varchar,
-    va_sch varchar,
+    va_sha varchar,
     dh_str timestamp(6), 
     dh_end timestamp(6), 
     va_usr varchar,

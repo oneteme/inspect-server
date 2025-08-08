@@ -307,30 +307,32 @@ values(?::uuid,?,?,?,?,?,?,?,?::uuid,?,?::uuid)""", toInsert, (ps, req) -> {
     public void saveMailRequests(List<MailRequest> requests) {
         completableProcess(SMTP_REQUEST, requests, toUpdate ->
                 executeBatch("""
-update e_smtp_rqt set va_hst = ?, cd_prt = ?, va_usr = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_fail = ?
+update e_smtp_rqt set va_hst = ?, cd_prt = ?, va_pcl = ?, va_usr = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_fail = ?
 where id_smtp_rqt = ?::uuid""", toUpdate, (ps, req) -> {
             ps.setString(1, req.getHost());
             ps.setInt(2, req.getPort());
-            ps.setString(3, req.getUser());
-            ps.setTimestamp(4, fromNullableInstant(req.getStart()));
-            ps.setTimestamp(5, fromNullableInstant(req.getEnd()));
-            ps.setString(6, req.getThreadName());
-            ps.setBoolean(7, req.isFailed());
-            ps.setString(8, req.getId());
-        }), toInsert ->
-                executeBatch("""
-insert into e_smtp_rqt(id_smtp_rqt,va_hst,cd_prt,va_usr,dh_str,dh_end,va_thr,va_fail,cd_prn_ses,cd_ins)
-values(?::uuid,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
-            ps.setString(1, req.getId());
-            ps.setString(2, req.getHost());
-            ps.setInt(3, req.getPort());
+            ps.setString(3, req.getProtocol());
             ps.setString(4, req.getUser());
             ps.setTimestamp(5, fromNullableInstant(req.getStart()));
             ps.setTimestamp(6, fromNullableInstant(req.getEnd()));
             ps.setString(7, req.getThreadName());
             ps.setBoolean(8, req.isFailed());
-            ps.setString(9, req.getSessionId());
-            ps.setString(10, req.getInstanceId());
+            ps.setString(9, req.getId());
+        }), toInsert ->
+                executeBatch("""
+insert into e_smtp_rqt(id_smtp_rqt,va_hst,cd_prt,va_pcl,va_usr,dh_str,dh_end,va_thr,va_fail,cd_prn_ses,cd_ins)
+values(?::uuid,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
+            ps.setString(1, req.getId());
+            ps.setString(2, req.getHost());
+            ps.setInt(3, req.getPort());
+            ps.setString(4, req.getProtocol());
+            ps.setString(5, req.getUser());
+            ps.setTimestamp(6, fromNullableInstant(req.getStart()));
+            ps.setTimestamp(7, fromNullableInstant(req.getEnd()));
+            ps.setString(8, req.getThreadName());
+            ps.setBoolean(9, req.isFailed());
+            ps.setString(10, req.getSessionId());
+            ps.setString(11, req.getInstanceId());
         }), MailRequest::getId, s -> nonNull(s.getEnd()));
         saveMailRequestMails(requests.stream().filter(r -> nonNull(r.getMails()))
                 .flatMap(r -> r.getMails().stream().map(m -> {
@@ -434,29 +436,11 @@ values(?::uuid,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
     public void saveDatabaseRequests(List<DatabaseRequest> requests) {
         completableProcess(JDBC_REQUEST, requests, toUpdate ->
                 executeBatch("""
-update e_dtb_rqt set va_hst = ?, cd_prt = ?, va_nam = ?, va_sch = ?, dh_str = ?, dh_end = ?, va_usr = ?, va_thr = ?, va_drv = ?, va_prd_nam = ?, va_prd_vrs = ?, va_cmd = ?, va_fail = ?
+update e_dtb_rqt set va_hst = ?, cd_prt = ?, va_she = ?, va_nam = ?, va_sha = ?, dh_str = ?, dh_end = ?, va_usr = ?, va_thr = ?, va_drv = ?, va_prd_nam = ?, va_prd_vrs = ?, va_cmd = ?, va_fail = ?
 where id_dtb_rqt = ?::uuid""", toUpdate, (ps, req) -> {
                 ps.setString(1, req.getHost());
                 ps.setInt(2, req.getPort());
-                ps.setString(3, req.getName());
-                ps.setString(4, req.getSchema());
-                ps.setTimestamp(5, fromNullableInstant(req.getStart()));
-                ps.setTimestamp(6, fromNullableInstant(req.getEnd()));
-                ps.setString(7, req.getUser());
-                ps.setString(8, req.getThreadName());
-                ps.setString(9, req.getDriverVersion());
-                ps.setString(10, req.getProductName());
-                ps.setString(11, req.getProductVersion());
-                ps.setString(12, req.getCommand()); // TODO use commands on DatabaseRequest
-                ps.setBoolean(13, req.isFailed());
-                ps.setString(14, req.getId());
-            }), toInsert ->
-                executeBatch("""
-insert into e_dtb_rqt(id_dtb_rqt,va_hst,cd_prt,va_nam,va_sch,dh_str,dh_end,va_usr,va_thr,va_drv,va_prd_nam,va_prd_vrs,va_cmd,va_fail,cd_prn_ses,cd_ins)
-values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
-                ps.setString(1, req.getId());
-                ps.setString(2, req.getHost());
-                ps.setInt(3, req.getPort());
+                ps.setString(3, req.getScheme());
                 ps.setString(4, req.getName());
                 ps.setString(5, req.getSchema());
                 ps.setTimestamp(6, fromNullableInstant(req.getStart()));
@@ -468,8 +452,28 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req
                 ps.setString(12, req.getProductVersion());
                 ps.setString(13, req.getCommand()); // TODO use commands on DatabaseRequest
                 ps.setBoolean(14, req.isFailed());
-                ps.setString(15, req.getSessionId());
-                ps.setString(16, req.getInstanceId());
+                ps.setString(15, req.getId());
+            }), toInsert ->
+                executeBatch("""
+insert into e_dtb_rqt(id_dtb_rqt,va_hst,cd_prt,va_she,va_nam,va_sha,dh_str,dh_end,va_usr,va_thr,va_drv,va_prd_nam,va_prd_vrs,va_cmd,va_fail,cd_prn_ses,cd_ins)
+values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
+                ps.setString(1, req.getId());
+                ps.setString(2, req.getHost());
+                ps.setInt(3, req.getPort());
+                ps.setString(4, req.getScheme());
+                ps.setString(5, req.getName());
+                ps.setString(6, req.getSchema());
+                ps.setTimestamp(7, fromNullableInstant(req.getStart()));
+                ps.setTimestamp(8, fromNullableInstant(req.getEnd()));
+                ps.setString(9, req.getUser());
+                ps.setString(10, req.getThreadName());
+                ps.setString(11, req.getDriverVersion());
+                ps.setString(12, req.getProductName());
+                ps.setString(13, req.getProductVersion());
+                ps.setString(14, req.getCommand()); // TODO use commands on DatabaseRequest
+                ps.setBoolean(15, req.isFailed());
+                ps.setString(16, req.getSessionId());
+                ps.setString(17, req.getInstanceId());
             }), DatabaseRequest::getId, s -> nonNull(s.getEnd())
         );
     }
