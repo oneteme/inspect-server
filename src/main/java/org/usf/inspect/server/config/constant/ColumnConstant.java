@@ -105,10 +105,11 @@ public class ColumnConstant {
     public static String databaseRequestColumns(TraceApiColumn column) {
         return switch (column) {
             case ID -> ID_DTB_RQT;
+            case SCHEME -> VA_SHE;
             case HOST -> VA_HST;
             case PORT -> CD_PRT;
             case DB -> VA_NAM;
-            case SCHEMA -> VA_SCH;
+            case SCHEMA -> VA_SHA;
             case START -> DH_STR;
             case END -> DH_END;
             case USER -> VA_USR;
