@@ -8,12 +8,16 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.usf.inspect.core.*;
 import org.usf.inspect.server.model.wrapper.*;
+
+import java.util.List;
+import java.util.Optional;
 
 import static java.time.Duration.ofSeconds;
 import static java.util.Arrays.asList;
@@ -59,15 +63,17 @@ public class InspectApplication {
 				new NamedType(RestRemoteServerProperties.class,	"rest-rmt"));
 		return mapper;
 	}
-	
+
 	@Bean
-	EventTraceScheduledDispatcher dispatcher(DispatcherAgent agent, ObjectMapper mapper) {
-		var trc = new TracingProperties();
-		trc.setDelayIfPending(0); //save immediately
-		trc.setQueueCapacity(1_000_000);
-		var scd = new SchedulingProperties();
-		scd.setInterval(ofSeconds(30)); //30s
-		var dump = new EventTraceDumper(trc.getDump().getLocation(), mapper);
-		return new EventTraceScheduledDispatcher(trc, scd, agent, asList(dump));
+	@Primary
+	@ConfigurationProperties(prefix = "inspect.server")
+	InspectServerConfiguration inspectConfigurationProperties() {
+		return new InspectServerConfiguration();
+	}
+
+	@Bean
+	EventTraceScheduledDispatcher dispatcher(InspectServerConfiguration conf, DispatcherAgent agent, ObjectMapper mapper) {
+		var dump = new EventTraceDumper(conf.getTracing().getDump().getLocation(), mapper);
+		return new EventTraceScheduledDispatcher(conf.getTracing(), conf.getScheduling(), agent, List.of(dump));
 	}
 }
