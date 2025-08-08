@@ -67,21 +67,30 @@ inspect:
         mode: REST #default=null, trace dispatch type (e.g., REST)
         host: http://localhost:9000 #default=localhost, target dispatch host
         retention-max-age: 10d #default=30d, maximum age of traces in days
+  server:
+    scheduling:
+      interval: 30s #default=60s, interval between trace dispatches
+    tracing:
+      queue-capacity: 1000000 #default=10000, queue capacity for trace dispatching
+      delay-if-pending: 0
+      dump:
+        enabled: false
+    partition:
+      enabled: true
+      schedule: "0 0 0 L * ?"
+      session:
+        http: DAY
+        #main: MONTH
+      request:
+        http: DAY
+        jdbc: DAY
 #  purge:
 #    enabled : false
 #    schedule: "0 0 1 * * ?"
 #    depth: 90 #en jour
 #    #env
 #      #ppd: 120
-  partition:
-    enabled: false
-    schedule: "0 0 0 L * ?"
-    session:
-      http: DAY
-      #main: MONTH
-    request:
-      http: DAY
-      jdbc: DAY
+
       #ftp: MONTH
       #smtp: MONTH
       #ldap: MONTH
