@@ -1,19 +1,7 @@
 package org.usf.inspect.server.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.usf.inspect.core.*;
-import org.usf.inspect.server.model.InstanceEnvironmentUpdated;
-import org.usf.inspect.server.model.InstanceTrace;
-
-import java.time.Instant;
-import java.util.List;
-
-import static java.lang.System.arraycopy;
 import static java.time.Instant.now;
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
@@ -27,14 +15,41 @@ import static org.usf.inspect.core.InstanceType.CLIENT;
 import static org.usf.inspect.core.SessionManager.nextId;
 import static org.usf.jquery.core.Utils.isBlank;
 
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.usf.inspect.core.AbstractRequest;
+import org.usf.inspect.core.AbstractSession;
+import org.usf.inspect.core.BasicDispatchState;
+import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.core.EventTraceScheduledDispatcher;
+import org.usf.inspect.core.InstanceEnvironment;
+import org.usf.inspect.core.LogEntry;
+import org.usf.inspect.core.MachineResourceUsage;
+import org.usf.inspect.server.model.InstanceEnvironmentUpdated;
+import org.usf.inspect.server.model.InstanceTrace;
+
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 @CrossOrigin
 @RestController
 @RequestMapping(value = "v4/trace", produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 public class TraceController {
-
-    private static final EventTrace[] EMPTY_TRACE = new EventTrace[0];
 
     private final EventTraceScheduledDispatcher dispatcher;
     
@@ -65,16 +80,17 @@ public class TraceController {
             @RequestParam(required = false) Integer attempts,
             @RequestParam(required = false) String filename,
             @RequestParam(required = false) Instant end,
-            @RequestBody EventTrace[] body) {
+            @RequestBody List<EventTrace> traces) {
     	var now = now();
     	try {
-    		var traces = nonNull(body) ? body : EMPTY_TRACE ; //avoid NullPointerException
-    		var copy = new EventTrace[traces.length + (nonNull(end) ? 2 : 1)];
-    		arraycopy(traces, 0, copy, 0, traces.length);
-    		if(nonNull(end)){
-    			copy[copy.length - 2] = new InstanceEnvironmentUpdated(id, end);
+    		if(isNull(traces)) {
+    			traces = new ArrayList<>();
     		}
-    		copy[copy.length - 1] = new InstanceTrace(pending, attempts, traces.length, filename, now, id);
+    		int size = traces.size();
+    		if(nonNull(end)){
+    			traces.add(new InstanceEnvironmentUpdated(id, end));
+    		}
+    		traces.add(new InstanceTrace(pending, attempts, size, filename, now, id));
     		for(var e : traces) {
     			if(e instanceof AbstractRequest req) {
     				req.setInstanceId(id);
@@ -86,7 +102,7 @@ public class TraceController {
     				ent.setInstanceId(id);
     			} //stages dosn't need instance id
     		}
-    		return dispatcher.emitAll(copy)
+    		return dispatcher.emitAll(traces)
     				? accepted().build()
     				: status(SERVICE_UNAVAILABLE).body("dispatcher.state=" + dispatcher.getState());
     	}

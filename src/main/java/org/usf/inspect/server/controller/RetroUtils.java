@@ -23,7 +23,7 @@ import static org.usf.inspect.core.SessionManager.nextId;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class RetroUtils {
 
-    public static EventTrace[] toV4(Session[] sessions) {
+    public static List<EventTrace> toV4(Session[] sessions) {
         List<EventTrace> traces = new ArrayList<>();
         for(Session s : sessions) {
             if(s instanceof MainSessionWrapper ms) {
@@ -73,7 +73,7 @@ public final class RetroUtils {
             }, traces::add);
             toV4(s.getId(), s.getLocalRequests(), null, traces::add);
         }
-        return traces.toArray(EventTrace[]::new);
+        return traces;
     }
 
     private static <T extends Wrapper<? extends AbstractRequest>, U extends AbstractStage> void toV4(String sessionId, Collection<T> requests, Function<T, List<U>> fn, Consumer<EventTrace> consumer) {
