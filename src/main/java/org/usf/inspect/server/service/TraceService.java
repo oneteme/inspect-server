@@ -14,22 +14,25 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 import static java.util.concurrent.CompletableFuture.*;
+import static java.util.concurrent.Executors.newFixedThreadPool;
+import static org.usf.inspect.core.ExecutorServiceWrapper.wrap;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class TraceService {
+	
     private final TraceDao dao;
-    private final ExecutorService executor = Executors.newFixedThreadPool(5);
+    private final ExecutorService executor = wrap(newFixedThreadPool(5));
 
     public void addInstance(InstanceEnvironment instance) {
         dao.saveInstanceEnvironment(instance);
     }
 
+    @TraceableStage
     public List<EventTrace> addTraces(List<EventTrace> eventTraces) {
         var cf = new ArrayList<CompletableFuture<Collection<EventTrace>>>();
         cf.add(supplyAsync(() -> filterAndApply(eventTraces, MainSession.class, dao::saveMainSessions), executor));
