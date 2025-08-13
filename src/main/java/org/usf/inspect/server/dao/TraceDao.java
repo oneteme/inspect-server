@@ -9,7 +9,7 @@ import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.*;
-import org.usf.inspect.server.model.InstanceEnvironmentUpdated;
+import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.InstanceTrace;
 import org.usf.inspect.server.model.wrapper.MailWrapper;
 
@@ -65,7 +65,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?::json,?::json,?::json)""", ps -> {
         });
     }
 
-    public void updateInstanceEnvironments(List<InstanceEnvironmentUpdated> instances){
+    public void updateInstanceEnvironments(List<InstanceEnvironmentUpdate> instances){
         executeBatch("update e_env_ins set dh_end = ? where id_ins = ?::uuid", instances.iterator(), (ps, instance) -> {
             ps.setTimestamp(1, fromNullableInstant(instance.getEnd()));
             ps.setString(2, instance.getId());

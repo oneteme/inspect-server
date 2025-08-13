@@ -37,7 +37,7 @@ import org.usf.inspect.core.EventTraceScheduledDispatcher;
 import org.usf.inspect.core.InstanceEnvironment;
 import org.usf.inspect.core.LogEntry;
 import org.usf.inspect.core.MachineResourceUsage;
-import org.usf.inspect.server.model.InstanceEnvironmentUpdated;
+import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.InstanceTrace;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -88,7 +88,7 @@ public class TraceController {
     		}
     		int size = traces.size();
     		if(nonNull(end)){
-    			traces.add(new InstanceEnvironmentUpdated(id, end));
+    			traces.add(new InstanceEnvironmentUpdate(id, end));
     		}
     		traces.add(new InstanceTrace(pending, attempts, size, filename, now, id));
     		for(var e : traces) {

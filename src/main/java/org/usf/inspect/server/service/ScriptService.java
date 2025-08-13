@@ -1,7 +1,5 @@
 package org.usf.inspect.server.service;
 
-import static org.usf.inspect.core.Helper.log;
-
 import java.time.YearMonth;
 import java.util.Map;
 
@@ -12,7 +10,9 @@ import org.usf.inspect.server.model.Partition;
 import org.usf.inspect.server.model.PartitionedTable;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ScriptService {
