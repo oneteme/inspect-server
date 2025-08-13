@@ -7,15 +7,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.usf.inspect.core.*;
-import org.usf.inspect.server.dto.DtoRequest;
-import org.usf.inspect.server.dto.DtoRestRequest;
+import org.usf.inspect.server.dto.*;
 import org.usf.inspect.server.mapper.InspectMappers;
 import org.usf.inspect.server.model.*;
 import org.usf.inspect.server.model.Session;
 import org.usf.inspect.server.model.filter.JqueryMainSessionFilter;
 import org.usf.inspect.server.model.filter.JqueryRequestFilter;
 import org.usf.inspect.server.model.filter.JqueryRequestSessionFilter;
-import org.usf.inspect.server.model.wrapper.*;
 import org.usf.inspect.server.service.RequestService;
 import org.usf.jquery.core.QueryComposer;
 import org.usf.jquery.web.Keyword;
@@ -48,7 +46,7 @@ public class RequestController {
     @GetMapping("instance/{idInstance}")
     public ResponseEntity<InstanceEnvironment> getInstance(
        @QueryRequestFilter(view = "instance",
-                           column = "app_name,version,address,environement,os,re,user,type,start,collector,branch,hash,end,configuration,resource,additional_properties,id") QueryComposer request,
+                           column = "app_name,version,address,environement,os,re,user,type,start,collector,branch,hash,end,id") QueryComposer request,
        @PathVariable String idInstance)  {
         return ok()
                 .cacheControl(maxAge(1, DAYS))
@@ -81,9 +79,9 @@ public class RequestController {
     }
 
     @GetMapping("request/rest/{idRequest}")
-    public ResponseEntity<RestRequest> getRestRequestById (
+    public ResponseEntity<RestRequestDto> getRestRequestById (
             @QueryRequestFilter(view = "rest_request",
-                                column = "id,protocol,auth,host,port,path,query,method,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,remote,parent,exception.err_type,exception.err_msg",
+                                column = "id,protocol,auth,host,port,path,query,method,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,parent,exception.err_type,exception.err_msg",
                                 join = "exception",
                                 order = "start") QueryComposer request,
             @PathVariable String idRequest) {
@@ -107,18 +105,18 @@ public class RequestController {
     }
 
     @GetMapping("request/rest")
-    public List<DtoRestRequest> getRestRequests(@RequestParam(required = false, name = "env") String[] environments,
+    public List<RestRequestDto> getRestRequests(@RequestParam(required = false, name = "env") String[] environments,
                                                 @RequestParam(required = false, name = "host") String[] hosts,
                                                 @RequestParam(required = false, name = "start") Instant start,
                                                 @RequestParam(required = false, name = "end") Instant end,
-                                                @RequestParam(required = false, name = "rangestatus") String [] rangestatus)  {
+                                                @RequestParam(required = false, name = "rangestatus") String[] rangestatus)  {
 
-        JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, null, environments, null, start, end, null, null, hosts, null, null, null, null, null, null, null,rangestatus);
+        JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, null, environments, null, start, end, null, null, hosts, null, null, null, null, null, null, null, rangestatus);
         return requestService.getRestRequestsLazyForSearch(jsf);
     }
 
     @GetMapping("request/database")
-    public List<DtoRequest> getDatabaseRequestForSearch(@RequestParam(required = false, name = "env") String[] environments,
+    public List<DatabaseRequestDto> getDatabaseRequestForSearch(@RequestParam(required = false, name = "env") String[] environments,
                                                         @RequestParam(required = false, name = "host") String[] hosts,
                                                         @RequestParam(required = false, name = "start") Instant start,
                                                         @RequestParam(required = false, name = "end") Instant end,
@@ -128,7 +126,7 @@ public class RequestController {
     }
 
     @GetMapping("request/ftp")
-    public List<DtoRequest> getFtpRequestForSearch(@RequestParam(required = false, name = "env") String[] environments,
+    public List<FtpRequestDto> getFtpRequestForSearch(@RequestParam(required = false, name = "env") String[] environments,
                                                    @RequestParam(required = false, name = "host") String[] hosts,
                                                    @RequestParam(required = false, name = "start") Instant start,
                                                    @RequestParam(required = false, name = "end") Instant end,
@@ -138,7 +136,7 @@ public class RequestController {
     }
 
     @GetMapping("request/smtp")
-    public List<DtoRequest> getSmtpRequestForSearch(@RequestParam(required = false, name = "env") String[] environments,
+    public List<MailRequestDto> getSmtpRequestForSearch(@RequestParam(required = false, name = "env") String[] environments,
                                                     @RequestParam(required = false, name = "host") String[] hosts,
                                                     @RequestParam(required = false, name = "start") Instant start,
                                                     @RequestParam(required = false, name = "end") Instant end,
@@ -148,7 +146,7 @@ public class RequestController {
     }
 
     @GetMapping("request/ldap")
-    public List<DtoRequest> getLdapRequestForSearch(@RequestParam(required = false, name = "env") String[] environments,
+    public List<DirectoryRequestDto> getLdapRequestForSearch(@RequestParam(required = false, name = "env") String[] environments,
                                                     @RequestParam(required = false, name = "host") String[] hosts,
                                                     @RequestParam(required = false, name = "start") Instant start,
                                                     @RequestParam(required = false, name = "end") Instant end,
@@ -159,7 +157,7 @@ public class RequestController {
 
 
     @GetMapping("session/rest")
-    public List<RestSessionWrapper> getRestSessions(
+    public List<RestSessionDto> getRestSessions(
             @RequestParam(required = false, name = "method") String[] methods,
             @RequestParam(required = false, name = "protocol") String[] protocols,
             @RequestParam(required = false, name = "host") String[] hosts,
@@ -182,7 +180,7 @@ public class RequestController {
     }
 
     @GetMapping("session/rest/{appName}/dump")
-    public List<Session> getRestSessionsForDump(
+    public List<RestSession> getRestSessionsForDump(
             @PathVariable String appName,
             @RequestParam(name = "env") String env,
             @RequestParam(name = "start") Instant start,
@@ -192,22 +190,13 @@ public class RequestController {
     }
 
     @GetMapping("session/rest/{idSession}")
-    public ResponseEntity<Session> getRestSession(
+    public ResponseEntity<RestSession> getRestSession(
             @QueryRequestFilter(view = "rest_session",
             column = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,err_type,err_msg,mask,user,user_agt,cache_control,instance_env") QueryComposer request,
             @PathVariable String idSession) {
-        return Optional.ofNullable(INSPECT.execute(request.filters(REST_SESSION.column(ID).varchar().eq(idSession)), InspectMappers::restSessionWithoutInstanceMapper))
+        return Optional.ofNullable(INSPECT.execute(request.filters(REST_SESSION.column(ID).varchar().eq(idSession)), InspectMappers::createBaseRestSession))
                 .map(o -> ok().cacheControl(maxAge(1, DAYS)).body(o))
                 .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null));
-    }
-
-    @GetMapping("session/rest/{id}/winstance") // todo: find where its used
-    public List<Session> getRestSessionWithInstance(
-            @QueryRequestFilter(view = "rest_session",
-                    column = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,err_type,err_msg,mask,user,user_agt,cache_control,instance_env,app_name,os,re,address",
-                    join="instance") QueryComposer request,
-            @PathVariable String id) {
-        return INSPECT.execute(request.filters(REST_SESSION.column(ID).varchar().eq(id)), InspectMappers.restSessionWithInstanceMapper());
     }
 
     @GetMapping("session/rest/{id}/parent")
@@ -233,7 +222,7 @@ public class RequestController {
     }
 
     @GetMapping("session/main") // can't optimise, done
-    public List<Session> getMainSessions(
+    public List<MainSessionDto> getMainSessions(
             @RequestParam(required = false, name = "env") String[] environments,
             @RequestParam(required = false, name = "name") String[] names,
             @RequestParam(required = false, name = "launchmode") String[] launchModes,
@@ -250,7 +239,7 @@ public class RequestController {
     }
 
     @GetMapping("session/main/{appName}/dump") // can't optimise, done
-    public List<Session> getMainSessionsForDump(
+    public List<MainSession> getMainSessionsForDump(
             @PathVariable String appName,
             @RequestParam(name = "env") String env,
             @RequestParam(name = "start") Instant start,
@@ -260,21 +249,21 @@ public class RequestController {
     }
 
     @GetMapping("session/main/{idSession}")
-    public ResponseEntity<Session> getMainSession(
+    public ResponseEntity<MainSession> getMainSession(
             @QueryRequestFilter(
                 view = "main_session",
                 column = "id,name,start,end,type,location,thread,err_type,err_msg,mask,user,instance_env") QueryComposer request,
             @PathVariable String idSession) {
-        return Optional.ofNullable(INSPECT.execute(request.filters(MAIN_SESSION.column(ID).varchar().eq(idSession)), InspectMappers::mainSessionWithoutInstanceMapper))
+        return Optional.ofNullable(INSPECT.execute(request.filters(MAIN_SESSION.column(ID).varchar().eq(idSession)), InspectMappers::createBaseMainsession))
                 .map(o -> ok().cacheControl(maxAge(1, DAYS)).body(o))
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
     @GetMapping("session/{idSession}/request/rest")
-    public ResponseEntity<List<RestRequest>>  getRestRequests(
+    public ResponseEntity<List<RestRequestDto>>  getRestRequests(
             @QueryRequestFilter(
                 view = "rest_request",
-                column = "id,protocol,host,path,query,method,status,start,end,thread,remote,parent,exception.err_type,exception.err_msg",
+                column = "id,protocol,host,path,query,method,status,start,end,thread,parent,exception.err_type,exception.err_msg",
                 join = "exception",
                 order = "start") QueryComposer request,
             @PathVariable String  idSession){
@@ -282,7 +271,7 @@ public class RequestController {
     }
 
     @GetMapping("session/request/exception") // need to add exception type to front call
-    public ResponseEntity<Map<Long, ExceptionInfoWrapper>> getRequestExceptions(
+    public ResponseEntity<Map<Long, ExceptionInfo>> getRequestExceptions(
             @QueryRequestFilter(
                     view = "exception",
                     column = "err_type,err_msg,parent",
@@ -292,29 +281,30 @@ public class RequestController {
     }
 
     @GetMapping("session/{idSession}/request/local")
-    public ResponseEntity<List<LocalRequestWrapper>> getLocalRequests(
+    public ResponseEntity<List<LocalRequest>> getLocalRequests(
             @QueryRequestFilter(
                     view = "local_request",
-                    column = "id,name,location,start,end,user,thread,status,parent,type,exception.err_type,exception.err_msg",
+                    column = "id,name,location,start,end,user,thread,parent,type,exception.err_type,exception.err_msg",
                     join = "exception",
                     order = "start") QueryComposer request, @PathVariable String idSession)  {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(INSPECT.execute(request.filters(LOCAL_REQUEST.column(PARENT).varchar().eq(idSession)), InspectMappers.localRequestMapper()));
     }
 
     @GetMapping("session/{idSession}/request/database")
-    public ResponseEntity<List<DatabaseRequestWrapper>> getDatabaseRequests(
+    public ResponseEntity<List<DatabaseRequestDto>> getDatabaseRequests(
             @QueryRequestFilter(
                     view = "database_request",
-                    column = "id,host,db,start,end,user,thread,command,status,schema",
+                    column = "id,host,db,start,end,user,thread,command,schema,exception.err_type,exception.err_msg",
+                    join = "exception",
                     order = "start") QueryComposer request, @PathVariable String idSession) {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(INSPECT.execute(request.filters(DATABASE_REQUEST.column(PARENT).varchar().eq(idSession)), InspectMappers.databaseRequestLazyMapper()));
     }
 
     @GetMapping("session/{idSession}/request/database/{idDatabase}")
-    public ResponseEntity<DatabaseRequestWrapper> getDatabaseRequest(
+    public ResponseEntity<DatabaseRequest> getDatabaseRequest(
             @QueryRequestFilter(
                     view = "database_request",
-                    column = "id,host,port,db,start,end,user,thread,driver,db_name,db_version,command,status,schema,parent",
+                    column = "id,host,port,db,start,end,user,thread,driver,db_name,db_version,command,schema,parent",
                     order = "start") QueryComposer request, @PathVariable String idSession, @PathVariable String idDatabase) {
         return Optional.ofNullable(INSPECT.execute(request.filters(DATABASE_REQUEST.column(ID).varchar().eq(idDatabase)), InspectMappers::databaseRequestComplete))
                 .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
@@ -348,17 +338,18 @@ public class RequestController {
     }
 
     @GetMapping("session/{idSession}/request/ftp")
-    public ResponseEntity<List<FtpRequestWrapper>> getFtpRequests(
+    public ResponseEntity<List<FtpRequestDto>> getFtpRequests(
             @QueryRequestFilter(
                     view = "ftp_request",
-                    column = "id,host,start,end,thread,status",
+                    column = "id,host,start,end,thread,exception.err_type,exception.err_msg",
+                    join = "exception",
                     order = "start") QueryComposer request,
             @PathVariable String idSession){
         return  ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(INSPECT.execute(request.filters(FTP_REQUEST.column(PARENT).varchar().eq(idSession)), InspectMappers.ftpRequestLazyMapper()));
     }
 
     @GetMapping("session/{id_session}/request/ftp/{id_ftp}")
-    public ResponseEntity<FtpRequestWrapper> getFtpRequest(
+    public ResponseEntity<FtpRequest> getFtpRequest(
             @QueryRequestFilter(
                     view = "ftp_request",
                     column = "id,host,port,protocol,server_version,client_version,start,end,user,thread,status,parent",
@@ -401,17 +392,18 @@ public class RequestController {
     }
 
     @GetMapping("session/{idSession}/request/smtp")
-    public ResponseEntity<List<MailRequestWrapper>> getSmtpRequests(
+    public ResponseEntity<List<MailRequestDto>> getSmtpRequests(
             @QueryRequestFilter(
                     view = "smtp_request",
-                    column = "id,host,start,end,thread,status",
+                    column = "id,host,start,end,thread,exception.err_type,exception.err_msg",
+                    join = "exception",
                     order = "start") QueryComposer request,
             @PathVariable String idSession){
         return ResponseEntity.ok().body(INSPECT.execute(request.filters(SMTP_REQUEST.column(PARENT).varchar().eq(idSession)), InspectMappers.smtpRequestLazyMapper()));
     }
 
     @GetMapping("session/{idSession}/request/smtp/{idSmtp}")
-    public ResponseEntity<MailRequestWrapper> getSmtpRequest(
+    public ResponseEntity<MailRequest> getSmtpRequest(
             @QueryRequestFilter(
                     view = "smtp_request",
                     column = "id,host,port,start,end,user,thread,status,parent",
@@ -434,7 +426,7 @@ public class RequestController {
     }
 
     @GetMapping("session/{idSession}/request/smtp/{idSmtp}/mail")
-    public ResponseEntity<List<MailWrapper>> getSmtpRequestMails(
+    public ResponseEntity<List<Mail>> getSmtpRequestMails(
             @QueryRequestFilter(
                     view = "smtp_mail",
                     column = "subject,from,recipients,media,reply_to,size,parent") QueryComposer request, @PathVariable String idSession, @PathVariable String idSmtp) {
@@ -478,17 +470,18 @@ public class RequestController {
 
 
     @GetMapping("session/{idSession}/request/ldap")
-    public ResponseEntity<List<DirectoryRequestWrapper>> getLdapRequests(
+    public ResponseEntity<List<DirectoryRequestDto>> getLdapRequests(
             @QueryRequestFilter(
                     view = "ldap_request",
-                    column = "id,host,start,end,thread,status",
+                    column = "id,host,start,end,thread,exception.err_type,exception.err_msg",
+                    join = "exception",
                     order = "start") QueryComposer request,
             @PathVariable String idSession){
         return ResponseEntity.ok().body(INSPECT.execute(request.filters(LDAP_REQUEST.column(PARENT).varchar().eq(idSession)), InspectMappers.ldapRequestLazyMapper()));
     }
 
     @GetMapping("session/{idSession}/request/ldap/{idLdap}")
-    public ResponseEntity<DirectoryRequestWrapper> getLdapRequests(
+    public ResponseEntity<DirectoryRequest> getLdapRequests(
             @QueryRequestFilter(
                     view = "ldap_request",
                     column = "id,host,port,protocol,start,end,user,thread,status,parent",
@@ -541,7 +534,7 @@ public class RequestController {
     }
 
     @GetMapping ("session/user/{user}/action")
-    public ResponseEntity<List<MainSessionWrapper>> getUserActions(
+    public ResponseEntity<List<Analytic>> getUserActions(
             @QueryRequestFilter(
                     view = "main_session",
                     column = "id,start:session_start,end,location,name:session_name,user_action.name:action_name,user_action.node_name,user_action.type,user_action.start:action_start",
@@ -553,7 +546,7 @@ public class RequestController {
             @RequestParam(name = "date") Instant date
             ) {
         return ResponseEntity.ok().body(INSPECT.execute(request.filters(MAIN_SESSION.column(USER).eq(user).and(MAIN_SESSION.column(START).ge(from(date)))), rs -> {
-            List<MainSessionWrapper> sessions = new ArrayList<>();
+            List<Analytic> sessions = new ArrayList<>();
             while (rs.next()) {
                 var userAction =  new UserAction(
                         rs.getString("action_name"),
@@ -564,7 +557,7 @@ public class RequestController {
                 var cdSession = rs.getString(ID.reference());
                 var session = sessions.stream().filter(s -> s.getId().equals(cdSession)).findFirst().orElse(null);
                 if(session == null) {
-                    session = new MainSessionWrapper();
+                    session = new Analytic();
                     session.setId(rs.getString(ID.reference()));
                     session.setStart(fromNullableTimestamp(rs.getTimestamp("session_start")));
                     session.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
@@ -575,7 +568,6 @@ public class RequestController {
                     } else {
                         session.setUserActions(new ArrayList<>(List.of(userAction)));
                     }
-
                     sessions.add(session);
                 } else {
                     session.getUserActions().add(userAction);

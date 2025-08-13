@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS e_main_ses (
     va_thr varchar,
     va_err_typ varchar,
     va_err_msg varchar,
+    va_stk json,
     va_msk int,
     cd_ins UUID
 )
@@ -35,6 +36,7 @@ CREATE TABLE IF NOT EXISTS e_rst_ses (
     va_thr varchar,
     va_err_typ varchar,
     va_err_msg varchar,
+    va_stk json,
     va_nam varchar,
     va_usr varchar,
     va_usr_agt varchar,

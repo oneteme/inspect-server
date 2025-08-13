@@ -21,6 +21,7 @@ public class ColumnConstant {
             case THREAD -> VA_THR;
             case ERR_TYPE -> VA_ERR_TYP;
             case ERR_MSG -> VA_ERR_MSG;
+            case STACKTRACE -> VA_STK;
             case MASK -> VA_MSK;
             case INSTANCE_ENV -> CD_INS;
             default -> null;
@@ -43,6 +44,7 @@ public class ColumnConstant {
             case SIZE_OUT -> VA_O_SZE;
             case ERR_TYPE -> VA_ERR_TYP;
             case ERR_MSG -> VA_ERR_MSG;
+            case STACKTRACE -> VA_STK;
             case CONTENT_ENCODING_IN -> VA_I_CNT_ENC;
             case CONTENT_ENCODING_OUT -> VA_O_CNT_ENC;
             case START -> DH_STR;
@@ -241,6 +243,7 @@ public class ColumnConstant {
             case TYPE -> VA_TYP;
             case ERR_TYPE -> VA_ERR_TYP;
             case ERR_MSG -> VA_ERR_MSG;
+            case STACKTRACE -> VA_STK;
             case ORDER -> CD_ORD;
             case PARENT -> CD_RQT;
             default -> null;

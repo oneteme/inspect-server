@@ -281,7 +281,7 @@ where id_lcl_rqt = ?::uuid""", toUpdate, (ps, req) -> {
             ps.setTimestamp(4,fromNullableInstant(req.getEnd()));
             ps.setString(5,req.getUser());
             ps.setString(6,req.getThreadName());
-            ps.setBoolean(7, !isNull(req.getException()));
+            ps.setBoolean(7, nonNull(req.getException()));
             ps.setString(8, req.getType());
             ps.setString(9, req.getId());
         }), toInsert ->

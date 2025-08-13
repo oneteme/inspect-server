@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.usf.inspect.core.*;
 import org.usf.inspect.jdbc.SqlCommand;
 import org.usf.inspect.server.RequestMask;
+import org.usf.inspect.server.dto.*;
 import org.usf.inspect.server.model.InstanceTrace;
 import org.usf.inspect.server.model.Session;
 import org.usf.inspect.server.model.UserAction;
@@ -30,32 +31,28 @@ import static org.usf.inspect.server.service.RequestService.valueOfNullabletoEnu
 public final class InspectMappers {
 
     public static InstanceEnvironment instanceEnvironmentMapper(ResultSet rs) throws SQLException {
-        var mapper = new ObjectMapper();
         if(rs.next()) {
-            InstanceEnvironment instanceEnvironment;
-            try {
-                instanceEnvironment = new InstanceEnvironment(
-                        rs.getString(ID.reference()),
-                        fromNullableTimestamp(rs.getTimestamp(START.reference())),
-                        InstanceType.valueOf(rs.getString(TYPE.reference())),
-                        rs.getString(APP_NAME.reference()),
-                        rs.getString(VERSION.reference()),
-                        rs.getString(ENVIRONEMENT.reference()),
-                        rs.getString(ADDRESS.reference()),
-                        rs.getString(OS.reference()),
-                        rs.getString(RE.reference()),
-                        rs.getString(USER.reference()),
-                        rs.getString(BRANCH.reference()),
-                        rs.getString(HASH.reference()),
-                        rs.getString(COLLECTOR.reference()),
-                        rs.getString(ADDITIONAL_PROPERTIES.reference()) != null ? mapper.readValue(rs.getString(ADDITIONAL_PROPERTIES.reference()), new TypeReference<Map<String, String>>() {}) : null,
-                        rs.getString(CONFIGURATION.reference()) != null ? mapper.readValue(rs.getString(CONFIGURATION.reference()), InspectCollectorConfiguration.class) : null
-                );
-                instanceEnvironment.setResource(rs.getString(RESOURCE.reference()) != null ? mapper.readValue(rs.getString(RESOURCE.reference()), MachineResource.class) : null);
-                instanceEnvironment.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
+            var instanceEnvironment = new InstanceEnvironment(
+                    rs.getString(ID.reference()),
+                    fromNullableTimestamp(rs.getTimestamp(START.reference())),
+                    InstanceType.valueOf(rs.getString(TYPE.reference())),
+                    rs.getString(APP_NAME.reference()),
+                    rs.getString(VERSION.reference()),
+                    rs.getString(ENVIRONEMENT.reference()),
+                    rs.getString(ADDRESS.reference()),
+                    rs.getString(OS.reference()),
+                    rs.getString(RE.reference()),
+                    rs.getString(USER.reference()),
+                    rs.getString(BRANCH.reference()),
+                    rs.getString(HASH.reference()),
+                    rs.getString(COLLECTOR.reference()),
+                    null,
+                    null
+                    //rs.getString(ADDITIONAL_PROPERTIES.reference()) != null ? mapper.readValue(rs.getString(ADDITIONAL_PROPERTIES.reference()), new TypeReference<Map<String, String>>() {}) : null,
+                    //rs.getString(CONFIGURATION.reference()) != null ? mapper.readValue(rs.getString(CONFIGURATION.reference()), InspectCollectorConfiguration.class) : null
+            );
+            //instanceEnvironment.setResource(rs.getString(RESOURCE.reference()) != null ? mapper.readValue(rs.getString(RESOURCE.reference()), MachineResource.class) : null);
+            instanceEnvironment.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
             return instanceEnvironment;
         }
         return null;
@@ -104,12 +101,16 @@ public final class InspectMappers {
         };
     }
 
-    public static RowMapper<RestRequest> restRequestLazyMapper() {
-       return InspectMappers::createBaseRestRequest;
+    public static RowMapper<RestRequestDto> restRequestLazyMapper() {
+       return rs -> {
+           RestRequestDto out = createBaseRestRequest(rs);
+           out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
+           return out;
+       };
     }
 
-    public static RestRequest createBaseRestRequest(ResultSet rs) throws SQLException {
-        RestRequest out = new RestRequest();
+    public static RestRequestDto createBaseRestRequest(ResultSet rs) throws SQLException {
+        RestRequestDto out = new RestRequestDto();
         out.setId(rs.getString(ID.reference()));
         out.setProtocol(rs.getString(PROTOCOL.reference()));
         out.setHost(rs.getString(HOST.reference()));
@@ -120,13 +121,12 @@ public final class InspectMappers {
         out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
         out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
         out.setThreadName(rs.getString(THREAD.reference()));
-        //out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
         return out;
     }
 
-    public static RestRequest restRequestMapperComplete(ResultSet rs) throws SQLException {
+    public static RestRequestDto restRequestMapperComplete(ResultSet rs) throws SQLException {
         if (rs.next()) {
-           var out = new RestRequest();
+            var out = new RestRequestDto();
             out.setSessionId(rs.getString(PARENT.reference()));
             out.setId(rs.getString(ID.reference()));
             out.setProtocol(rs.getString(PROTOCOL.reference()));
@@ -144,15 +144,15 @@ public final class InspectMappers {
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
             out.setThreadName(rs.getString(THREAD.reference()));
             out.setAuthScheme(rs.getString(AUTH.reference()));
-            //out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
             return out;
         }
         return null;
     }
     
-    public static RowMapper<RestSessionWrapper> restSessionShallowMapper() {
+    public static RowMapper<RestSessionDto> restSessionShallowMapper() {
         return rs -> {
-            RestSessionWrapper out = new RestSessionWrapper();
+            RestSessionDto out = new RestSessionDto();
             out.setId(rs.getString(ID.reference()));
             out.setMethod(rs.getString(METHOD.reference()));
             out.setProtocol(rs.getString(PROTOCOL.reference()));
@@ -166,14 +166,14 @@ public final class InspectMappers {
             out.setName(rs.getString(API_NAME.reference()));
             out.setUser(rs.getString(USER.reference()));
             out.setAppName(rs.getString(APP_NAME.reference()));
-            //out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
             return out;
         };
     }
 
-    public static RowMapper<Session> restSessionDumpMapper() {
+    public static RowMapper<RestSession> restSessionDumpMapper() {
         return rs -> {
-            RestSessionWrapper out = new RestSessionWrapper();
+            RestSession out = new RestSession();
             out.setId(rs.getString(ID.reference()));
             out.setMethod(rs.getString(METHOD.reference()));
             out.setProtocol(rs.getString(PROTOCOL.reference()));
@@ -188,127 +188,45 @@ public final class InspectMappers {
             out.setUser(rs.getString(USER.reference()));
             out.setHost(rs.getString(HOST.reference()));
             out.setThreadName(rs.getString(THREAD.reference()));
-            //out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
             return out;
         };
     }
 
-    public static RowMapper<Session> restSessionWithInstanceMapper() {
-        return rs -> {
-            RestSessionWrapper out = createBaseRestSession(rs);
-            out.setOs(rs.getString(OS.reference()));
-            out.setRe(rs.getString(RE.reference()));
-            out.setAddress(rs.getString(ADDRESS.reference()));
-            out.setAppName(rs.getString(APP_NAME.reference()));
-            setRestSessionMasks(out);
-            return out;
-        };
-    }
-
-    public static Session restSessionWithoutInstanceMapper(ResultSet rs) throws SQLException {
+    public static RestSession createBaseRestSession(ResultSet rs) throws SQLException {
         if (rs.next()) {
-            RestSessionWrapper out = createBaseRestSession(rs);
-            setRestSessionMasks(out);
+            RestSession out = new RestSession();
+            out.setId(rs.getString(ID.reference()));
+            out.setMethod(rs.getString(METHOD.reference()));
+            out.setProtocol(rs.getString(PROTOCOL.reference()));
+            out.setHost(rs.getString(HOST.reference()));
+            out.setPort(rs.getInt(PORT.reference()));
+            out.setPath(rs.getString(PATH.reference()));
+            out.setQuery(rs.getString(QUERY.reference()));
+            out.setContentType(rs.getString(MEDIA.reference()));
+            out.setAuthScheme(rs.getString(AUTH.reference()));
+            out.setStatus(rs.getInt(STATUS.reference()));
+            out.setInDataSize(rs.getLong(SIZE_IN.reference()));
+            out.setOutDataSize(rs.getLong(SIZE_OUT.reference()));
+            out.setInContentEncoding(rs.getString(CONTENT_ENCODING_IN.reference()));
+            out.setOutContentEncoding(rs.getString(CONTENT_ENCODING_OUT.reference()));
+            out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
+            out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+            out.setThreadName(rs.getString(THREAD.reference()));
+            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
+            out.setName(rs.getString(API_NAME.reference()));
+            out.setUserAgent(rs.getString(USER_AGT.reference()));
+            out.setUser(rs.getString(USER.reference()));
+            out.setRequestsMask(rs.getInt(MASK.reference()));
+            out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
+            out.setCacheControl(rs.getString(CACHE_CONTROL.reference()));
             return out;
         }
         return null;
     }
 
-
-    private static RestSessionWrapper createBaseRestSession(ResultSet rs) throws SQLException {
-        RestSessionWrapper out = new RestSessionWrapper();
-        out.setId(rs.getString(ID.reference()));
-        out.setMethod(rs.getString(METHOD.reference()));
-        out.setProtocol(rs.getString(PROTOCOL.reference()));
-        out.setHost(rs.getString(HOST.reference()));
-        out.setPort(rs.getInt(PORT.reference()));
-        out.setPath(rs.getString(PATH.reference()));
-        out.setQuery(rs.getString(QUERY.reference()));
-        out.setContentType(rs.getString(MEDIA.reference()));
-        out.setAuthScheme(rs.getString(AUTH.reference()));
-        out.setStatus(rs.getInt(STATUS.reference()));
-        out.setInDataSize(rs.getLong(SIZE_IN.reference()));
-        out.setOutDataSize(rs.getLong(SIZE_OUT.reference()));
-        out.setInContentEncoding(rs.getString(CONTENT_ENCODING_IN.reference()));
-        out.setOutContentEncoding(rs.getString(CONTENT_ENCODING_OUT.reference()));
-        out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
-        out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
-        out.setThreadName(rs.getString(THREAD.reference()));
-        //out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
-        out.setName(rs.getString(API_NAME.reference()));
-        out.setUserAgent(rs.getString(USER_AGT.reference()));
-        out.setUser(rs.getString(USER.reference()));
-        out.setMask(rs.getInt(MASK.reference()));
-        out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
-        out.setCacheControl(rs.getString(CACHE_CONTROL.reference()));
-        return out;
-    }
-
-    private static void setRestSessionMasks(RestSessionWrapper out) {
-        if (RequestMask.JDBC.is(out.getMask())) {
-            out.setDatabaseRequests(new ArrayList<>());
-        }
-        if (RequestMask.LOCAL.is(out.getMask())) {
-            out.setLocalRequests(new ArrayList<>());
-        }
-        if (RequestMask.REST.is(out.getMask())) {
-            out.setRestRequests(new ArrayList<>());
-        }
-        if (RequestMask.FTP.is(out.getMask())) {
-            out.setFtpRequests(new ArrayList<>());
-        }
-        if (RequestMask.SMTP.is(out.getMask())) {
-            out.setMailRequests(new ArrayList<>());
-        }
-        if (RequestMask.LDAP.is(out.getMask())) {
-            out.setLdapRequests(new ArrayList<>());
-        }
-    }
-
-    private static void setMainSessionMasks(MainSessionWrapper out) {
-        if (RequestMask.JDBC.is(out.getRequestsMask())) {
-            out.setDatabaseRequests(new ArrayList<>());
-        }
-        if (RequestMask.LOCAL.is(out.getMask())) {
-            out.setLocalRequests(new ArrayList<>());
-        }
-        if (RequestMask.REST.is(out.getMask())) {
-            out.setRestRequests(new ArrayList<>());
-        }
-        if (RequestMask.FTP.is(out.getMask())) {
-            out.setFtpRequests(new ArrayList<>());
-        }
-        if (RequestMask.SMTP.is(out.getMask())) {
-            out.setMailRequests(new ArrayList<>());
-        }
-        if (RequestMask.LDAP.is(out.getMask())) {
-            out.setLdapRequests(new ArrayList<>());
-        }
-    }
-
-    public static RowMapper<Session> mainSessionWithInstanceMapper() {
-        return rs -> {
-            MainSessionWrapper out = createBaseMainsession(rs);
-            out.setAppName(rs.getString(APP_NAME.reference()));
-            out.setOs(rs.getString(OS.reference()));
-            out.setRe(rs.getString(RE.reference()));
-            out.setAddress(rs.getString(ADDRESS.reference()));
-            setMainSessionMasks(out);
-            return out;
-        };
-    }
-
-    public static Session mainSessionWithoutInstanceMapper(ResultSet rs) throws SQLException {
-        if(rs.next()) {
-            MainSessionWrapper out = createBaseMainsession(rs);
-            setMainSessionMasks(out);
-            return out;
-        }
-        return null;
-    }
-
-    private static MainSessionWrapper createBaseMainsession(ResultSet rs) throws SQLException {
-        MainSessionWrapper out = new MainSessionWrapper();
+    public static MainSession createBaseMainsession(ResultSet rs) throws SQLException {
+        MainSession out = new MainSession();
         out.setId(rs.getString(ID.reference()));
         out.setName(rs.getString(NAME.reference()));
         out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
@@ -316,18 +234,18 @@ public final class InspectMappers {
         out.setType(rs.getString(TYPE.reference()));
         out.setLocation(rs.getString(LOCATION.reference()));
         out.setThreadName(rs.getString(THREAD.reference()));
-        //out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+        out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
         out.setUser(rs.getString(USER.reference()));
         out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
-        out.setMask(rs.getInt(MASK.reference()));
+        out.setRequestsMask(rs.getInt(MASK.reference()));
         return out;
     }
 
 
     
-    public static RowMapper<Session> mainSessionDumpMapper(){
+    public static RowMapper<MainSession> mainSessionDumpMapper(){
         return rs -> {
-            MainSessionWrapper out = new MainSessionWrapper();
+            MainSession out = new MainSession();
             out.setId(rs.getString(ID.reference())); // add value of nullable
             out.setName(rs.getString(NAME.reference()));
             out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
@@ -335,30 +253,31 @@ public final class InspectMappers {
             out.setType(rs.getString(TYPE.reference()));
             out.setLocation(rs.getString(LOCATION.reference()));
             out.setThreadName(rs.getString(THREAD.reference()));
-            //out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
             return out;
         };
     }
     
-    public static RowMapper<Session> mainSessionForSearchMapper(){
+    public static RowMapper<MainSessionDto> mainSessionForSearchMapper(){
+        var mapper = new ObjectMapper();
         return rs -> {
-            MainSessionWrapper out = new MainSessionWrapper();
+            MainSessionDto out = new MainSessionDto();
+            out.setAppName(rs.getString(APP_NAME.reference()));
             out.setId(rs.getString(ID.reference())); // add value of nullable
             out.setName(rs.getString(NAME.reference()));
             out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
             out.setLocation(rs.getString(LOCATION.reference()));
-            out.setAppName(rs.getString(APP_NAME.reference()));
             out.setUser(rs.getString(USER.reference()));
             out.setType(rs.getString(TYPE.reference()));
-            //out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
             return out;
         };
     }
 
-    public static RowMapper<LocalRequestWrapper> localRequestMapper(){
+    public static RowMapper<LocalRequest> localRequestMapper(){
         return rs -> {
-            LocalRequestWrapper out = new LocalRequestWrapper();
+            LocalRequest out = new LocalRequest();
             out.setSessionId(rs.getString(PARENT.reference()));
             out.setId(rs.getString(ID.reference()));
             out.setName(rs.getString(NAME.reference()));
@@ -367,19 +286,23 @@ public final class InspectMappers {
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
             out.setUser(rs.getString(USER.reference()));
             out.setThreadName(rs.getString(THREAD.reference()));
-            out.setFailed(rs.getBoolean(FAILED.reference()));
             out.setType(rs.getString(TYPE.reference()));
-            //out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
             return out;
         };
     }
 
-    public static RowMapper<DatabaseRequestWrapper> databaseRequestLazyMapper() {
-        return InspectMappers::createBaseDatabaseRequest;
+    public static RowMapper<DatabaseRequestDto> databaseRequestLazyMapper() {
+        return rs -> {
+            DatabaseRequestDto out = createBaseDatabaseRequest(rs);
+            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
+            return out;
+        };
     }
-    public static DatabaseRequestWrapper databaseRequestComplete(ResultSet rs) throws SQLException { // return null
+
+    public static DatabaseRequest databaseRequestComplete(ResultSet rs) throws SQLException { // return null
         if (rs.next()) {
-            DatabaseRequestWrapper out = createBaseDatabaseRequest(rs);
+            DatabaseRequest out = createBaseDatabaseRequest(rs);
             out.setDriverVersion(rs.getString(DRIVER.reference()));
             out.setProductName(rs.getString(DB_NAME.reference()));
             out.setProductVersion(rs.getString(DB_VERSION.reference()));
@@ -392,8 +315,8 @@ public final class InspectMappers {
 
 
 
-    private static DatabaseRequestWrapper createBaseDatabaseRequest(ResultSet rs) throws SQLException {
-        DatabaseRequestWrapper out = new DatabaseRequestWrapper();
+    private static DatabaseRequestDto createBaseDatabaseRequest(ResultSet rs) throws SQLException {
+        DatabaseRequestDto out = new DatabaseRequestDto();
         out.setId(rs.getString(ID.reference()));
         out.setHost(rs.getString(HOST.reference()));
         out.setName(rs.getString(DB.reference()));
@@ -401,9 +324,7 @@ public final class InspectMappers {
         out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
         out.setUser(rs.getString(USER.reference()));
         out.setThreadName(rs.getString(THREAD.reference()));
-        out.setActions(new ArrayList<>());
-        //out.setCommand(rs.getString(COMMAND.reference()));
-        out.setFailed(rs.getBoolean(FAILED.reference()));
+        out.setCommand(rs.getString(COMMAND.reference()));
         out.setSchema(rs.getString(SCHEMA.reference()));
         return out;
     }
@@ -416,30 +337,32 @@ public final class InspectMappers {
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
             out.setCount(ofNullable(rs.getString(ACTION_COUNT.reference())).map(str -> Arrays.stream(str.split(",")).mapToLong(Long::parseLong).toArray()).orElse(null));
             out.setCommands(valueOfNullabletoEnumList(SqlCommand.class, rs.getString(COMMANDS.reference())).toArray(new SqlCommand[0]));
-            //out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
             return out;
         };
     }
 
-    public static RowMapper<FtpRequestWrapper> ftpRequestLazyMapper(){
-        return InspectMappers::createBaseFtpRequest;
+    public static RowMapper<FtpRequestDto> ftpRequestLazyMapper(){
+        return rs -> {
+            FtpRequestDto out = createBaseFtpRequest(rs);
+            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
+            return out;
+        };
     }
 
-    private static FtpRequestWrapper createBaseFtpRequest(ResultSet rs) throws SQLException {
-        FtpRequestWrapper out = new FtpRequestWrapper();
+    private static FtpRequestDto createBaseFtpRequest(ResultSet rs) throws SQLException {
+        FtpRequestDto out = new FtpRequestDto();
         out.setId(rs.getString(ID.reference()));
         out.setHost(rs.getString(HOST.reference()));
         out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
         out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
         out.setThreadName(rs.getString(THREAD.reference()));
-        out.setActions(new ArrayList<>());
-        out.setFailed(rs.getBoolean(FAILED.reference()));
         return out;
     }
 
-    public static FtpRequestWrapper ftpRequestComplete(ResultSet rs) throws SQLException {
+    public static FtpRequest ftpRequestComplete(ResultSet rs) throws SQLException {
         if (rs.next()) {
-            FtpRequestWrapper out = createBaseFtpRequest(rs);
+            FtpRequest out = createBaseFtpRequest(rs);
             out.setSessionId(rs.getString(PARENT.reference()));
             out.setPort(rs.getInt(PORT.reference()));
             out.setProtocol(rs.getString(PROTOCOL.reference()));
@@ -458,30 +381,32 @@ public final class InspectMappers {
             out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
             out.setArgs(ofNullable(rs.getString(ARG.reference())).map(str -> Arrays.stream(str.split(",")).toArray(String[]::new)).orElse(null));
-            //out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
             return out;
         };
     }
 
-    public static RowMapper<MailRequestWrapper> smtpRequestLazyMapper(){
-        return InspectMappers::createBaseMailRequest;
+    public static RowMapper<MailRequestDto> smtpRequestLazyMapper(){
+        return rs -> {
+            MailRequestDto out = createBaseMailRequest(rs);
+            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
+            return out;
+        };
     }
 
-    private static MailRequestWrapper createBaseMailRequest(ResultSet rs) throws SQLException{
-        MailRequestWrapper out = new MailRequestWrapper();
+    private static MailRequestDto createBaseMailRequest(ResultSet rs) throws SQLException{
+        MailRequestDto out = new MailRequestDto();
         out.setId(rs.getString(ID.reference()));
         out.setHost(rs.getString(HOST.reference()));
         out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
         out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
         out.setThreadName(rs.getString(THREAD.reference()));
-        out.setActions(new ArrayList<>());
-        out.setFailed(rs.getBoolean(FAILED.reference()));
         return out;
     }
 
-    public static MailRequestWrapper mailRequestCompleteMapper(ResultSet rs) throws SQLException {
+    public static MailRequest mailRequestCompleteMapper(ResultSet rs) throws SQLException {
         if (rs.next()) {
-            MailRequestWrapper out = createBaseMailRequest(rs);
+            MailRequest out = createBaseMailRequest(rs);
             out.setSessionId(rs.getString(PARENT.reference()));
             out.setPort(rs.getInt(PORT.reference()));
             out.setUser(rs.getString(USER.reference()));
@@ -496,14 +421,14 @@ public final class InspectMappers {
             out.setName(rs.getString(NAME.reference()));
             out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
-            //out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
             return out;
         };
     }
     
-    public static RowMapper<MailWrapper> mailMapper(){
+    public static RowMapper<Mail> mailMapper(){
         return rs -> {
-            var out = new MailWrapper();
+            var out = new Mail();
             out.setContentType(rs.getString(MEDIA.reference()));
             out.setFrom(ofNullable(rs.getString(FROM.reference())).map(str -> Arrays.stream(str.split(",")).toArray(String[]::new)).orElse(null));
             out.setRecipients(ofNullable(rs.getString(RECIPIENTS.reference())).map(str -> Arrays.stream(str.split(",")).toArray(String[]::new)).orElse(null));
@@ -514,25 +439,27 @@ public final class InspectMappers {
         };
     }
 
-    public static RowMapper<DirectoryRequestWrapper> ldapRequestLazyMapper(){
-        return InspectMappers::createBaseLdapRequest;
+    public static RowMapper<DirectoryRequestDto> ldapRequestLazyMapper(){
+        return rs -> {
+            DirectoryRequestDto out = createBaseLdapRequest(rs);
+            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
+            return out;
+        };
     }
 
-    private static DirectoryRequestWrapper createBaseLdapRequest(ResultSet rs) throws SQLException{
-        DirectoryRequestWrapper out = new DirectoryRequestWrapper();
+    private static DirectoryRequestDto createBaseLdapRequest(ResultSet rs) throws SQLException{
+        DirectoryRequestDto out = new DirectoryRequestDto();
         out.setId(rs.getString(ID.reference()));
         out.setHost(rs.getString(HOST.reference()));
         out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
         out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
         out.setThreadName(rs.getString(THREAD.reference()));
-        out.setActions(new ArrayList<>());
-        out.setFailed(rs.getBoolean(FAILED.reference()));
         return out;
     }
 
-    public static DirectoryRequestWrapper ldapRequestCompleteMapper(ResultSet rs) throws SQLException {
+    public static DirectoryRequest ldapRequestCompleteMapper(ResultSet rs) throws SQLException {
         if (rs.next()) {
-            DirectoryRequestWrapper out = createBaseLdapRequest(rs);
+            DirectoryRequest out = createBaseLdapRequest(rs);
             out.setSessionId(rs.getString(PARENT.reference()));
             out.setPort(rs.getInt(PORT.reference()));
             out.setProtocol(rs.getString(PROTOCOL.reference()));
@@ -569,12 +496,18 @@ public final class InspectMappers {
 
 
 
-    public static Map<Long, ExceptionInfoWrapper> exceptionInfoMapper(ResultSet rs) throws SQLException {
-        Map<Long, ExceptionInfoWrapper> out = new HashMap<>();
+    public static Map<Long, ExceptionInfo> exceptionInfoMapper(ResultSet rs) throws SQLException {
+        Map<Long, ExceptionInfo> out = new HashMap<>();
         while(rs.next()) {
-            //out.put(rs.getLong(PARENT.reference()), new ExceptionInfoWrapper(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+            out.put(rs.getLong(PARENT.reference()), new ExceptionInfo(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null, null));
         }
         return out;
     }
 
+    public static ExceptionInfo getExceptionInfoIfNotNull(String className, String message, StackTraceRow[] stackTraceRows) {
+        if(className != null || message != null) {
+            return new ExceptionInfo(className, message, stackTraceRows, null);
+        }
+        return null;
+    }
 }

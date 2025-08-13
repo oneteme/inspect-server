@@ -16,7 +16,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum TraceApiColumn implements ColumnDecorator {
 
-    ID("id"),
+    ID("id"){
+        @Override
+        public JDBCType type(ViewDecorator vd) {
+            return JDBCType.VARCHAR;
+        }
+    },
     METHOD("method"), //METHOD
     PROTOCOL("protocol"),
     HOST("host"),
