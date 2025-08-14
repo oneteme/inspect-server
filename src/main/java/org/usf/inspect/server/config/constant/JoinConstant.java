@@ -1,41 +1,17 @@
 package org.usf.inspect.server.config.constant;
 
-import static org.usf.inspect.server.RequestType.FTP;
-import static org.usf.inspect.server.RequestType.JDBC;
-import static org.usf.inspect.server.RequestType.LDAP;
-import static org.usf.inspect.server.RequestType.LOCAL;
-import static org.usf.inspect.server.RequestType.REST;
-import static org.usf.inspect.server.RequestType.SMTP;
-import static org.usf.inspect.server.config.TraceApiColumn.ID;
-import static org.usf.inspect.server.config.TraceApiColumn.INSTANCE_ENV;
-import static org.usf.inspect.server.config.TraceApiColumn.ORDER;
-import static org.usf.inspect.server.config.TraceApiColumn.PARENT;
-import static org.usf.inspect.server.config.TraceApiColumn.TYPE;
-import static org.usf.inspect.server.config.TraceApiTable.DATABASE_REQUEST;
-import static org.usf.inspect.server.config.TraceApiTable.DATABASE_STAGE;
-import static org.usf.inspect.server.config.TraceApiTable.EXCEPTION;
-import static org.usf.inspect.server.config.TraceApiTable.FTP_REQUEST;
-import static org.usf.inspect.server.config.TraceApiTable.FTP_STAGE;
-import static org.usf.inspect.server.config.TraceApiTable.INSTANCE;
-import static org.usf.inspect.server.config.TraceApiTable.LDAP_REQUEST;
-import static org.usf.inspect.server.config.TraceApiTable.LDAP_STAGE;
-import static org.usf.inspect.server.config.TraceApiTable.LOCAL_REQUEST;
-import static org.usf.inspect.server.config.TraceApiTable.MAIN_SESSION;
-import static org.usf.inspect.server.config.TraceApiTable.REST_REQUEST;
-import static org.usf.inspect.server.config.TraceApiTable.REST_SESSION;
-import static org.usf.inspect.server.config.TraceApiTable.SMTP_REQUEST;
-import static org.usf.inspect.server.config.TraceApiTable.SMTP_STAGE;
-import static org.usf.inspect.server.config.TraceApiTable.USER_ACTION;
-import static org.usf.jquery.core.ViewJoin.innerJoin;
-import static org.usf.jquery.core.ViewJoin.leftJoin;
-
-import org.usf.inspect.server.RequestType;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+import org.usf.inspect.core.RequestMask;
 import org.usf.jquery.core.ViewJoin;
 import org.usf.jquery.web.Builder;
 import org.usf.jquery.web.ViewDecorator;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import static org.usf.inspect.core.RequestMask.*;
+import static org.usf.inspect.server.config.TraceApiColumn.*;
+import static org.usf.inspect.server.config.TraceApiTable.*;
+import static org.usf.jquery.core.ViewJoin.innerJoin;
+import static org.usf.jquery.core.ViewJoin.leftJoin;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class JoinConstant {
@@ -90,7 +66,7 @@ public class JoinConstant {
     public static Builder<ViewDecorator, ViewJoin[]> restRequestJoins(String name) {
         return switch (name) {
             case EXCEPTION_JOIN -> 
-                    (view, args) -> new ViewJoin[]{leftJoin(EXCEPTION.view(), REST_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(RequestType.REST.name()))};
+                    (view, args) -> new ViewJoin[]{leftJoin(EXCEPTION.view(), REST_REQUEST.column(ID).eq(EXCEPTION.column(PARENT)), EXCEPTION.column(TYPE).eq(REST.name()))};
             case REST_SESSION_JOIN ->
                     (view, args) -> new ViewJoin[]{leftJoin(REST_SESSION.view(), REST_REQUEST.column(PARENT).eq(REST_SESSION.column(ID)))};
             case MAIN_SESSION_JOIN ->

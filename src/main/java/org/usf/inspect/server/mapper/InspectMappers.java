@@ -7,17 +7,13 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import org.usf.inspect.core.*;
 import org.usf.inspect.jdbc.SqlCommand;
-import org.usf.inspect.server.RequestMask;
 import org.usf.inspect.server.dto.*;
 import org.usf.inspect.server.model.InstanceTrace;
-import org.usf.inspect.server.model.Session;
 import org.usf.inspect.server.model.UserAction;
-import org.usf.inspect.server.model.wrapper.*;
 import org.usf.jquery.core.RowMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -226,19 +222,22 @@ public final class InspectMappers {
     }
 
     public static MainSession createBaseMainsession(ResultSet rs) throws SQLException {
-        MainSession out = new MainSession();
-        out.setId(rs.getString(ID.reference()));
-        out.setName(rs.getString(NAME.reference()));
-        out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
-        out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
-        out.setType(rs.getString(TYPE.reference()));
-        out.setLocation(rs.getString(LOCATION.reference()));
-        out.setThreadName(rs.getString(THREAD.reference()));
-        out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
-        out.setUser(rs.getString(USER.reference()));
-        out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
-        out.setRequestsMask(rs.getInt(MASK.reference()));
-        return out;
+        if(rs.next()) {
+            MainSession out = new MainSession();
+            out.setId(rs.getString(ID.reference()));
+            out.setName(rs.getString(NAME.reference()));
+            out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
+            out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+            out.setType(rs.getString(TYPE.reference()));
+            out.setLocation(rs.getString(LOCATION.reference()));
+            out.setThreadName(rs.getString(THREAD.reference()));
+            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
+            out.setUser(rs.getString(USER.reference()));
+            out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
+            out.setRequestsMask(rs.getInt(MASK.reference()));
+            return out;
+        }
+        return null;
     }
 
 
@@ -259,7 +258,6 @@ public final class InspectMappers {
     }
     
     public static RowMapper<MainSessionDto> mainSessionForSearchMapper(){
-        var mapper = new ObjectMapper();
         return rs -> {
             MainSessionDto out = new MainSessionDto();
             out.setAppName(rs.getString(APP_NAME.reference()));
@@ -475,7 +473,7 @@ public final class InspectMappers {
             out.setName(rs.getString(NAME.reference()));
             out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
-            //out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference())));
+            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
             return out;
         };
     }

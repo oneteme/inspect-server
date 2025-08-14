@@ -14,13 +14,11 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.usf.inspect.core.*;
-import org.usf.inspect.server.model.wrapper.*;
+import org.usf.inspect.server.model.wrapper.MainSessionWrapper;
+import org.usf.inspect.server.model.wrapper.RestSessionWrapper;
 
 import java.util.List;
-import java.util.Optional;
 
-import static java.time.Duration.ofSeconds;
-import static java.util.Arrays.asList;
 import static org.springframework.http.converter.json.Jackson2ObjectMapperBuilder.json;
 
 @SpringBootApplication

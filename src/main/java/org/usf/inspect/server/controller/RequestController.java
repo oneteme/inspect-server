@@ -78,20 +78,8 @@ public class RequestController {
         return INSPECT.execute(request.filters(LOG_ENTRY.column(PARENT).varchar().eq(idSession)), InspectMappers.instanceLogEntryMapper());
     }
 
-    @GetMapping("request/rest/{idRequest}")
-    public ResponseEntity<RestRequestDto> getRestRequestById (
-            @QueryRequestFilter(view = "rest_request",
-                                column = "id,protocol,auth,host,port,path,query,method,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,parent,exception.err_type,exception.err_msg",
-                                join = "exception",
-                                order = "start") QueryComposer request,
-            @PathVariable String idRequest) {
-        return  Optional.ofNullable(INSPECT.execute(request.filters(REST_REQUEST.column(ID).varchar().eq(idRequest)), InspectMappers::restRequestMapperComplete))
-                .map(o -> ok().cacheControl(maxAge(1, DAYS)).body(o))
-                .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null));
-    }
-
     @GetMapping("request/{type}/hosts")
-    public String[] getRequestsHostsbyType(
+    public String[] getRequestHosts(
             @PathVariable String type,
             @RequestParam(name = "env") String environment,
             @RequestParam(name = "start") Instant start,
@@ -101,7 +89,7 @@ public class RequestController {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid request type: " + type, e);
         }
-        return requestService.getRequestsHostsByType(type, environment, start, end);
+        return requestService.getRequestHosts(type, environment, start, end);
     }
 
     @GetMapping("request/rest")
@@ -112,7 +100,7 @@ public class RequestController {
                                                 @RequestParam(required = false, name = "rangestatus") String[] rangestatus)  {
 
         JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, null, environments, null, start, end, null, null, hosts, null, null, null, null, null, null, null, rangestatus);
-        return requestService.getRestRequestsLazyForSearch(jsf);
+        return requestService.getRestRequests(jsf);
     }
 
     @GetMapping("request/database")
@@ -122,7 +110,7 @@ public class RequestController {
                                                         @RequestParam(required = false, name = "end") Instant end,
                                                         @RequestParam(required = false, name = "rangestatus") Boolean [] rangestatus)  {
         JqueryRequestFilter jsf = new JqueryRequestFilter(environments,hosts,start,end,rangestatus);
-        return requestService.getDatabaseRequestsLazyForSearch(jsf);
+        return requestService.getDatabaseRequests(jsf);
     }
 
     @GetMapping("request/ftp")
@@ -132,7 +120,7 @@ public class RequestController {
                                                    @RequestParam(required = false, name = "end") Instant end,
                                                    @RequestParam(required = false, name = "rangestatus") Boolean [] rangestatus)  {
         JqueryRequestFilter jsf = new JqueryRequestFilter(environments,hosts,start,end,rangestatus);
-        return requestService.getFtpRequestsLazyForSearch(jsf);
+        return requestService.getFtpRequests(jsf);
     }
 
     @GetMapping("request/smtp")
@@ -142,7 +130,7 @@ public class RequestController {
                                                     @RequestParam(required = false, name = "end") Instant end,
                                                     @RequestParam(required = false, name = "rangestatus") Boolean [] rangestatus)  {
         JqueryRequestFilter jsf = new JqueryRequestFilter(environments,hosts,start,end,rangestatus);
-        return requestService.getSmtpRequestsLazyForSearch(jsf);
+        return requestService.getSmtpRequestsByFilter(jsf);
     }
 
     @GetMapping("request/ldap")
@@ -152,7 +140,7 @@ public class RequestController {
                                                     @RequestParam(required = false, name = "end") Instant end,
                                                     @RequestParam(required = false, name = "rangestatus") Boolean [] rangestatus)  {
         JqueryRequestFilter jsf = new JqueryRequestFilter(environments,hosts,start,end,rangestatus);
-        return requestService.getLdapRequestsLazyForSearch(jsf);
+        return requestService.getLdapRequestsByFilter(jsf);
     }
 
 
@@ -300,24 +288,37 @@ public class RequestController {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(INSPECT.execute(request.filters(DATABASE_REQUEST.column(PARENT).varchar().eq(idSession)), InspectMappers.databaseRequestLazyMapper()));
     }
 
-    @GetMapping("session/{idSession}/request/database/{idDatabase}")
+
+    @GetMapping("request/rest/{idRequest}")
+    public ResponseEntity<RestRequestDto> getRestRequestById (
+            @QueryRequestFilter(view = "rest_request",
+                    column = "id,protocol,auth,host,port,path,query,method,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,parent,exception.err_type,exception.err_msg",
+                    join = "exception",
+                    order = "start") QueryComposer request,
+            @PathVariable String idRequest) {
+        return  Optional.ofNullable(INSPECT.execute(request.filters(REST_REQUEST.column(ID).varchar().eq(idRequest)), InspectMappers::restRequestMapperComplete))
+                .map(o -> ok().cacheControl(maxAge(1, DAYS)).body(o))
+                .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null));
+    }
+
+    @GetMapping("request/database/{idDatabase}")
     public ResponseEntity<DatabaseRequest> getDatabaseRequest(
             @QueryRequestFilter(
                     view = "database_request",
                     column = "id,host,port,db,start,end,user,thread,driver,db_name,db_version,command,schema,parent",
-                    order = "start") QueryComposer request, @PathVariable String idSession, @PathVariable String idDatabase) {
+                    order = "start") QueryComposer request, @PathVariable String idDatabase) {
         return Optional.ofNullable(INSPECT.execute(request.filters(DATABASE_REQUEST.column(ID).varchar().eq(idDatabase)), InspectMappers::databaseRequestComplete))
                 .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping("session/{idSession}/request/database/{idDatabase}/stage")
+    @GetMapping("request/database/{idDatabase}/stage")
     public ResponseEntity<List<DatabaseRequestStage>> getDatabaseRequestStages(
             @QueryRequestFilter(
                     view = "database_stage",
                     column = "name,start,end,action_count,commands,parent,exception.err_type,exception.err_msg",
                     join = "exception",
-                    order = "start") QueryComposer request, @PathVariable String idSession, @PathVariable String idDatabase) {
+                    order = "start") QueryComposer request, @PathVariable String idDatabase) {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(INSPECT.execute(request.filters(DATABASE_STAGE.column(PARENT).varchar().eq(idDatabase)), InspectMappers.databaseRequestStageMapper()));
     }
 
@@ -348,26 +349,25 @@ public class RequestController {
         return  ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(INSPECT.execute(request.filters(FTP_REQUEST.column(PARENT).varchar().eq(idSession)), InspectMappers.ftpRequestLazyMapper()));
     }
 
-    @GetMapping("session/{id_session}/request/ftp/{id_ftp}")
+    @GetMapping("request/ftp/{id_ftp}")
     public ResponseEntity<FtpRequest> getFtpRequest(
             @QueryRequestFilter(
                     view = "ftp_request",
                     column = "id,host,port,protocol,server_version,client_version,start,end,user,thread,status,parent",
                     order = "start") QueryComposer request,
-            @PathVariable(name = "id_session") String idSession,
             @PathVariable(name = "id_ftp") String idFtp){
         return Optional.ofNullable(INSPECT.execute(request.filters(FTP_REQUEST.column(ID).varchar().eq(idFtp)), InspectMappers::ftpRequestComplete))
                 .map(o -> ok().cacheControl(maxAge(1, DAYS)).body(o))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping("session/{idSession}/request/ftp/{idFtp}/stage")
+    @GetMapping("request/ftp/{idFtp}/stage")
     public ResponseEntity<List<FtpRequestStage>> getFtpRequestStages(
             @QueryRequestFilter(
                     view = "ftp_stage",
                     column = "name,start,end,arg,parent,exception.err_type,exception.err_msg",
                     join = "exception",
-                    order = "start") QueryComposer request, @PathVariable String idSession, @PathVariable String idFtp) {
+                    order = "start") QueryComposer request, @PathVariable String idFtp) {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(INSPECT.execute(request.filters(FTP_STAGE.column(PARENT).varchar().eq(idFtp)), InspectMappers.ftpRequestStageMapper()));
     }
 
@@ -402,34 +402,33 @@ public class RequestController {
         return ResponseEntity.ok().body(INSPECT.execute(request.filters(SMTP_REQUEST.column(PARENT).varchar().eq(idSession)), InspectMappers.smtpRequestLazyMapper()));
     }
 
-    @GetMapping("session/{idSession}/request/smtp/{idSmtp}")
+    @GetMapping("request/smtp/{idSmtp}")
     public ResponseEntity<MailRequest> getSmtpRequest(
             @QueryRequestFilter(
                     view = "smtp_request",
                     column = "id,host,port,start,end,user,thread,status,parent",
                     order = "start") QueryComposer request,
-            @PathVariable String idSession,
             @PathVariable String idSmtp){
         return Optional.ofNullable(INSPECT.execute(request.filters(SMTP_REQUEST.column(ID).varchar().eq(idSmtp)), InspectMappers::mailRequestCompleteMapper))
                 .map(o -> ok().cacheControl(maxAge(1, DAYS)).body(o))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping("session/{idSession}/request/smtp/{idSmtp}/stage")
+    @GetMapping("request/smtp/{idSmtp}/stage")
     public ResponseEntity<List<MailRequestStage>> getSmtpRequestStages(
             @QueryRequestFilter(
                     view = "smtp_stage",
                     column = "name,start,end,parent,exception.err_type,exception.err_msg",
                     join = "exception",
-                    order = "start") QueryComposer request, @PathVariable String idSession, @PathVariable String idSmtp) {
+                    order = "start") QueryComposer request, @PathVariable String idSmtp) {
         return ResponseEntity.ok().body(INSPECT.execute(request.filters(SMTP_STAGE.column(PARENT).varchar().eq(idSmtp)), InspectMappers.mailRequestStageMapper()));
     }
 
-    @GetMapping("session/{idSession}/request/smtp/{idSmtp}/mail")
+    @GetMapping("request/smtp/{idSmtp}/mail")
     public ResponseEntity<List<Mail>> getSmtpRequestMails(
             @QueryRequestFilter(
                     view = "smtp_mail",
-                    column = "subject,from,recipients,media,reply_to,size,parent") QueryComposer request, @PathVariable String idSession, @PathVariable String idSmtp) {
+                    column = "subject,from,recipients,media,reply_to,size,parent") QueryComposer request, @PathVariable String idSmtp) {
         return ResponseEntity.ok().body(INSPECT.execute(request.filters(SMTP_MAIL.column(PARENT).varchar().eq(idSmtp)), InspectMappers.mailMapper()));
     }
 
@@ -480,13 +479,12 @@ public class RequestController {
         return ResponseEntity.ok().body(INSPECT.execute(request.filters(LDAP_REQUEST.column(PARENT).varchar().eq(idSession)), InspectMappers.ldapRequestLazyMapper()));
     }
 
-    @GetMapping("session/{idSession}/request/ldap/{idLdap}")
-    public ResponseEntity<DirectoryRequest> getLdapRequests(
+    @GetMapping("request/ldap/{idLdap}")
+    public ResponseEntity<DirectoryRequest> getLdapRequest(
             @QueryRequestFilter(
                     view = "ldap_request",
                     column = "id,host,port,protocol,start,end,user,thread,status,parent",
                     order = "start") QueryComposer request,
-            @PathVariable String idSession,
             @PathVariable String idLdap){
         return Optional.ofNullable(INSPECT.execute(request.filters(LDAP_REQUEST.column(ID).varchar().eq(idLdap)), InspectMappers::ldapRequestCompleteMapper))
                 .map(o -> ok().cacheControl(maxAge(1, DAYS)).body(o))
@@ -494,13 +492,13 @@ public class RequestController {
     }
 
 
-    @GetMapping("session/{idSession}/request/ldap/{idLdap}/stage")
+    @GetMapping("request/ldap/{idLdap}/stage")
     public ResponseEntity<List<DirectoryRequestStage>> getLdapRequestStages(
             @QueryRequestFilter(
                     view = "ldap_stage",
                     column = "name,start,end,arg,parent,exception.err_type,exception.err_msg",
                     join = "exception",
-                    order = "start") QueryComposer request, @PathVariable String idSession, @PathVariable String idLdap) {
+                    order = "start") QueryComposer request, @PathVariable String idLdap) {
         return ResponseEntity.ok().body(INSPECT.execute(request.filters(LDAP_STAGE.column(PARENT).varchar().eq(idLdap)), InspectMappers.ldapRequestStageMapper()));
     }
 

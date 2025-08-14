@@ -22,7 +22,6 @@ import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 import java.util.stream.IntStream;
 
-import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static org.usf.inspect.server.Utils.*;
 import static org.usf.inspect.server.dao.RequestCompletableType.*;
@@ -65,6 +64,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?::json,?::json,?::json)""", ps -> {
         });
     }
 
+    @Transactional(rollbackFor = Throwable.class)
     public void updateInstanceEnvironments(List<InstanceEnvironmentUpdate> instances){
         executeBatch("update e_env_ins set dh_end = ? where id_ins = ?::uuid", instances.iterator(), (ps, instance) -> {
             ps.setTimestamp(1, fromNullableInstant(instance.getEnd()));
@@ -72,6 +72,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?::json,?::json,?::json)""", ps -> {
         });
     }
 
+    @Transactional(rollbackFor = Throwable.class)
     public void saveInstanceTraces(List<InstanceTrace> instanceTraces) {
         executeBatch("""
 insert into e_ins_trc (va_pnd, va_atp, va_ses_sze, dh_str, va_fln, cd_ins)
@@ -85,6 +86,7 @@ values (?, ?, ?, ?, ?, ?::uuid)""", instanceTraces.iterator(), (ps, instanceTrac
         });
     }
 
+    @Transactional(rollbackFor = Throwable.class)
     public void saveLogEntries(List<LogEntry> logEntries) {
         executeBatch("""
 insert into e_log_ent(va_lvl,va_msg,va_stk,dh_str,cd_prn_ses,cd_ins)
@@ -102,6 +104,7 @@ values (?,?,?::json,?,?::uuid,?::uuid)""", logEntries.iterator(), (ps, o)-> {
         });
     }
 
+    @Transactional(rollbackFor = Throwable.class)
     public void saveMachineResourceUsages(List<MachineResourceUsage> usages) {
         executeBatch("""
 insert into e_rsc_usg(dh_str,va_usd_hep,va_cmt_hep,va_usd_met,va_cmt_met,va_usd_dsk,cd_ins)
