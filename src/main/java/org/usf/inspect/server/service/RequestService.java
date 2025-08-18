@@ -172,7 +172,7 @@ public class RequestService {
 
     public List<Session> getRestSessionsForTree(List<String> ids)  {
         JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(ids.toArray(String[]::new));
-        List<Session> sessions = getRestSessions(jsf, true);
+        List<Session> sessions = getRestSessions(jsf);
         if (!sessions.isEmpty()) {
             var reqMap = sessions.stream().collect(toMap(Session::getId, identity()));
             var parentIds = reqMap.keySet().stream().toList();
@@ -249,7 +249,7 @@ public class RequestService {
     }
 
 
-    public List<Session> getRestSessions(JqueryRequestSessionFilter jsf, boolean lazy)  { // remove if possible after optimizing tree
+    public List<Session> getRestSessions(JqueryRequestSessionFilter jsf)  { // remove if possible after optimizing tree
         var v = new QueryComposer()
                 .columns(
                     getColumns(
@@ -257,9 +257,7 @@ public class RequestService {
                             PROTOCOL, HOST, PORT, PATH, QUERY, MEDIA, AUTH, STATUS, SIZE_IN, SIZE_OUT, CONTENT_ENCODING_IN, CONTENT_ENCODING_OUT,
                             START, END, THREAD, ERR_TYPE, ERR_MSG, MASK, USER, USER_AGT, CACHE_CONTROL, INSTANCE_ENV
                     ));
-        if(lazy) {
-            v.columns(getColumns(INSTANCE, APP_NAME, OS, RE, ADDRESS)).filters(REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
-        }
+        v.columns(getColumns(INSTANCE, APP_NAME, OS, RE, ADDRESS)).filters(REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
         if(jsf != null) {
             v.filters(jsf.filters(REST_SESSION).toArray(DBFilter[]::new));
         }
@@ -290,12 +288,10 @@ public class RequestService {
                 session.setUser(rs.getString(USER.reference()));
                 session.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
                 session.setCacheControl(rs.getString(CACHE_CONTROL.reference()));
-                if(lazy) {
-                    session.setOs(rs.getString(OS.reference()));
-                    session.setRe(rs.getString(RE.reference()));
-                    session.setAddress(rs.getString(ADDRESS.reference()));
-                    session.setAppName(rs.getString(APP_NAME.reference()));
-                }
+                session.setOs(rs.getString(OS.reference()));
+                session.setRe(rs.getString(RE.reference()));
+                session.setAddress(rs.getString(ADDRESS.reference()));
+                session.setAppName(rs.getString(APP_NAME.reference()));
                 session.setRequestsMask(rs.getInt(MASK.reference()));
                 if(RequestMask.JDBC.is(session.getRequestsMask())) {
                     session.setDatabaseRequests(new ArrayList<>());
@@ -323,7 +319,7 @@ public class RequestService {
 
     public Session getMainSessionForTree(String id)  {
         JqueryMainSessionFilter jsf = new JqueryMainSessionFilter(Collections.singletonList(id).toArray(String[]::new));
-        Session session = requireSingle(getMainSessions(jsf, true));
+        Session session = requireSingle(getMainSessions(jsf));
         if (session != null) {
             getRestRequestsCompleteForParent(Collections.singletonList(session.getId())).forEach(r -> session.getRestRequests().add(r));
             getDatabaseRequestsComplete(session.getId()).forEach(r -> session.getDatabaseRequests().add(r));
@@ -395,17 +391,14 @@ public class RequestService {
         });
     }
 
-    public List<Session> getMainSessions(JqueryMainSessionFilter jsf, boolean lazy) {
+    public List<Session> getMainSessions(JqueryMainSessionFilter jsf) {
         var v = new QueryComposer()
                 .columns(
                     getColumns(
                             MAIN_SESSION, ID, NAME, START, END, TYPE, LOCATION, THREAD,
                             ERR_TYPE, ERR_MSG, MASK, USER, INSTANCE_ENV
                     ));
-        if(lazy) {
-            v.columns(getColumns(INSTANCE, APP_NAME, OS, RE, ADDRESS)).filters(MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
-        }
-
+        v.columns(getColumns(INSTANCE, APP_NAME, OS, RE, ADDRESS)).filters(MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
         if(jsf != null) {
             v.filters(jsf.filters(MAIN_SESSION).toArray(DBFilter[]::new));
         }
@@ -421,12 +414,10 @@ public class RequestService {
                 main.setLocation(rs.getString(LOCATION.reference()));
                 main.setThreadName(rs.getString(THREAD.reference()));
                 main.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
-                if(lazy) {
-                    main.setAppName(rs.getString(APP_NAME.reference()));
-                    main.setOs(rs.getString(OS.reference()));
-                    main.setRe(rs.getString(RE.reference()));
-                    main.setAddress(rs.getString(ADDRESS.reference()));
-                }
+                main.setAppName(rs.getString(APP_NAME.reference()));
+                main.setOs(rs.getString(OS.reference()));
+                main.setRe(rs.getString(RE.reference()));
+                main.setAddress(rs.getString(ADDRESS.reference()));
                 main.setUser(rs.getString(USER.reference()));
                 main.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
                 main.setRequestsMask(rs.getInt(MASK.reference()));
@@ -455,14 +446,14 @@ public class RequestService {
     }
 
     public List<RestRequestWrapper> getRestRequestsCompleteForParent(List<String> cdSession)  {
-        return getRestRequestsCompleteByFilters(new DBFilter[]{REST_REQUEST.column(PARENT).in(cdSession.toArray())});
+        return getRestRequestsCompleteByFilters(new DBFilter[]{REST_REQUEST.column(PARENT).varchar().in(cdSession.toArray())});
     }
 
     private List<RestRequestWrapper> getRestRequestsCompleteByFilters(DBFilter[] filters)  { //use criteria
         var v = new QueryComposer()
                 .columns(getColumns(
                         REST_REQUEST, ID, PROTOCOL, AUTH, HOST, PORT, PATH, QUERY, METHOD, STATUS, SIZE_IN,
-                        SIZE_OUT, CONTENT_ENCODING_IN, CONTENT_ENCODING_OUT, START, END, THREAD, REMOTE, PARENT
+                        SIZE_OUT, CONTENT_ENCODING_IN, CONTENT_ENCODING_OUT, START, END, THREAD, PARENT
                 ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(REST_REQUEST.join(EXCEPTION_JOIN))
@@ -547,11 +538,11 @@ public class RequestService {
     }
 
     public List<DatabaseRequestWrapper> getDatabaseRequestsComplete(List<String> cdSession)  {
-        return getDatabaseRequestsComplete(DATABASE_REQUEST.column(PARENT).in(cdSession.toArray()));
+        return getDatabaseRequestsComplete(DATABASE_REQUEST.column(PARENT).varchar().in(cdSession.toArray()));
     }
 
     public List<DatabaseRequestWrapper> getDatabaseRequestsComplete(String cdSession)  {
-        return getDatabaseRequestsComplete(DATABASE_REQUEST.column(PARENT).eq(cdSession));
+        return getDatabaseRequestsComplete(DATABASE_REQUEST.column(PARENT).varchar().eq(cdSession));
     }
 
     public List<DatabaseRequestDto> getDatabaseRequests(JqueryRequestFilter jsf)  {
@@ -627,11 +618,11 @@ public class RequestService {
     }
 
     public List<FtpRequestWrapper> getFtpRequestsComplete(List<String> cdSession)  {
-        return getFtpRequestsComplete(FTP_REQUEST.column(PARENT).in(cdSession.toArray()));
+        return getFtpRequestsComplete(FTP_REQUEST.column(PARENT).varchar().in(cdSession.toArray()));
     }
 
     public List<FtpRequestWrapper> getFtpRequestsComplete(String cdSession) {
-        return getFtpRequestsComplete(FTP_REQUEST.column(PARENT).eq(cdSession));
+        return getFtpRequestsComplete(FTP_REQUEST.column(PARENT).varchar().eq(cdSession));
     }
 
     public List<FtpRequestDto> getFtpRequests(JqueryRequestFilter jsf)  {
@@ -702,11 +693,11 @@ public class RequestService {
     }
 
     public List<MailRequestWrapper> getSmtpRequestsComplete(List<String> cdSession) {
-        return getSmtpRequestsComplete(SMTP_REQUEST.column(PARENT).in(cdSession.toArray()));
+        return getSmtpRequestsComplete(SMTP_REQUEST.column(PARENT).varchar().in(cdSession.toArray()));
     }
 
     public List<MailRequestWrapper> getSmtpRequestsComplete(String cdSession) {
-        return getSmtpRequestsComplete(SMTP_REQUEST.column(PARENT).eq(cdSession));
+        return getSmtpRequestsComplete(SMTP_REQUEST.column(PARENT).varchar().eq(cdSession));
     }
 
     public List<MailRequestDto> getSmtpRequestsByFilter(JqueryRequestFilter jsf)  {
@@ -772,11 +763,11 @@ public class RequestService {
     }
 
     public List<DirectoryRequestWrapper> getLdapRequestsComplete(List<String> cdSession)  {
-        return getLdapRequestsComplete(LDAP_REQUEST.column(PARENT).in(cdSession.toArray()));
+        return getLdapRequestsComplete(LDAP_REQUEST.column(PARENT).varchar().in(cdSession.toArray()));
     }
 
     public List<DirectoryRequestWrapper> getLdapRequestsComplete(String cdSession)  {
-        return getLdapRequestsComplete(LDAP_REQUEST.column(PARENT).eq(cdSession));
+        return getLdapRequestsComplete(LDAP_REQUEST.column(PARENT).varchar().eq(cdSession));
     }
 
     public List<DirectoryRequestDto> getLdapRequestsByFilter(JqueryRequestFilter jsf)  {

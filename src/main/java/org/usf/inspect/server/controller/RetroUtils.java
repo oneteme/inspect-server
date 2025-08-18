@@ -3,7 +3,10 @@ package org.usf.inspect.server.controller;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.usf.inspect.core.*;
+import org.usf.inspect.core.AbstractRequest;
+import org.usf.inspect.core.AbstractStage;
+import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.core.HttpAction;
 import org.usf.inspect.server.model.Session;
 import org.usf.inspect.server.model.Wrapper;
 import org.usf.inspect.server.model.wrapper.MainSessionWrapper;
@@ -17,7 +20,9 @@ import java.util.function.Function;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static org.usf.inspect.core.HttpAction.*;
 import static org.usf.inspect.core.SessionManager.nextId;
+import static org.usf.inspect.server.model.RequestMask.mask;
 
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -30,13 +35,16 @@ public final class RetroUtils {
                 if(isNull(s.getId())) {
                     s.setId(nextId());
                 }
-                traces.add(ms.unwrap());
+                var mainSession = ms.unwrap();
+                mainSession.setRequestsMask(mask(s));
+                traces.add(ms);
             } else if (s instanceof RestSessionWrapper rs) {
                 if(isNull(s.getId())) {
                     log.warn("RestSesstion.id is null : {}", s);
                 }
                 var restSession = rs.unwrap();
-                var stage = restSession.createStage(HttpAction.PROCESS, restSession.getStart(), restSession.getEnd(), null);
+                restSession.setRequestsMask(mask(s));
+                var stage = restSession.createStage(PROCESS, restSession.getStart(), restSession.getEnd(), null);
                 stage.setRequestId(s.getId());
                 stage.setOrder(0);
                 traces.add(stage);
@@ -60,7 +68,7 @@ public final class RetroUtils {
                 return m.getActions();
             }, traces::add);
             toV4(s.getId(), s.getRestRequests(), (e) -> {
-                var stage = e.createStage(HttpAction.PROCESS, e.getStart(), e.getEnd(), null);
+                var stage = e.createStage(PROCESS, e.getStart(), e.getEnd(), null);
                 if(e.getException() != null) {
                     if(e.getException().getType() == null){
                         e.setBodyContent(e.getException().getMessage());

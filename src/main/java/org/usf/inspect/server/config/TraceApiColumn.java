@@ -79,7 +79,6 @@ public enum TraceApiColumn implements ColumnDecorator {
     },
     SERVER_VERSION("serverVersion"),
     CLIENT_VERSION("clientVersion"),
-    REMOTE("remote"),
 
     INSTANCE_ENV("instance"){
         @Override

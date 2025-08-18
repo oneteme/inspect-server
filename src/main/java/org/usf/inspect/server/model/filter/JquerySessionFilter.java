@@ -34,7 +34,7 @@ public class JquerySessionFilter {
     public Collection<DBFilter> filters(TraceApiTable table) {
         Collection<DBFilter> filters = new ArrayList<>();
         if(!isEmpty(getIds())) {
-            filters.add(table.column(ID).in(getIds()));
+            filters.add(table.column(ID).varchar().in(getIds()));
         }
         if(!isEmpty(getAppNames())) {
             filters.add(INSTANCE.column(APP_NAME).in(getAppNames()));
