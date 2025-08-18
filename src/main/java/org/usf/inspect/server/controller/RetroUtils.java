@@ -89,7 +89,9 @@ public final class RetroUtils {
             for(var o : requests) {
                 var req = o.unwrap();
                 req.setSessionId(sessionId);
-                req.setId(nextId());
+                if(isNull(req.getId())){ //req.id = ses.id
+                    req.setId(nextId());
+                }
                 consumer.accept(req);
                 if(fn != null) {
                     var inc = 0;

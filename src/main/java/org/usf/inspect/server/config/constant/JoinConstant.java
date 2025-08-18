@@ -51,12 +51,6 @@ public class JoinConstant {
                     (view, args) -> new ViewJoin[]{innerJoin(SMTP_REQUEST.view(), view.column(ID).eq(SMTP_REQUEST.column(PARENT)))};
             case LDAP_REQUEST_JOIN ->
                     (view, args) -> new ViewJoin[]{innerJoin(LDAP_REQUEST.view(), view.column(ID).eq(LDAP_REQUEST.column(PARENT)))};
-            case "request" ->
-                    (view, args) -> {
-            	var req = org.usf.inspect.server.model.RequestType.valueOf(args[0]).getView();
-            	return new ViewJoin[]{innerJoin(req.view(), view.column(ID).eq(req.column(PARENT)))};
-            };
-                    
             case INSTANCE_JOIN ->
                     (view, args) -> new ViewJoin[]{innerJoin(INSTANCE.view(), REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)))};
             default -> null;

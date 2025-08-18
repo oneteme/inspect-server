@@ -276,7 +276,6 @@ public final class InspectMappers {
     public static RowMapper<LocalRequest> localRequestMapper(){
         return rs -> {
             LocalRequest out = new LocalRequest();
-            out.setSessionId(rs.getString(PARENT.reference()));
             out.setId(rs.getString(ID.reference()));
             out.setName(rs.getString(NAME.reference()));
             out.setLocation(rs.getString(LOCATION.reference()));

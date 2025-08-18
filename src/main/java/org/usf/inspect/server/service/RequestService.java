@@ -153,8 +153,8 @@ public class RequestService {
         });
     }
 
-    public Map<String,String> getSessionParent(String childId){
-        var prnt = getPropertyByFilters(REST_REQUEST, PARENT, REST_REQUEST.column(ID).varchar().eq(childId));
+    public Map<String, String> getSessionParent(TraceApiTable tableType, String childId){
+        var prnt = getPropertyByFilters(tableType, PARENT, tableType.column(ID).varchar().eq(childId));
         if(prnt != null){
             var res = getPropertyByFilters(REST_SESSION, ID, REST_SESSION.column(ID).varchar().eq(prnt));
             if(res != null) {
@@ -772,7 +772,7 @@ public class RequestService {
 
     public List<DirectoryRequestDto> getLdapRequestsByFilter(JqueryRequestFilter jsf)  {
         var filters = jsf.filters(LDAP_REQUEST).toArray(DBFilter[]::new);
-        var count = getRequestCountByTable(LDAP_REQUEST,filters);
+        var count = getRequestCountByTable(LDAP_REQUEST, filters);
         if(count > requestLimit){
             throw new PayloadTooLargeException();
         }
@@ -834,14 +834,13 @@ public class RequestService {
         });
     }
 
-    public String[] getRequestHosts(String  type, String environment, Instant start, Instant end){
-        var table = TraceApiTable.valueOf(RequestType.valueOf(type).getTable());
+    public String[] getRequestHosts(TraceApiTable requestTable, String environment, Instant start, Instant end){
         var v1 = new QueryComposer()
                 .distinct(true)
-                .columns(table.column(HOST))
-                .joins(table.join(INSTANCE_JOIN))
-                .filters(table.column(START).ge(from(start)))
-                .filters(table.column(START).lt(from(end)))
+                .columns(requestTable.column(HOST))
+                .joins(requestTable.join(INSTANCE_JOIN))
+                .filters(requestTable.column(START).ge(from(start)))
+                .filters(requestTable.column(START).lt(from(end)))
                 .filters(INSTANCE.column(ENVIRONEMENT).eq(environment));
         return INSPECT.execute(v1, toArray(rs -> rs.getString(HOST.reference()), String[]::new));
     }

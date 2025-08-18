@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.usf.inspect.core.*;
+import org.usf.inspect.server.config.TraceApiTable;
 import org.usf.inspect.server.dto.*;
 import org.usf.inspect.server.mapper.InspectMappers;
 import org.usf.inspect.server.model.*;
@@ -84,12 +85,13 @@ public class RequestController {
             @RequestParam(name = "env") String environment,
             @RequestParam(name = "start") Instant start,
             @RequestParam(name = "end") Instant end)  {
+        TraceApiTable requestTable;
         try {
-            RequestType.valueOf(type);
+            requestTable = RequestType.valueOf(type).getTable();
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid request type: " + type, e);
         }
-        return requestService.getRequestHosts(type, environment, start, end);
+        return requestService.getRequestHosts(requestTable, environment, start, end);
     }
 
     @GetMapping("request/rest")
@@ -108,8 +110,8 @@ public class RequestController {
                                                         @RequestParam(required = false, name = "host") String[] hosts,
                                                         @RequestParam(required = false, name = "start") Instant start,
                                                         @RequestParam(required = false, name = "end") Instant end,
-                                                        @RequestParam(required = false, name = "rangestatus") Boolean [] rangestatus)  {
-        JqueryRequestFilter jsf = new JqueryRequestFilter(environments,hosts,start,end,rangestatus);
+                                                        @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus)  {
+        JqueryRequestFilter jsf = new JqueryRequestFilter(environments, hosts, start, end, rangestatus);
         return requestService.getDatabaseRequests(jsf);
     }
 
@@ -118,8 +120,8 @@ public class RequestController {
                                                    @RequestParam(required = false, name = "host") String[] hosts,
                                                    @RequestParam(required = false, name = "start") Instant start,
                                                    @RequestParam(required = false, name = "end") Instant end,
-                                                   @RequestParam(required = false, name = "rangestatus") Boolean [] rangestatus)  {
-        JqueryRequestFilter jsf = new JqueryRequestFilter(environments,hosts,start,end,rangestatus);
+                                                   @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus)  {
+        JqueryRequestFilter jsf = new JqueryRequestFilter(environments,hosts,start,end, rangestatus);
         return requestService.getFtpRequests(jsf);
     }
 
@@ -128,8 +130,8 @@ public class RequestController {
                                                     @RequestParam(required = false, name = "host") String[] hosts,
                                                     @RequestParam(required = false, name = "start") Instant start,
                                                     @RequestParam(required = false, name = "end") Instant end,
-                                                    @RequestParam(required = false, name = "rangestatus") Boolean [] rangestatus)  {
-        JqueryRequestFilter jsf = new JqueryRequestFilter(environments,hosts,start,end,rangestatus);
+                                                    @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus)  {
+        JqueryRequestFilter jsf = new JqueryRequestFilter(environments,hosts,start,end, rangestatus);
         return requestService.getSmtpRequestsByFilter(jsf);
     }
 
@@ -138,8 +140,8 @@ public class RequestController {
                                                     @RequestParam(required = false, name = "host") String[] hosts,
                                                     @RequestParam(required = false, name = "start") Instant start,
                                                     @RequestParam(required = false, name = "end") Instant end,
-                                                    @RequestParam(required = false, name = "rangestatus") Boolean [] rangestatus)  {
-        JqueryRequestFilter jsf = new JqueryRequestFilter(environments,hosts,start,end,rangestatus);
+                                                    @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus)  {
+        JqueryRequestFilter jsf = new JqueryRequestFilter(environments,hosts,start,end, rangestatus);
         return requestService.getLdapRequestsByFilter(jsf);
     }
 
@@ -187,9 +189,18 @@ public class RequestController {
                 .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping("session/rest/{id}/parent")
-    public ResponseEntity<Map<String, String>> getSessionParent(@PathVariable String id)  {
-        return Optional.of(requestService.getSessionParent(id))
+    @GetMapping("{type}/{id}/parent")
+    public ResponseEntity<Map<String, String>> getSessionParent(
+            @PathVariable String type,
+            @PathVariable String id
+    )  {
+        TraceApiTable tableType;
+        try {
+            tableType = RequestType.valueOf(type).getTable();
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid request type: " + type, e);
+        }
+        return Optional.of(requestService.getSessionParent(tableType, id))
                 .filter(o -> !o.isEmpty())
                 .map(o -> ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
                 .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null));
@@ -251,7 +262,7 @@ public class RequestController {
     public ResponseEntity<List<RestRequestDto>>  getRestRequests(
             @QueryRequestFilter(
                 view = "rest_request",
-                column = "id,protocol,host,path,query,method,status,start,end,thread,parent,exception.err_type,exception.err_msg",
+                column = "id,protocol,host,path,query,method,status,start,end,thread,exception.err_type,exception.err_msg",
                 join = "exception",
                 order = "start") QueryComposer request,
             @PathVariable String  idSession){
@@ -272,7 +283,7 @@ public class RequestController {
     public ResponseEntity<List<LocalRequest>> getLocalRequests(
             @QueryRequestFilter(
                     view = "local_request",
-                    column = "id,name,location,start,end,user,thread,parent,type,exception.err_type,exception.err_msg",
+                    column = "id,name,location,start,end,user,thread,type,exception.err_type,exception.err_msg",
                     join = "exception",
                     order = "start") QueryComposer request, @PathVariable String idSession)  {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(INSPECT.execute(request.filters(LOCAL_REQUEST.column(PARENT).varchar().eq(idSession)), InspectMappers.localRequestMapper()));
@@ -316,7 +327,7 @@ public class RequestController {
     public ResponseEntity<List<DatabaseRequestStage>> getDatabaseRequestStages(
             @QueryRequestFilter(
                     view = "database_stage",
-                    column = "name,start,end,action_count,commands,parent,exception.err_type,exception.err_msg",
+                    column = "name,start,end,action_count,commands,exception.err_type,exception.err_msg",
                     join = "exception",
                     order = "start") QueryComposer request, @PathVariable String idDatabase) {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(INSPECT.execute(request.filters(DATABASE_STAGE.column(PARENT).varchar().eq(idDatabase)), InspectMappers.databaseRequestStageMapper()));
@@ -353,7 +364,7 @@ public class RequestController {
     public ResponseEntity<FtpRequest> getFtpRequest(
             @QueryRequestFilter(
                     view = "ftp_request",
-                    column = "id,host,port,protocol,server_version,client_version,start,end,user,thread,status,parent",
+                    column = "id,host,port,protocol,server_version,client_version,start,end,user,thread,parent",
                     order = "start") QueryComposer request,
             @PathVariable(name = "id_ftp") String idFtp){
         return Optional.ofNullable(INSPECT.execute(request.filters(FTP_REQUEST.column(ID).varchar().eq(idFtp)), InspectMappers::ftpRequestComplete))
@@ -365,7 +376,7 @@ public class RequestController {
     public ResponseEntity<List<FtpRequestStage>> getFtpRequestStages(
             @QueryRequestFilter(
                     view = "ftp_stage",
-                    column = "name,start,end,arg,parent,exception.err_type,exception.err_msg",
+                    column = "name,start,end,arg,exception.err_type,exception.err_msg",
                     join = "exception",
                     order = "start") QueryComposer request, @PathVariable String idFtp) {
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(INSPECT.execute(request.filters(FTP_STAGE.column(PARENT).varchar().eq(idFtp)), InspectMappers.ftpRequestStageMapper()));
@@ -406,7 +417,7 @@ public class RequestController {
     public ResponseEntity<MailRequest> getSmtpRequest(
             @QueryRequestFilter(
                     view = "smtp_request",
-                    column = "id,host,port,start,end,user,thread,status,parent",
+                    column = "id,host,port,start,end,user,thread,parent",
                     order = "start") QueryComposer request,
             @PathVariable String idSmtp){
         return Optional.ofNullable(INSPECT.execute(request.filters(SMTP_REQUEST.column(ID).varchar().eq(idSmtp)), InspectMappers::mailRequestCompleteMapper))
@@ -418,7 +429,7 @@ public class RequestController {
     public ResponseEntity<List<MailRequestStage>> getSmtpRequestStages(
             @QueryRequestFilter(
                     view = "smtp_stage",
-                    column = "name,start,end,parent,exception.err_type,exception.err_msg",
+                    column = "name,start,end,exception.err_type,exception.err_msg",
                     join = "exception",
                     order = "start") QueryComposer request, @PathVariable String idSmtp) {
         return ResponseEntity.ok().body(INSPECT.execute(request.filters(SMTP_STAGE.column(PARENT).varchar().eq(idSmtp)), InspectMappers.mailRequestStageMapper()));
@@ -428,7 +439,7 @@ public class RequestController {
     public ResponseEntity<List<Mail>> getSmtpRequestMails(
             @QueryRequestFilter(
                     view = "smtp_mail",
-                    column = "subject,from,recipients,media,reply_to,size,parent") QueryComposer request, @PathVariable String idSmtp) {
+                    column = "subject,from,recipients,media,reply_to,size") QueryComposer request, @PathVariable String idSmtp) {
         return ResponseEntity.ok().body(INSPECT.execute(request.filters(SMTP_MAIL.column(PARENT).varchar().eq(idSmtp)), InspectMappers.mailMapper()));
     }
 
@@ -483,7 +494,7 @@ public class RequestController {
     public ResponseEntity<DirectoryRequest> getLdapRequest(
             @QueryRequestFilter(
                     view = "ldap_request",
-                    column = "id,host,port,protocol,start,end,user,thread,status,parent",
+                    column = "id,host,port,protocol,start,end,user,thread,parent",
                     order = "start") QueryComposer request,
             @PathVariable String idLdap){
         return Optional.ofNullable(INSPECT.execute(request.filters(LDAP_REQUEST.column(ID).varchar().eq(idLdap)), InspectMappers::ldapRequestCompleteMapper))
@@ -496,7 +507,7 @@ public class RequestController {
     public ResponseEntity<List<DirectoryRequestStage>> getLdapRequestStages(
             @QueryRequestFilter(
                     view = "ldap_stage",
-                    column = "name,start,end,arg,parent,exception.err_type,exception.err_msg",
+                    column = "name,start,end,arg,exception.err_type,exception.err_msg",
                     join = "exception",
                     order = "start") QueryComposer request, @PathVariable String idLdap) {
         return ResponseEntity.ok().body(INSPECT.execute(request.filters(LDAP_STAGE.column(PARENT).varchar().eq(idLdap)), InspectMappers.ldapRequestStageMapper()));
