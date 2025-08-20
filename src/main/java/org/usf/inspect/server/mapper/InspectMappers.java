@@ -335,6 +335,7 @@ public final class InspectMappers {
             out.setCount(ofNullable(rs.getString(ACTION_COUNT.reference())).map(str -> Arrays.stream(str.split(",")).mapToLong(Long::parseLong).toArray()).orElse(null));
             out.setCommands(valueOfNullabletoEnumList(SqlCommand.class, rs.getString(COMMANDS.reference())).toArray(new SqlCommand[0]));
             out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
+            out.setOrder(rs.getInt(ORDER.reference()));
             return out;
         };
     }
@@ -379,6 +380,7 @@ public final class InspectMappers {
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
             out.setArgs(ofNullable(rs.getString(ARG.reference())).map(str -> Arrays.stream(str.split(",")).toArray(String[]::new)).orElse(null));
             out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
+            out.setOrder(rs.getInt(ORDER.reference()));
             return out;
         };
     }
@@ -419,6 +421,7 @@ public final class InspectMappers {
             out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
             out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
+            out.setOrder(rs.getInt(ORDER.reference()));
             return out;
         };
     }
@@ -473,6 +476,7 @@ public final class InspectMappers {
             out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
             out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
+            out.setOrder(rs.getInt(ORDER.reference()));
             return out;
         };
     }
