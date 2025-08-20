@@ -32,20 +32,20 @@ public final class RetroUtils {
         List<EventTrace> traces = new ArrayList<>();
         for(Session s : sessions) {
             if(s instanceof MainSessionWrapper ms) {
-                if(isNull(s.getId())) {
-                    s.setId(nextId());
+                if(isNull(ms.getId())) {
+                    ms.setId(nextId());
                 }
                 var mainSession = ms.unwrap();
-                mainSession.setRequestsMask(mask(s));
-                traces.add(ms);
+                mainSession.setRequestsMask(mask(ms));
+                traces.add(mainSession);
             } else if (s instanceof RestSessionWrapper rs) {
-                if(isNull(s.getId())) {
-                    log.warn("RestSesstion.id is null : {}", s);
+                if(isNull(rs.getId())) {
+                    log.warn("RestSesstion.id is null : {}", rs);
                 }
                 var restSession = rs.unwrap();
-                restSession.setRequestsMask(mask(s));
+                restSession.setRequestsMask(mask(rs));
                 var stage = restSession.createStage(PROCESS, restSession.getStart(), restSession.getEnd(), null);
-                stage.setRequestId(s.getId());
+                stage.setRequestId(rs.getId());
                 stage.setOrder(0);
                 traces.add(stage);
                 traces.add(restSession);
