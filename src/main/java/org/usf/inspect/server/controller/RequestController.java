@@ -543,7 +543,7 @@ public class RequestController {
     }
 
     @GetMapping ("session/user/{user}/action")
-    public ResponseEntity<List<Analytic>> getUserActions(
+    public ResponseEntity<List<AnalyticDto>> getUserActions(
             @QueryRequestFilter(
                     view = "main_session",
                     column = "id,start:session_start,end,location,name:session_name,user_action.name:action_name,user_action.node_name,user_action.type,user_action.start:action_start",
@@ -555,7 +555,7 @@ public class RequestController {
             @RequestParam(name = "date") Instant date
             ) {
         return ResponseEntity.ok().body(INSPECT.execute(request.filters(MAIN_SESSION.column(USER).eq(user).and(MAIN_SESSION.column(START).ge(from(date)))), rs -> {
-            List<Analytic> sessions = new ArrayList<>();
+            List<AnalyticDto> sessions = new ArrayList<>();
             while (rs.next()) {
                 var userAction =  new UserAction(
                         rs.getString("action_name"),
@@ -566,7 +566,7 @@ public class RequestController {
                 var cdSession = rs.getString(ID.reference());
                 var session = sessions.stream().filter(s -> s.getId().equals(cdSession)).findFirst().orElse(null);
                 if(session == null) {
-                    session = new Analytic();
+                    session = new AnalyticDto();
                     session.setId(rs.getString(ID.reference()));
                     session.setStart(fromNullableTimestamp(rs.getTimestamp("session_start")));
                     session.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));

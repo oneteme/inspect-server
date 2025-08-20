@@ -31,7 +31,6 @@ public class MainSessionWrapper implements Wrapper<MainSession>, Session {
     private String os;
     private String re;
     private String address;
-    private Integer mask;
 
 
     public void setRequestsMask(int requestsMask) {
