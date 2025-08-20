@@ -87,6 +87,7 @@ CREATE TABLE IF NOT EXISTS e_smtp_rqt (
     id_smtp_rqt UUID,
     va_hst varchar,
     cd_prt int,
+    va_pcl varchar,
     va_usr varchar,
     dh_str timestamp(6),
     dh_end timestamp(6),
