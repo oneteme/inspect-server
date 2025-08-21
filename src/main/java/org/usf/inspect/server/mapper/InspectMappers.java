@@ -140,6 +140,7 @@ public final class InspectMappers {
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
             out.setThreadName(rs.getString(THREAD.reference()));
             out.setAuthScheme(rs.getString(AUTH.reference()));
+            out.setBodyContent(rs.getString(BODY_CONTENT.reference()));
             out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
             return out;
         }

@@ -303,7 +303,7 @@ public class RequestController {
     @GetMapping("request/rest/{idRequest}")
     public ResponseEntity<RestRequestDto> getRestRequestById (
             @QueryRequestFilter(view = "rest_request",
-                    column = "id,protocol,auth,host,port,path,query,method,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,parent,exception.err_type,exception.err_msg",
+                    column = "id,protocol,auth,host,port,path,query,method,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,body_content,parent,exception.err_type,exception.err_msg",
                     join = "exception",
                     order = "start") QueryComposer request,
             @PathVariable String idRequest) {

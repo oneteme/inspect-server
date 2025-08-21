@@ -74,6 +74,7 @@ public class ColumnConstant {
             case STATUS -> CD_STT;
             case SIZE_IN -> VA_I_SZE;
             case SIZE_OUT -> VA_O_SZE;
+            case BODY_CONTENT -> VA_BODY_CONTENT;
             case CONTENT_ENCODING_IN -> VA_I_CNT_ENC;
             case CONTENT_ENCODING_OUT -> VA_O_CNT_ENC;
             case START -> DH_STR;

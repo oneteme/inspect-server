@@ -105,6 +105,7 @@ public enum TraceApiColumn implements ColumnDecorator {
     COMMITED_META("commitedMeta"),
     USED_DISK_SPACE("usedDiskSpace"),
     FILENAME("filename"),
+    BODY_CONTENT("bodyContent"),
     //---
     ELAPSEDTIME("elapsedtime", FilterConstant::elapsedtime2, Builder.multiArgsCriteria(FilterConstant::elapsedTimeExpressions)),
     COUNT_SLOWEST("elapsedTimeSlowest", FilterConstant::elapsedTimeVerySlow),
