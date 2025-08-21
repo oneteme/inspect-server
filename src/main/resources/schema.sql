@@ -31,7 +31,6 @@ CREATE TABLE IF NOT EXISTS e_rst_ses (
     va_o_cnt_enc varchar,
     dh_str timestamp(6),
     dh_end timestamp(6),
-    va_bdy_cnt varchar,
     va_thr varchar,
     va_err_typ varchar,
     va_err_msg varchar,
