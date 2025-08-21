@@ -262,7 +262,7 @@ public class RequestController {
     public ResponseEntity<List<RestRequestDto>>  getRestRequests(
             @QueryRequestFilter(
                 view = "rest_request",
-                column = "id,protocol,host,path,query,method,status,start,end,thread,exception.err_type,exception.err_msg",
+                column = "id,protocol,host,path,query,method,status,start,end,thread,body_content,exception.err_type,exception.err_msg",
                 join = "exception",
                 order = "start") QueryComposer request,
             @PathVariable String  idSession){

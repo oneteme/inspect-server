@@ -98,11 +98,7 @@ public final class InspectMappers {
     }
 
     public static RowMapper<RestRequestDto> restRequestLazyMapper() {
-       return rs -> {
-           RestRequestDto out = createBaseRestRequest(rs);
-           out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
-           return out;
-       };
+       return InspectMappers::createBaseRestRequest;
     }
 
     public static RestRequestDto createBaseRestRequest(ResultSet rs) throws SQLException {
@@ -117,31 +113,21 @@ public final class InspectMappers {
         out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
         out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
         out.setThreadName(rs.getString(THREAD.reference()));
+        out.setBodyContent(rs.getString(BODY_CONTENT.reference()));
+        out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
         return out;
     }
 
     public static RestRequestDto restRequestMapperComplete(ResultSet rs) throws SQLException {
         if (rs.next()) {
-            var out = new RestRequestDto();
+            var out = createBaseRestRequest(rs);
             out.setSessionId(rs.getString(PARENT.reference()));
-            out.setId(rs.getString(ID.reference()));
-            out.setProtocol(rs.getString(PROTOCOL.reference()));
-            out.setHost(rs.getString(HOST.reference()));
             out.setPort(rs.getInt(PORT.reference()));
-            out.setPath(rs.getString(PATH.reference()));
-            out.setQuery(rs.getString(QUERY.reference()));
-            out.setMethod(rs.getString(METHOD.reference()));
-            out.setStatus(rs.getInt(STATUS.reference()));
             out.setInDataSize(rs.getLong(SIZE_IN.reference()));
             out.setOutDataSize(rs.getLong(SIZE_OUT.reference()));
             out.setInContentEncoding(rs.getString(CONTENT_ENCODING_IN.reference()));
             out.setOutContentEncoding(rs.getString(CONTENT_ENCODING_OUT.reference()));
-            out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
-            out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
-            out.setThreadName(rs.getString(THREAD.reference()));
             out.setAuthScheme(rs.getString(AUTH.reference()));
-            out.setBodyContent(rs.getString(BODY_CONTENT.reference()));
-            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
             return out;
         }
         return null;
