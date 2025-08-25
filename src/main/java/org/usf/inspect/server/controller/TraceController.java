@@ -18,6 +18,8 @@ import static org.usf.jquery.core.Utils.isBlank;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -52,6 +54,8 @@ import lombok.extern.slf4j.Slf4j;
 public class TraceController {
 
     private final EventTraceScheduledDispatcher dispatcher;
+
+	private static final Predicate<String> isUUID = Pattern.compile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$").asPredicate();
     
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<String> addInstanceEnvironment(
@@ -60,17 +64,15 @@ public class TraceController {
     	if(isBlank(instance.getName())) { //env !?
     		return status(BAD_REQUEST).body("invalid instance name");
     	}
-    	if(instance.getType() == CLIENT) {
-    		instance = update(instance, hsr.getRemoteAddr(), nextId());
-    	}
-    	try {
-    		return dispatcher.dispatch(instance) 
-    				? ok(instance.getId())
-    				: status(SERVICE_UNAVAILABLE).body("dispatcher.state=" + dispatcher.getState());
-    	} catch(Exception e) {
-    		log.error("post instance", e);
-    		return internalServerError().body("unexpected exception " + e.getClass().getSimpleName());
-    	}
+		var id = assertUUID(instance.getId(), "instance.id");
+		try {
+			return dispatcher.dispatch(instance)
+					? ok(id)
+					: status(SERVICE_UNAVAILABLE).body("dispatcher.state=" + dispatcher.getState());
+		} catch(Exception e) {
+			log.error("post instance", e);
+			return internalServerError().body("unexpected exception " + e.getClass().getSimpleName());
+		}
     }
 
     @PutMapping("instance/{id}/session")
@@ -81,6 +83,7 @@ public class TraceController {
             @RequestParam(required = false) String filename,
             @RequestParam(required = false) Instant end,
             @RequestBody List<EventTrace> traces) {
+		assertUUID(id, "instance/id");
     	var now = now();
     	try {
     		if(isNull(traces)) {
@@ -94,8 +97,10 @@ public class TraceController {
     		for(var e : traces) {
     			if(e instanceof AbstractRequest req) {
     				req.setInstanceId(id);
+					assertUUID(req.getId(), "req.id");
     			} else if(e instanceof AbstractSession ses) {
     				ses.setInstanceId(id);
+					assertUUID(ses.getId(), "ses.id");
     			} else if(e instanceof MachineResourceUsage usg) {
     				usg.setInstanceId(id);
     			} else if(e instanceof LogEntry ent) {
@@ -132,4 +137,11 @@ public class TraceController {
         ins.setEnd(instance.getEnd());
     	return ins;
     }
+
+	static String assertUUID(String uuid, String name) {
+		if (nonNull(uuid) && isUUID.test(uuid)) {
+			return uuid;
+		}
+		throw new IllegalArgumentException(name + " is not a valid UUID: " + uuid);
+	}
 }

@@ -38,9 +38,7 @@ public class TraceLegacyController {
     public ResponseEntity<String> addInstanceEnvironment(
             HttpServletRequest hsr,
             @RequestBody InstanceEnvironment instance) {
-        if(instance.getType() == SERVER) {  //ID is supplied by the server in v3
-            instance = update(instance, instance.getAddress(), nextId());
-        }
+        instance = update(instance, instance.getType() == SERVER ? instance.getAddress() : hsr.getRemoteAddr(), nextId());
         return tracer.addInstanceEnvironment(hsr, instance);
     }
 

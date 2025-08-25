@@ -1,16 +1,13 @@
 package org.usf.inspect.server.config.constant;
 
-import static org.usf.inspect.server.config.TraceApiColumn.END;
-import static org.usf.inspect.server.config.TraceApiColumn.ERR_MSG;
-import static org.usf.inspect.server.config.TraceApiColumn.ERR_TYPE;
-import static org.usf.inspect.server.config.TraceApiColumn.START;
-import static org.usf.inspect.server.config.TraceApiColumn.STATUS;
+import static org.usf.inspect.server.config.TraceApiColumn.*;
 import static org.usf.jquery.core.ComparisonExpression.eq;
 import static org.usf.jquery.core.ComparisonExpression.ge;
 import static org.usf.jquery.core.ComparisonExpression.isNotNull;
 import static org.usf.jquery.core.ComparisonExpression.isNull;
 import static org.usf.jquery.core.ComparisonExpression.lt;
 
+import org.usf.inspect.server.config.TraceApiColumn;
 import org.usf.jquery.core.ComparisonExpression;
 import org.usf.jquery.core.DBColumn;
 import org.usf.jquery.web.ViewDecorator;
@@ -25,8 +22,8 @@ public class FilterConstant {
         return table.column(END).minus(table.column(START)).epoch();
     }
 
-    private static DBColumn countStatusByType(ViewDecorator table, ComparisonExpression op) {
-        var status = table.column(STATUS);
+    private static DBColumn countStatusByType(ViewDecorator table, TraceApiColumn column, ComparisonExpression op) {
+        var status = table.column(column);
         return (status).toCase().when(op, status).end().count();
     }
 
@@ -43,59 +40,59 @@ public class FilterConstant {
     }
 
     public static DBColumn countError(ViewDecorator table, String... args){
-        return countStatusByType(table, eq(false));
+        return countStatusByType(table, FAILED, eq(true));
     }
 
     public static DBColumn countSuccess(ViewDecorator table, String... args){
-        return countStatusByType(table, eq(true));
+        return countStatusByType(table, FAILED, eq(false));
     }
 
     public static DBColumn countStatus200(ViewDecorator table, String... args) {
-        return countStatusByType(table, eq(200));
+        return countStatusByType(table, STATUS, eq(200));
     }
 
     public static DBColumn countStatus400(ViewDecorator table, String... args) {
-        return countStatusByType(table, eq(400));
+        return countStatusByType(table, STATUS, eq(400));
     }
 
     public static DBColumn countStatus401(ViewDecorator table, String... args) {
-        return countStatusByType(table, eq(401));
+        return countStatusByType(table, STATUS, eq(401));
     }
 
     public static DBColumn countStatus403(ViewDecorator table, String... args) {
-        return countStatusByType(table, eq(403));
+        return countStatusByType(table, STATUS, eq(403));
     }
 
     public static DBColumn countStatus404(ViewDecorator table, String... args) {
-        return countStatusByType(table, eq(404));
+        return countStatusByType(table, STATUS, eq(404));
     }
 
     public static DBColumn countStatus500(ViewDecorator table, String... args) {
-        return countStatusByType(table, eq(500));
+        return countStatusByType(table, STATUS, eq(500));
     }
 
     public static DBColumn countStatus503(ViewDecorator table, String... args) {
-        return countStatusByType(table, eq(503));
+        return countStatusByType(table, STATUS, eq(503));
     }
 
     public static DBColumn countErrorStatus(ViewDecorator table, String... args) {
-        return countStatusByType(table, ge(400));
+        return countStatusByType(table, STATUS, ge(400));
     }
 
     public static DBColumn countClientErrorStatus(ViewDecorator table, String... args) {
-        return countStatusByType(table, ge(400).and(lt(500)));
+        return countStatusByType(table, STATUS, ge(400).and(lt(500)));
     }
 
     public static DBColumn countServerErrorStatus(ViewDecorator table, String... args) {
-        return countStatusByType(table, ge(500));
+        return countStatusByType(table, STATUS, ge(500));
     }
 
     public static DBColumn countServerUnavailableStatus(ViewDecorator table, String... args) {
-        return countStatusByType(table, eq(0));
+        return countStatusByType(table, STATUS, eq(0));
     }
 
     public static DBColumn countSuccesStatus(ViewDecorator table, String... args) {
-        return countStatusByType(table, ge(200).and(lt(300)));
+        return countStatusByType(table, STATUS, ge(200).and(lt(300)));
     }
     public static ComparisonExpression elapsedTimeExpressions(ViewDecorator table, String name) {
         return switch (name) {

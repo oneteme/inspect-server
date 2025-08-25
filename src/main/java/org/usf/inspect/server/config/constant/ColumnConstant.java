@@ -21,6 +21,7 @@ public class ColumnConstant {
             case THREAD -> VA_THR;
             case ERR_TYPE -> VA_ERR_TYP;
             case ERR_MSG -> VA_ERR_MSG;
+            case STACKTRACE -> VA_STK;
             case MASK -> VA_MSK;
             case INSTANCE_ENV -> CD_INS;
             default -> null;
@@ -43,6 +44,7 @@ public class ColumnConstant {
             case SIZE_OUT -> VA_O_SZE;
             case ERR_TYPE -> VA_ERR_TYP;
             case ERR_MSG -> VA_ERR_MSG;
+            case STACKTRACE -> VA_STK;
             case CONTENT_ENCODING_IN -> VA_I_CNT_ENC;
             case CONTENT_ENCODING_OUT -> VA_O_CNT_ENC;
             case START -> DH_STR;
@@ -54,6 +56,17 @@ public class ColumnConstant {
             case CACHE_CONTROL -> VA_CCH_CTR;
             case MASK -> VA_MSK;
             case INSTANCE_ENV -> CD_INS;
+            default -> null;
+        };
+    }
+
+    public static String restSessionStageColumns(TraceApiColumn column) {
+        return switch (column) {
+            case NAME -> VA_NAM;
+            case START -> DH_STR;
+            case END -> DH_END;
+            case ORDER -> CD_ORD;
+            case PARENT -> CD_PRN_SES;
             default -> null;
         };
     }
@@ -72,6 +85,7 @@ public class ColumnConstant {
             case STATUS -> CD_STT;
             case SIZE_IN -> VA_I_SZE;
             case SIZE_OUT -> VA_O_SZE;
+            case BODY_CONTENT -> VA_BODY_CONTENT;
             case CONTENT_ENCODING_IN -> VA_I_CNT_ENC;
             case CONTENT_ENCODING_OUT -> VA_O_CNT_ENC;
             case START -> DH_STR;
@@ -79,6 +93,17 @@ public class ColumnConstant {
             case THREAD -> VA_THR;
             case PARENT -> CD_PRN_SES;
             case INSTANCE_ENV -> CD_INS;
+            default -> null;
+        };
+    }
+
+    public static String restRequestStageColumns(TraceApiColumn column) {
+        return switch (column) {
+            case NAME -> VA_NAM;
+            case START -> DH_STR;
+            case END -> DH_END;
+            case ORDER -> CD_ORD;
+            case PARENT -> CD_RST_RQT;
             default -> null;
         };
     }
@@ -241,6 +266,7 @@ public class ColumnConstant {
             case TYPE -> VA_TYP;
             case ERR_TYPE -> VA_ERR_TYP;
             case ERR_MSG -> VA_ERR_MSG;
+            case STACKTRACE -> VA_STK;
             case ORDER -> CD_ORD;
             case PARENT -> CD_RQT;
             default -> null;

@@ -13,6 +13,7 @@ import static org.usf.inspect.server.Utils.isEmpty;
  * @author u$f
  *
  */
+@Deprecated(since = "v1.1")
 @RequiredArgsConstructor
 public enum RequestMask {
 	

@@ -35,7 +35,7 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
     private final String[] apiNames;
     private final String path;
     private final String query;
-    private final String[] rangestatus;
+    private final String[] rangeStatus;
 
     public JqueryRequestSessionFilter(String[] ids, String[] appNames, String[] environments, String[] users, Instant start, Instant end, String[] methods, String[] protocols, String[] hosts, String[] ports, String[] medias, String[] auths, Integer[] status, String[] apiNames, String path, String query,String[] rangestatus) {
         super(ids, appNames, environments, users, start, end);
@@ -49,7 +49,7 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
         this.apiNames = apiNames;
         this.path = path;
         this.query = query;
-        this.rangestatus = rangestatus;
+        this.rangeStatus = rangestatus;
     }
 
     public JqueryRequestSessionFilter(String[] ids) {
@@ -90,10 +90,10 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
             filters.add(table.column(STATUS).in(getStatus()));
         }
 
-        if(!isEmpty(getRangestatus())){
-            DBFilter filter = table.column(STATUS).varchar().startsLike(getRangestatus()[0].charAt(0));
-            for(int i=1;i < getRangestatus().length; i++) {
-                filter = filter.append(LogicalOperator.OR, table.column(STATUS).varchar().startsLike(getRangestatus()[i].charAt(0)));
+        if(!isEmpty(getRangeStatus())){
+            DBFilter filter = table.column(STATUS).varchar().startsLike(getRangeStatus()[0].charAt(0));
+            for(int i = 1; i < getRangeStatus().length; i++) {
+                filter = filter.append(LogicalOperator.OR, table.column(STATUS).varchar().startsLike(getRangeStatus()[i].charAt(0)));
             }
             filters.add(filter);
         }

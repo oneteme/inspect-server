@@ -16,7 +16,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum TraceApiColumn implements ColumnDecorator {
 
-    ID("id"),
+    ID("id"){
+        @Override
+        public JDBCType type(ViewDecorator vd) {
+            return JDBCType.VARCHAR;
+        }
+    },
     METHOD("method"), //METHOD
     PROTOCOL("protocol"),
     HOST("host"),
@@ -74,7 +79,6 @@ public enum TraceApiColumn implements ColumnDecorator {
     },
     SERVER_VERSION("serverVersion"),
     CLIENT_VERSION("clientVersion"),
-    REMOTE("remote"),
 
     INSTANCE_ENV("instance"){
         @Override
@@ -101,6 +105,7 @@ public enum TraceApiColumn implements ColumnDecorator {
     COMMITED_META("commitedMeta"),
     USED_DISK_SPACE("usedDiskSpace"),
     FILENAME("filename"),
+    BODY_CONTENT("bodyContent"),
     //---
     ELAPSEDTIME("elapsedtime", FilterConstant::elapsedtime2, Builder.multiArgsCriteria(FilterConstant::elapsedTimeExpressions)),
     COUNT_SLOWEST("elapsedTimeSlowest", FilterConstant::elapsedTimeVerySlow),

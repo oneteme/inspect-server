@@ -16,8 +16,9 @@ import lombok.RequiredArgsConstructor;
 public enum TraceApiTable implements ViewDecorator {
 
     REST_REQUEST(ColumnConstant::restRequestColumns, JoinConstant::restRequestJoins),
-    REST_SESSION(ColumnConstant::restSessionColumns, JoinConstant::restSessionJoins),
-//  REST_SESSION2(DataConstants::restSessionColumns),
+    REST_REQUEST_STAGE(ColumnConstant::restRequestStageColumns, JoinConstant::restRequestStageJoins),
+	REST_SESSION(ColumnConstant::restSessionColumns, JoinConstant::restSessionJoins),
+	REST_SESSION_STAGE(ColumnConstant::restSessionStageColumns),
     MAIN_SESSION(ColumnConstant::mainSessionColumns, JoinConstant::mainSessionJoins),
     DATABASE_REQUEST(ColumnConstant::databaseRequestColumns, JoinConstant::databaseRequestJoins),
     DATABASE_STAGE(ColumnConstant::databaseStageColumns, JoinConstant::databaseStageJoins),

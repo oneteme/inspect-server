@@ -18,7 +18,7 @@ public final class FieldConstant {
     public static final String ID_RST_RQT = "id_rst_rqt";
     public static final String ID_LDAP_RQT = "id_ldap_rqt";
     public static final String CD_LDAP_RQT = "cd_ldap_rqt";
-
+    public static final String CD_RST_RQT = "cd_rst_rqt";
     public static final String ID_INS = "id_ins";
     public static final String CD_INS = "cd_ins";
     public static final String CD_RQT = "cd_rqt";
@@ -91,4 +91,5 @@ public final class FieldConstant {
     public static final String VA_USED_DISK_SPACE = "va_usd_dsk";
     public static final String VA_FAIL= "va_fail";
     public static final String VA_FILENAME= "va_fln";
+    public static final String VA_BODY_CONTENT = "va_bdy_cnt";
 }
