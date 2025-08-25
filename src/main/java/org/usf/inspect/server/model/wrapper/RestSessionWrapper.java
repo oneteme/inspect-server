@@ -29,7 +29,6 @@ public class RestSessionWrapper implements Wrapper<RestSession>, Session {
     private String os;
     private String re;
     private String address;
-    private Integer mask;
 
     public void setRequestsMask(int requestsMask) {
         restSession.setRequestsMask(requestsMask);

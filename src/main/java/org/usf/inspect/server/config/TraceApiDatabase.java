@@ -16,7 +16,9 @@ public enum TraceApiDatabase implements DatabaseDecorator {
 	public String viewName(ViewDecorator vd) {
 		return switch ((TraceApiTable) vd) {
 			case REST_REQUEST: yield "e_rst_rqt";
+			case REST_REQUEST_STAGE: yield "e_rst_rqt_stg";
 			case REST_SESSION: yield "e_rst_ses";
+			case REST_SESSION_STAGE: yield "e_rst_ses_stg";
 			case MAIN_SESSION: yield "e_main_ses";
 			case DATABASE_REQUEST: yield "e_dtb_rqt";
 			case DATABASE_STAGE: yield "e_dtb_stg";

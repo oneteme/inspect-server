@@ -19,11 +19,11 @@ public class RequestDao {
 
     public List<String> selectChildsById(String id) {
         var query = "with recursive recusive(prnt,chld) as (" +
-                " select ''::varchar as prnt, ? as chld " +
+                " select ''::varchar as prnt, ?::varchar as chld " +
                 " union all " +
-                " select  recusive.chld, E_RST_RQT.CD_RMT_SES " +
+                " select  recusive.chld::varchar, E_RST_RQT.ID_RST_RQT::varchar " +
                 " from E_RST_RQT, recusive " +
-                " where recusive.chld = E_RST_RQT.CD_PRN_SES " +
+                " where recusive.chld::varchar = E_RST_RQT.CD_PRN_SES::varchar " +
                 ") select distinct(chld) from recusive";
         return template.query(query, (ResultSet rs, int rowNum) -> (rs.getString("chld")), id).stream().filter(Objects::nonNull).toList();
     }

@@ -1,10 +1,7 @@
 package org.usf.inspect.server.model.filter;
 
 import static java.sql.Timestamp.from;
-import static org.usf.inspect.server.config.TraceApiColumn.ENVIRONEMENT;
-import static org.usf.inspect.server.config.TraceApiColumn.HOST;
-import static org.usf.inspect.server.config.TraceApiColumn.START;
-import static org.usf.inspect.server.config.TraceApiColumn.STATUS;
+import static org.usf.inspect.server.config.TraceApiColumn.*;
 import static org.usf.inspect.server.config.TraceApiTable.INSTANCE;
 import static org.usf.jquery.core.Utils.isEmpty;
 
@@ -27,7 +24,7 @@ public class JqueryRequestFilter {
     private final String[] hosts;
     private final Instant start;
     private final Instant end;
-    private final Boolean[] rangestatus;
+    private final Boolean[] failed;
 
     public Collection<DBFilter> filters(TraceApiTable table) {
         Collection<DBFilter> filters = new ArrayList<>();
@@ -43,8 +40,8 @@ public class JqueryRequestFilter {
         if(getEnd() != null) {
             filters.add(table.column(START).lt(from(getEnd()))); // to be fixed
         }
-        if(getRangestatus() != null) {
-            filters.add(table.column(STATUS).in(getRangestatus()));
+        if(getFailed() != null) {
+            filters.add(table.column(FAILED).in(getFailed()));
         }
         return filters;
     }
