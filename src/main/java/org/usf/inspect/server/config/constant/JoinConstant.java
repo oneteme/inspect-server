@@ -71,6 +71,14 @@ public class JoinConstant {
         };
     }
 
+    public static Builder<ViewDecorator, ViewJoin[]> restRequestStageJoins(String name) {
+        return switch (name) {
+            case EXCEPTION_JOIN ->
+                    (view, args) -> new ViewJoin[]{leftJoin(EXCEPTION.view(), REST_REQUEST_STAGE.column(PARENT).eq(EXCEPTION.column(PARENT)), REST_REQUEST_STAGE.column(ORDER).eq(EXCEPTION.column(ORDER)), EXCEPTION.column(TYPE).eq(REST.name()))};
+            default -> null;
+        };
+    }
+
     public static Builder<ViewDecorator, ViewJoin[]> localRequestJoins(String name) {
         return switch (name) {
             case EXCEPTION_JOIN ->

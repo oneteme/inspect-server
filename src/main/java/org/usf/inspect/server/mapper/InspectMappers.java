@@ -98,7 +98,11 @@ public final class InspectMappers {
     }
 
     public static RowMapper<RestRequestDto> restRequestLazyMapper() {
-       return InspectMappers::createBaseRestRequest;
+        return rs -> {
+            RestRequestDto out = createBaseRestRequest(rs);
+            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
+            return out;
+        };
     }
 
     public static RestRequestDto createBaseRestRequest(ResultSet rs) throws SQLException {
@@ -114,11 +118,10 @@ public final class InspectMappers {
         out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
         out.setThreadName(rs.getString(THREAD.reference()));
         out.setBodyContent(rs.getString(BODY_CONTENT.reference()));
-        out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
         return out;
     }
 
-    public static RestRequestDto restRequestMapperComplete(ResultSet rs) throws SQLException {
+    public static RestRequest restRequestMapperComplete(ResultSet rs) throws SQLException {
         if (rs.next()) {
             var out = createBaseRestRequest(rs);
             out.setSessionId(rs.getString(PARENT.reference()));
@@ -321,6 +324,18 @@ public final class InspectMappers {
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
             out.setCount(ofNullable(rs.getString(ACTION_COUNT.reference())).map(str -> Arrays.stream(str.split(",")).mapToLong(Long::parseLong).toArray()).orElse(null));
             out.setCommands(valueOfNullabletoEnumList(SqlCommand.class, rs.getString(COMMANDS.reference())).toArray(new SqlCommand[0]));
+            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
+            out.setOrder(rs.getInt(ORDER.reference()));
+            return out;
+        };
+    }
+
+    public static RowMapper<HttpRequestStage> restRequestStageMapper(){
+        return rs -> {
+            HttpRequestStage out= new HttpRequestStage();
+            out.setName(rs.getString(NAME.reference()));
+            out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
+            out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
             out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
             out.setOrder(rs.getInt(ORDER.reference()));
             return out;

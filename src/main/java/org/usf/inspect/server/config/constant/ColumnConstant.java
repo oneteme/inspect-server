@@ -60,6 +60,17 @@ public class ColumnConstant {
         };
     }
 
+    public static String restSessionStageColumns(TraceApiColumn column) {
+        return switch (column) {
+            case NAME -> VA_NAM;
+            case START -> DH_STR;
+            case END -> DH_END;
+            case ORDER -> CD_ORD;
+            case PARENT -> CD_PRN_SES;
+            default -> null;
+        };
+    }
+
     public static String restRequestColumns(TraceApiColumn column) {
         return switch (column) {
             case ID -> ID_RST_RQT;
@@ -82,6 +93,17 @@ public class ColumnConstant {
             case THREAD -> VA_THR;
             case PARENT -> CD_PRN_SES;
             case INSTANCE_ENV -> CD_INS;
+            default -> null;
+        };
+    }
+
+    public static String restRequestStageColumns(TraceApiColumn column) {
+        return switch (column) {
+            case NAME -> VA_NAM;
+            case START -> DH_STR;
+            case END -> DH_END;
+            case ORDER -> CD_ORD;
+            case PARENT -> CD_RST_RQT;
             default -> null;
         };
     }
