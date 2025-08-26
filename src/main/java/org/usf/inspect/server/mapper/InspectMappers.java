@@ -10,6 +10,7 @@ import org.usf.inspect.jdbc.SqlCommand;
 import org.usf.inspect.server.dto.*;
 import org.usf.inspect.server.model.InstanceTrace;
 import org.usf.inspect.server.model.UserAction;
+import org.usf.jquery.core.ResultSetMapper;
 import org.usf.jquery.core.RowMapper;
 
 import java.sql.ResultSet;
@@ -26,32 +27,38 @@ import static org.usf.inspect.server.service.RequestService.valueOfNullabletoEnu
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public final class InspectMappers {
 
-    public static InstanceEnvironment instanceEnvironmentMapper(ResultSet rs) throws SQLException {
-        if(rs.next()) {
-            var instanceEnvironment = new InstanceEnvironment(
-                    rs.getString(ID.reference()),
-                    fromNullableTimestamp(rs.getTimestamp(START.reference())),
-                    InstanceType.valueOf(rs.getString(TYPE.reference())),
-                    rs.getString(APP_NAME.reference()),
-                    rs.getString(VERSION.reference()),
-                    rs.getString(ENVIRONEMENT.reference()),
-                    rs.getString(ADDRESS.reference()),
-                    rs.getString(OS.reference()),
-                    rs.getString(RE.reference()),
-                    rs.getString(USER.reference()),
-                    rs.getString(BRANCH.reference()),
-                    rs.getString(HASH.reference()),
-                    rs.getString(COLLECTOR.reference()),
-                    null,
-                    null
-                    //rs.getString(ADDITIONAL_PROPERTIES.reference()) != null ? mapper.readValue(rs.getString(ADDITIONAL_PROPERTIES.reference()), new TypeReference<Map<String, String>>() {}) : null,
-                    //rs.getString(CONFIGURATION.reference()) != null ? mapper.readValue(rs.getString(CONFIGURATION.reference()), InspectCollectorConfiguration.class) : null
-            );
-            //instanceEnvironment.setResource(rs.getString(RESOURCE.reference()) != null ? mapper.readValue(rs.getString(RESOURCE.reference()), MachineResource.class) : null);
-            instanceEnvironment.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
-            return instanceEnvironment;
-        }
-        return null;
+    public static ResultSetMapper<InstanceEnvironment> instanceEnvironmentMapper(ObjectMapper mapper) {
+        return rs->{
+            if(rs.next()) {
+                var instanceEnvironment = new InstanceEnvironment(
+                        rs.getString(ID.reference()),
+                        fromNullableTimestamp(rs.getTimestamp(START.reference())),
+                        InstanceType.valueOf(rs.getString(TYPE.reference())),
+                        rs.getString(APP_NAME.reference()),
+                        rs.getString(VERSION.reference()),
+                        rs.getString(ENVIRONEMENT.reference()),
+                        rs.getString(ADDRESS.reference()),
+                        rs.getString(OS.reference()),
+                        rs.getString(RE.reference()),
+                        rs.getString(USER.reference()),
+                        rs.getString(BRANCH.reference()),
+                        rs.getString(HASH.reference()),
+                        rs.getString(COLLECTOR.reference()),
+                        null,
+                        null
+                        //rs.getString(ADDITIONAL_PROPERTIES.reference()) != null ? mapper.readValue(rs.getString(ADDITIONAL_PROPERTIES.reference()), new TypeReference<Map<String, String>>() {}) : null,
+                        //rs.getString(CONFIGURATION.reference()) != null ? mapper.readValue(rs.getString(CONFIGURATION.reference()), InspectCollectorConfiguration.class) : null
+                );
+                try {
+                    instanceEnvironment.setResource(rs.getString(RESOURCE.reference()) != null ? mapper.readValue(rs.getString(RESOURCE.reference()), MachineResource.class) : null);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+                instanceEnvironment.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                return instanceEnvironment;
+            }
+            return null;
+        };
     }
 
     public static RowMapper<InstanceTrace> instanceTraceMapper() {
@@ -78,8 +85,7 @@ public final class InspectMappers {
                 );
     }
 
-    public static RowMapper<LogEntry> instanceLogEntryMapper() {
-        var mapper = new ObjectMapper();
+    public static RowMapper<LogEntry> instanceLogEntryMapper(ObjectMapper mapper) {
         return rs -> {
             try {
                 var log = new LogEntry(

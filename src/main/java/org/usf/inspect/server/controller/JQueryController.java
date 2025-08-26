@@ -80,4 +80,10 @@ public class JQueryController {
             @QueryRequest(view = "instance") QueryComposer query) {
         return INSPECT.execute(query);
     }
+
+    @GetMapping("resource/machine")
+    public List<DynamicModel> getResourceMachine(
+            @QueryRequest(view = "resource_usage") QueryComposer query) {
+        return INSPECT.execute(query);
+    }
 }
