@@ -26,11 +26,10 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static java.sql.Timestamp.from;
-import static java.util.Objects.*;
+import static java.util.Objects.nonNull;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static org.springframework.http.CacheControl.maxAge;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-import static org.springframework.http.ResponseEntity.*;
 import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.http.ResponseEntity.status;
 import static org.usf.inspect.server.Utils.fromNullableTimestamp;
@@ -51,7 +50,7 @@ public class RequestController {
     @GetMapping("instance/{idInstance}")
     public ResponseEntity<InstanceEnvironment> getInstance(
        @QueryRequestFilter(view = "instance",
-                           column = "app_name,version,address,environement,os,re,user,type,start,collector,branch,hash,end,resource,id") QueryComposer request,
+                           column = "app_name,version,address,environement,os,re,user,type,start,collector,branch,hash,end,resource,configuration,id") QueryComposer request,
        @PathVariable String idInstance)  {
         return ok()
                 //.cacheControl(maxAge(1, DAYS))
