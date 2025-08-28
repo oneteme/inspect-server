@@ -95,7 +95,7 @@ public enum TraceApiColumn implements ColumnDecorator {
     RESOURCE("resource"),
     PENDING("pending"),
     ATTEMPTS("attempts"),
-    SIZE_SESSION("sizeSession"),
+    TRACE_COUNT("traceCount"),
     LOG_LEVEL("logLevel"),
     LOG_MESSAGE("logMessage"),
     STACKTRACE("stacktrace"),

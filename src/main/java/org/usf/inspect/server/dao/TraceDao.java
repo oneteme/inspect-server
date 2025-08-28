@@ -75,7 +75,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?::json,?::json,?::json)""", ps -> {
     @Transactional(rollbackFor = Throwable.class)
     public void saveInstanceTraces(List<InstanceTrace> instanceTraces) {
         executeBatch("""
-insert into e_ins_trc (va_pnd, va_atp, va_ses_sze, dh_str, va_fln, cd_ins)
+insert into e_ins_trc (va_pnd, va_atp, va_trc_cnt, dh_str, va_fln, cd_ins)
 values (?, ?, ?, ?, ?, ?::uuid)""", instanceTraces.iterator(), (ps, instanceTrace) -> {
             ps.setObject(1, instanceTrace.getPending(), Types.INTEGER);
             ps.setObject(2, instanceTrace.getAttempts(), Types.INTEGER);

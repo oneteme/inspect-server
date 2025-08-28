@@ -311,7 +311,7 @@ public class ColumnConstant {
         return switch (column) {
             case PENDING -> VA_PND;
             case ATTEMPTS -> VA_ATP;
-            case SIZE_SESSION -> VA_SES_SZE;
+            case TRACE_COUNT -> VA_TRC_CNT;
             case FILENAME -> VA_FILENAME;
             case START -> DH_STR;
             case INSTANCE_ENV -> CD_INS;

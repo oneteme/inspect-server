@@ -81,9 +81,21 @@ public class JQueryController {
         return INSPECT.execute(query);
     }
 
+    @GetMapping("instance/trace")
+    public List<DynamicModel> getInstanceTrace(
+            @QueryRequest(view = "instance_trace") QueryComposer query) {
+        return INSPECT.execute(query);
+    }
+
     @GetMapping("resource/machine")
     public List<DynamicModel> getResourceMachine(
             @QueryRequest(view = "resource_usage") QueryComposer query) {
+        return INSPECT.execute(query);
+    }
+
+    @GetMapping("log/entry")
+    public List<DynamicModel> getLogEntry(
+            @QueryRequest(view = "log_entry") QueryComposer query) {
         return INSPECT.execute(query);
     }
 }

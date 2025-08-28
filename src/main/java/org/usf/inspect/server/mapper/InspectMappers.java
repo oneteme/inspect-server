@@ -66,7 +66,7 @@ public final class InspectMappers {
             new InstanceTrace(
                     rs.getInt(PENDING.reference()),
                     rs.getInt(ATTEMPTS.reference()),
-                    rs.getInt(SIZE_SESSION.reference()),
+                    rs.getInt(TRACE_COUNT.reference()),
                     rs.getString(FILENAME.reference()),
                     fromNullableTimestamp(rs.getTimestamp(START.reference())),
                     rs.getString(INSTANCE_ENV.reference())

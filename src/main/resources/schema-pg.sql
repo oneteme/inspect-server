@@ -260,7 +260,7 @@ CREATE TABLE IF NOT EXISTS e_usr_acn (
 create table if not exists e_ins_trc (
     va_pnd int,
     va_atp int,
-    va_ses_sze int,
+    va_trc_cnt int,
     dh_str timestamp(6),
     va_fln varchar,
     cd_ins uuid
