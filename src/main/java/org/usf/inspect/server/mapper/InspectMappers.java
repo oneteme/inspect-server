@@ -89,15 +89,12 @@ public final class InspectMappers {
     public static RowMapper<LogEntry> instanceLogEntryMapper(ObjectMapper mapper) {
         return rs -> {
             try {
-                var log = new LogEntry(
+                return new LogEntry(
                         fromNullableTimestamp(rs.getTimestamp(START.reference())),
                         LogEntry.Level.valueOf(rs.getString(LOG_LEVEL.reference())),
                         rs.getString(LOG_MESSAGE.reference()),
                         rs.getString(STACKTRACE.reference()) != null ? mapper.readValue(rs.getString(STACKTRACE.reference()), new TypeReference<StackTraceRow[]>() {}) : null
                 );
-                log.setSessionId(rs.getString(PARENT.reference()));
-                log.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
-                return log;
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }

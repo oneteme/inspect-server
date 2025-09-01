@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.*;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.InstanceTrace;
-import org.usf.inspect.server.model.wrapper.MailWrapper;
 
 import java.sql.PreparedStatement;
 import java.sql.Types;
@@ -23,9 +22,9 @@ import java.util.function.ToIntFunction;
 import java.util.stream.IntStream;
 
 import static java.util.Objects.nonNull;
+import static org.usf.inspect.core.RequestMask.*;
 import static org.usf.inspect.server.Utils.*;
 import static org.usf.inspect.server.dao.RequestCompletableType.*;
-import static org.usf.inspect.server.model.RequestMask.LOCAL;
 
 
 @Slf4j
@@ -357,30 +356,6 @@ values(?::uuid,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
             ps.setString(10, req.getSessionId());
             ps.setString(11, req.getInstanceId());
         }), MailRequest::getId, s -> nonNull(s.getEnd()));
-        saveMailRequestMails(requests.stream().filter(r -> nonNull(r.getMails()))
-                .flatMap(r -> r.getMails().stream().map(m -> {
-                    var mail = new MailWrapper();
-                    mail.setRecipients(m.getRecipients());
-                    mail.setFrom(m.getFrom());
-                    mail.setReplyTo(m.getReplyTo());
-                    mail.setSubject(m.getSubject());
-                    mail.setSize(m.getSize());
-                    mail.setContentType(m.getContentType());
-                    mail.setRequestId(r.getId());
-                    return mail;
-                })).toList());
-    }
-
-    private void saveMailRequestMails(List<MailWrapper> mails) {
-        executeBatch("insert into e_smtp_mail(va_sbj,va_cnt_typ,va_frm,va_rcp,va_rpl,va_sze,cd_smtp_rqt) values(?,?,?,?,?,?,?::uuid)", mails.iterator(), (ps, mail)-> {
-            ps.setString(1, mail.getSubject());
-            ps.setString(2, mail.getContentType());
-            ps.setString(3, nonNull(mail.getFrom()) ? String.join(", ", mail.getFrom()) : null);
-            ps.setString(4, nonNull(mail.getRecipients()) ? String.join(", ", mail.getRecipients()) : null);
-            ps.setString(5, nonNull(mail.getReplyTo()) ? String.join(", ", mail.getReplyTo()) : null);
-            ps.setInt(6,mail.getSize());
-            ps.setString(7, mail.getRequestId());
-        });
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -559,7 +534,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
             ps.setInt(4, stage.getOrder());
             ps.setString(5, stage.getRequestId());
         });
-        saveExceptions(stages, RequestMask.REST);
+        saveExceptions(stages, REST);
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -582,7 +557,20 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
             ps.setInt(4, stage.getOrder());
             ps.setString(5, stage.getRequestId());
         });
-        saveExceptions(stages, RequestMask.SMTP);
+        saveMailRequestMails(stages);
+        saveExceptions(stages, SMTP);
+    }
+
+    private void saveMailRequestMails(List<MailRequestStage> mails) {
+        executeBatch("insert into e_smtp_mail(va_sbj,va_cnt_typ,va_frm,va_rcp,va_rpl,va_sze,cd_smtp_rqt) values(?,?,?,?,?,?,?::uuid)", mails.stream().filter(m -> nonNull(m.getMail())).iterator(), (ps, stage)-> {
+            ps.setString(1, stage.getMail().getSubject());
+            ps.setString(2, stage.getMail().getContentType());
+            ps.setString(3, nonNull(stage.getMail().getFrom()) ? String.join(", ", stage.getMail().getFrom()) : null);
+            ps.setString(4, nonNull(stage.getMail().getRecipients()) ? String.join(", ", stage.getMail().getRecipients()) : null);
+            ps.setString(5, nonNull(stage.getMail().getReplyTo()) ? String.join(", ", stage.getMail().getReplyTo()) : null);
+            ps.setInt(6,stage.getMail().getSize());
+            ps.setString(7, stage.getRequestId());
+        });
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -595,7 +583,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
             ps.setInt(5, stage.getOrder());
             ps.setString(6, stage.getRequestId());
         });
-        saveExceptions(stages, RequestMask.FTP);
+        saveExceptions(stages, FTP);
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -608,7 +596,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
             ps.setInt(5, stage.getOrder());
             ps.setString(6, stage.getRequestId());
         });
-        saveExceptions(stages, RequestMask.LDAP);
+        saveExceptions(stages, LDAP);
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -622,7 +610,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
             ps.setInt(6, stage.getOrder());
             ps.setString(7, stage.getRequestId());
         });
-        saveExceptions(stages, RequestMask.JDBC);
+        saveExceptions(stages, JDBC);
     }
 
     private void saveExceptions(List<? extends AbstractStage> stages, RequestMask mask) {

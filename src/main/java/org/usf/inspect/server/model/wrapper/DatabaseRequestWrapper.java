@@ -9,7 +9,6 @@ import org.usf.inspect.core.DatabaseRequest;
 import org.usf.inspect.core.DatabaseRequestStage;
 import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.jdbc.SqlCommand;
-import org.usf.inspect.server.model.Wrapper;
 
 import java.util.*;
 import java.util.stream.Collectors;

@@ -74,12 +74,12 @@ public class RequestController {
         return INSPECT.execute(request.filters(RESOURCE_USAGE.column(INSTANCE_ENV).varchar().eq(idInstance)), InspectMappers.instanceResourceUsageMapper());
     }
 
-    @GetMapping("session/{idSession}/log/entry")
-    public List<LogEntry> getSessionLogEntries(
+    @GetMapping("instance/{idInstance}/log/entry")
+    public List<LogEntry> getLogEntries(
             @QueryRequestFilter(view = "log_entry",
-                    column = "start,log_level,log_message,parent,instance_env") QueryComposer request,
-            @PathVariable String idSession)  {
-        return INSPECT.execute(request.filters(LOG_ENTRY.column(PARENT).varchar().eq(idSession)), InspectMappers.instanceLogEntryMapper(mapper));
+                    column = "start,log_level,log_message,stacktrace", order = "start.desc") QueryComposer request,
+            @PathVariable String idInstance)  {
+        return INSPECT.execute(request.filters(LOG_ENTRY.column(INSTANCE_ENV).varchar().eq(idInstance)), InspectMappers.instanceLogEntryMapper(mapper));
     }
 
     @GetMapping("request/{type}/hosts")

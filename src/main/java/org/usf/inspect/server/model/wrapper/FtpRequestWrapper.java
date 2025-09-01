@@ -8,7 +8,6 @@ import lombok.experimental.Delegate;
 import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.core.FtpRequest;
 import org.usf.inspect.core.FtpRequestStage;
-import org.usf.inspect.server.model.Wrapper;
 
 import java.util.List;
 
