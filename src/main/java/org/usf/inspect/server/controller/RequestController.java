@@ -1,5 +1,6 @@
 package org.usf.inspect.server.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.CacheControl;
@@ -25,11 +26,10 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static java.sql.Timestamp.from;
-import static java.util.Objects.*;
+import static java.util.Objects.nonNull;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static org.springframework.http.CacheControl.maxAge;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-import static org.springframework.http.ResponseEntity.*;
 import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.http.ResponseEntity.status;
 import static org.usf.inspect.server.Utils.fromNullableTimestamp;
@@ -45,15 +45,16 @@ import static org.usf.inspect.server.config.TraceApiTable.*;
 public class RequestController {
 
     private final RequestService requestService;
+    private final ObjectMapper mapper;
 
     @GetMapping("instance/{idInstance}")
     public ResponseEntity<InstanceEnvironment> getInstance(
        @QueryRequestFilter(view = "instance",
-                           column = "app_name,version,address,environement,os,re,user,type,start,collector,branch,hash,end,id") QueryComposer request,
+                           column = "app_name,version,address,environement,os,re,user,type,start,collector,branch,hash,end,resource,configuration,id") QueryComposer request,
        @PathVariable String idInstance)  {
         return ok()
                 .cacheControl(maxAge(1, DAYS))
-                .body(INSPECT.execute(request.filters(INSTANCE.column(ID).varchar().eq(idInstance)), InspectMappers::instanceEnvironmentMapper));
+                .body(INSPECT.execute(request.filters(INSTANCE.column(ID).varchar().eq(idInstance)), InspectMappers.instanceEnvironmentMapper(mapper)));
     }
 
     // New
@@ -73,12 +74,12 @@ public class RequestController {
         return INSPECT.execute(request.filters(RESOURCE_USAGE.column(INSTANCE_ENV).varchar().eq(idInstance)), InspectMappers.instanceResourceUsageMapper());
     }
 
-    @GetMapping("session/{idSession}/log/entry")
-    public List<LogEntry> getSessionLogEntries(
+    @GetMapping("instance/{idInstance}/log/entry")
+    public List<LogEntry> getLogEntries(
             @QueryRequestFilter(view = "log_entry",
-                    column = "start,log_level,log_message,parent,instance_env") QueryComposer request,
-            @PathVariable String idSession)  {
-        return INSPECT.execute(request.filters(LOG_ENTRY.column(PARENT).varchar().eq(idSession)), InspectMappers.instanceLogEntryMapper());
+                    column = "start,log_level,log_message,stacktrace", order = "start.desc") QueryComposer request,
+            @PathVariable String idInstance)  {
+        return INSPECT.execute(request.filters(LOG_ENTRY.column(INSTANCE_ENV).varchar().eq(idInstance)), InspectMappers.instanceLogEntryMapper(mapper));
     }
 
     @GetMapping("request/{type}/hosts")
@@ -336,7 +337,7 @@ public class RequestController {
     public ResponseEntity<List<DatabaseRequestStage>> getDatabaseRequestStages(
             @QueryRequestFilter(
                     view = "database_stage",
-                    column = "name,order,start,end,action_count,commands,exception.err_type,exception.err_msg",
+                    column = "name,order,start,end,action_count,command,exception.err_type,exception.err_msg",
                     join = "exception",
                     order = "order") QueryComposer request, @PathVariable String idDatabase) {
         return ok().body(INSPECT.execute(request.filters(DATABASE_STAGE.column(PARENT).varchar().eq(idDatabase)), InspectMappers.databaseRequestStageMapper()));

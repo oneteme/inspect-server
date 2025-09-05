@@ -91,6 +91,7 @@ CREATE TABLE IF NOT EXISTS e_smtp_rqt (
     dh_str timestamp(6),
     dh_end timestamp(6),
     va_thr varchar,
+    va_cmd varchar,
     va_fail boolean,
     cd_prn_ses UUID,
     cd_ins UUID
@@ -100,6 +101,7 @@ CREATE TABLE IF NOT EXISTS e_smtp_stg (
     va_nam varchar,
     dh_str timestamp(6),
     dh_end timestamp(6),
+    va_cmd varchar,
     cd_ord smallint,
     cd_smtp_rqt UUID
 );
@@ -125,6 +127,7 @@ CREATE TABLE IF NOT EXISTS e_ftp_rqt (
     dh_str timestamp(6),
     dh_end timestamp(6),
     va_thr varchar,
+    va_cmd varchar,
     va_fail boolean,
     cd_prn_ses UUID, -- index
     cd_ins UUID
@@ -135,6 +138,7 @@ CREATE TABLE IF NOT EXISTS e_ftp_stg (
     dh_str timestamp(6),
     dh_end timestamp(6),
     va_arg varchar,
+    va_cmd varchar,
     cd_ord smallint,
     cd_ftp_rqt UUID -- index
 );
@@ -148,6 +152,7 @@ CREATE TABLE IF NOT EXISTS e_ldap_rqt (
     dh_str timestamp(6),
     dh_end timestamp(6),
     va_thr varchar,
+    va_cmd varchar,
     va_fail boolean,
     cd_prn_ses UUID, -- index
     cd_ins UUID
@@ -158,6 +163,7 @@ CREATE TABLE IF NOT EXISTS e_ldap_stg (
     dh_str timestamp(6),
     dh_end timestamp(6),
     va_arg varchar,
+    va_cmd varchar,
     cd_ord smallint,
     cd_ldap_rqt UUID
 );
@@ -187,6 +193,7 @@ CREATE TABLE IF NOT EXISTS e_dtb_stg (
     dh_str timestamp(6),
     dh_end timestamp(6),
     va_cnt varchar,
+    va_arg varchar,
     va_cmd varchar,
     cd_ord smallint,
     cd_dtb_rqt UUID
@@ -246,7 +253,7 @@ CREATE TABLE IF NOT EXISTS e_usr_acn (
 create table if not exists e_ins_trc (
     va_pnd int,
     va_atp int,
-    va_ses_sze int,
+    va_trc_cnt int,
     dh_str timestamp(6),
     va_fln varchar,
     cd_ins uuid

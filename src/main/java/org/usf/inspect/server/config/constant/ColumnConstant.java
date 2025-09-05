@@ -120,6 +120,7 @@ public class ColumnConstant {
             case START -> DH_STR;
             case END -> DH_END;
             case THREAD -> VA_THR;
+            case COMMAND -> VA_CMD;
             case FAILED -> VA_FAIL;
             case PARENT -> CD_PRN_SES;
             case INSTANCE_ENV -> CD_INS;
@@ -173,6 +174,7 @@ public class ColumnConstant {
             case START -> DH_STR;
             case END -> DH_END;
             case ARG -> VA_ARG;
+            case COMMAND -> VA_CMD;
             case ORDER -> CD_ORD;
             case PARENT -> CD_FTP_RQT;
             default -> null;
@@ -185,7 +187,8 @@ public class ColumnConstant {
             case START -> DH_STR;
             case END -> DH_END;
             case ACTION_COUNT -> VA_CNT;
-            case COMMANDS -> VA_CMD;
+            case ARG -> VA_ARG;
+            case COMMAND -> VA_CMD;
             case ORDER -> CD_ORD;
             case PARENT -> CD_DTB_RQT;
             default -> null;
@@ -201,6 +204,7 @@ public class ColumnConstant {
             case END -> DH_END;
             case USER -> VA_USR;
             case THREAD -> VA_THR;
+            case COMMAND -> VA_CMD;
             case FAILED -> VA_FAIL;
             case PARENT -> CD_PRN_SES;
             case INSTANCE_ENV -> CD_INS;
@@ -213,6 +217,7 @@ public class ColumnConstant {
             case NAME -> VA_NAM;
             case START -> DH_STR;
             case END -> DH_END;
+            case COMMAND -> VA_CMD;
             case ORDER -> CD_ORD;
             case PARENT -> CD_SMTP_RQT;
             default -> null;
@@ -242,6 +247,7 @@ public class ColumnConstant {
             case END -> DH_END;
             case USER -> VA_USR;
             case THREAD -> VA_THR;
+            case COMMAND -> VA_CMD;
             case FAILED -> VA_FAIL;
             case PARENT -> CD_PRN_SES;
             case INSTANCE_ENV -> CD_INS;
@@ -255,6 +261,7 @@ public class ColumnConstant {
             case START -> DH_STR;
             case END -> DH_END;
             case ARG -> VA_ARG;
+            case COMMAND -> VA_CMD;
             case ORDER -> CD_ORD;
             case PARENT -> CD_LDAP_RQT;
             default -> null;
@@ -311,7 +318,7 @@ public class ColumnConstant {
         return switch (column) {
             case PENDING -> VA_PND;
             case ATTEMPTS -> VA_ATP;
-            case SIZE_SESSION -> VA_SES_SZE;
+            case TRACE_COUNT -> VA_TRC_CNT;
             case FILENAME -> VA_FILENAME;
             case START -> DH_STR;
             case INSTANCE_ENV -> CD_INS;

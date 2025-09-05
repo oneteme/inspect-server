@@ -6,7 +6,6 @@ import org.usf.inspect.core.ExceptionInfo;
 import org.usf.inspect.core.MainSession;
 import org.usf.inspect.server.model.Session;
 import org.usf.inspect.server.model.UserAction;
-import org.usf.inspect.server.model.Wrapper;
 
 import java.time.Instant;
 import java.util.List;
