@@ -337,7 +337,7 @@ public class RequestController {
     public ResponseEntity<List<DatabaseRequestStage>> getDatabaseRequestStages(
             @QueryRequestFilter(
                     view = "database_stage",
-                    column = "name,order,start,end,action_count,commands,exception.err_type,exception.err_msg",
+                    column = "name,order,start,end,action_count,command,exception.err_type,exception.err_msg",
                     join = "exception",
                     order = "order") QueryComposer request, @PathVariable String idDatabase) {
         return ok().body(INSPECT.execute(request.filters(DATABASE_STAGE.column(PARENT).varchar().eq(idDatabase)), InspectMappers.databaseRequestStageMapper()));

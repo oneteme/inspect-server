@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import org.usf.inspect.core.*;
-import org.usf.inspect.jdbc.SqlCommand;
 import org.usf.inspect.server.dto.*;
 import org.usf.inspect.server.model.InstanceTrace;
 import org.usf.inspect.server.model.UserAction;
@@ -22,7 +21,6 @@ import java.util.Map;
 import static java.util.Optional.ofNullable;
 import static org.usf.inspect.server.Utils.fromNullableTimestamp;
 import static org.usf.inspect.server.config.TraceApiColumn.*;
-import static org.usf.inspect.server.service.RequestService.valueOfNullabletoEnumList;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public final class InspectMappers {
@@ -327,7 +325,7 @@ public final class InspectMappers {
             out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
             out.setCount(ofNullable(rs.getString(ACTION_COUNT.reference())).map(str -> Arrays.stream(str.split(",")).mapToLong(Long::parseLong).toArray()).orElse(null));
-            out.setCommands(valueOfNullabletoEnumList(SqlCommand.class, rs.getString(COMMANDS.reference())).toArray(new SqlCommand[0]));
+            out.setCommand(rs.getString(COMMAND.reference()));
             out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
             out.setOrder(rs.getInt(ORDER.reference()));
             return out;
