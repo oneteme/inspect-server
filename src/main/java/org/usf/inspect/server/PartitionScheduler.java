@@ -35,19 +35,19 @@ public class PartitionScheduler {
     @TraceableStage
     public void createPartition(){
         YearMonth now = YearMonth.now().plusMonths(1);
-        scriptService.createPartitions(now,now,toConfigMap());
+        scriptService.createPartitions(now, now, toConfigMap());
     }
 
     private Map<PartitionedTable,Partition> toConfigMap(){
         Map<PartitionedTable, Partition> map = new EnumMap<>(PartitionedTable.class);
-        ofNullable(properties.getSession().getHttp()).ifPresent(o-> map.put(SES_HTTP, o));
-        ofNullable(properties.getSession().getMain()).ifPresent(o-> map.put(SES_MAIN, o));
-        ofNullable(properties.getSession().getHttp()).ifPresent(o-> map.put(REQ_HTTP, o));
-        ofNullable(properties.getRequest().getJdbc()).ifPresent(o-> map.put(REQ_JDBC, o));
-        ofNullable(properties.getRequest().getFtp()).ifPresent(o-> map.put(REQ_FTP, o));
-        ofNullable(properties.getRequest().getSmtp()).ifPresent(o-> map.put(REQ_SMTP, o));
-        ofNullable(properties.getRequest().getLdap()).ifPresent(o-> map.put(REQ_LDAP, o));
-        ofNullable(properties.getRequest().getLocal()).ifPresent(o-> map.put(REQ_LOCAL, o));
+        ofNullable(properties.getHttpSession()).ifPresent(o-> map.put(SES_HTTP, o));
+        ofNullable(properties.getMainSession()).ifPresent(o-> map.put(SES_MAIN, o));
+        ofNullable(properties.getHttpRequest()).ifPresent(o-> map.put(REQ_HTTP, o));
+        ofNullable(properties.getJdbcRequest()).ifPresent(o-> map.put(REQ_JDBC, o));
+        ofNullable(properties.getFtpRequest()).ifPresent(o-> map.put(REQ_FTP, o));
+        ofNullable(properties.getSmtpRequest()).ifPresent(o-> map.put(REQ_SMTP, o));
+        ofNullable(properties.getLdapRequest()).ifPresent(o-> map.put(REQ_LDAP, o));
+        ofNullable(properties.getLocalRequest()).ifPresent(o-> map.put(REQ_LOCAL, o));
         return map;
     }
 }

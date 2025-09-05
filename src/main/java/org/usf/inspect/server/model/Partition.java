@@ -66,7 +66,7 @@ public enum Partition {
     public static List<String> buildPartitionScript(YearMonth start, YearMonth end, Map<PartitionedTable, Partition> map){
         var scripts = new ArrayList<String>();
         for (String table : PartitionedTable.tables) {
-            var part = PartitionedTable.enumOf(table).map(map::get).orElse(Partition.MONTH);
+            var part = PartitionedTable.enumOf(table).map(map::get).orElse(MONTH);
             var from = part.toStartDate(start);
             var to = part.toEndDate(end);
             LocalDateTime next = null;

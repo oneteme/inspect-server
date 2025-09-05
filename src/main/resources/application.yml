@@ -78,12 +78,9 @@ inspect:
     partition:
       enabled: true
       schedule: "0 0 0 L * ?"
-      session:
-        http: DAY
-        #main: MONTH
-      request:
-        http: DAY
-        jdbc: DAY
+      http-session: DAY
+      http-request: DAY
+      jdbc-request: DAY
 #  purge:
 #    enabled : false
 #    schedule: "0 0 1 * * ?"

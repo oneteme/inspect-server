@@ -6,9 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.usf.inspect.core.AbstractRequest;
 import org.usf.inspect.core.AbstractStage;
 import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.HttpAction;
 import org.usf.inspect.server.model.Session;
-import org.usf.inspect.server.model.Wrapper;
+import org.usf.inspect.server.model.wrapper.Wrapper;
 import org.usf.inspect.server.model.wrapper.MainSessionWrapper;
 import org.usf.inspect.server.model.wrapper.RestSessionWrapper;
 
@@ -20,9 +19,10 @@ import java.util.function.Function;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
-import static org.usf.inspect.core.HttpAction.*;
+import static org.usf.inspect.core.HttpAction.PROCESS;
+import static org.usf.inspect.core.RequestMask.*;
 import static org.usf.inspect.core.SessionManager.nextId;
-import static org.usf.inspect.server.model.RequestMask.mask;
+import static org.usf.inspect.server.Utils.isEmpty;
 
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -107,6 +107,29 @@ public final class RetroUtils {
 
     private static <T extends AbstractStage> boolean isFailed(List<T> stage) {
         return stage != null && stage.stream().anyMatch(a -> nonNull(a.getException()));
+    }
+
+    private static int mask(Session s) {
+        var v = 0;
+        if(!isEmpty(s.getLocalRequests())) {
+            v |= LOCAL.getValue();
+        }
+        if(!isEmpty(s.getDatabaseRequests())) {
+            v |= JDBC.getValue();
+        }
+        if(!isEmpty(s.getRestRequests())) {
+            v |= REST.getValue();
+        }
+        if(!isEmpty(s.getFtpRequests())) {
+            v |= FTP.getValue();
+        }
+        if(!isEmpty(s.getMailRequests())) {
+            v |= SMTP.getValue();
+        }
+        if(!isEmpty(s.getLdapRequests())) {
+            v |= LDAP.getValue();
+        }
+        return v;
     }
 }
 

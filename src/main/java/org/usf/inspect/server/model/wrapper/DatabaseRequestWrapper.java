@@ -5,14 +5,14 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;
+import org.usf.inspect.core.DatabaseCommand;
 import org.usf.inspect.core.DatabaseRequest;
 import org.usf.inspect.core.DatabaseRequestStage;
 import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.jdbc.SqlCommand;
-import org.usf.inspect.server.model.Wrapper;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
+
+import static java.util.Objects.nonNull;
 
 @Getter
 @Setter
@@ -27,17 +27,16 @@ public final class DatabaseRequestWrapper implements EventTrace, Wrapper<Databas
     private List<DatabaseRequestStage> actions;
 
     public String mainCommand(){
-        Set<SqlCommand> r = Optional.ofNullable(actions).orElseGet(Collections::emptyList).stream().map(DatabaseRequestStage::getCommands).filter(Objects::nonNull).flatMap(Arrays::stream).collect(Collectors.toSet());
-        if(r.size() == 1) {
-            var s = r.iterator().next();
-            if (s != null) {
-                return s.toString();
-            }
+        DatabaseCommand c = actions.stream().map(DatabaseRequestWrapper::enumOf).reduce(DatabaseCommand::mergeCommand).orElse(null);
+        return nonNull(c) ? c.getType().name() : null;
+    }
+
+    private static DatabaseCommand enumOf(DatabaseRequestStage stage) {
+        try {
+            return DatabaseCommand.valueOf(stage.getName());
+        } catch (IllegalArgumentException e) {
+            return null;
         }
-        if(r.size() > 1){
-            return "SQL";
-        }
-        return null;
     }
 
     @Override

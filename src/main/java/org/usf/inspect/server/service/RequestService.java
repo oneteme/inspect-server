@@ -228,7 +228,6 @@ public class RequestService {
 
     public List<RestSession> getRestSessionsForDump(String env, String appName, Instant start, Instant end) {
         var cte = new QueryComposer()
-                .filters(INSTANCE.column(START).le(from(end)))
                 .columns(getColumns(INSTANCE, ID, START))
                 .filters(INSTANCE.column(START).le(from(end)))
                 .filters(INSTANCE.column(ENVIRONEMENT).eq(env))

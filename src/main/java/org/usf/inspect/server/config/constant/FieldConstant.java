@@ -80,7 +80,7 @@ public final class FieldConstant {
     public static final String VA_RSR = "va_rsr";
     public static final String VA_PND = "va_pnd";
     public static final String VA_ATP = "va_atp";
-    public static final String VA_SES_SZE = "va_ses_sze";
+    public static final String VA_TRC_CNT = "va_trc_cnt";
     public static final String VA_LVL = "va_lvl";
     public static final String VA_MSG = "va_msg";
     public static final String VA_STK = "va_stk";

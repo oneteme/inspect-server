@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.*;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.InstanceTrace;
-import org.usf.inspect.server.model.wrapper.MailWrapper;
 
 import java.sql.PreparedStatement;
 import java.sql.Types;
@@ -23,9 +22,9 @@ import java.util.function.ToIntFunction;
 import java.util.stream.IntStream;
 
 import static java.util.Objects.nonNull;
+import static org.usf.inspect.core.RequestMask.*;
 import static org.usf.inspect.server.Utils.*;
 import static org.usf.inspect.server.dao.RequestCompletableType.*;
-import static org.usf.inspect.server.model.RequestMask.LOCAL;
 
 
 @Slf4j
@@ -75,7 +74,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?::json,?::json,?::json)""", ps -> {
     @Transactional(rollbackFor = Throwable.class)
     public void saveInstanceTraces(List<InstanceTrace> instanceTraces) {
         executeBatch("""
-insert into e_ins_trc (va_pnd, va_atp, va_ses_sze, dh_str, va_fln, cd_ins)
+insert into e_ins_trc (va_pnd, va_atp, va_trc_cnt, dh_str, va_fln, cd_ins)
 values (?, ?, ?, ?, ?, ?::uuid)""", instanceTraces.iterator(), (ps, instanceTrace) -> {
             ps.setObject(1, instanceTrace.getPending(), Types.INTEGER);
             ps.setObject(2, instanceTrace.getAttempts(), Types.INTEGER);
@@ -330,7 +329,7 @@ values(?::uuid,?,?,?,?,?,?,?,?::uuid,?,?::uuid)""", toInsert, (ps, req) -> {
     public void saveMailRequests(List<MailRequest> requests) {
         completableProcess(SMTP_REQUEST, requests, toUpdate ->
                 executeBatch("""
-update e_smtp_rqt set va_hst = ?, cd_prt = ?, va_pcl = ?, va_usr = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_fail = ?
+update e_smtp_rqt set va_hst = ?, cd_prt = ?, va_pcl = ?, va_usr = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_cmd = ?, va_fail = ?
 where id_smtp_rqt = ?::uuid""", toUpdate, (ps, req) -> {
             ps.setString(1, req.getHost());
             ps.setInt(2, req.getPort());
@@ -339,12 +338,13 @@ where id_smtp_rqt = ?::uuid""", toUpdate, (ps, req) -> {
             ps.setTimestamp(5, fromNullableInstant(req.getStart()));
             ps.setTimestamp(6, fromNullableInstant(req.getEnd()));
             ps.setString(7, req.getThreadName());
-            ps.setBoolean(8, req.isFailed());
-            ps.setString(9, req.getId());
+            ps.setString(8, req.getCommand());
+            ps.setBoolean(9, req.isFailed());
+            ps.setString(10, req.getId());
         }), toInsert ->
                 executeBatch("""
-insert into e_smtp_rqt(id_smtp_rqt,va_hst,cd_prt,va_pcl,va_usr,dh_str,dh_end,va_thr,va_fail,cd_prn_ses,cd_ins)
-values(?::uuid,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
+insert into e_smtp_rqt(id_smtp_rqt,va_hst,cd_prt,va_pcl,va_usr,dh_str,dh_end,va_thr,va_cmd,va_fail,cd_prn_ses,cd_ins)
+values(?::uuid,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
             ps.setString(1, req.getId());
             ps.setString(2, req.getHost());
             ps.setInt(3, req.getPort());
@@ -353,41 +353,18 @@ values(?::uuid,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
             ps.setTimestamp(6, fromNullableInstant(req.getStart()));
             ps.setTimestamp(7, fromNullableInstant(req.getEnd()));
             ps.setString(8, req.getThreadName());
-            ps.setBoolean(9, req.isFailed());
-            ps.setString(10, req.getSessionId());
-            ps.setString(11, req.getInstanceId());
+            ps.setString(9, req.getCommand());
+            ps.setBoolean(10, req.isFailed());
+            ps.setString(11, req.getSessionId());
+            ps.setString(12, req.getInstanceId());
         }), MailRequest::getId, s -> nonNull(s.getEnd()));
-        saveMailRequestMails(requests.stream().filter(r -> nonNull(r.getMails()))
-                .flatMap(r -> r.getMails().stream().map(m -> {
-                    var mail = new MailWrapper();
-                    mail.setRecipients(m.getRecipients());
-                    mail.setFrom(m.getFrom());
-                    mail.setReplyTo(m.getReplyTo());
-                    mail.setSubject(m.getSubject());
-                    mail.setSize(m.getSize());
-                    mail.setContentType(m.getContentType());
-                    mail.setRequestId(r.getId());
-                    return mail;
-                })).toList());
-    }
-
-    private void saveMailRequestMails(List<MailWrapper> mails) {
-        executeBatch("insert into e_smtp_mail(va_sbj,va_cnt_typ,va_frm,va_rcp,va_rpl,va_sze,cd_smtp_rqt) values(?,?,?,?,?,?,?::uuid)", mails.iterator(), (ps, mail)-> {
-            ps.setString(1, mail.getSubject());
-            ps.setString(2, mail.getContentType());
-            ps.setString(3, nonNull(mail.getFrom()) ? String.join(", ", mail.getFrom()) : null);
-            ps.setString(4, nonNull(mail.getRecipients()) ? String.join(", ", mail.getRecipients()) : null);
-            ps.setString(5, nonNull(mail.getReplyTo()) ? String.join(", ", mail.getReplyTo()) : null);
-            ps.setInt(6,mail.getSize());
-            ps.setString(7, mail.getRequestId());
-        });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveFtpRequests(List<FtpRequest> requests){
         completableProcess(FTP_REQUEST, requests, toUpdate ->
                 executeBatch("""
-update e_ftp_rqt set va_hst = ?, cd_prt = ?, va_pcl = ?, va_srv_vrs = ?, va_clt_vrs = ?, va_usr = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_fail = ?
+update e_ftp_rqt set va_hst = ?, cd_prt = ?, va_pcl = ?, va_srv_vrs = ?, va_clt_vrs = ?, va_usr = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_cmd = ?, va_fail = ?
 where id_ftp_rqt = ?::uuid""", toUpdate, (ps, req) -> {
             ps.setString(1, req.getHost());
             ps.setInt(2, req.getPort());
@@ -398,12 +375,13 @@ where id_ftp_rqt = ?::uuid""", toUpdate, (ps, req) -> {
             ps.setTimestamp(7, fromNullableInstant(req.getStart()));
             ps.setTimestamp(8, fromNullableInstant(req.getEnd()));
             ps.setString(9, req.getThreadName());
-            ps.setBoolean(10, req.isFailed());
-            ps.setString(11, req.getId());
+            ps.setString(10, req.getCommand());
+            ps.setBoolean(11, req.isFailed());
+            ps.setString(12, req.getId());
         }), toInsert ->
                 executeBatch("""
-insert into e_ftp_rqt(id_ftp_rqt,va_hst,cd_prt,va_pcl,va_srv_vrs,va_clt_vrs,va_usr,dh_str,dh_end,va_thr,va_fail,cd_prn_ses,cd_ins)
-values(?::uuid,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
+insert into e_ftp_rqt(id_ftp_rqt,va_hst,cd_prt,va_pcl,va_srv_vrs,va_clt_vrs,va_usr,dh_str,dh_end,va_thr,va_cmd,va_fail,cd_prn_ses,cd_ins)
+values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
                     ps.setString(1, req.getId());
                     ps.setString(2, req.getHost());
                     ps.setInt(3, req.getPort());
@@ -414,9 +392,10 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
                     ps.setTimestamp(8, fromNullableInstant(req.getStart()));
                     ps.setTimestamp(9, fromNullableInstant(req.getEnd()));
                     ps.setString(10, req.getThreadName());
-                    ps.setBoolean(11, req.isFailed());
-                    ps.setString(12, req.getSessionId());
-                    ps.setString(13, req.getInstanceId());
+                    ps.setString(11, req.getCommand());
+                    ps.setBoolean(12, req.isFailed());
+                    ps.setString(13, req.getSessionId());
+                    ps.setString(14, req.getInstanceId());
                 }), FtpRequest::getId, s -> nonNull(s.getEnd()));
     }
 
@@ -424,7 +403,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
     public void saveLdapRequests(List<DirectoryRequest> requests) {
         completableProcess(LDAP_REQUEST, requests, toUpdate ->
                 executeBatch("""
-update e_ldap_rqt set va_hst = ?, cd_prt = ?, va_pcl = ?, va_usr = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_fail = ?
+update e_ldap_rqt set va_hst = ?, cd_prt = ?, va_pcl = ?, va_usr = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_cmd = ?, va_fail = ?
 where id_ldap_rqt = ?::uuid""", toUpdate, (ps, req) -> {
                 ps.setString(1, req.getHost());
                 ps.setInt(2, req.getPort());
@@ -433,12 +412,13 @@ where id_ldap_rqt = ?::uuid""", toUpdate, (ps, req) -> {
                 ps.setTimestamp(5, fromNullableInstant(req.getStart()));
                 ps.setTimestamp(6, fromNullableInstant(req.getEnd()));
                 ps.setString(7, req.getThreadName());
-                ps.setBoolean(8, req.isFailed());
-                ps.setString(9, req.getId());
+                ps.setString(8, req.getCommand());
+                ps.setBoolean(9, req.isFailed());
+                ps.setString(10, req.getId());
             }), toInsert ->
                 executeBatch("""
-insert into e_ldap_rqt(id_ldap_rqt,va_hst,cd_prt,va_pcl,va_usr,dh_str,dh_end,va_thr,va_fail,cd_prn_ses,cd_ins)
-values(?::uuid,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
+insert into e_ldap_rqt(id_ldap_rqt,va_hst,cd_prt,va_pcl,va_usr,dh_str,dh_end,va_thr,va_cmd,va_fail,cd_prn_ses,cd_ins)
+values(?::uuid,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
                 ps.setString(1, req.getId());
                 ps.setString(2, req.getHost());
                 ps.setInt(3, req.getPort());
@@ -447,9 +427,10 @@ values(?::uuid,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
                 ps.setTimestamp(6, fromNullableInstant(req.getStart()));
                 ps.setTimestamp(7, fromNullableInstant(req.getEnd()));
                 ps.setString(8, req.getThreadName());
-                ps.setBoolean(9, req.isFailed());
-                ps.setString(10, req.getSessionId());
-                ps.setString(11, req.getInstanceId());
+                ps.setString(9, req.getCommand());
+                ps.setBoolean(10, req.isFailed());
+                ps.setString(11, req.getSessionId());
+                ps.setString(12, req.getInstanceId());
             }), DirectoryRequest::getId, s -> nonNull(s.getEnd())
         );
     }
@@ -493,7 +474,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
                 ps.setString(11, req.getDriverVersion());
                 ps.setString(12, req.getProductName());
                 ps.setString(13, req.getProductVersion());
-                ps.setString(14, req.getCommand()); // TODO use commands on DatabaseRequest
+                ps.setString(14, req.getCommand());
                 ps.setBoolean(15, req.isFailed());
                 ps.setString(16, req.getSessionId());
                 ps.setString(17, req.getInstanceId());
@@ -559,7 +540,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
             ps.setInt(4, stage.getOrder());
             ps.setString(5, stage.getRequestId());
         });
-        saveExceptions(stages, RequestMask.REST);
+        saveExceptions(stages, REST);
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -582,47 +563,63 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
             ps.setInt(4, stage.getOrder());
             ps.setString(5, stage.getRequestId());
         });
-        saveExceptions(stages, RequestMask.SMTP);
+        saveMailRequestMails(stages);
+        saveExceptions(stages, SMTP);
+    }
+
+    private void saveMailRequestMails(List<MailRequestStage> mails) {
+        executeBatch("insert into e_smtp_mail(va_sbj,va_cnt_typ,va_frm,va_rcp,va_rpl,va_sze,cd_smtp_rqt) values(?,?,?,?,?,?,?::uuid)", mails.stream().filter(m -> nonNull(m.getMail())).iterator(), (ps, stage)-> {
+            ps.setString(1, stage.getMail().getSubject());
+            ps.setString(2, stage.getMail().getContentType());
+            ps.setString(3, nonNull(stage.getMail().getFrom()) ? String.join(", ", stage.getMail().getFrom()) : null);
+            ps.setString(4, nonNull(stage.getMail().getRecipients()) ? String.join(", ", stage.getMail().getRecipients()) : null);
+            ps.setString(5, nonNull(stage.getMail().getReplyTo()) ? String.join(", ", stage.getMail().getReplyTo()) : null);
+            ps.setInt(6,stage.getMail().getSize());
+            ps.setString(7, stage.getRequestId());
+        });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveFtpRequestStages(List<FtpRequestStage> stages) {
-        executeBatch("insert into e_ftp_stg(va_nam,dh_str,dh_end,va_arg,cd_ord,cd_ftp_rqt) values(?,?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
+        executeBatch("insert into e_ftp_stg(va_nam,dh_str,dh_end,va_cmd,va_arg,cd_ord,cd_ftp_rqt) values(?,?,?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
             ps.setString(1, stage.getName());
             ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
             ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
-            ps.setString(4, nonNull(stage.getArgs()) ? String.join(", ", stage.getArgs()) : null);
-            ps.setInt(5, stage.getOrder());
-            ps.setString(6, stage.getRequestId());
+            ps.setString(4, stage.getCommand());
+            ps.setString(5, nonNull(stage.getArgs()) ? String.join(", ", stage.getArgs()) : null);
+            ps.setInt(6, stage.getOrder());
+            ps.setString(7, stage.getRequestId());
         });
-        saveExceptions(stages, RequestMask.FTP);
+        saveExceptions(stages, FTP);
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveLdapRequestStages(List<DirectoryRequestStage> stages) {
-        executeBatch("insert into e_ldap_stg(va_nam,dh_str,dh_end,va_arg,cd_ord,cd_ldap_rqt) values(?,?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
+        executeBatch("insert into e_ldap_stg(va_nam,dh_str,dh_end,va_cmd,va_arg,cd_ord,cd_ldap_rqt) values(?,?,?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
             ps.setString(1, stage.getName());
             ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
             ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
-            ps.setString(4, nonNull(stage.getArgs()) ? String.join(", ", stage.getArgs()) : null);
-            ps.setInt(5, stage.getOrder());
-            ps.setString(6, stage.getRequestId());
+            ps.setString(4, stage.getCommand());
+            ps.setString(5, nonNull(stage.getArgs()) ? String.join(", ", stage.getArgs()) : null);
+            ps.setInt(6, stage.getOrder());
+            ps.setString(7, stage.getRequestId());
         });
-        saveExceptions(stages, RequestMask.LDAP);
+        saveExceptions(stages, LDAP);
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveDatabaseRequestStages(List<DatabaseRequestStage> stages) {
-        executeBatch("insert into e_dtb_stg(va_nam,dh_str,dh_end,va_cnt,va_cmd,cd_ord,cd_dtb_rqt) values(?,?,?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
+        executeBatch("insert into e_dtb_stg(va_nam,dh_str,dh_end,va_cnt,va_cmd,va_arg,cd_ord,cd_dtb_rqt) values(?,?,?,?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
             ps.setString(1, stage.getName());
             ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
             ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
             ps.setString(4, valueOfNullableArray(stage.getCount()));
-            ps.setString(5,valueOfNullableList(stage.getCommands()));
-            ps.setInt(6, stage.getOrder());
-            ps.setString(7, stage.getRequestId());
+            ps.setString(5, stage.getCommand());
+            ps.setString(6, nonNull(stage.getArgs()) ? String.join(", ", stage.getArgs()) : null);
+            ps.setInt(7, stage.getOrder());
+            ps.setString(8, stage.getRequestId());
         });
-        saveExceptions(stages, RequestMask.JDBC);
+        saveExceptions(stages, JDBC);
     }
 
     private void saveExceptions(List<? extends AbstractStage> stages, RequestMask mask) {

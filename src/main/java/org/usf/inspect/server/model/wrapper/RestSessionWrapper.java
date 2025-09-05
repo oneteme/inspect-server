@@ -6,7 +6,6 @@ import org.usf.inspect.core.CompletableMetric;
 import org.usf.inspect.core.ExceptionInfo;
 import org.usf.inspect.core.RestSession;
 import org.usf.inspect.server.model.Session;
-import org.usf.inspect.server.model.Wrapper;
 
 import java.net.URI;
 import java.time.Instant;
