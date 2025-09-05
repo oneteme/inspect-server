@@ -53,7 +53,7 @@ public class RequestController {
                            column = "app_name,version,address,environement,os,re,user,type,start,collector,branch,hash,end,resource,configuration,id") QueryComposer request,
        @PathVariable String idInstance)  {
         return ok()
-                //.cacheControl(maxAge(1, DAYS))
+                .cacheControl(maxAge(1, DAYS))
                 .body(INSPECT.execute(request.filters(INSTANCE.column(ID).varchar().eq(idInstance)), InspectMappers.instanceEnvironmentMapper(mapper)));
     }
 
