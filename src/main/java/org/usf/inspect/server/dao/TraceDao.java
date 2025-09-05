@@ -54,9 +54,9 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?::json,?::json,?::json)""", ps -> {
             ps.setString(12, instance.getBranch());
             ps.setString(13, instance.getHash());
             try {
-                ps.setString(14, instance.getConfiguration() != null ? mapper.writeValueAsString(instance.getConfiguration()) : null);
-                ps.setString(15, instance.getResource() != null ? mapper.writeValueAsString(instance.getResource()) : null);
-                ps.setString(16, instance.getAdditionalProperties() != null ? mapper.writeValueAsString(instance.getAdditionalProperties()) : null);
+                ps.setBytes(14, instance.getConfiguration() != null ? mapper.writeValueAsBytes(instance.getConfiguration()) : null);
+                ps.setBytes(15, instance.getResource() != null ? mapper.writeValueAsBytes(instance.getResource()) : null);
+                ps.setBytes(16, instance.getAdditionalProperties() != null ? mapper.writeValueAsBytes(instance.getAdditionalProperties()) : null);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
@@ -93,7 +93,7 @@ values (?,?,?::json,?,?::uuid,?::uuid)""", logEntries.iterator(), (ps, o)-> {
             ps.setString(1, String.valueOf(o.getLevel()));
             ps.setString(2, o.getMessage());
             try {
-                ps.setString(3, nonNull(o.getStackRows()) ? mapper.writeValueAsString(o.getStackRows()) : null);
+                ps.setBytes(3, nonNull(o.getStackRows()) ? mapper.writeValueAsBytes(o.getStackRows()) : null);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
@@ -144,7 +144,7 @@ where id_ses = ?::uuid""", toUpdate, (ps, ses) -> {
             ps.setString(17, nonNull(exp) ? exp.getType() : null);
             ps.setString(18, nonNull(exp) ? exp.getMessage() : null);
             try {
-                ps.setString(19, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null);
+                ps.setBytes(19, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsBytes(exp.getStackTraceRows()) : null);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
@@ -179,7 +179,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::json,?,?,?,?,?,?::uuid)"""
             ps.setString(18, nonNull(exp) ? exp.getType() : null);
             ps.setString(19, nonNull(exp) ? exp.getMessage() : null);
             try {
-                ps.setString(20, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null);
+                ps.setBytes(20, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsBytes(exp.getStackTraceRows()) : null);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
@@ -209,7 +209,7 @@ where id_ses = ?::uuid""", toUpdate, (ps, ses) -> {
             ps.setString(8, nonNull(exp) ? exp.getType() : null);
             ps.setString(9, nonNull(exp) ? exp.getMessage() : null);
             try {
-                ps.setString(10, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null);
+                ps.setBytes(10, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsBytes(exp.getStackTraceRows()) : null);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
@@ -231,7 +231,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?::json,?,?::uuid)""", toInsert, (ps, ses) -> {
             ps.setString(9, nonNull(exp) ? exp.getType() : null);
             ps.setString(10, nonNull(exp) ? exp.getMessage() : null);
             try {
-                ps.setString(11, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null);
+                ps.setBytes(11, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsBytes(exp.getStackTraceRows()) : null);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
@@ -633,7 +633,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
                         ps.setString(2, exp.getException().getType());
                         ps.setString(3, exp.getException().getMessage());
                         try {
-                            ps.setObject(4, nonNull(exp.getException().getStackTraceRows()) ? mapper.writeValueAsString(exp.getException().getStackTraceRows()) : null);
+                            ps.setObject(4, nonNull(exp.getException().getStackTraceRows()) ? mapper.writeValueAsBytes(exp.getException().getStackTraceRows()) : null);
                         } catch (JsonProcessingException e) {
                             throw new RuntimeException(e);
                         }
@@ -654,7 +654,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
                         ps.setString(2, exp.getException().getType());
                         ps.setString(3, exp.getException().getMessage());
                         try {
-                            ps.setString(4, nonNull(exp.getException().getStackTraceRows()) ? mapper.writeValueAsString(exp.getException().getStackTraceRows()) : null);
+                            ps.setBytes(4, nonNull(exp.getException().getStackTraceRows()) ? mapper.writeValueAsBytes(exp.getException().getStackTraceRows()) : null);
                         } catch (JsonProcessingException e) {
                             throw new RuntimeException(e);
                         }
