@@ -21,12 +21,20 @@ import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 import java.util.stream.IntStream;
 
+import static java.sql.Types.*;
 import static java.util.Objects.nonNull;
 import static org.usf.inspect.core.RequestMask.*;
 import static org.usf.inspect.server.Utils.*;
 import static org.usf.inspect.server.dao.RequestCompletableType.*;
 
 
+/**
+ * Using Types.OTHER with JSON serialization to ensure portability:
+ * - In PostgreSQL: Types.OTHER is interpreted as native JSONB type
+ * - In H2: Types.OTHER is treated as VARCHAR without JSON parsing attempts
+ * Prior serialization with writeValueAsString prevents conversion errors
+ * between the two DBMSs, making the code compatible with both environments.
+ */
 @Slf4j
 @Repository
 @RequiredArgsConstructor
@@ -39,7 +47,7 @@ public class TraceDao {
     public void saveInstanceEnvironment(InstanceEnvironment instance) {
         template.update("""
 insert into e_env_ins(id_ins,va_typ,dh_str,va_app,va_vrs,va_adr,va_env,va_os,va_re,va_usr,va_clr,va_brch,va_hsh,va_cnf,va_rsr,va_add_prp)
-values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?::json,?::json,?::json)""", ps -> {
+values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             ps.setString(1, instance.getId());
             ps.setString(2, instance.getType() != null ? instance.getType().name() : null);
             ps.setTimestamp(3, fromNullableInstant(instance.getInstant()));
@@ -54,9 +62,9 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?::json,?::json,?::json)""", ps -> {
             ps.setString(12, instance.getBranch());
             ps.setString(13, instance.getHash());
             try {
-                ps.setString(14, instance.getConfiguration() != null ? mapper.writeValueAsString(instance.getConfiguration()) : null);
-                ps.setString(15, instance.getResource() != null ? mapper.writeValueAsString(instance.getResource()) : null);
-                ps.setString(16, instance.getAdditionalProperties() != null ? mapper.writeValueAsString(instance.getAdditionalProperties()) : null);
+                ps.setObject(14, instance.getConfiguration() != null ? mapper.writeValueAsString(instance.getConfiguration()) : null, OTHER);
+                ps.setObject(15, instance.getResource() != null ? mapper.writeValueAsString(instance.getResource()) : null, OTHER);
+                ps.setObject(16, instance.getAdditionalProperties() != null ? mapper.writeValueAsString(instance.getAdditionalProperties()) : null, OTHER);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
@@ -76,8 +84,8 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?::json,?::json,?::json)""", ps -> {
         executeBatch("""
 insert into e_ins_trc (va_pnd, va_atp, va_trc_cnt, dh_str, va_fln, cd_ins)
 values (?, ?, ?, ?, ?, ?::uuid)""", instanceTraces.iterator(), (ps, instanceTrace) -> {
-            ps.setObject(1, instanceTrace.getPending(), Types.INTEGER);
-            ps.setObject(2, instanceTrace.getAttempts(), Types.INTEGER);
+            ps.setObject(1, instanceTrace.getPending(), INTEGER);
+            ps.setObject(2, instanceTrace.getAttempts(), INTEGER);
             ps.setInt(3, instanceTrace.getTraceCount());
             ps.setTimestamp(4, fromNullableInstant(instanceTrace.getInstant()));
             ps.setString(5, instanceTrace.getFileName());
@@ -89,11 +97,11 @@ values (?, ?, ?, ?, ?, ?::uuid)""", instanceTraces.iterator(), (ps, instanceTrac
     public void saveLogEntries(List<LogEntry> logEntries) {
         executeBatch("""
 insert into e_log_ent(va_lvl,va_msg,va_stk,dh_str,cd_prn_ses,cd_ins)
-values (?,?,?::json,?,?::uuid,?::uuid)""", logEntries.iterator(), (ps, o)-> {
+values (?,?,?,?,?::uuid,?::uuid)""", logEntries.iterator(), (ps, o)-> {
             ps.setString(1, String.valueOf(o.getLevel()));
             ps.setString(2, o.getMessage());
             try {
-                ps.setString(3, nonNull(o.getStackRows()) ? mapper.writeValueAsString(o.getStackRows()) : null);
+                ps.setObject(3, nonNull(o.getStackRows()) ? mapper.writeValueAsString(o.getStackRows()) : null, OTHER);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
@@ -122,7 +130,7 @@ values (?,?,?,?,?,?,?::uuid)""",usages.iterator(), (ps, o)-> {
     public void saveRestSessions(List<RestSession> sessions) {
         completableProcess(REST_SESSION, sessions, toUpdate ->
                 executeBatch("""
-update e_rst_ses set va_mth = ?, va_pcl = ?, va_hst = ?, cd_prt = ?, va_pth = ?, va_qry = ?, va_cnt_typ = ?, va_ath_sch = ?, cd_stt = ?, va_i_sze = ?, va_o_sze = ?, va_i_cnt_enc = ?, va_o_cnt_enc = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_err_typ = ?, va_err_msg = ?, va_stk = ?::json, va_nam = ?, va_usr = ?, va_usr_agt = ?, va_cch_ctr = ?, va_msk = ?
+update e_rst_ses set va_mth = ?, va_pcl = ?, va_hst = ?, cd_prt = ?, va_pth = ?, va_qry = ?, va_cnt_typ = ?, va_ath_sch = ?, cd_stt = ?, va_i_sze = ?, va_o_sze = ?, va_i_cnt_enc = ?, va_o_cnt_enc = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_err_typ = ?, va_err_msg = ?, va_stk = ?, va_nam = ?, va_usr = ?, va_usr_agt = ?, va_cch_ctr = ?, va_msk = ?
 where id_ses = ?::uuid""", toUpdate, (ps, ses) -> {
             var exp = ses.getException();
             ps.setString(1, ses.getMethod());
@@ -144,7 +152,7 @@ where id_ses = ?::uuid""", toUpdate, (ps, ses) -> {
             ps.setString(17, nonNull(exp) ? exp.getType() : null);
             ps.setString(18, nonNull(exp) ? exp.getMessage() : null);
             try {
-                ps.setString(19, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null);
+                ps.setObject(19, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
@@ -157,7 +165,7 @@ where id_ses = ?::uuid""", toUpdate, (ps, ses) -> {
         }), toInsert ->
                 executeBatch("""
 insert into e_rst_ses(id_ses,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_cnt_typ,va_ath_sch,cd_stt,va_i_sze,va_o_sze,va_i_cnt_enc,va_o_cnt_enc,dh_str,dh_end,va_thr,va_err_typ,va_err_msg,va_stk,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_msk,cd_ins)
-values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::json,?,?,?,?,?,?::uuid)""", toInsert, (ps, ses) -> {
+values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid)""", toInsert, (ps, ses) -> {
             var exp = ses.getException();
             ps.setString(1, ses.getId());
             ps.setString(2, ses.getMethod());
@@ -179,7 +187,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::json,?,?,?,?,?,?::uuid)"""
             ps.setString(18, nonNull(exp) ? exp.getType() : null);
             ps.setString(19, nonNull(exp) ? exp.getMessage() : null);
             try {
-                ps.setString(20, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null);
+                ps.setObject(20, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
@@ -196,7 +204,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::json,?,?,?,?,?,?::uuid)"""
     public void saveMainSessions(List<MainSession> sessions) {
         completableProcess(MAIN_SESSION, sessions, toUpdate ->
                 executeBatch("""
-update e_main_ses set va_nam = ?, va_usr = ?, dh_str = ?, dh_end = ?, va_typ = ?, va_lct = ?, va_thr = ?, va_err_typ = ?, va_err_msg = ?, va_stk = ?::json, va_msk = ?
+update e_main_ses set va_nam = ?, va_usr = ?, dh_str = ?, dh_end = ?, va_typ = ?, va_lct = ?, va_thr = ?, va_err_typ = ?, va_err_msg = ?, va_stk = ?, va_msk = ?
 where id_ses = ?::uuid""", toUpdate, (ps, ses) -> {
             var exp = ses.getException();
             ps.setString(1, ses.getName());
@@ -209,7 +217,7 @@ where id_ses = ?::uuid""", toUpdate, (ps, ses) -> {
             ps.setString(8, nonNull(exp) ? exp.getType() : null);
             ps.setString(9, nonNull(exp) ? exp.getMessage() : null);
             try {
-                ps.setString(10, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null);
+                ps.setObject(10, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
@@ -231,7 +239,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?::json,?,?::uuid)""", toInsert, (ps, ses) -> {
             ps.setString(9, nonNull(exp) ? exp.getType() : null);
             ps.setString(10, nonNull(exp) ? exp.getMessage() : null);
             try {
-                ps.setString(11, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null);
+                ps.setObject(11, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
@@ -627,13 +635,13 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
                 .filter(e -> nonNull(e.getException()))
                 .toList();
         if(!isEmpty(exceptions)) {
-            executeBatch("insert into e_exc_inf(va_typ,va_err_typ,va_err_msg,va_stk,cd_ord,cd_rqt) values(?,?,?,?::json,?,?::uuid)",
+            executeBatch("insert into e_exc_inf(va_typ,va_err_typ,va_err_msg,va_stk,cd_ord,cd_rqt) values(?,?,?,?,?,?::uuid)",
                     exceptions.iterator(), (ps, exp) -> {
                         ps.setString(1, mask.name());
                         ps.setString(2, exp.getException().getType());
                         ps.setString(3, exp.getException().getMessage());
                         try {
-                            ps.setObject(4, nonNull(exp.getException().getStackTraceRows()) ? mapper.writeValueAsString(exp.getException().getStackTraceRows()) : null);
+                            ps.setObject(4, nonNull(exp.getException().getStackTraceRows()) ? mapper.writeValueAsString(exp.getException().getStackTraceRows()) : null, OTHER);
                         } catch (JsonProcessingException e) {
                             throw new RuntimeException(e);
                         }
@@ -648,13 +656,13 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
                 .filter(e -> nonNull(e.getException()))
                 .toList();
         if(!isEmpty(exceptions)) {
-            executeBatch("insert into e_exc_inf(va_typ,va_err_typ,va_err_msg,va_stk,cd_ord,cd_rqt) values(?,?,?,?::json,?,?::uuid)",
+            executeBatch("insert into e_exc_inf(va_typ,va_err_typ,va_err_msg,va_stk,cd_ord,cd_rqt) values(?,?,?,?,?,?::uuid)",
                     exceptions.iterator(), (ps, exp) -> {
                         ps.setString(1, LOCAL.name());
                         ps.setString(2, exp.getException().getType());
                         ps.setString(3, exp.getException().getMessage());
                         try {
-                            ps.setString(4, nonNull(exp.getException().getStackTraceRows()) ? mapper.writeValueAsString(exp.getException().getStackTraceRows()) : null);
+                            ps.setObject(4, nonNull(exp.getException().getStackTraceRows()) ? mapper.writeValueAsString(exp.getException().getStackTraceRows()) : null, OTHER);
                         } catch (JsonProcessingException e) {
                             throw new RuntimeException(e);
                         }
