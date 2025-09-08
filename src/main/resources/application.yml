@@ -41,10 +41,10 @@ logging:
 
 inspect:
   collector: 
-    enabled: false #default=false, enables the collector
+    enabled: true #default=false, enables the collector
     debug-mode: true #default=false, enables collector debug mode
     scheduling:
-      interval: 10s #default=60s, interval between trace dispatches
+      interval: 15s #default=60s, interval between trace dispatches
     monitoring:
       http-route:
         excludes:
@@ -65,7 +65,7 @@ inspect:
         #location: c:/dev #default=/tmp
       remote:
         mode: REST #default=null, trace dispatch type (e.g., REST)
-        host: http://localhost:9000 #default=localhost, target dispatch host
+        host: http://localhost:9001 #default=localhost, target dispatch host
         retention-max-age: 10d #default=30d, maximum age of traces in days
   server:
     scheduling:
