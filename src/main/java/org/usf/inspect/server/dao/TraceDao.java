@@ -564,12 +564,13 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveMailRequestStages(List<MailRequestStage> stages) {
-        executeBatch("insert into e_smtp_stg(va_nam,dh_str,dh_end,cd_ord,cd_smtp_rqt) values(?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
+        executeBatch("insert into e_smtp_stg(va_nam,dh_str,dh_end,va_cmd,cd_ord,cd_smtp_rqt) values(?,?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
             ps.setString(1, stage.getName());
             ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
             ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
-            ps.setInt(4, stage.getOrder());
-            ps.setString(5, stage.getRequestId());
+            ps.setString(4, stage.getCommand());
+            ps.setInt(5, stage.getOrder());
+            ps.setString(6, stage.getRequestId());
         });
         saveMailRequestMails(stages);
         saveExceptions(stages, SMTP);
