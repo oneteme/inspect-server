@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import static java.sql.Timestamp.from;
 import static java.util.Objects.nonNull;
 import static java.util.concurrent.TimeUnit.DAYS;
+import static java.util.concurrent.TimeUnit.HOURS;
 import static org.springframework.http.CacheControl.maxAge;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.ResponseEntity.ok;
@@ -53,7 +54,7 @@ public class RequestController {
                            column = "app_name,version,address,environement,os,re,user,type,start,collector,branch,hash,end,resource,configuration,id") QueryComposer request,
        @PathVariable String idInstance)  {
         return ok()
-                .cacheControl(maxAge(1, DAYS))
+                .cacheControl(maxAge(1, HOURS))
                 .body(INSPECT.execute(request.filters(INSTANCE.column(ID).varchar().eq(idInstance)), InspectMappers.instanceEnvironmentMapper(mapper)));
     }
 
