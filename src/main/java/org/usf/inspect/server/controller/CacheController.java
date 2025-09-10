@@ -36,9 +36,9 @@ public class CacheController {
 
 	private String host = null;
 
-	public CacheController(ObjectMapper mapper, TraceService service) {
+	public CacheController(ObjectMapper mapper, TraceService service, RestTemplateBuilder builder) {
 		this.service = service;
-		this.template = new RestTemplateBuilder()
+		this.template = builder //load interceptors
 				.messageConverters(new MappingJackson2HttpMessageConverter(mapper))
                 .defaultHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                 .build();
