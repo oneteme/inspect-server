@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS e_main_ses (
     va_thr varchar,
     va_err_typ varchar,
     va_err_msg varchar,
-    va_stk json,
+    va_stk text,
     va_msk int,
     cd_ins UUID
 );
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS e_rst_ses (
     va_thr varchar,
     va_err_typ varchar,
     va_err_msg varchar,
-    va_stk json,
+    va_stk text,
     va_nam varchar,
     va_usr varchar,
     va_usr_agt varchar,
@@ -217,7 +217,7 @@ CREATE TABLE IF NOT EXISTS e_exc_inf (
     va_typ varchar,
     va_err_typ varchar,
     va_err_msg varchar,
-    va_stk json,
+    va_stk text,
     cd_ord smallint,
     cd_rqt UUID
 );
@@ -237,9 +237,9 @@ CREATE TABLE IF NOT EXISTS e_env_ins (
     va_clr varchar,
     va_brch varchar,
     va_hsh varchar,
-    va_cnf json,
-    va_rsr json,
-    va_add_prp json
+    va_cnf text,
+    va_rsr text,
+    va_add_prp text
 );
 
 CREATE TABLE IF NOT EXISTS e_usr_acn (
@@ -263,7 +263,7 @@ create table if not exists e_log_ent (
     dh_str timestamp(6),
     va_lvl varchar,
     va_msg varchar,
-    va_stk json,
+    va_stk text,
     cd_prn_ses uuid,
     cd_ins uuid
 );

@@ -81,20 +81,7 @@ inspect:
       http-session: DAY
       http-request: DAY
       jdbc-request: DAY
-#  purge:
-#    enabled : false
-#    schedule: "0 0 1 * * ?"
-#    depth: 90 #en jour
-#    #env
-#      #ppd: 120
-
-      #ftp: MONTH
-      #smtp: MONTH
-      #ldap: MONTH
-      #local: MONTH
-  # target: REMOTE => log only
-  # server:
-  #   host:
-  #   compress-min-size:
+    purge:
+      enabled: false
 
 
