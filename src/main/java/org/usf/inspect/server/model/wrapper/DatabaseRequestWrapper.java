@@ -5,12 +5,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;
-import org.usf.inspect.core.DatabaseCommand;
-import org.usf.inspect.core.DatabaseRequest;
-import org.usf.inspect.core.DatabaseRequestStage;
-import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.core.*;
 
 import java.util.List;
+import java.util.Optional;
 
 import static java.util.Objects.nonNull;
 
@@ -27,8 +25,14 @@ public final class DatabaseRequestWrapper implements EventTrace, Wrapper<Databas
     private List<DatabaseRequestStage> actions;
 
     public String mainCommand(){
-        DatabaseCommand c = actions.stream().map(DatabaseRequestWrapper::enumOf).reduce(DatabaseCommand::mergeCommand).orElse(null);
-        return nonNull(c) ? c.getType().name() : null;
+        DatabaseCommand main = null;
+        for(DatabaseRequestStage stage : actions){
+            DatabaseCommand c = enumOf(stage);
+            if(nonNull(c)){
+                main = DatabaseCommand.mergeCommand(main, c);
+            }
+        }
+        return Optional.ofNullable(main).map(DatabaseCommand::getType).map(CommandType::name).orElse(null);
     }
 
     private static DatabaseCommand enumOf(DatabaseRequestStage stage) {
