@@ -7,6 +7,8 @@ import org.usf.inspect.core.InstanceEnvironment;
 import org.usf.inspect.server.dao.PurgeDao;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -23,10 +25,11 @@ public class PurgeService {
     private class BatchPurgeStrategy implements PurgeStrategy {
         @Override
         public void execute() {
-            List<InstanceEnvironment> instances = purgeDao.getInstances();
+            var now = LocalDate.now().atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
+            List<InstanceEnvironment> instances = purgeDao.getInstances(null);
             for (InstanceEnvironment instance : instances) {
                 if(instance.getConfiguration() != null) {
-                    Instant dateLimit = Instant.now().minus(instance.getConfiguration().getTracing().getRemote().getRetentionMaxAge());
+                    Instant dateLimit = now.minus(instance.getConfiguration().getTracing().getRemote().getRetentionMaxAge());
                     var deleted = purgeDao.purgeByInstance(dateLimit, instance.getEnv(), instance.getName());
                     log.info("[{}]:{} => {} rows deleted before {}", instance.getEnv(), instance.getName(), IntStream.of(deleted).sum(), dateLimit);
                 } else {
@@ -74,7 +77,7 @@ public class PurgeService {
         performPurge(new BatchPurgeStrategy());
     }
 
-    public void purge(String env, List<String> app, Instant dateLimit) {
-        performPurge(new TargetedPurgeStrategy(env, app, dateLimit));
+    public void purge(String env, List<String> apps, Instant dateLimit) {
+        performPurge(new TargetedPurgeStrategy(env, apps.isEmpty() ? purgeDao.getInstances(env).stream().map(InstanceEnvironment::getName).toList() : apps, dateLimit));
     }
 }

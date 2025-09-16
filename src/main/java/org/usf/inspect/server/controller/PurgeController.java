@@ -20,7 +20,7 @@ public class PurgeController {
     @DeleteMapping("{env}")
     public void purge(
             @PathVariable(name = "env") String env,
-            @RequestParam(name = "apps") List<String> apps,
+            @RequestParam(name = "apps", required = false) List<String> apps,
             @RequestParam(name = "date_limit") Instant dateLimit
     ){
         purgeService.purge(env, apps, dateLimit);

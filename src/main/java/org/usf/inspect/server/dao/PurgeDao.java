@@ -9,6 +9,9 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.InspectCollectorConfiguration;
 import org.usf.inspect.core.InstanceEnvironment;
+import org.usf.inspect.server.config.TraceApiColumn;
+import org.usf.inspect.server.config.TraceApiTable;
+import org.usf.jquery.core.*;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -18,6 +21,9 @@ import static java.lang.String.*;
 import static java.sql.Timestamp.*;
 import static java.util.stream.Collectors.*;
 import static org.usf.inspect.core.RequestMask.*;
+import static org.usf.inspect.server.config.TraceApiColumn.*;
+import static org.usf.inspect.server.config.TraceApiDatabase.INSPECT;
+import static org.usf.inspect.server.config.TraceApiTable.*;
 
 @Slf4j
 @Repository
@@ -28,7 +34,7 @@ public class PurgeDao {
             "e_rst_ses", "e_main_ses", "e_rst_rqt", "e_dtb_rqt", "e_ftp_rqt", "e_smtp_rqt", "e_ldap_rqt", "e_lcl_rqt"
     );
     private final static List<String> TABLES_WITH_INSTANCE_WITHOUT_END = List.of(
-           "e_ins_trc", "e_log_ent", "e_rsc_usg"
+            "e_ins_trc", "e_log_ent", "e_rsc_usg"
     );
 
     private final static String DELETE_BY_INSTANCE = "DELETE FROM %s WHERE dh_str < '%s' AND dh_end < '%s' AND cd_ins IN (%s);";
@@ -39,47 +45,48 @@ public class PurgeDao {
     private final ObjectMapper mapper;
     private final JdbcTemplate template;
 
-    public List<InstanceEnvironment> getInstances() {
-        var sql = """
-                WITH ranked AS (
-                    SELECT
-                        va_env,
-                        va_app,
-                        va_cnf,
-                        ROW_NUMBER() OVER (
-                            PARTITION BY va_env, va_app 
-                            ORDER BY dh_str DESC
-                        ) AS rn
-                    FROM e_env_ins
-                    WHERE dh_end IS NULL
-                )
-                SELECT va_env, va_app, va_cnf
-                FROM ranked
-                WHERE rn = 1
-                ORDER BY va_env, va_app
-            """;
-        return template.query(sql, (rs, rowNum) -> {
-            try {
-                return new InstanceEnvironment(
-                        null,
-                        null,
-                        null,
-                        rs.getString("va_app"),
-                        null,
-                        rs.getString("va_env"),
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        rs.getString("va_cnf") != null ? mapper.readValue(rs.getString("va_cnf"), InspectCollectorConfiguration.class) : null
-                );
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
+    public List<InstanceEnvironment> getInstances(String env) {
+        return INSPECT.execute(v ->
+                v.columns(
+                                INSTANCE.column(ENVIRONEMENT),
+                                INSTANCE.column(APP_NAME),
+                                INSTANCE.column(CONFIGURATION)
+                        )
+                        .filters(DBColumn.rank().over(
+                                new DBColumn[]{INSTANCE.column(ENVIRONEMENT), INSTANCE.column(APP_NAME)},
+                                new DBOrder[]{INSTANCE.column(START).desc()}
+                        ).eq(1))
+                        .subViewQuery(INSTANCE.view(), sq -> {
+                            sq.filters(INSTANCE.column(END).isNull());
+                            if (env != null) {
+                                sq.filters(INSTANCE.column(ENVIRONEMENT).eq(env));
+                            }
+                        }), rs -> {
+            List<InstanceEnvironment> environments = new ArrayList<>();
+            while (rs.next()) {
+                try {
+                    environments.add(new InstanceEnvironment(
+                            null,
+                            null,
+                            null,
+                            rs.getString("va_app"),
+                            null,
+                            rs.getString("va_env"),
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            rs.getString("va_cnf") != null ? mapper.readValue(rs.getString("va_cnf"), InspectCollectorConfiguration.class) : null
+                    ));
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
             }
+            return environments;
         });
     }
 
@@ -87,7 +94,7 @@ public class PurgeDao {
     public int[] purgeByInstance(Instant dateLimit, String env, String app) {
         List<String> sql = new ArrayList<>();
         var ids = selectInstanceIds(dateLimit, env, app);
-        if(!ids.isEmpty()) {
+        if (!ids.isEmpty()) {
             for (String table : TABLES_WITH_INSTANCE) {
                 sql.add(format(DELETE_BY_INSTANCE, table, from(dateLimit), from(dateLimit), ids.stream().map(id -> "'" + id + "'").collect(joining(","))));
             }
@@ -95,7 +102,7 @@ public class PurgeDao {
                 sql.add(format(DELETE_BY_INSTANCE_WITHOUT_END, table, from(dateLimit), ids.stream().map(id -> "'" + id + "'").collect(joining(","))));
             }
         }
-        sql.add(format("DELETE FROM e_env_ins WHERE dh_end < '%s' AND va_env %s AND va_app %s;", from(dateLimit), env != null ? " = '" + env + "'" : "IS NULL", app != null  ? " = '" + app + "'" : "IS NULL"));
+        sql.add(format("DELETE FROM e_env_ins WHERE dh_end < '%s' AND va_env %s AND va_app %s;", from(dateLimit), env != null ? " = '" + env + "'" : "IS NULL", app != null ? " = '" + app + "'" : "IS NULL"));
         return template.batchUpdate(sql.toArray(new String[0]));
     }
 
