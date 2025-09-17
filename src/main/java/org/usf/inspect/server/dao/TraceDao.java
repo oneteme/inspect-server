@@ -11,9 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.*;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.InstanceTrace;
+import org.usf.inspect.server.model.RequestCompletableType;
 
 import java.sql.PreparedStatement;
-import java.sql.Types;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
@@ -25,7 +25,7 @@ import static java.sql.Types.*;
 import static java.util.Objects.nonNull;
 import static org.usf.inspect.core.RequestMask.*;
 import static org.usf.inspect.server.Utils.*;
-import static org.usf.inspect.server.dao.RequestCompletableType.*;
+import static org.usf.inspect.server.model.RequestCompletableType.*;
 
 
 /**
