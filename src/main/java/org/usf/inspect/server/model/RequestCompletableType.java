@@ -1,4 +1,4 @@
-package org.usf.inspect.server.dao;
+package org.usf.inspect.server.model;
 
 import lombok.Getter;
 
