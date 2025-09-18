@@ -15,6 +15,7 @@ import org.usf.jquery.core.*;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static java.lang.String.*;
@@ -41,6 +42,7 @@ public class PurgeDao {
     private final static String DELETE_BY_INSTANCE_WITHOUT_END = "DELETE FROM %s WHERE dh_str < '%s' AND cd_ins IN (%s);";
     private final static String DELETE_BY_NO_INSTANCE = "DELETE FROM %s WHERE NOT EXISTS (SELECT 1 FROM %s WHERE %s = %s);";
     private final static String DELETE_EXCEPTION_BY_NO_INSTANCE = "DELETE FROM e_exc_inf WHERE va_typ = '%s' AND NOT EXISTS (SELECT 1 FROM %s WHERE %s = cd_rqt);";
+    private final static String VACUUM = "VACUUM ANALYZE %s;";
 
     private final ObjectMapper mapper;
     private final JdbcTemplate template;
@@ -69,18 +71,18 @@ public class PurgeDao {
                             null,
                             null,
                             null,
-                            rs.getString("va_app"),
+                            rs.getString(APP_NAME.reference()),
                             null,
-                            rs.getString("va_env"),
-                            null,
-                            null,
+                            rs.getString(ENVIRONEMENT.reference()),
                             null,
                             null,
                             null,
                             null,
                             null,
                             null,
-                            rs.getString("va_cnf") != null ? mapper.readValue(rs.getString("va_cnf"), InspectCollectorConfiguration.class) : null
+                            null,
+                            null,
+                            rs.getString(CONFIGURATION.reference()) != null ? mapper.readValue(rs.getString(CONFIGURATION.reference()), InspectCollectorConfiguration.class) : null
                     ));
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
@@ -138,9 +140,27 @@ public class PurgeDao {
     }
 
     public void vacuumAnalyze() {
-        template.batchUpdate(TABLES_WITH_INSTANCE.stream()
-                .map(t -> format("VACUUM ANALYZE %s;", t))
-                .toArray(String[]::new));
+        String[] vacuumQueries = {
+                format(VACUUM, "e_rst_ses"),
+                format(VACUUM, "e_main_ses"),
+                format(VACUUM, "e_rst_rqt"),
+                format(VACUUM, "e_dtb_rqt"),
+                format(VACUUM, "e_ftp_rqt"),
+                format(VACUUM, "e_smtp_rqt"),
+                format(VACUUM, "e_ldap_rqt"),
+                format(VACUUM, "e_lcl_rqt"),
+                format(VACUUM, "e_rst_ses_stg"),
+                format(VACUUM, "e_rst_rqt_stg"),
+                format(VACUUM, "e_smtp_stg"),
+                format(VACUUM, "e_ftp_stg"),
+                format(VACUUM, "e_ldap_stg"),
+                format(VACUUM, "e_dtb_stg"),
+                format(VACUUM, "e_ins_trc"),
+                format(VACUUM, "e_rsc_usg")
+        };
+        for (String query : vacuumQueries) {
+            template.execute(query);
+        }
     }
 
     private List<String> selectInstanceIds(Instant dateLimit, String env, String app) {

@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.IntStream;
 
 @Service
@@ -67,8 +68,9 @@ public class PurgeService {
             log.error("[error] => purging old data", e);
         } finally {
             var deleted = purgeDao.finalizePurge();
-            purgeDao.vacuumAnalyze();
             log.info("[finalize] => {} rows deleted", IntStream.of(deleted).sum());
+            log.info("[vacuum] => purging old data");
+            purgeDao.vacuumAnalyze();
         }
         log.info("[end] => purging old data");
     }
@@ -78,6 +80,6 @@ public class PurgeService {
     }
 
     public void purge(String env, List<String> apps, Instant dateLimit) {
-        performPurge(new TargetedPurgeStrategy(env, apps.isEmpty() ? purgeDao.getInstances(env).stream().map(InstanceEnvironment::getName).toList() : apps, dateLimit));
+        performPurge(new TargetedPurgeStrategy(env, Objects.isNull(apps) || apps.isEmpty() ? purgeDao.getInstances(env).stream().map(InstanceEnvironment::getName).toList() : apps, dateLimit));
     }
 }
