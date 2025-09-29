@@ -100,8 +100,6 @@ public enum TraceApiColumn implements ColumnDecorator {
     STACKTRACE("stacktrace"),
     USED_HEAP("usedHeap"),
     COMMITED_HEAP("commitedHeap"),
-    USED_META("usedMeta"),
-    COMMITED_META("commitedMeta"),
     USED_DISK_SPACE("usedDiskSpace"),
     FILENAME("filename"),
     BODY_CONTENT("bodyContent"),

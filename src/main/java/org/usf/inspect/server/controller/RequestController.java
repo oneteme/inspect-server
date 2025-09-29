@@ -70,7 +70,7 @@ public class RequestController {
     @GetMapping("instance/{idInstance}/resource/usage")
     public List<MachineResourceUsage> getInstanceResourceUsages(
             @QueryRequestFilter(view = "resource_usage",
-                    column = "low_heap,high_heap,low_meta,high_meta,start") QueryComposer request,
+                    column = "low_heap,high_heap,start") QueryComposer request,
             @PathVariable String idInstance)  {
         return INSPECT.execute(request.filters(RESOURCE_USAGE.column(INSTANCE_ENV).varchar().eq(idInstance)), InspectMappers.instanceResourceUsageMapper());
     }
