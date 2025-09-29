@@ -342,8 +342,6 @@ public class ColumnConstant {
         return switch (column) {
             case USED_HEAP -> VA_USED_HEP;
             case COMMITED_HEAP -> VA_COMMITED_HEP;
-            case USED_META -> VA_USED_MET;
-            case COMMITED_META -> VA_COMMITED_MET;
             case USED_DISK_SPACE -> VA_USED_DISK_SPACE;
             case START -> DH_STR;
             case INSTANCE_ENV -> CD_INS;

@@ -114,15 +114,13 @@ values (?,?,?,?,?::uuid,?::uuid)""", logEntries.iterator(), (ps, o)-> {
     @Transactional(rollbackFor = Throwable.class)
     public void saveMachineResourceUsages(List<MachineResourceUsage> usages) {
         executeBatch("""
-insert into e_rsc_usg(dh_str,va_usd_hep,va_cmt_hep,va_usd_met,va_cmt_met,va_usd_dsk,cd_ins)
-values (?,?,?,?,?,?,?::uuid)""",usages.iterator(), (ps, o)-> {
+insert into e_rsc_usg(dh_str,va_usd_hep,va_cmt_hep,va_usd_dsk,cd_ins)
+values (?,?,?,?,?::uuid)""",usages.iterator(), (ps, o)-> {
             ps.setTimestamp(1, fromNullableInstant(o.getInstant()));
             ps.setInt(2, o.getUsedHeap());
             ps.setInt(3, o.getCommitedHeap());
-            ps.setInt(4, o.getUsedMeta());
-            ps.setInt(5, o.getCommitedMeta());
-            ps.setInt(6, o.getUsedDiskSpace());
-            ps.setString(7, o.getInstanceId());
+            ps.setInt(4, o.getUsedDiskSpace());
+            ps.setString(5, o.getInstanceId());
         });
     }
 

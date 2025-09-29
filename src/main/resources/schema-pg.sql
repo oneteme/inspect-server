@@ -286,8 +286,6 @@ create table if not exists e_rsc_usg (
     dh_str timestamp(6),
     va_usd_hep int,
     va_cmt_hep int,
-    va_usd_met int,
-    va_cmt_met int,
     va_usd_dsk int,
     cd_ins uuid
 );
