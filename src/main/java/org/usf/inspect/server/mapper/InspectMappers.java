@@ -78,8 +78,6 @@ public final class InspectMappers {
                         fromNullableTimestamp(rs.getTimestamp(START.reference())),
                         rs.getInt(USED_HEAP.reference()),
                         rs.getInt(COMMITED_HEAP.reference()),
-                        0,
-                        0,
                         rs.getInt(USED_DISK_SPACE.reference())
                 );
     }
