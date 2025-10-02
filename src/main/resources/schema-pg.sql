@@ -271,7 +271,8 @@ create table if not exists e_ins_trc (
     dh_str timestamp(6),
     va_fln varchar,
     cd_ins uuid
-);
+)
+PARTITION BY RANGE (dh_str);
 
 create table if not exists e_log_ent (
     dh_str timestamp(6),
@@ -288,7 +289,8 @@ create table if not exists e_rsc_usg (
     va_cmt_hep int,
     va_usd_dsk int,
     cd_ins uuid
-);
+)
+PARTITION BY RANGE (dh_str);
 
 create table if not exists e_cmp_mtc (
     id_cmp_mtc uuid,

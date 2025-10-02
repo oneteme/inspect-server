@@ -48,6 +48,8 @@ public class PartitionScheduler {
         ofNullable(properties.getSmtpRequest()).ifPresent(o-> map.put(REQ_SMTP, o));
         ofNullable(properties.getLdapRequest()).ifPresent(o-> map.put(REQ_LDAP, o));
         ofNullable(properties.getLocalRequest()).ifPresent(o-> map.put(REQ_LOCAL, o));
+        ofNullable(properties.getInstanceTrace()).ifPresent(o-> map.put(INSTANCE_TRACE, o));
+        ofNullable(properties.getResourceUsage()).ifPresent(o-> map.put(RESOURCE_USAGE, o));
         return map;
     }
 }
