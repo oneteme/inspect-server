@@ -3,22 +3,24 @@ package org.usf.inspect.server.controller;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.usf.inspect.core.AbstractRequest;
-import org.usf.inspect.core.AbstractStage;
-import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.core.*;
 import org.usf.inspect.server.model.Session;
 import org.usf.inspect.server.model.wrapper.Wrapper;
 import org.usf.inspect.server.model.wrapper.MainSessionWrapper;
 import org.usf.inspect.server.model.wrapper.RestSessionWrapper;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static org.usf.inspect.core.ExceptionInfo.mainCauseException;
 import static org.usf.inspect.core.HttpAction.PROCESS;
 import static org.usf.inspect.core.RequestMask.*;
 import static org.usf.inspect.core.SessionManager.nextId;
@@ -44,7 +46,7 @@ public final class RetroUtils {
                 }
                 var restSession = rs.unwrap();
                 restSession.setRequestsMask(mask(rs));
-                var stage = restSession.createStage(PROCESS, restSession.getStart(), restSession.getEnd(), null);
+                var stage = createStage(restSession.getId(), restSession.getStart(), restSession.getEnd(), HttpSessionStage::new);
                 stage.setRequestId(rs.getId());
                 stage.setOrder(0);
                 traces.add(stage);
@@ -68,7 +70,7 @@ public final class RetroUtils {
                 return m.getActions();
             }, traces::add);
             toV4(s.getId(), s.getRestRequests(), (e) -> {
-                var stage = e.createStage(PROCESS, e.getStart(), e.getEnd(), null);
+                var stage = createStage(e.getId(), e.getStart(), e.getEnd(), HttpRequestStage::new);
                 if(e.getException() != null) {
                     if(e.getException().getType() == null){
                         e.setBodyContent(e.getException().getMessage());
@@ -103,6 +105,16 @@ public final class RetroUtils {
                 }
             }
         }
+    }
+
+    private static <T extends AbstractStage> T createStage(String id, Instant start, Instant end, Supplier<T> supp) {
+        var stg = supp.get();
+        stg.setName(PROCESS.name());
+        stg.setStart(start);
+        stg.setEnd(end);
+        stg.setRequestId(id);
+        stg.setOrder(0);
+        return stg;
     }
 
     private static <T extends AbstractStage> boolean isFailed(List<T> stage) {
