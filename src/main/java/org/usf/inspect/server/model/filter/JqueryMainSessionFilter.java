@@ -24,17 +24,14 @@ public class JqueryMainSessionFilter extends JquerySessionFilter {
     private final String location;
     private final String[] rangestatus;
 
-    public JqueryMainSessionFilter(String[] ids, String[] appNames, String[] environments, String[] users, Instant start, Instant end, String[] names, String[] launchModes, String location, String[] rangestatus) {
-        super(ids, appNames, environments, users, start, end );
+    public JqueryMainSessionFilter(String[] appNames, String[] environments, String[] users, Instant start, Instant end, String[] names, String[] launchModes, String location, String[] rangestatus) {
+        super(appNames, environments, users, start, end );
         this.names = names;
         this.launchModes = launchModes;
         this.location = location;
         this.rangestatus = rangestatus;
     }
 
-    public JqueryMainSessionFilter(String[] ids) {
-        this(ids, null, null, null, null, null, null, null, null,null);
-    }
     @Override
     public Collection<DBFilter> filters(TraceApiTable table) {
         Collection<DBFilter> filters = super.filters(table);

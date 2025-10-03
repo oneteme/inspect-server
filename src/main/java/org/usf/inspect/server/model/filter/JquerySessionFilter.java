@@ -24,7 +24,6 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class JquerySessionFilter {
-    private final String[] ids;
     private final String[] appNames;
     private final String[] environments;
     private final String[] users;
@@ -33,9 +32,6 @@ public class JquerySessionFilter {
 
     public Collection<DBFilter> filters(TraceApiTable table) {
         Collection<DBFilter> filters = new ArrayList<>();
-        if(!isEmpty(getIds())) {
-            filters.add(table.column(ID).varchar().in(getIds()));
-        }
         if(!isEmpty(getAppNames())) {
             filters.add(INSTANCE.column(APP_NAME).in(getAppNames()));
         }
