@@ -37,8 +37,8 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
     private final String query;
     private final String[] rangeStatus;
 
-    public JqueryRequestSessionFilter(String[] ids, String[] appNames, String[] environments, String[] users, Instant start, Instant end, String[] methods, String[] protocols, String[] hosts, String[] ports, String[] medias, String[] auths, Integer[] status, String[] apiNames, String path, String query,String[] rangestatus) {
-        super(ids, appNames, environments, users, start, end);
+    public JqueryRequestSessionFilter(String[] appNames, String[] environments, String[] users, Instant start, Instant end, String[] methods, String[] protocols, String[] hosts, String[] ports, String[] medias, String[] auths, Integer[] status, String[] apiNames, String path, String query,String[] rangestatus) {
+        super(appNames, environments, users, start, end);
         this.methods = methods;
         this.protocols = protocols;
         this.hosts = hosts;
@@ -50,10 +50,6 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
         this.path = path;
         this.query = query;
         this.rangeStatus = rangestatus;
-    }
-
-    public JqueryRequestSessionFilter(String[] ids) {
-        this(ids, null,null,null,null, null, null,null,null,null,null,null,null, null,null,null,null);
     }
 
     @Override

@@ -5,6 +5,7 @@ import static java.sql.Types.TIMESTAMP;
 import static java.sql.Types.VARCHAR;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
+import static java.util.UUID.fromString;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static org.usf.inspect.server.Utils.fromNullableTimestamp;
@@ -14,15 +15,10 @@ import static org.usf.inspect.server.config.TraceApiDatabase.INSPECT;
 import static org.usf.inspect.server.config.TraceApiTable.*;
 import static org.usf.inspect.server.config.constant.JoinConstant.*;
 import static org.usf.inspect.server.mapper.InspectMappers.*;
+import static org.usf.jquery.core.DBColumn.column;
 import static org.usf.jquery.core.Mappers.toArray;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -153,16 +149,16 @@ public class RequestService {
         });
     }
 
-    public Map<String, String> getSessionParent(TraceApiTable tableType, String childId){
-        var prnt = getPropertyByFilters(tableType, PARENT, tableType.column(ID).varchar().eq(childId));
+    public Map<String, String> getSessionParent(RequestType tableType, String childId){
+        var prnt = getPropertyByFilters(tableType.getTable(), PARENT, column(tableType.getId()).eq(fromString(childId)));
         if(prnt != null){
-            var res = getPropertyByFilters(REST_SESSION, ID, REST_SESSION.column(ID).varchar().eq(prnt));
+            var res = getPropertyByFilters(REST_SESSION, ID, column("id_ses").eq(fromString(prnt)));
             if(res != null) {
                 return Map.of("id", res, "type", "rest");
             }
-            res = getPropertyByFilters(MAIN_SESSION, ID, MAIN_SESSION.column(ID).varchar().eq(prnt));
+            res = getPropertyByFilters(MAIN_SESSION, ID, column("id_ses").eq(fromString(prnt)));
             if(res!= null){
-                var type = getPropertyByFilters(MAIN_SESSION, TYPE, MAIN_SESSION.column(ID).varchar().eq(res));
+                var type = getPropertyByFilters(MAIN_SESSION, TYPE, column("id_ses").eq(fromString(prnt)));
                 return Map.of("id", res, "type", type);
             }
         }
@@ -171,8 +167,7 @@ public class RequestService {
 
 
     public List<Session> getRestSessionsForTree(List<String> ids)  {
-        JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(ids.toArray(String[]::new));
-        List<Session> sessions = getRestSessions(jsf);
+        List<Session> sessions = getRestSessions(ids);
         if (!sessions.isEmpty()) {
             var reqMap = sessions.stream().collect(toMap(Session::getId, identity()));
             var parentIds = reqMap.keySet().stream().toList();
@@ -248,7 +243,7 @@ public class RequestService {
     }
 
 
-    public List<Session> getRestSessions(JqueryRequestSessionFilter jsf)  { // remove if possible after optimizing tree
+    public List<Session> getRestSessions(List<String> ids)  { // remove if possible after optimizing tree
         var v = new QueryComposer()
                 .columns(
                     getColumns(
@@ -257,9 +252,7 @@ public class RequestService {
                             START, END, THREAD, ERR_TYPE, ERR_MSG, MASK, USER, USER_AGT, CACHE_CONTROL, INSTANCE_ENV
                     ));
         v.columns(getColumns(INSTANCE, APP_NAME, OS, RE, ADDRESS)).filters(REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
-        if(jsf != null) {
-            v.filters(jsf.filters(REST_SESSION).toArray(DBFilter[]::new));
-        }
+        v.filters(column("id_ses").in(ids.stream().map(UUID::fromString).toArray()));
         return INSPECT.execute(v, rs -> {
             List<Session> sessions = new ArrayList<>();
             while (rs.next()) {
@@ -317,8 +310,7 @@ public class RequestService {
     }
 
     public Session getMainSessionForTree(String id)  {
-        JqueryMainSessionFilter jsf = new JqueryMainSessionFilter(Collections.singletonList(id).toArray(String[]::new));
-        Session session = requireSingle(getMainSessions(jsf));
+        Session session = requireSingle(getMainSessions(Collections.singletonList(id)));
         if (session != null) {
             getRestRequestsCompleteForParent(Collections.singletonList(session.getId())).forEach(r -> session.getRestRequests().add(r));
             getDatabaseRequestsComplete(session.getId()).forEach(r -> session.getDatabaseRequests().add(r));
@@ -389,7 +381,7 @@ public class RequestService {
         });
     }
 
-    public List<Session> getMainSessions(JqueryMainSessionFilter jsf) {
+    public List<Session> getMainSessions(List<String> ids) {
         var v = new QueryComposer()
                 .columns(
                     getColumns(
@@ -397,9 +389,7 @@ public class RequestService {
                             ERR_TYPE, ERR_MSG, MASK, USER, INSTANCE_ENV
                     ));
         v.columns(getColumns(INSTANCE, APP_NAME, OS, RE, ADDRESS)).filters(MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
-        if(jsf != null) {
-            v.filters(jsf.filters(MAIN_SESSION).toArray(DBFilter[]::new));
-        }
+        v.filters(column("id_ses").in(ids.stream().map(UUID::fromString).toArray()));
         return INSPECT.execute(v, rs -> {
             List<Session> sessions = new ArrayList<>();
             while(rs.next()) {
@@ -444,7 +434,7 @@ public class RequestService {
     }
 
     public List<RestRequestWrapper> getRestRequestsCompleteForParent(List<String> cdSession)  {
-        return getRestRequestsCompleteByFilters(new DBFilter[]{REST_REQUEST.column(PARENT).varchar().in(cdSession.toArray())});
+        return getRestRequestsCompleteByFilters(new DBFilter[]{column("cd_prn_ses").in(cdSession.stream().map(UUID::fromString).toArray())});
     }
 
     private List<RestRequestWrapper> getRestRequestsCompleteByFilters(DBFilter[] filters)  { //use criteria
@@ -536,11 +526,11 @@ public class RequestService {
     }
 
     public List<DatabaseRequestWrapper> getDatabaseRequestsComplete(List<String> cdSession)  {
-        return getDatabaseRequestsComplete(DATABASE_REQUEST.column(PARENT).varchar().in(cdSession.toArray()));
+        return getDatabaseRequestsComplete(column("cd_prn_ses").in(cdSession.stream().map(UUID::fromString).toArray()));
     }
 
     public List<DatabaseRequestWrapper> getDatabaseRequestsComplete(String cdSession)  {
-        return getDatabaseRequestsComplete(DATABASE_REQUEST.column(PARENT).varchar().eq(cdSession));
+        return getDatabaseRequestsComplete(column("cd_prn_ses").eq(fromString(cdSession)));
     }
 
     public List<DatabaseRequestDto> getDatabaseRequests(JqueryRequestFilter jsf)  {
@@ -616,11 +606,11 @@ public class RequestService {
     }
 
     public List<FtpRequestWrapper> getFtpRequestsComplete(List<String> cdSession)  {
-        return getFtpRequestsComplete(FTP_REQUEST.column(PARENT).varchar().in(cdSession.toArray()));
+        return getFtpRequestsComplete(column("cd_prn_ses").in(cdSession.stream().map(UUID::fromString).toArray()));
     }
 
     public List<FtpRequestWrapper> getFtpRequestsComplete(String cdSession) {
-        return getFtpRequestsComplete(FTP_REQUEST.column(PARENT).varchar().eq(cdSession));
+        return getFtpRequestsComplete(column("cd_prn_ses").eq(fromString(cdSession)));
     }
 
     public List<FtpRequestDto> getFtpRequests(JqueryRequestFilter jsf)  {
@@ -691,11 +681,11 @@ public class RequestService {
     }
 
     public List<MailRequestWrapper> getSmtpRequestsComplete(List<String> cdSession) {
-        return getSmtpRequestsComplete(SMTP_REQUEST.column(PARENT).varchar().in(cdSession.toArray()));
+        return getSmtpRequestsComplete(column("cd_prn_ses").in(cdSession.stream().map(UUID::fromString).toArray()));
     }
 
     public List<MailRequestWrapper> getSmtpRequestsComplete(String cdSession) {
-        return getSmtpRequestsComplete(SMTP_REQUEST.column(PARENT).varchar().eq(cdSession));
+        return getSmtpRequestsComplete(column("cd_prn_ses").eq(fromString(cdSession)));
     }
 
     public List<MailRequestDto> getSmtpRequestsByFilter(JqueryRequestFilter jsf)  {
@@ -761,11 +751,11 @@ public class RequestService {
     }
 
     public List<DirectoryRequestWrapper> getLdapRequestsComplete(List<String> cdSession)  {
-        return getLdapRequestsComplete(LDAP_REQUEST.column(PARENT).varchar().in(cdSession.toArray()));
+        return getLdapRequestsComplete(column("cd_prn_ses").in(cdSession.stream().map(UUID::fromString).toArray()));
     }
 
     public List<DirectoryRequestWrapper> getLdapRequestsComplete(String cdSession)  {
-        return getLdapRequestsComplete(LDAP_REQUEST.column(PARENT).varchar().eq(cdSession));
+        return getLdapRequestsComplete(column("cd_prn_ses").eq(fromString(cdSession)));
     }
 
     public List<DirectoryRequestDto> getLdapRequestsByFilter(JqueryRequestFilter jsf)  {
