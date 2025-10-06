@@ -91,7 +91,7 @@ public class TraceController {
     		}
     		int size = traces.size();
     		if(nonNull(end)){
-    			traces.add(new InstanceEnvironmentUpdate(id, end));
+    			traces.add(new InstanceEnvironmentUpdate(id, end)); //publish event
     		}
     		traces.add(new InstanceTrace(pending, attempts, size, filename, now, id));
     		for(var e : traces) {

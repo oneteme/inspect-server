@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.*;
@@ -14,15 +13,16 @@ import org.usf.inspect.server.model.InstanceTrace;
 import org.usf.inspect.server.model.RequestCompletableType;
 
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 import java.util.stream.IntStream;
 
 import static java.sql.Types.*;
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static java.util.Optional.ofNullable;
 import static org.usf.inspect.core.RequestMask.*;
 import static org.usf.inspect.server.Utils.*;
 import static org.usf.inspect.server.model.RequestCompletableType.*;
@@ -49,7 +49,7 @@ public class TraceDao {
 insert into e_env_ins(id_ins,va_typ,dh_str,va_app,va_vrs,va_adr,va_env,va_os,va_re,va_usr,va_clr,va_brch,va_hsh,va_cnf,va_rsr,va_add_prp)
 values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             ps.setString(1, instance.getId());
-            ps.setString(2, instance.getType() != null ? instance.getType().name() : null);
+            ps.setString(2, ofNullable(instance.getType()).map(InstanceType::name).orElse(null));
             ps.setTimestamp(3, fromNullableInstant(instance.getInstant()));
             ps.setString(4, instance.getName());
             ps.setString(5, instance.getVersion());
@@ -62,11 +62,11 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             ps.setString(12, instance.getBranch());
             ps.setString(13, instance.getHash());
             try {
-                ps.setObject(14, instance.getConfiguration() != null ? mapper.writeValueAsString(instance.getConfiguration()) : null, OTHER);
-                ps.setObject(15, instance.getResource() != null ? mapper.writeValueAsString(instance.getResource()) : null, OTHER);
-                ps.setObject(16, instance.getAdditionalProperties() != null ? mapper.writeValueAsString(instance.getAdditionalProperties()) : null, OTHER);
+                ps.setObject(14, toJsonOrNull(instance.getConfiguration()), OTHER);
+                ps.setObject(15, toJsonOrNull(instance.getResource()), OTHER);
+                ps.setObject(16, toJsonOrNull(instance.getAdditionalProperties()), OTHER);
             } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
+                throw new SQLException("parsing parameter", e);
             }
         });
     }
@@ -81,41 +81,33 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveInstanceTraces(List<InstanceTrace> instanceTraces) {
-        executeBatch("""
-insert into e_ins_trc (va_pnd, va_atp, va_trc_cnt, dh_str, va_fln, cd_ins)
-values (?, ?, ?, ?, ?, ?::uuid)""", instanceTraces.iterator(), (ps, instanceTrace) -> {
-            ps.setObject(1, instanceTrace.getPending(), INTEGER);
-            ps.setObject(2, instanceTrace.getAttempts(), INTEGER);
-            ps.setInt(3, instanceTrace.getTraceCount());
-            ps.setTimestamp(4, fromNullableInstant(instanceTrace.getInstant()));
-            ps.setString(5, instanceTrace.getFileName());
-            ps.setString(6, instanceTrace.getInstanceId());
-        });
+        executeBatch("insert into e_ins_trc (va_pnd, va_atp, va_trc_cnt, dh_str, va_fln, cd_ins) values (?, ?, ?, ?, ?, ?::uuid)", 
+        		instanceTraces.iterator(), (ps, trc) -> {
+		            ps.setObject(1, trc.getPending(), INTEGER);
+		            ps.setObject(2, trc.getAttempts(), INTEGER);
+		            ps.setInt(3, trc.getTraceCount());
+		            ps.setTimestamp(4, fromNullableInstant(trc.getInstant()));
+		            ps.setString(5, trc.getFileName());
+		            ps.setString(6, trc.getInstanceId());
+		        });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveLogEntries(List<LogEntry> logEntries) {
-        executeBatch("""
-insert into e_log_ent(va_lvl,va_msg,va_stk,dh_str,cd_prn_ses,cd_ins)
-values (?,?,?,?,?::uuid,?::uuid)""", logEntries.iterator(), (ps, o)-> {
-            ps.setString(1, String.valueOf(o.getLevel()));
-            ps.setString(2, o.getMessage());
-            try {
-                ps.setObject(3, nonNull(o.getStackRows()) ? mapper.writeValueAsString(o.getStackRows()) : null, OTHER);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-            ps.setTimestamp(4, fromNullableInstant(o.getInstant()));
-            ps.setString(5, o.getSessionId());
-            ps.setString(6, o.getInstanceId());
-        });
+        executeBatch("insert into e_log_ent(va_lvl,va_msg,va_stk,dh_str,cd_prn_ses,cd_ins) values (?,?,?,?,?::uuid,?::uuid)", 
+        		logEntries.iterator(), (ps, o)-> {
+		            ps.setString(1, String.valueOf(o.getLevel()));
+		            ps.setString(2, o.getMessage());
+		            ps.setObject(3, toJsonOrNull(o.getStackRows()), OTHER);
+		            ps.setTimestamp(4, fromNullableInstant(o.getInstant()));
+		            ps.setString(5, o.getSessionId());
+		            ps.setString(6, o.getInstanceId());
+		        });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveMachineResourceUsages(List<MachineResourceUsage> usages) {
-        executeBatch("""
-insert into e_rsc_usg(dh_str,va_usd_hep,va_cmt_hep,va_usd_dsk,cd_ins)
-values (?,?,?,?,?::uuid)""",usages.iterator(), (ps, o)-> {
+        executeBatch("insert into e_rsc_usg(dh_str,va_usd_hep,va_cmt_hep,va_usd_dsk,cd_ins) values (?,?,?,?,?::uuid)", usages.iterator(), (ps, o)-> {
             ps.setTimestamp(1, fromNullableInstant(o.getInstant()));
             ps.setInt(2, o.getUsedHeap());
             ps.setInt(3, o.getCommitedHeap());
@@ -149,11 +141,7 @@ where id_ses = ?::uuid""", toUpdate, (ps, ses) -> {
             ps.setString(16, ses.getThreadName());
             ps.setString(17, nonNull(exp) ? exp.getType() : null);
             ps.setString(18, nonNull(exp) ? exp.getMessage() : null);
-            try {
-                ps.setObject(19, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
+            ps.setObject(19, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
             ps.setString(20, ses.getName());
             ps.setString(21, ses.getUser());
             ps.setString(22, userAgentExtract(ses.getUserAgent()));
@@ -184,18 +172,14 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid)""", toIn
             ps.setString(17, ses.getThreadName());
             ps.setString(18, nonNull(exp) ? exp.getType() : null);
             ps.setString(19, nonNull(exp) ? exp.getMessage() : null);
-            try {
-                ps.setObject(20, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
+            ps.setObject(20, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
             ps.setString(21, ses.getName());
             ps.setString(22, ses.getUser());
             ps.setString(23, userAgentExtract(ses.getUserAgent()));
             ps.setString(24, ses.getCacheControl());
             ps.setInt(25, ses.getRequestsMask());
             ps.setString(26, ses.getInstanceId());
-        }), RestSession::getId, s -> nonNull(s.getEnd()));
+        }));
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -214,11 +198,7 @@ where id_ses = ?::uuid""", toUpdate, (ps, ses) -> {
             ps.setString(7, ses.getThreadName());
             ps.setString(8, nonNull(exp) ? exp.getType() : null);
             ps.setString(9, nonNull(exp) ? exp.getMessage() : null);
-            try {
-                ps.setObject(10, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
+            ps.setObject(10, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
             ps.setInt(11, ses.getRequestsMask());
             ps.setString(12, ses.getId());
         }), toInsert ->
@@ -236,14 +216,10 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?::json,?,?::uuid)""", toInsert, (ps, ses) -> {
             ps.setString(8, ses.getThreadName());
             ps.setString(9, nonNull(exp) ? exp.getType() : null);
             ps.setString(10, nonNull(exp) ? exp.getMessage() : null);
-            try {
-                ps.setObject(11, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
+            ps.setObject(11, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
             ps.setInt(12, ses.getRequestsMask());
             ps.setString(13, ses.getInstanceId());
-        }), MainSession::getId, s -> nonNull(s.getEnd()));
+        }));
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -294,7 +270,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, 
             ps.setString(18, req.getBodyContent());
             ps.setString(19, req.getSessionId());
             ps.setString(20, req.getInstanceId());
-        }), RestRequest::getId, s -> nonNull(s.getEnd()));
+        }));
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -327,7 +303,7 @@ values(?::uuid,?,?,?,?,?,?,?,?::uuid,?,?::uuid)""", toInsert, (ps, req) -> {
             ps.setString(9, req.getSessionId());
             ps.setString(10, req.getType());
             ps.setString(11, req.getInstanceId());
-        }), LocalRequest::getId, s -> nonNull(s.getEnd()));
+        }));
         saveLocalRequestExceptions(requests);
     }
 
@@ -363,7 +339,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
             ps.setBoolean(10, req.isFailed());
             ps.setString(11, req.getSessionId());
             ps.setString(12, req.getInstanceId());
-        }), MailRequest::getId, s -> nonNull(s.getEnd()));
+        }));
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -402,7 +378,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) ->
                     ps.setBoolean(12, req.isFailed());
                     ps.setString(13, req.getSessionId());
                     ps.setString(14, req.getInstanceId());
-                }), FtpRequest::getId, s -> nonNull(s.getEnd()));
+                }));
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -437,8 +413,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
                 ps.setBoolean(10, req.isFailed());
                 ps.setString(11, req.getSessionId());
                 ps.setString(12, req.getInstanceId());
-            }), DirectoryRequest::getId, s -> nonNull(s.getEnd())
-        );
+            }));
     }
 
 
@@ -484,24 +459,18 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
                 ps.setBoolean(15, req.isFailed());
                 ps.setString(16, req.getSessionId());
                 ps.setString(17, req.getInstanceId());
-            }), DatabaseRequest::getId, s -> nonNull(s.getEnd())
-        );
+            }));
     }
 
-    private <T> void completableProcess(
+    private <T extends CompletableMetric> void completableProcess(
             RequestCompletableType type,
             List<T> items,
             ToIntFunction<Iterator<T>> updateBatchExecutor,
-            ToIntFunction<Iterator<T>> insertBatchExecutor,
-            Function<T, String> idExtractor,
-            Predicate<T> endCondition
+            ToIntFunction<Iterator<T>> insertBatchExecutor
     ) {
-        List<String> completableMetrics = template.queryForList(
-                String.format("select id_cmp_mtc from e_cmp_mtc where cd_typ = %s", type.getValue()),
-                String.class
-        );
-        var toUpdate = items.stream().filter(s -> completableMetrics.contains(idExtractor.apply(s))).toList();
-        var toInsert = items.stream().filter(s -> !completableMetrics.contains(idExtractor.apply(s))).toList();
+        List<String> completableMetrics = template.queryForList("select id_cmp_mtc from e_cmp_mtc where cd_typ = " + type.getValue(), String.class);
+        var toUpdate = items.stream().filter(s -> completableMetrics.contains(s.getId())).toList();
+        var toInsert = items.stream().filter(s -> !completableMetrics.contains(s.getId())).toList();
 
         if(!toUpdate.isEmpty()) {
 
@@ -510,14 +479,14 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
                 log.warn("Not all {} {} were updated, only {} were updated", type.name(), toUpdate.size(), updated);
             }
             var completedMetrics = toUpdate.stream()
-                    .filter(endCondition)
-                    .map(idExtractor).toList(); //Insertion des sessions uncompleted
+                    .filter(s-> nonNull(s.getEnd()))
+                    .map(CompletableMetric::getId).toList(); //Insertion des sessions uncompleted
             if(!completedMetrics.isEmpty()) {
                 var inClause = "?::uuid" + ", ?::uuid".repeat(completedMetrics.size() - 1);
                 template.update(String.format("delete from e_cmp_mtc where id_cmp_mtc in (%s) and cd_typ = %s", inClause, type.getValue()), ps -> {
                     var n = 1;
-                    for (String cmpMetric : completedMetrics) {
-                        ps.setString(n++, cmpMetric);
+                    for (var id : completedMetrics) {
+                        ps.setString(n++, id);
                     }
                 });
             }
@@ -527,8 +496,8 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
 
             insertBatchExecutor.applyAsInt(toInsert.iterator());
             var uncompletedMetrics = toInsert.stream()
-                    .filter(s -> !endCondition.test(s))
-                    .map(idExtractor).toList(); //Insertion des sessions uncompleted
+                    .filter(s -> isNull(s.getEnd()))
+                    .map(CompletableMetric::getId).toList(); //Insertion des sessions uncompleted
             if(!uncompletedMetrics.isEmpty()) {
                 executeBatch(String.format("insert into e_cmp_mtc(id_cmp_mtc,cd_typ) values(?::uuid, %s)", type.getValue()), uncompletedMetrics.iterator(), (ps, id) -> {
                     ps.setString(1, id);
@@ -539,92 +508,101 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveHttpRequestStages(List<HttpRequestStage> stages) {
-        executeBatch("insert into e_rst_rqt_stg(va_nam,dh_str,dh_end,cd_ord,cd_rst_rqt) values(?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
-            ps.setString(1, stage.getName());
-            ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
-            ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
-            ps.setInt(4, stage.getOrder());
-            ps.setString(5, stage.getRequestId());
+        executeBatch("insert into e_rst_rqt_stg(va_nam,dh_str,dh_end,cd_ord,cd_rst_rqt) values(?,?,?,?,?::uuid)", stages.iterator(), (ps, stg)-> {
+            ps.setString(1, stg.getName());
+            ps.setTimestamp(2, fromNullableInstant(stg.getStart()));
+            ps.setTimestamp(3, fromNullableInstant(stg.getEnd()));
+            ps.setInt(4, stg.getOrder());
+            ps.setString(5, stg.getRequestId());
         });
         saveExceptions(stages, REST);
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveHttpSessionStages(List<HttpSessionStage> stages) {
-        executeBatch("insert into e_rst_ses_stg(va_nam,dh_str,dh_end,cd_ord,cd_prn_ses) values(?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
-            ps.setString(1, stage.getName());
-            ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
-            ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
-            ps.setInt(4, stage.getOrder());
-            ps.setString(5, stage.getRequestId());
+        executeBatch("insert into e_rst_ses_stg(va_nam,dh_str,dh_end,cd_ord,cd_prn_ses) values(?,?,?,?,?::uuid)", stages.iterator(), (ps, stg)-> {
+            ps.setString(1, stg.getName());
+            ps.setTimestamp(2, fromNullableInstant(stg.getStart()));
+            ps.setTimestamp(3, fromNullableInstant(stg.getEnd()));
+            ps.setInt(4, stg.getOrder());
+            ps.setString(5, stg.getRequestId());
         });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveMailRequestStages(List<MailRequestStage> stages) {
-        executeBatch("insert into e_smtp_stg(va_nam,dh_str,dh_end,va_cmd,cd_ord,cd_smtp_rqt) values(?,?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
-            ps.setString(1, stage.getName());
-            ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
-            ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
-            ps.setString(4, stage.getCommand());
-            ps.setInt(5, stage.getOrder());
-            ps.setString(6, stage.getRequestId());
+        executeBatch("insert into e_smtp_stg(va_nam,dh_str,dh_end,va_cmd,cd_ord,cd_smtp_rqt) values(?,?,?,?,?,?::uuid)", stages.iterator(), (ps, stg)-> {
+            ps.setString(1, stg.getName());
+            ps.setTimestamp(2, fromNullableInstant(stg.getStart()));
+            ps.setTimestamp(3, fromNullableInstant(stg.getEnd()));
+            ps.setString(4, stg.getCommand());
+            ps.setInt(5, stg.getOrder());
+            ps.setString(6, stg.getRequestId());
         });
         saveMailRequestMails(stages);
         saveExceptions(stages, SMTP);
     }
 
     private void saveMailRequestMails(List<MailRequestStage> mails) {
-        executeBatch("insert into e_smtp_mail(va_sbj,va_cnt_typ,va_frm,va_rcp,va_rpl,va_sze,cd_smtp_rqt) values(?,?,?,?,?,?,?::uuid)", mails.stream().filter(m -> nonNull(m.getMail())).iterator(), (ps, stage)-> {
-            ps.setString(1, stage.getMail().getSubject());
-            ps.setString(2, stage.getMail().getContentType());
-            ps.setString(3, nonNull(stage.getMail().getFrom()) ? String.join(", ", stage.getMail().getFrom()) : null);
-            ps.setString(4, nonNull(stage.getMail().getRecipients()) ? String.join(", ", stage.getMail().getRecipients()) : null);
-            ps.setString(5, nonNull(stage.getMail().getReplyTo()) ? String.join(", ", stage.getMail().getReplyTo()) : null);
-            ps.setInt(6,stage.getMail().getSize());
-            ps.setString(7, stage.getRequestId());
-        });
+        executeBatch("insert into e_smtp_mail(va_sbj,va_cnt_typ,va_frm,va_rcp,va_rpl,va_sze,cd_smtp_rqt) values(?,?,?,?,?,?,?::uuid)", 
+        		mails.stream().filter(m -> nonNull(m.getMail())).iterator(), (ps, stg)-> {
+		            ps.setString(1, stg.getMail().getSubject());
+		            ps.setString(2, stg.getMail().getContentType());
+		            if(nonNull(stg.getMail())) { //
+		            	var mail = stg.getMail();
+		                ps.setString(3, joinValuesOrNull(mail.getFrom()));
+		                ps.setString(4, joinValuesOrNull(mail.getRecipients()));
+		                ps.setString(5, joinValuesOrNull(mail.getReplyTo()));
+		            }
+		            else {
+		            	ps.setNull(3, VARCHAR);
+		            	ps.setNull(4, VARCHAR);
+		            	ps.setNull(5, VARCHAR);
+		            }
+		            ps.setInt(6,stg.getMail().getSize());
+		            ps.setString(7, stg.getRequestId());
+		        });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveFtpRequestStages(List<FtpRequestStage> stages) {
-        executeBatch("insert into e_ftp_stg(va_nam,dh_str,dh_end,va_cmd,va_arg,cd_ord,cd_ftp_rqt) values(?,?,?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
-            ps.setString(1, stage.getName());
-            ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
-            ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
-            ps.setString(4, stage.getCommand());
-            ps.setString(5, nonNull(stage.getArgs()) ? String.join(", ", stage.getArgs()) : null);
-            ps.setInt(6, stage.getOrder());
-            ps.setString(7, stage.getRequestId());
+        executeBatch("insert into e_ftp_stg(va_nam,dh_str,dh_end,va_cmd,va_arg,cd_ord,cd_ftp_rqt) values(?,?,?,?,?,?,?::uuid)", stages.iterator(), (ps, stg)-> {
+            ps.setString(1, stg.getName());
+            ps.setTimestamp(2, fromNullableInstant(stg.getStart()));
+            ps.setTimestamp(3, fromNullableInstant(stg.getEnd()));
+            ps.setString(4, stg.getCommand());
+            ps.setString(5, joinValuesOrNull(stg.getArgs()));
+            ps.setInt(6, stg.getOrder());
+            ps.setString(7, stg.getRequestId());
         });
         saveExceptions(stages, FTP);
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveLdapRequestStages(List<DirectoryRequestStage> stages) {
-        executeBatch("insert into e_ldap_stg(va_nam,dh_str,dh_end,va_cmd,va_arg,cd_ord,cd_ldap_rqt) values(?,?,?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
-            ps.setString(1, stage.getName());
-            ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
-            ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
-            ps.setString(4, stage.getCommand());
-            ps.setString(5, nonNull(stage.getArgs()) ? String.join(", ", stage.getArgs()) : null);
-            ps.setInt(6, stage.getOrder());
-            ps.setString(7, stage.getRequestId());
+        executeBatch("insert into e_ldap_stg(va_nam,dh_str,dh_end,va_cmd,va_arg,cd_ord,cd_ldap_rqt) values(?,?,?,?,?,?,?::uuid)", stages.iterator(), (ps, stg)-> {
+            ps.setString(1, stg.getName());
+            ps.setTimestamp(2, fromNullableInstant(stg.getStart()));
+            ps.setTimestamp(3, fromNullableInstant(stg.getEnd()));
+            ps.setString(4, stg.getCommand());
+            ps.setString(5, joinValuesOrNull(stg.getArgs()));
+            ps.setInt(6, stg.getOrder());
+            ps.setString(7, stg.getRequestId());
         });
         saveExceptions(stages, LDAP);
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveDatabaseRequestStages(List<DatabaseRequestStage> stages) {
-        executeBatch("insert into e_dtb_stg(va_nam,dh_str,dh_end,va_cnt,va_cmd,va_arg,cd_ord,cd_dtb_rqt) values(?,?,?,?,?,?,?,?::uuid)", stages.iterator(), (ps, stage)-> {
-            ps.setString(1, stage.getName());
-            ps.setTimestamp(2, fromNullableInstant(stage.getStart()));
-            ps.setTimestamp(3, fromNullableInstant(stage.getEnd()));
-            ps.setString(4, valueOfNullableArray(stage.getCount()));
-            ps.setString(5, stage.getCommand());
-            ps.setString(6, nonNull(stage.getArgs()) ? String.join(", ", stage.getArgs()) : null);
-            ps.setInt(7, stage.getOrder());
-            ps.setString(8, stage.getRequestId());
+        executeBatch("insert into e_dtb_stg(va_nam,dh_str,dh_end,va_cnt,va_cmd,va_arg,cd_ord,cd_dtb_rqt) values(?,?,?,?,?,?,?,?::uuid)", stages.iterator(), (ps, stg)-> {
+            ps.setString(1, stg.getName());
+            ps.setTimestamp(2, fromNullableInstant(stg.getStart()));
+            ps.setTimestamp(3, fromNullableInstant(stg.getEnd()));
+            ps.setString(4, valueOfNullableArray(stg.getCount()));
+            ps.setString(5, stg.getCommand());
+            ps.setString(6, joinValuesOrNull(stg.getArgs()));
+            ps.setInt(7, stg.getOrder());
+            ps.setString(8, stg.getRequestId());
         });
         saveExceptions(stages, JDBC);
     }
@@ -634,19 +612,14 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
                 .filter(e -> nonNull(e.getException()))
                 .toList();
         if(!isEmpty(exceptions)) {
-            executeBatch("insert into e_exc_inf(va_typ,va_err_typ,va_err_msg,va_stk,cd_ord,cd_rqt) values(?,?,?,?,?,?::uuid)",
-                    exceptions.iterator(), (ps, exp) -> {
-                        ps.setString(1, mask.name());
-                        ps.setString(2, exp.getException().getType());
-                        ps.setString(3, exp.getException().getMessage());
-                        try {
-                            ps.setObject(4, nonNull(exp.getException().getStackTraceRows()) ? mapper.writeValueAsString(exp.getException().getStackTraceRows()) : null, OTHER);
-                        } catch (JsonProcessingException e) {
-                            throw new RuntimeException(e);
-                        }
-                        ps.setInt(5, exp.getOrder());
-                        ps.setString(6, exp.getRequestId());
-                    });
+            executeBatch("insert into e_exc_inf(va_typ,va_err_typ,va_err_msg,va_stk,cd_ord,cd_rqt) values(?,?,?,?,?,?::uuid)", exceptions.iterator(), (ps, exp) -> {
+                ps.setString(1, mask.name());
+                ps.setString(2, exp.getException().getType());
+                ps.setString(3, exp.getException().getMessage());
+                ps.setObject(4, toJsonOrNull(exp.getException().getStackTraceRows()), OTHER);
+                ps.setInt(5, exp.getOrder());
+                ps.setString(6, exp.getRequestId());
+            });
         }
     }
 
@@ -655,38 +628,52 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
                 .filter(e -> nonNull(e.getException()))
                 .toList();
         if(!isEmpty(exceptions)) {
-            executeBatch("insert into e_exc_inf(va_typ,va_err_typ,va_err_msg,va_stk,cd_ord,cd_rqt) values(?,?,?,?,?,?::uuid)",
-                    exceptions.iterator(), (ps, exp) -> {
-                        ps.setString(1, LOCAL.name());
-                        ps.setString(2, exp.getException().getType());
-                        ps.setString(3, exp.getException().getMessage());
-                        try {
-                            ps.setObject(4, nonNull(exp.getException().getStackTraceRows()) ? mapper.writeValueAsString(exp.getException().getStackTraceRows()) : null, OTHER);
-                        } catch (JsonProcessingException e) {
-                            throw new RuntimeException(e);
-                        }
-                        ps.setInt(5, 0);
-                        ps.setString(6, exp.getId());
-                    });
+            executeBatch("insert into e_exc_inf(va_typ,va_err_typ,va_err_msg,va_stk,cd_ord,cd_rqt) values(?,?,?,?,?,?::uuid)", exceptions.iterator(), (ps, exp) -> {
+                ps.setString(1, LOCAL.name());
+                ps.setString(2, exp.getException().getType());
+                ps.setString(3, exp.getException().getMessage());
+                ps.setObject(4, toJsonOrNull(exp.getException().getStackTraceRows()), OTHER);
+                ps.setInt(5, 0);
+                ps.setString(6, exp.getId());
+            });
         }
     }
 
-    private <T> int executeBatch(String sql, Iterator<T> it, ParameterizedPreparedStatementSetter<T> pss) {
-        return template.execute(sql, (PreparedStatement ps) -> {
+    private <T> Integer executeBatch(String sql, Iterator<T> it, PreparedStatementSetter<T> pss) {
+        return it.hasNext() ? template.execute(sql, (PreparedStatement ps) -> {
             long rows = 0;
             var n = 0;
-            while (it.hasNext()) {
-                pss.setValues(ps, it.next());
-                ps.addBatch();
-                if (++n % BATCH_SIZE == 0) {
-                    rows += IntStream.of(ps.executeBatch()).sum();
+            try {
+                while (it.hasNext()) {
+                    pss.setValues(ps, it.next());
+                    ps.addBatch();
+                    if (++n % BATCH_SIZE == 0) {
+                        rows += IntStream.of(ps.executeBatch()).sum();
+                    }
                 }
+            }
+            catch (JsonProcessingException e) {
+            	throw new SQLException("parsing parameter, row="+n, e);
             }
             if (n % BATCH_SIZE != 0) {
                 rows += IntStream.of(ps.executeBatch()).sum();
             }
             log.debug("{} batch added, {} rows inserted", n, rows);
             return n;
-        });
+        }) : 0;
+    }
+
+    String toJsonOrNull(Object o) throws JsonProcessingException {
+    	return nonNull(o) ? mapper.writeValueAsString(o) : null;
+    }
+    
+    static String joinValuesOrNull(String... args) {
+    	return nonNull(args) ? String.join(", ", args) : null;
+    }
+    
+    @FunctionalInterface
+    interface PreparedStatementSetter<T> {
+    	
+    	void setValues(PreparedStatement ps, T argument) throws SQLException, JsonProcessingException;
     }
 }
