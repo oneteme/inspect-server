@@ -491,6 +491,8 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
                 });
             }
         }
+        
+        //savePoint !!
 
         if(!toInsert.isEmpty()) {
 
@@ -515,7 +517,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
             ps.setInt(4, stg.getOrder());
             ps.setString(5, stg.getRequestId());
         });
-        saveExceptions(stages, REST);
+        saveStageExceptions(stages, REST);
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -540,7 +542,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
             ps.setString(6, stg.getRequestId());
         });
         saveMailRequestMails(stages);
-        saveExceptions(stages, SMTP);
+        saveStageExceptions(stages, SMTP);
     }
 
     private void saveMailRequestMails(List<MailRequestStage> mails) {
@@ -575,7 +577,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
             ps.setInt(6, stg.getOrder());
             ps.setString(7, stg.getRequestId());
         });
-        saveExceptions(stages, FTP);
+        saveStageExceptions(stages, FTP);
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -589,7 +591,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
             ps.setInt(6, stg.getOrder());
             ps.setString(7, stg.getRequestId());
         });
-        saveExceptions(stages, LDAP);
+        saveStageExceptions(stages, LDAP);
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -604,23 +606,21 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
             ps.setInt(7, stg.getOrder());
             ps.setString(8, stg.getRequestId());
         });
-        saveExceptions(stages, JDBC);
+        saveStageExceptions(stages, JDBC);
     }
 
-    private void saveExceptions(List<? extends AbstractStage> stages, RequestMask mask) {
+    private void saveStageExceptions(List<? extends AbstractStage> stages, RequestMask mask) {
         var exceptions = stages.stream()
                 .filter(e -> nonNull(e.getException()))
-                .toList();
-        if(!isEmpty(exceptions)) {
-            executeBatch("insert into e_exc_inf(va_typ,va_err_typ,va_err_msg,va_stk,cd_ord,cd_rqt) values(?,?,?,?,?,?::uuid)", exceptions.iterator(), (ps, exp) -> {
-                ps.setString(1, mask.name());
-                ps.setString(2, exp.getException().getType());
-                ps.setString(3, exp.getException().getMessage());
-                ps.setObject(4, toJsonOrNull(exp.getException().getStackTraceRows()), OTHER);
-                ps.setInt(5, exp.getOrder());
-                ps.setString(6, exp.getRequestId());
-            });
-        }
+                .iterator();
+        executeBatch("insert into e_exc_inf(va_typ,va_err_typ,va_err_msg,va_stk,cd_ord,cd_rqt) values(?,?,?,?,?,?::uuid)", exceptions, (ps, exp) -> {
+            ps.setString(1, mask.name());
+            ps.setString(2, exp.getException().getType());
+            ps.setString(3, exp.getException().getMessage());
+            ps.setObject(4, toJsonOrNull(exp.getException().getStackTraceRows()), OTHER);
+            ps.setInt(5, exp.getOrder());
+            ps.setString(6, exp.getRequestId());
+        });
     }
 
     private void saveLocalRequestExceptions(List<LocalRequest> stages) {
