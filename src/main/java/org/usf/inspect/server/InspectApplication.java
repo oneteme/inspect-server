@@ -8,7 +8,9 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -20,6 +22,7 @@ import org.usf.inspect.server.model.wrapper.RestSessionWrapper;
 import java.util.List;
 
 import static org.springframework.http.converter.json.Jackson2ObjectMapperBuilder.json;
+import static org.usf.inspect.core.BasicDispatchState.DISABLE;
 
 @SpringBootApplication
 @EnableTransactionManagement
@@ -72,6 +75,13 @@ public class InspectApplication {
 	@Bean
 	EventTraceScheduledDispatcher dispatcher(InspectServerConfiguration conf, DispatcherAgent agent, ObjectMapper mapper) {
 		var dump = new EventTraceDumper(conf.getTracing().getDump().getLocation(), mapper);
-		return new EventTraceScheduledDispatcher(conf.getTracing(), conf.getScheduling(), agent, List.of(dump));
+		var dspt = new EventTraceScheduledDispatcher(conf.getTracing(), conf.getScheduling(), agent, List.of(dump));
+		dspt.setState(DISABLE); //until ready state
+		return dspt;
+	}
+	
+	@Bean
+	ApplicationListener<ApplicationReadyEvent> enableDispatcherOnReady(EventTraceScheduledDispatcher dispatcher, InspectServerConfiguration conf){
+		return e-> dispatcher.setState(conf.getScheduling().getState()); //wait for server startup before activate dispatcher
 	}
 }
