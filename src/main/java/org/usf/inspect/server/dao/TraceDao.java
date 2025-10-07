@@ -39,6 +39,7 @@ import static org.usf.inspect.server.model.RequestCompletableType.*;
 @Repository
 @RequiredArgsConstructor
 public class TraceDao {
+	
     private final JdbcTemplate template;
     private final ObjectMapper mapper;
 
