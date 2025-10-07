@@ -39,6 +39,7 @@ import org.usf.inspect.core.EventTraceScheduledDispatcher;
 import org.usf.inspect.core.InstanceEnvironment;
 import org.usf.inspect.core.LogEntry;
 import org.usf.inspect.core.MachineResourceUsage;
+import org.usf.inspect.core.TraceFail;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.InstanceTrace;
 
@@ -83,17 +84,18 @@ public class TraceController {
             @RequestParam(required = false) String filename,
             @RequestParam(required = false) Instant end,
             @RequestBody List<EventTrace> traces) {
-		assertUUID(id, "instance/id");
     	var now = now();
+    	var retry = true;
+		assertUUID(id, "instance/id");
     	try {
     		if(isNull(traces)) {
     			traces = new ArrayList<>();
     		}
     		int size = traces.size();
+    		traces.add(new InstanceTrace(pending, attempts, size, filename, now, id)); //before add InstanceEnvironmentUpdate
     		if(nonNull(end)){
     			traces.add(new InstanceEnvironmentUpdate(id, end)); //publish event
     		}
-    		traces.add(new InstanceTrace(pending, attempts, size, filename, now, id));
     		for(var e : traces) {
     			if(e instanceof AbstractRequest req) {
     				req.setInstanceId(id);
@@ -107,13 +109,14 @@ public class TraceController {
     				ent.setInstanceId(id);
     			} //stages dosn't need instance id
     		}
+    		retry = false;
     		return dispatcher.emitAll(traces)
     				? accepted().build()
-    				: status(SERVICE_UNAVAILABLE).body("dispatcher.state=" + dispatcher.getState());
+    				: status(SERVICE_UNAVAILABLE).body(new TraceFail(dispatcher.getState().toString(), true));
     	}
-    	catch (Exception e) {
+    	catch (Throwable e) { //OutOfMem
     		log.error("put sessions", e);
-    		return internalServerError().body("unexpected exception " + e.getClass().getSimpleName());
+    		return internalServerError().body(new TraceFail(dispatcher.getState().toString(), retry));
     	}
     }
     
