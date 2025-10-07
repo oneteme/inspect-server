@@ -2,13 +2,11 @@ package org.usf.inspect.server.model;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.usf.inspect.core.EventTrace;
 
 import java.time.Instant;
 
 @Getter
-@Setter //immutable !
 @RequiredArgsConstructor
 public class InstanceTrace implements EventTrace {
 	

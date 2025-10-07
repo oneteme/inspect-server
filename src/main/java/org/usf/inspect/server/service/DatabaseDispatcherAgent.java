@@ -1,5 +1,7 @@
 package org.usf.inspect.server.service;
 
+import static java.util.Collections.emptyList;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -9,6 +11,7 @@ import org.usf.inspect.core.DispatchException;
 import org.usf.inspect.core.DispatcherAgent;
 import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.core.InstanceEnvironment;
+import org.usf.inspect.core.TraceableStage;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,9 +30,12 @@ public class DatabaseDispatcherAgent implements DispatcherAgent {
 		service.addInstance(instance);
 	}
 
+	@TraceableStage
 	@Override
 	public List<EventTrace> dispatch(boolean complete, int attempts, int pending, List<EventTrace> traces) {
-		return service.addTraces(traces);
+		return traces.isEmpty() 
+				? emptyList()
+				: service.addTraces(traces);
 	}
 
 	@Override

@@ -20,9 +20,9 @@ import static java.util.concurrent.CompletableFuture.*;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.usf.inspect.core.ExecutorServiceWrapper.wrap;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class TraceService {
 	
 	private final ExecutorService executor = wrap(newFixedThreadPool(5));
@@ -32,7 +32,6 @@ public class TraceService {
         dao.saveInstanceEnvironment(instance);
     }
 
-    @TraceableStage
     public List<EventTrace> addTraces(List<EventTrace> traces) {
         var cf = new ArrayList<CompletableFuture<Collection<EventTrace>>>();
         cf.add(supplyAsync(()-> filterAndApply(traces, MainSession.class, dao::saveMainSessions), executor));

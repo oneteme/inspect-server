@@ -23,6 +23,7 @@ import java.util.List;
 
 import static org.springframework.http.converter.json.Jackson2ObjectMapperBuilder.json;
 import static org.usf.inspect.core.BasicDispatchState.DISABLE;
+import static org.usf.inspect.core.InspectContext.coreModule;
 
 @SpringBootApplication
 @EnableTransactionManagement
@@ -37,31 +38,14 @@ public class InspectApplication {
 	@Primary
 	ObjectMapper mapper(){
 		var mapper = json()
-				.modules(new JavaTimeModule(), new ParameterNamesModule())
+				.modules(new JavaTimeModule(), new ParameterNamesModule(), coreModule())
 				.build()
 			    .setSerializationInclusion(JsonInclude.Include.NON_EMPTY); // !null & !empty
 		mapper.configure(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL, true);
 		// Deprecated(since = "v1.1", forRemoval = true)
-		mapper.registerSubtypes(new NamedType(MainSessionWrapper.class, "main"), new NamedType(RestSessionWrapper.class, "rest"));
-
 		mapper.registerSubtypes(
-				new NamedType(LogEntry.class, 					"log"),
-				new NamedType(MachineResourceUsage.class,		"rsrc-usg"),
-				new NamedType(MainSession.class,  				"main-ses"),
-				new NamedType(RestSession.class,  				"rest-ses"),
-				new NamedType(LocalRequest.class, 				"locl-req"),
-				new NamedType(DatabaseRequest.class,			"jdbc-req"),
-				new NamedType(RestRequest.class,  				"http-req"),
-				new NamedType(MailRequest.class,  				"mail-req"),
-				new NamedType(DirectoryRequest.class,			"ldap-req"),
-				new NamedType(FtpRequest.class,  				"ftp-req"),
-				new NamedType(DatabaseRequestStage.class,		"jdbc-stg"),
-				new NamedType(HttpRequestStage.class,  			"http-stg"),
-				new NamedType(HttpSessionStage.class,  			"sess-stg"),
-				new NamedType(MailRequestStage.class,  			"mail-stg"),
-				new NamedType(DirectoryRequestStage.class,		"ldap-stg"),
-				new NamedType(FtpRequestStage.class,  			"ftp-stg"),
-				new NamedType(RestRemoteServerProperties.class,	"rest-rmt"));
+				new NamedType(MainSessionWrapper.class, "main"), 
+				new NamedType(RestSessionWrapper.class, "rest"));
 		return mapper;
 	}
 
