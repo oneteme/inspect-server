@@ -71,6 +71,7 @@ public final class RetroUtils {
             }, traces::add);
             toV4(s.getId(), s.getRestRequests(), (e) -> {
                 var stage = createStage(e.getId(), e.getStart(), e.getEnd(), HttpRequestStage::new);
+                e.setLinked(nonNull(e.getId()));
                 if(e.getException() != null) {
                     if(e.getException().getType() == null){
                         e.setBodyContent(e.getException().getMessage());
@@ -91,10 +92,10 @@ public final class RetroUtils {
             for(var o : requests) {
                 var req = o.unwrap();
                 req.setSessionId(sessionId);
+                consumer.accept(req);
                 if(isNull(req.getId())){ //req.id = ses.id
                     req.setId(nextId());
                 }
-                consumer.accept(req);
                 if(fn != null) {
                     var inc = 0;
                     for(var s : fn.apply(o)) {

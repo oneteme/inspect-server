@@ -251,7 +251,7 @@ where id_rst_rqt = ?::uuid""", toUpdate, (ps, req) -> {
         }), toInsert ->
                 executeBatch("""
 insert into e_rst_rqt(id_rst_rqt,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_cnt_typ,va_ath_sch,cd_stt,va_i_sze,va_o_sze,va_i_cnt_enc,va_o_cnt_enc,dh_str,dh_end,va_thr,va_bdy_cnt,va_lnk,cd_prn_ses,cd_ins)
-values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
+values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
             ps.setString(1, req.getId());
             ps.setString(2, req.getMethod());
             ps.setString(3, req.getProtocol());
