@@ -49,6 +49,7 @@ public final class FieldConstant {
     public static final String VA_TYP = "va_typ";
     public static final String VA_LCT = "va_lct";
     public static final String VA_THR = "va_thr";
+    public static final String VA_LNK = "va_lnk";
     public static final String VA_APP = "va_app";
     public static final String VA_VRS = "va_vrs";
     public static final String VA_ADR = "va_adr";

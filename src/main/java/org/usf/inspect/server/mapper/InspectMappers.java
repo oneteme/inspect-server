@@ -131,6 +131,7 @@ public final class InspectMappers {
             out.setInContentEncoding(rs.getString(CONTENT_ENCODING_IN.reference()));
             out.setOutContentEncoding(rs.getString(CONTENT_ENCODING_OUT.reference()));
             out.setAuthScheme(rs.getString(AUTH.reference()));
+            out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
             return out;
         }
         return null;
@@ -294,6 +295,8 @@ public final class InspectMappers {
             out.setProductName(rs.getString(DB_NAME.reference()));
             out.setProductVersion(rs.getString(DB_VERSION.reference()));
             out.setPort(rs.getInt(PORT.reference()));
+            out.setFailed(rs.getBoolean(FAILED.reference()));
+            out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
             out.setSessionId(rs.getString(PARENT.reference()));
             return out;
         }
@@ -369,6 +372,8 @@ public final class InspectMappers {
             out.setServerVersion(rs.getString(SERVER_VERSION.reference()));
             out.setClientVersion(rs.getString(CLIENT_VERSION.reference()));
             out.setUser(rs.getString(USER.reference()));
+            out.setFailed(rs.getBoolean(FAILED.reference()));
+            out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
             return out;
         }
         return null;
@@ -411,6 +416,8 @@ public final class InspectMappers {
             out.setSessionId(rs.getString(PARENT.reference()));
             out.setPort(rs.getInt(PORT.reference()));
             out.setUser(rs.getString(USER.reference()));
+            out.setFailed(rs.getBoolean(FAILED.reference()));
+            out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
             return out;
         }
         return null;
@@ -466,6 +473,8 @@ public final class InspectMappers {
             out.setPort(rs.getInt(PORT.reference()));
             out.setProtocol(rs.getString(PROTOCOL.reference()));
             out.setUser(rs.getString(USER.reference()));
+            out.setFailed(rs.getBoolean(FAILED.reference()));
+            out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
             return out;
         }
         return null;
