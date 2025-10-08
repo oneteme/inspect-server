@@ -310,10 +310,10 @@ public class RequestController {
     @GetMapping("request/rest/{idRequest}")
     public ResponseEntity<RestRequest> getRestRequest (
             @QueryRequestFilter(view = "rest_request",
-                    column = "id,protocol,auth,host,port,path,query,method,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,body_content,parent") QueryComposer request,
+                    column = "id,protocol,auth,host,port,path,query,method,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,body_content,instance_env,parent") QueryComposer request,
             @PathVariable String idRequest) {
         return  Optional.ofNullable(INSPECT.execute(request.filters(column("id_rst_rqt").eq(fromString(idRequest))), InspectMappers::restRequestMapperComplete))
-                .map(o -> nonNull(o.getEnd()) ? ok().cacheControl(maxAge(1, DAYS)).body(o) : ok().body(o))
+                .map(o -> nonNull(o.getEnd()) ? ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o) : ok().body(o))
                 .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null));
     }
 
@@ -331,7 +331,7 @@ public class RequestController {
     public ResponseEntity<DatabaseRequest> getDatabaseRequest(
             @QueryRequestFilter(
                     view = "database_request",
-                    column = "id,host,port,db,start,end,user,thread,driver,db_name,db_version,command,schema,failed,parent") QueryComposer request, @PathVariable String idDatabase) {
+                    column = "id,host,port,db,start,end,user,thread,driver,db_name,db_version,command,schema,failed,instance_env,parent") QueryComposer request, @PathVariable String idDatabase) {
         return Optional.ofNullable(INSPECT.execute(request.filters(column("id_dtb_rqt").eq(fromString(idDatabase))), InspectMappers::databaseRequestComplete))
                 .map(o -> nonNull(o.getEnd()) ? ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o) : ok().body(o))
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
@@ -348,16 +348,16 @@ public class RequestController {
     }
 
     @GetMapping("session/request/database/stages/count")
-    public ResponseEntity<Map<Long, Integer>> getDatabaseRequestStagesCount(
+    public ResponseEntity<Map<String, Integer>> getDatabaseRequestStagesCount(
             @QueryRequestFilter(
                     view = "database_stage",
                     column = "action_count,parent",
                     ignoreParameters = "ids") QueryComposer request,
             @RequestParam(name = "ids") String[] idDatabaseList) {
-        return ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").in(Arrays.stream(idDatabaseList).map(UUID::fromString).toArray())), rs -> {
-            Map<Long,Integer> actionsMap= new HashMap<>();
+        return ok().body(INSPECT.execute(request.filters(column("cd_dtb_rqt").in(Arrays.stream(idDatabaseList).map(UUID::fromString).toArray())), rs -> {
+            Map<String, Integer> actionsMap= new HashMap<>();
             while (rs.next()) {
-                actionsMap.put(rs.getLong(PARENT.reference()), rs.getInt(ACTION_COUNT.reference()));
+                actionsMap.put(rs.getString(PARENT.reference()), rs.getInt(ACTION_COUNT.reference()));
             }
             return actionsMap;
         }));
@@ -378,7 +378,7 @@ public class RequestController {
     public ResponseEntity<FtpRequest> getFtpRequest(
             @QueryRequestFilter(
                     view = "ftp_request",
-                    column = "id,host,port,protocol,server_version,client_version,start,end,user,thread,failed,parent") QueryComposer request,
+                    column = "id,host,port,protocol,server_version,client_version,start,end,user,thread,failed,instance_env,parent") QueryComposer request,
             @PathVariable String idFtp){
         return Optional.ofNullable(INSPECT.execute(request.filters(column("id_ftp_rqt").eq(fromString(idFtp))), InspectMappers::ftpRequestComplete))
                 .map(o -> nonNull(o.getEnd()) ? ok().cacheControl(maxAge(1, DAYS)).body(o) : ok().body(o))
@@ -396,7 +396,7 @@ public class RequestController {
     }
 
     @GetMapping ("session/request/ftp/stages")
-    public ResponseEntity<Map<Long,List<String>>> getFtpRequestStages(
+    public ResponseEntity<Map<String,List<String>>> getFtpRequestStages(
             @QueryRequestFilter(
                     view = "ftp_stage",
                     column = "name,parent",
@@ -404,12 +404,12 @@ public class RequestController {
             @RequestParam(name = "ids") String[] idFtpList) {
         return  ok().body(INSPECT.execute(request.filters(column("cd_ftp_rqt").in(Arrays.stream(idFtpList).map(UUID::fromString).toArray())
                                 .and(FTP_STAGE.column(NAME).notIn("CONNECTION","DISCONNECTION"))), rs -> {
-            Map<Long,List<String>> actionsMap= new HashMap<>();
+            Map<String, List<String>> actionsMap= new HashMap<>();
             while (rs.next()) {
-                if(!actionsMap.containsKey(rs.getLong(PARENT.reference()))){
-                    actionsMap.put(rs.getLong(PARENT.reference()), new ArrayList<>());
+                if(!actionsMap.containsKey(rs.getString(PARENT.reference()))){
+                    actionsMap.put(rs.getString(PARENT.reference()), new ArrayList<>());
                 }
-                actionsMap.get(rs.getLong(PARENT.reference())).add(rs.getString(NAME.reference()));
+                actionsMap.get(rs.getString(PARENT.reference())).add(rs.getString(NAME.reference()));
             }
             return actionsMap;
         }));
@@ -430,7 +430,7 @@ public class RequestController {
     public ResponseEntity<MailRequest> getSmtpRequest(
             @QueryRequestFilter(
                     view = "smtp_request",
-                    column = "id,host,port,start,end,user,thread,failed,parent") QueryComposer request,
+                    column = "id,host,port,start,end,user,thread,failed,instance_env,parent") QueryComposer request,
             @PathVariable String idSmtp){
         return Optional.ofNullable(INSPECT.execute(request.filters(column("id_smtp_rqt").eq(fromString(idSmtp))), InspectMappers::mailRequestCompleteMapper))
                 .map(o -> nonNull(o.getEnd()) ? ok().cacheControl(maxAge(1, DAYS)).body(o) : ok().body(o))
@@ -456,35 +456,35 @@ public class RequestController {
     }
 
     @GetMapping("session/request/smtp/stages")
-    public ResponseEntity<Map<Long, List<String>>> getSmtpRequestStages(
+    public ResponseEntity<Map<String, List<String>>> getSmtpRequestStages(
             @QueryRequestFilter(
                     view = "smtp_stage",
                     column = "name,parent",
                     ignoreParameters = "ids") QueryComposer request,
             @RequestParam(name = "ids") String[] idSmtpList) {
         return ok().body(INSPECT.execute(request.filters(column("cd_smtp_rqt").in(Arrays.stream(idSmtpList).map(UUID::fromString).toArray()).and(SMTP_STAGE.column(NAME).notIn("CONNECTION","DISCONNECTION"))), rs -> {
-            Map<Long,List<String>> actionsMap= new HashMap<>();
+            Map<String, List<String>> actionsMap= new HashMap<>();
             while (rs.next()) {
-                if(!actionsMap.containsKey(rs.getLong(PARENT.reference()))){
-                    actionsMap.put(rs.getLong(PARENT.reference()), new ArrayList<>());
+                if(!actionsMap.containsKey(rs.getString(PARENT.reference()))){
+                    actionsMap.put(rs.getString(PARENT.reference()), new ArrayList<>());
                 }
-                actionsMap.get(rs.getLong(PARENT.reference())).add(rs.getString(NAME.reference()));
+                actionsMap.get(rs.getString(PARENT.reference())).add(rs.getString(NAME.reference()));
             }
             return actionsMap;
         }));
     }
 
     @GetMapping("session/request/smtp/stages/count")
-    public ResponseEntity<Map<Long, Integer>> getSmtpRequestStagesRowCount(
+    public ResponseEntity<Map<String, Integer>> getSmtpRequestStagesRowCount(
             @QueryRequestFilter(
                     view = "smtp_mail",
                     column = "parent.count:count,parent",
                     ignoreParameters = "ids") QueryComposer request,
             @RequestParam(name = "ids") String[] idSmtpList) {
         return ok().body(INSPECT.execute(request.filters(column("cd_smtp_rqt").in(Arrays.stream(idSmtpList).map(UUID::fromString).toArray())), rs -> {
-            Map<Long,Integer> actionsMap= new HashMap<>();
+            Map<String, Integer> actionsMap= new HashMap<>();
             while (rs.next()) {
-                actionsMap.put(rs.getLong(PARENT.reference()), rs.getInt("count"));
+                actionsMap.put(rs.getString(PARENT.reference()), rs.getInt("count"));
             }
             return actionsMap;
         }));
@@ -506,7 +506,7 @@ public class RequestController {
     public ResponseEntity<DirectoryRequest> getLdapRequest(
             @QueryRequestFilter(
                     view = "ldap_request",
-                    column = "id,host,port,protocol,start,end,user,thread,failed,parent") QueryComposer request,
+                    column = "id,host,port,protocol,start,end,user,thread,failed,instance_env,parent") QueryComposer request,
             @PathVariable String idLdap){
         return Optional.ofNullable(INSPECT.execute(request.filters(column("id_ldap_rqt").eq(fromString(idLdap))), InspectMappers::ldapRequestCompleteMapper))
                 .map(o -> nonNull(o.getEnd()) ? ok().cacheControl(maxAge(1, DAYS)).body(o) : ok().body(o))
@@ -525,19 +525,19 @@ public class RequestController {
     }
 
     @GetMapping ("session/request/ldap/stages")
-    public ResponseEntity<Map<Long,List<String>>> getLdapRequestStages(
+    public ResponseEntity<Map<String, List<String>>> getLdapRequestStages(
             @QueryRequestFilter(
                     view = "ldap_stage",
                     column = "name,parent",
                     ignoreParameters = "ids") QueryComposer request,
             @RequestParam(name = "ids") String[] idFtpList) {
         return ok().body(INSPECT.execute(request.filters(column("cd_ldap_rqt").in(Arrays.stream(idFtpList).map(UUID::fromString).toArray()).and(LDAP_STAGE.column(NAME).notIn("CONNECTION","DISCONNECTION"))), rs -> {
-            Map<Long,List<String>> actionsMap= new HashMap<>();
+            Map<String, List<String>> actionsMap= new HashMap<>();
             while (rs.next()) {
-                if(!actionsMap.containsKey(rs.getLong(PARENT.reference()))){
-                    actionsMap.put(rs.getLong(PARENT.reference()), new ArrayList<>());
+                if(!actionsMap.containsKey(rs.getString(PARENT.reference()))){
+                    actionsMap.put(rs.getString(PARENT.reference()), new ArrayList<>());
                 }
-                actionsMap.get(rs.getLong(PARENT.reference())).add(rs.getString(NAME.reference()));
+                actionsMap.get(rs.getString(PARENT.reference())).add(rs.getString(NAME.reference()));
             }
             return actionsMap;
         }));
