@@ -227,7 +227,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?::json,?,?::uuid)""", toInsert, (ps, ses) -> {
     public void saveRestRequests(List<RestRequest> requests) {
         completableProcess(REST_REQUEST, requests, toUpdate ->
                 executeBatch("""
-update e_rst_rqt set va_mth = ?, va_pcl = ?, va_hst = ?, cd_prt = ?, va_pth = ?, va_qry = ?, va_cnt_typ = ?, va_ath_sch = ?, cd_stt = ?, va_i_sze = ?, va_o_sze = ?, va_i_cnt_enc = ?, va_o_cnt_enc = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_bdy_cnt = ?
+update e_rst_rqt set va_mth = ?, va_pcl = ?, va_hst = ?, cd_prt = ?, va_pth = ?, va_qry = ?, va_cnt_typ = ?, va_ath_sch = ?, cd_stt = ?, va_i_sze = ?, va_o_sze = ?, va_i_cnt_enc = ?, va_o_cnt_enc = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_bdy_cnt = ?, va_lnk = ?
 where id_rst_rqt = ?::uuid""", toUpdate, (ps, req) -> {
             ps.setString(1, req.getMethod());
             ps.setString(2, req.getProtocol());
@@ -246,11 +246,12 @@ where id_rst_rqt = ?::uuid""", toUpdate, (ps, req) -> {
             ps.setTimestamp(15, fromNullableInstant(req.getEnd()));
             ps.setString(16, req.getThreadName());
             ps.setString(17, req.getBodyContent());
-            ps.setString(18, req.getId());
+            ps.setBoolean(18, req.isLinked());
+            ps.setString(19, req.getId());
         }), toInsert ->
                 executeBatch("""
-insert into e_rst_rqt(id_rst_rqt,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_cnt_typ,va_ath_sch,cd_stt,va_i_sze,va_o_sze,va_i_cnt_enc,va_o_cnt_enc,dh_str,dh_end,va_thr,va_bdy_cnt,cd_prn_ses,cd_ins)
-values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
+insert into e_rst_rqt(id_rst_rqt,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_cnt_typ,va_ath_sch,cd_stt,va_i_sze,va_o_sze,va_i_cnt_enc,va_o_cnt_enc,dh_str,dh_end,va_thr,va_bdy_cnt,va_lnk,cd_prn_ses,cd_ins)
+values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
             ps.setString(1, req.getId());
             ps.setString(2, req.getMethod());
             ps.setString(3, req.getProtocol());
@@ -269,8 +270,9 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, 
             ps.setTimestamp(16, fromNullableInstant(req.getEnd()));
             ps.setString(17, req.getThreadName());
             ps.setString(18, req.getBodyContent());
-            ps.setString(19, req.getSessionId());
-            ps.setString(20, req.getInstanceId());
+            ps.setBoolean(19, req.isLinked());
+            ps.setString(20, req.getSessionId());
+            ps.setString(21, req.getInstanceId());
         }));
     }
 

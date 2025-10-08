@@ -236,7 +236,7 @@ public class RequestService {
                         START, END, USER, THREAD, HOST, ERR_MSG, ERR_TYPE
                     )
                 )
-                .filters(REST_SESSION.column(END).ge(from(start)).and(REST_SESSION.column(START).le(from(end))))
+                .filters(REST_SESSION.column(START).le(from(end)).and(REST_SESSION.column(END).isNull().or(REST_SESSION.column(END).ge(from(start)))))
                 .filters(REST_SESSION.column(INSTANCE_ENV).in(new QueryComposer().columns(new ViewColumn("id", cte, JDBCType.VARCHAR, null)).compose().asColumn()))
                 .orders(REST_SESSION.column(START).order());
         return INSPECT.execute(v, restSessionDumpMapper());
@@ -335,7 +335,7 @@ public class RequestService {
                                 MAIN_SESSION, ID, NAME, START, END, TYPE, LOCATION, THREAD, ERR_TYPE, ERR_MSG
                         )
                 )
-                .filters(MAIN_SESSION.column(END).ge(from(start)).and(MAIN_SESSION.column(START).le(from(end))))
+                .filters(MAIN_SESSION.column(START).le(from(end)).and(MAIN_SESSION.column(END).isNull().or(MAIN_SESSION.column(END).ge(from(start)))))
                 .filters(MAIN_SESSION.column(INSTANCE_ENV).in(new QueryComposer().columns(new ViewColumn("id", cte, JDBCType.VARCHAR, null)).compose().asColumn()))
                 .orders(MAIN_SESSION.column(START).order());
         return INSPECT.execute(v, mainSessionDumpMapper());
@@ -496,7 +496,7 @@ public class RequestService {
         }
         var v = new QueryComposer()
                 .columns(getColumns(
-                        REST_REQUEST, ID, PROTOCOL, HOST, PATH, QUERY, METHOD, STATUS, START, END, THREAD, PARENT
+                        REST_REQUEST, ID, PROTOCOL, HOST, PATH, QUERY, METHOD, STATUS, START, END, THREAD, LINKED, PARENT
                 ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(REST_REQUEST.join(EXCEPTION_JOIN))
@@ -518,6 +518,7 @@ public class RequestService {
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setThreadName(rs.getString(THREAD.reference()));
+                out.setLinked(rs.getBoolean(LINKED.reference()));
                 out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
                 outs.add(out);
             }

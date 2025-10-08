@@ -43,6 +43,7 @@ public enum TraceApiColumn implements ColumnDecorator {
     START("start"),
     END("end"),
     THREAD("thread"),
+    LINKED("linked"),
     API_NAME("apiName"), //API
     APP_NAME("appName"), //APP
     USER("user"),

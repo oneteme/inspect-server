@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS e_rst_rqt (
     dh_end timestamp(6),
     va_bdy_cnt varchar,
     va_thr varchar,
+    va_lnk boolean,
     cd_prn_ses UUID,
     cd_ins UUID
 )
