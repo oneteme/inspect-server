@@ -9,18 +9,17 @@ import static org.usf.inspect.core.BasicDispatchState.DISABLE;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.server.service.TraceService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
+
+import java.io.IOException;
 
 @Slf4j
 @CrossOrigin
@@ -30,7 +29,8 @@ public class CacheController {
 
     private final TraceService service;
     private final RestTemplate template;
-    
+    private final ObjectMapper mapper;
+
     @Value("${spring.profiles.active:}")
     private String activeProfile;
 
@@ -38,6 +38,7 @@ public class CacheController {
 
 	public CacheController(ObjectMapper mapper, TraceService service, RestTemplateBuilder builder) {
 		this.service = service;
+		this.mapper = mapper;
 		this.template = builder //load interceptors
 				.messageConverters(new MappingJackson2HttpMessageConverter(mapper))
                 .defaultHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
@@ -48,7 +49,7 @@ public class CacheController {
     public int importTraceable(@PathVariable String env) {
     	if(activeProfile.equals(env) && host != null) {
 	    	template.postForLocation(host + "/v4/trace/state/"+ DISABLE, null); //stop adding session first on remote server
-	        var arr = template.getForObject(host + "/cache", EventTrace[].class); //import sessions from remote server cache
+	        var arr = template.getForObject(host + "/v4/trace/queue", EventTrace[].class); //import sessions from remote server cache
 	        if(nonNull(arr) && arr.length > 0) {
 	            var cnt = service.addTraces(asList(arr)); //save sessions on database (local.env == remote.env)
 	            if(!cnt.isEmpty()) {
@@ -59,5 +60,31 @@ public class CacheController {
 	        return 0;
     	}
     	throw new IllegalArgumentException(String.format("mismatch env (actual : %s, expected : %s)", activeProfile, env));
+    }
+
+    @PostMapping("{env}/import/file")
+    public int importTraceableFromFile(@PathVariable String env, @RequestParam("file") MultipartFile file) {
+        if(!activeProfile.equals(env)) {
+            throw new IllegalArgumentException(String.format("mismatch env (actual : %s, expected : %s)", activeProfile, env));
+        }
+
+        if(file.isEmpty()) {
+            throw new IllegalArgumentException("Le fichier ne peut pas être vide");
+        }
+
+        try {
+            var arr = mapper.readValue(file.getInputStream(), EventTrace[].class);
+            if(nonNull(arr) && arr.length > 0) {
+                var cnt = service.addTraces(asList(arr)); //save sessions on database
+                if(!cnt.isEmpty()) {
+                    log.warn("{} sessions was imported from file, but {} sessions was not saved", arr.length, cnt);
+                }
+                return arr.length;
+            }
+            return 0;
+        } catch (IOException e) {
+            log.error("Erreur lors de la lecture du fichier", e);
+            throw new RuntimeException("Erreur lors de la lecture du fichier: " + e.getMessage(), e);
+        }
     }
 }
