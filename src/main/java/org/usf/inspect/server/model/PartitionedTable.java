@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public enum PartitionedTable {
+	
     SES_HTTP("e_rst_ses"),
     SES_MAIN("e_main_ses"),
     REQ_HTTP("e_rst_rqt"),

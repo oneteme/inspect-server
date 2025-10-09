@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.server.service.TraceService;
+import org.usf.inspect.server.service.DatabaseDispatcherService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -27,7 +27,7 @@ import java.io.IOException;
 @RequestMapping(value = "cache", produces = APPLICATION_JSON_VALUE)
 public class CacheController {
 
-    private final TraceService service;
+    private final DatabaseDispatcherService service;
     private final RestTemplate template;
     private final ObjectMapper mapper;
 
@@ -36,7 +36,7 @@ public class CacheController {
 
 	private String host = null;
 
-	public CacheController(ObjectMapper mapper, TraceService service, RestTemplateBuilder builder) {
+	public CacheController(ObjectMapper mapper, DatabaseDispatcherService service, RestTemplateBuilder builder) {
 		this.service = service;
 		this.mapper = mapper;
 		this.template = builder //load interceptors
@@ -69,7 +69,7 @@ public class CacheController {
         }
 
         if(file.isEmpty()) {
-            throw new IllegalArgumentException("Le fichier ne peut pas être vide");
+            throw new IllegalArgumentException("Le fichier ne peut pas être vide"); //fr_en !?
         }
 
         try {

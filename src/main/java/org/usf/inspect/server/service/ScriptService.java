@@ -1,5 +1,7 @@
 package org.usf.inspect.server.service;
 
+import static org.usf.inspect.server.model.Partition.buildPartitionScript;
+
 import java.time.YearMonth;
 import java.util.Map;
 
@@ -16,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class ScriptService {
+	
     private final JdbcTemplate template;
 
     @Transactional(rollbackFor = Throwable.class)
@@ -23,7 +26,7 @@ public class ScriptService {
         log.info("+ Creating new partitions, parameters in entry"); // change to inline
         log.info("\t- Period: [{}, {}]", start, end);
         log.info("\t- Tables: " + map.toString());
-        var partitions = Partition.buildPartitionScript(start, end, map);
+        var partitions = buildPartitionScript(start, end, map);
         template.batchUpdate(partitions.toArray(String[]::new));
     }
 }

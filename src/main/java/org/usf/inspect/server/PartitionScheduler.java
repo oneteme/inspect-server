@@ -40,7 +40,7 @@ public class PartitionScheduler {
 
     private Map<PartitionedTable,Partition> toConfigMap(){
         Map<PartitionedTable, Partition> map = new EnumMap<>(PartitionedTable.class);
-        ofNullable(properties.getHttpSession()).ifPresent(o-> map.put(SES_HTTP, o));
+        ofNullable(properties.getHttpSession()).ifPresent(o-> map.put(SES_HTTP, o)); //TD compute => default = Month
         ofNullable(properties.getMainSession()).ifPresent(o-> map.put(SES_MAIN, o));
         ofNullable(properties.getHttpRequest()).ifPresent(o-> map.put(REQ_HTTP, o));
         ofNullable(properties.getJdbcRequest()).ifPresent(o-> map.put(REQ_JDBC, o));
