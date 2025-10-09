@@ -506,8 +506,6 @@ public final class InspectMappers {
 
     }
 
-
-
     public static Map<Long, ExceptionInfo> exceptionInfoMapper(ResultSet rs) throws SQLException {
         Map<Long, ExceptionInfo> out = new HashMap<>();
         while(rs.next()) {

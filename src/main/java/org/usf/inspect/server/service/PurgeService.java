@@ -13,8 +13,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
-@Service
 @Slf4j
+@Service
 @RequiredArgsConstructor
 public class PurgeService {
     private final PurgeDao purgeDao;
