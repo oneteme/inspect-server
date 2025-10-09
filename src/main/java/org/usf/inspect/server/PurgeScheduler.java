@@ -11,12 +11,13 @@ import org.usf.inspect.server.service.PurgeService;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@ConditionalOnProperty(prefix = "inspect.server.purge", name="enabled", havingValue = "true")
+@ConditionalOnProperty(prefix="inspect.server.purge", name="enabled", havingValue="true")
 public class PurgeScheduler {
+	
     private final PurgeService purgeService;
 
-    @Scheduled(cron= "${inspect.server.purge.schedule:0 0 1 * * ?}")
     @TraceableStage
+    @Scheduled(cron= "${inspect.server.purge.schedule:0 0 1 * * ?}")
     public void launch() {
         purgeService.purge();
     }

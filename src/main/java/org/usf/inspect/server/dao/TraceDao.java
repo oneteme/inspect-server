@@ -16,10 +16,10 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.ToIntFunction;
-import java.util.stream.IntStream;
+import java.util.function.ToLongFunction;
 
 import static java.sql.Types.*;
+import static java.util.Arrays.stream;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
@@ -74,9 +74,9 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateInstanceEnvironments(List<InstanceEnvironmentUpdate> instances){
-        executeBatch("update e_env_ins set dh_end = ? where id_ins = ?::uuid", instances.iterator(), (ps, instance) -> {
-            ps.setTimestamp(1, fromNullableInstant(instance.getEnd()));
-            ps.setString(2, instance.getId());
+        executeBatch("update e_env_ins set dh_end = ? where id_ins = ?::uuid", instances.iterator(), (ps, ins) -> {
+            ps.setTimestamp(1, fromNullableInstant(ins.getEnd()));
+            ps.setString(2, ins.getId());
         });
     }
 
@@ -278,36 +278,30 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveLocalRequests(List<LocalRequest> requests){
-        completableProcess(LOCAL_REQUEST, requests, toUpdate ->
-                executeBatch("""
-update e_lcl_rqt set va_nam = ?, va_lct = ?, dh_str = ?, dh_end = ?, va_usr = ?, va_thr = ?, va_fail = ?, va_typ = ?
-where id_lcl_rqt = ?::uuid""", toUpdate, (ps, req) -> {
-            ps.setString(1,req.getName());
-            ps.setString(2,req.getLocation());
-            ps.setTimestamp(3,fromNullableInstant(req.getStart()));
-            ps.setTimestamp(4,fromNullableInstant(req.getEnd()));
-            ps.setString(5,req.getUser());
-            ps.setString(6,req.getThreadName());
-            ps.setBoolean(7, nonNull(req.getException()));
-            ps.setString(8, req.getType());
-            ps.setString(9, req.getId());
-        }), toInsert ->
-                executeBatch("""
-insert into e_lcl_rqt(id_lcl_rqt,va_nam,va_lct,dh_str,dh_end,va_usr,va_thr,va_fail,cd_prn_ses,va_typ,cd_ins)
-values(?::uuid,?,?,?,?,?,?,?,?::uuid,?,?::uuid)""", toInsert, (ps, req) -> {
-            ps.setString(1, req.getId());
-            ps.setString(2,req.getName());
-            ps.setString(3,req.getLocation());
-            ps.setTimestamp(4,fromNullableInstant(req.getStart()));
-            ps.setTimestamp(5,fromNullableInstant(req.getEnd()));
-            ps.setString(6,req.getUser());
-            ps.setString(7,req.getThreadName());
-            ps.setBoolean(8, nonNull(req.getException()));
-            ps.setString(9, req.getSessionId());
-            ps.setString(10, req.getType());
+        completableProcess(LOCAL_REQUEST, requests, 
+        		toUpdate -> executeBatch("""
+UPDATE e_lcl_rqt SET va_nam=?,va_lct=?,dh_str=?,dh_end=?,va_usr=?,va_thr=?,va_fail=?,va_typ=? 
+WHERE id_lcl_rqt = ?::uuid""", toUpdate, TraceDao::localRequestSetter), 
+                toInsert -> executeBatch("""
+INSERT INTO e_lcl_rqt(va_nam,va_lct,dh_str,dh_end,va_usr,va_thr,va_fail,va_typ,id_lcl_rqt,cd_prn_ses,cd_ins)
+(?,?,?,?,?,?,?,?,?::uuid,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
+			localRequestSetter(ps, req);
+            ps.setString(10, req.getSessionId());
             ps.setString(11, req.getInstanceId());
         }));
         saveLocalRequestExceptions(requests);
+    }
+    
+    static void localRequestSetter(PreparedStatement ps, LocalRequest req) throws SQLException {
+        ps.setString(1,req.getName());
+        ps.setString(2,req.getLocation());
+        ps.setTimestamp(3,fromNullableInstant(req.getStart()));
+        ps.setTimestamp(4,fromNullableInstant(req.getEnd()));
+        ps.setString(5,req.getUser());
+        ps.setString(6,req.getThreadName());
+        ps.setBoolean(7, nonNull(req.getException()));
+        ps.setString(8, req.getType());
+        ps.setString(9, req.getId());
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -468,45 +462,35 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
     private <T extends CompletableMetric> void completableProcess(
             RequestCompletableType type,
             List<T> items,
-            ToIntFunction<Iterator<T>> updateBatchExecutor,
-            ToIntFunction<Iterator<T>> insertBatchExecutor
-    ) {
-        List<String> completableMetrics = template.queryForList("select id_cmp_mtc from e_cmp_mtc where cd_typ = " + type.getValue(), String.class);
+            ToLongFunction<Iterator<T>> updateBatchExecutor,
+            ToLongFunction<Iterator<T>> insertBatchExecutor) {
+        var completableMetrics = template.queryForList("SELECT id_cmp_mtc FROM e_cmp_mtc WHERE cd_typ=" + type.getValue(), String.class);
         var toUpdate = items.stream().filter(s -> completableMetrics.contains(s.getId())).toList();
-        var toInsert = items.stream().filter(s -> !completableMetrics.contains(s.getId())).toList();
 
         if(!toUpdate.isEmpty()) {
-
-            var updated = updateBatchExecutor.applyAsInt(toUpdate.iterator());
-            if(updated != toUpdate.size()) {
-                log.warn("Not all {} {} were updated, only {} were updated", type.name(), toUpdate.size(), updated);
-            }
+            updateBatchExecutor.applyAsLong(toUpdate.iterator()); //already logged
             var completedMetrics = toUpdate.stream()
                     .filter(s-> nonNull(s.getEnd()))
-                    .map(CompletableMetric::getId).toList(); //Insertion des sessions uncompleted
-            if(!completedMetrics.isEmpty()) {
-                var inClause = "?::uuid" + ", ?::uuid".repeat(completedMetrics.size() - 1);
-                template.update(String.format("delete from e_cmp_mtc where id_cmp_mtc in (%s) and cd_typ = %s", inClause, type.getValue()), ps -> {
-                    var n = 1;
-                    for (var id : completedMetrics) {
-                        ps.setString(n++, id);
-                    }
-                });
+                    .map(CompletableMetric::getId)
+                    .toArray(); //Insertion des sessions uncompleted
+            if(completedMetrics.length > 0) {
+                template.update(new StringBuilder("DELETE FROM e_cmp_mtc WHERE id_cmp_mtc IN(?::uuid")
+                		.append(",?::uuid".repeat(completedMetrics.length - 1))
+                		.append(" AND cd_typ=").append(type.getValue()).toString(), completedMetrics);
             }
         }
-        
         //savePoint !!
-
+        var toInsert = items.stream().filter(s -> !completableMetrics.contains(s.getId())).toList();
         if(!toInsert.isEmpty()) {
-
-            insertBatchExecutor.applyAsInt(toInsert.iterator());
+            insertBatchExecutor.applyAsLong(toInsert.iterator());
             var uncompletedMetrics = toInsert.stream()
-                    .filter(s -> isNull(s.getEnd()))
-                    .map(CompletableMetric::getId).toList(); //Insertion des sessions uncompleted
+                    .filter(s-> isNull(s.getEnd()))
+                    .map(CompletableMetric::getId)
+                    .toList(); //Insertion des sessions uncompleted
             if(!uncompletedMetrics.isEmpty()) {
-                executeBatch(String.format("insert into e_cmp_mtc(id_cmp_mtc,cd_typ) values(?::uuid, %s)", type.getValue()), uncompletedMetrics.iterator(), (ps, id) -> {
-                    ps.setString(1, id);
-                });
+                executeBatch(new StringBuilder("INSERT INTO e_cmp_mtc(id_cmp_mtc,cd_typ) VALUES(?::uuid,")
+                		.append(type.getValue()).append(')').toString(), uncompletedMetrics.iterator(), 
+                		(ps, id) -> ps.setString(1, id));
             }
         }
     }
@@ -629,41 +613,39 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
     private void saveLocalRequestExceptions(List<LocalRequest> stages) {
         var exceptions = stages.stream()
                 .filter(e -> nonNull(e.getException()))
-                .toList();
-        if(!isEmpty(exceptions)) {
-            executeBatch("insert into e_exc_inf(va_typ,va_err_typ,va_err_msg,va_stk,cd_ord,cd_rqt) values(?,?,?,?,?,?::uuid)", exceptions.iterator(), (ps, exp) -> {
-                ps.setString(1, LOCAL.name());
-                ps.setString(2, exp.getException().getType());
-                ps.setString(3, exp.getException().getMessage());
-                ps.setObject(4, toJsonOrNull(exp.getException().getStackTraceRows()), OTHER);
-                ps.setInt(5, 0);
-                ps.setString(6, exp.getId());
-            });
-        }
+                .iterator();
+        executeBatch("insert into e_exc_inf(va_typ,va_err_typ,va_err_msg,va_stk,cd_ord,cd_rqt) values(?,?,?,?,?,?::uuid)", exceptions, (ps, exp) -> {
+            ps.setString(1, LOCAL.name());
+            ps.setString(2, exp.getException().getType());
+            ps.setString(3, exp.getException().getMessage());
+            ps.setObject(4, toJsonOrNull(exp.getException().getStackTraceRows()), OTHER);
+            ps.setInt(5, 0);
+            ps.setString(6, exp.getId());
+        });
     }
 
-    private <T> Integer executeBatch(String sql, Iterator<T> it, PreparedStatementSetter<T> pss) {
+    private <T> Long executeBatch(String sql, Iterator<T> it, PreparedStatementSetter<T> pss) {
         return it.hasNext() ? template.execute(sql, (PreparedStatement ps) -> {
+        	long idx = 0;
             long rows = 0;
-            var n = 0;
             try {
                 while (it.hasNext()) {
                     pss.setValues(ps, it.next());
                     ps.addBatch();
-                    if (++n % BATCH_SIZE == 0) {
-                        rows += IntStream.of(ps.executeBatch()).sum();
+                    if (++idx % BATCH_SIZE == 0) {
+                        rows += stream(ps.executeBatch()).sum();
                     }
                 }
             }
             catch (JsonProcessingException e) {
-            	throw new SQLException("parsing parameter, row="+n, e);
+            	throw new SQLException("parsing parameter, row="+idx, e);
             }
-            if (n % BATCH_SIZE != 0) {
-                rows += IntStream.of(ps.executeBatch()).sum();
+            if (idx % BATCH_SIZE > 0) {
+                rows += stream(ps.executeBatch()).sum();
             }
-            log.debug("{} batch added, {} rows inserted", n, rows);
-            return n;
-        }) : 0;
+            log.debug("{}/{} rows was updated", idx, rows);
+            return rows;
+        }) : 0L;
     }
 
     String toJsonOrNull(Object o) throws JsonProcessingException {

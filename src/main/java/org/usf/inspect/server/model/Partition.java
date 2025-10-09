@@ -62,7 +62,8 @@ public enum Partition {
     public String createPartition(String table, LocalDateTime from , LocalDateTime to, String name){
         return String.format("CREATE TABLE IF NOT EXISTS %s PARTITION OF %s FOR VALUES FROM ('%s') TO ('%s');", name, table, from, to);
     }
-
+    
+    //TODO check period + tables exists
     public static List<String> buildPartitionScript(YearMonth start, YearMonth end, Map<PartitionedTable, Partition> map){
         var scripts = new ArrayList<String>();
         for (String table : PartitionedTable.tables) {

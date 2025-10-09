@@ -9,40 +9,39 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.InspectCollectorConfiguration;
 import org.usf.inspect.core.InstanceEnvironment;
-import org.usf.inspect.server.config.TraceApiColumn;
-import org.usf.inspect.server.config.TraceApiTable;
 import org.usf.jquery.core.*;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static java.lang.String.*;
 import static java.sql.Timestamp.*;
+import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.*;
 import static org.usf.inspect.core.RequestMask.*;
 import static org.usf.inspect.server.config.TraceApiColumn.*;
 import static org.usf.inspect.server.config.TraceApiDatabase.INSPECT;
 import static org.usf.inspect.server.config.TraceApiTable.*;
+import static org.usf.jquery.core.DBColumn.rank;
 
 @Slf4j
 @Repository
 @RequiredArgsConstructor
 public class PurgeDao {
 
-    private final static List<String> TABLES_WITH_INSTANCE = List.of(
+    private static final List<String> TABLES_WITH_INSTANCE = List.of(
             "e_rst_ses", "e_main_ses", "e_rst_rqt", "e_dtb_rqt", "e_ftp_rqt", "e_smtp_rqt", "e_ldap_rqt", "e_lcl_rqt"
     );
-    private final static List<String> TABLES_WITH_INSTANCE_WITHOUT_END = List.of(
+    private static final List<String> TABLES_WITH_INSTANCE_WITHOUT_END = List.of(
             "e_ins_trc", "e_log_ent", "e_rsc_usg"
     );
 
-    private final static String DELETE_BY_INSTANCE = "DELETE FROM %s WHERE dh_str < '%s' AND dh_end < '%s' AND cd_ins IN (%s);";
-    private final static String DELETE_BY_INSTANCE_WITHOUT_END = "DELETE FROM %s WHERE dh_str < '%s' AND cd_ins IN (%s);";
-    private final static String DELETE_BY_NO_INSTANCE = "DELETE FROM %s WHERE NOT EXISTS (SELECT 1 FROM %s WHERE %s = %s);";
-    private final static String DELETE_EXCEPTION_BY_NO_INSTANCE = "DELETE FROM e_exc_inf WHERE va_typ = '%s' AND NOT EXISTS (SELECT 1 FROM %s WHERE %s = cd_rqt);";
-    private final static String VACUUM = "VACUUM ANALYZE %s;";
+    private static final String DELETE_BY_INSTANCE = "DELETE FROM %s WHERE dh_str < '%s' AND dh_end < '%s' AND cd_ins IN (%s);";
+    private static final String DELETE_BY_INSTANCE_WITHOUT_END = "DELETE FROM %s WHERE dh_str < '%s' AND cd_ins IN (%s);";
+    private static final String DELETE_BY_NO_INSTANCE = "DELETE FROM %s WHERE NOT EXISTS (SELECT 1 FROM %s WHERE %s = %s);";
+    private static final String DELETE_EXCEPTION_BY_NO_INSTANCE = "DELETE FROM e_exc_inf WHERE va_typ = '%s' AND NOT EXISTS (SELECT 1 FROM %s WHERE %s = cd_rqt);";
 
     private final ObjectMapper mapper;
     private final JdbcTemplate template;
@@ -50,20 +49,17 @@ public class PurgeDao {
     public List<InstanceEnvironment> getInstances(String env) {
         return INSPECT.execute(v ->
                 v.columns(
-                                INSTANCE.column(ENVIRONEMENT),
-                                INSTANCE.column(APP_NAME),
-                                INSTANCE.column(CONFIGURATION)
-                        )
-                        .filters(DBColumn.rank().over(
-                                new DBColumn[]{INSTANCE.column(ENVIRONEMENT), INSTANCE.column(APP_NAME)},
-                                new DBOrder[]{INSTANCE.column(START).desc()}
-                        ).eq(1))
-                        .subViewQuery(INSTANCE.view(), sq -> {
-                            sq.filters(INSTANCE.column(END).isNull());
-                            if (env != null) {
-                                sq.filters(INSTANCE.column(ENVIRONEMENT).eq(env));
-                            }
-                        }), rs -> {
+                		INSTANCE.column(ENVIRONEMENT),
+                        INSTANCE.column(APP_NAME),
+                        INSTANCE.column(CONFIGURATION))
+                .filters(rank().over(
+                		new DBColumn[]{INSTANCE.column(ENVIRONEMENT), INSTANCE.column(APP_NAME)},
+                        new DBOrder[] {INSTANCE.column(START).desc()}).eq(1))
+                .subViewQuery(INSTANCE.view(), sq -> {
+                	sq.filters(INSTANCE.column(END).isNull());
+                    if (nonNull(env)) {
+                    	sq.filters(INSTANCE.column(ENVIRONEMENT).eq(env));
+                    }}), rs -> {
             List<InstanceEnvironment> environments = new ArrayList<>();
             while (rs.next()) {
                 try {
@@ -140,42 +136,32 @@ public class PurgeDao {
     }
 
     public void vacuumAnalyze() {
-        String[] vacuumQueries = {
-                format(VACUUM, "e_rst_ses"),
-                format(VACUUM, "e_main_ses"),
-                format(VACUUM, "e_rst_rqt"),
-                format(VACUUM, "e_dtb_rqt"),
-                format(VACUUM, "e_ftp_rqt"),
-                format(VACUUM, "e_smtp_rqt"),
-                format(VACUUM, "e_ldap_rqt"),
-                format(VACUUM, "e_lcl_rqt"),
-                format(VACUUM, "e_rst_ses_stg"),
-                format(VACUUM, "e_rst_rqt_stg"),
-                format(VACUUM, "e_smtp_stg"),
-                format(VACUUM, "e_ftp_stg"),
-                format(VACUUM, "e_ldap_stg"),
-                format(VACUUM, "e_dtb_stg"),
-                format(VACUUM, "e_ins_trc"),
-                format(VACUUM, "e_rsc_usg")
-        };
-        for (String query : vacuumQueries) {
-            template.execute(query);
-        }
+    	Stream.of("e_rst_ses",
+    			"e_main_ses",
+    			"e_rst_rqt",
+    			"e_dtb_rqt",
+    			"e_ftp_rqt",
+    			"e_smtp_rqt",
+    			"e_ldap_rqt",
+    			"e_lcl_rqt",
+    			"e_rst_ses_stg",
+    			"e_rst_rqt_stg",
+    			"e_smtp_stg",
+    			"e_ftp_stg",
+    			"e_ldap_stg",
+    			"e_dtb_stg",
+    			"e_ins_trc",
+    			"e_rsc_usg")
+    	.map("VACUUM ANALYZE "::concat)
+    	.forEach(template::execute);
     }
 
     private List<String> selectInstanceIds(Instant dateLimit, String env, String app) {
-        List<Object> params = new ArrayList<>(3);
-        params.add(from(dateLimit));
-
-        StringBuilder sql = new StringBuilder(100)
-                .append("SELECT id_ins FROM e_env_ins WHERE dh_str < ? AND dh_end IS NULL");
-
-        sql.append(env != null ? " AND va_env = ?" : " AND va_env IS NULL");
-        if (env != null) params.add(env);
-
-        sql.append(app != null ? " AND va_app = ?" : " AND va_app IS NULL");
-        if (app != null) params.add(app);
-
-        return template.queryForList(sql.toString(), String.class, params.toArray());
+        var args = new ArrayList<>(3);
+        args.add(from(dateLimit));
+        return template.queryForList(new StringBuilder("SELECT id_ins FROM e_env_ins WHERE dh_str<? AND dh_end IS NULL")
+        		.append(" AND va_env").append(nonNull(env) && args.add(env) ? "=?" : " IS NULL")
+        		.append(" AND va_app").append(nonNull(app) && args.add(app) ? "=?" : " IS NULL")
+        		.toString(), String.class, args.toArray());
     }
 }

@@ -1,13 +1,13 @@
 package org.usf.inspect.server.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.usf.inspect.core.*;
-import org.usf.inspect.server.dao.TraceDao;
-import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
-import org.usf.inspect.server.model.InstanceTrace;
+import static java.util.Collections.emptyList;
+import static java.util.concurrent.CompletableFuture.allOf;
+import static java.util.concurrent.CompletableFuture.supplyAsync;
+import static java.util.concurrent.Executors.newFixedThreadPool;
+import static org.usf.inspect.core.ExecutorServiceWrapper.wrap;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -15,24 +15,49 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
-import static java.util.Collections.emptyList;
-import static java.util.concurrent.CompletableFuture.*;
-import static java.util.concurrent.Executors.newFixedThreadPool;
-import static org.usf.inspect.core.ExecutorServiceWrapper.wrap;
+import org.springframework.stereotype.Service;
+import org.usf.inspect.core.*;
+import org.usf.inspect.server.dao.TraceDao;
+import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
+import org.usf.inspect.server.model.InstanceTrace;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class TraceService {
+public class DatabaseDispatcherService implements DispatcherAgent {
 	
+	private final TraceDao dao;
+	private final ObjectMapper mapper;
 	private final ExecutorService executor = wrap(newFixedThreadPool(5));
-    private final TraceDao dao;
-
-    public void addInstance(InstanceEnvironment instance) {
+    
+	@Override
+	public void dispatch(InstanceEnvironment instance) {
         dao.saveInstanceEnvironment(instance);
-    }
+	}
 
-    public List<EventTrace> addTraces(List<EventTrace> traces) {
+	@TraceableStage
+	@Override
+	public List<EventTrace> dispatch(boolean complete, int attempts, int pending, List<EventTrace> traces) {
+		return traces.isEmpty() ? emptyList() : addTraces(traces);
+	}
+
+	@Override
+	public void dispatch(int attempts, File dumpFile) {
+		try {
+			var traces = mapper.readValue(dumpFile, new TypeReference<List<EventTrace>>() {});
+			dispatch(false, attempts, 0, traces);
+		} catch (IOException e) {
+			throw new DispatchException("cannot dispatch dumpFile " + dumpFile.getName(), e);
+		}
+	}
+	
+	public List<EventTrace> addTraces(List<EventTrace> traces) {
         var cf = new ArrayList<CompletableFuture<Collection<EventTrace>>>();
         cf.add(supplyAsync(()-> filterAndApply(traces, MainSession.class, dao::saveMainSessions), executor));
         cf.add(supplyAsync(()-> filterAndApply(traces, RestSession.class, dao::saveRestSessions), executor));
@@ -52,14 +77,13 @@ public class TraceService {
         cf.add(supplyAsync(()-> filterAndApply(traces, LogEntry.class, dao::saveLogEntries), executor));
         cf.add(supplyAsync(()-> filterAndApply(traces, InstanceEnvironmentUpdate.class, dao::updateInstanceEnvironments), executor));
         cf.add(supplyAsync(()-> filterAndApply(traces, InstanceTrace.class, dao::saveInstanceTraces), executor));
-        return allOf(cf.toArray(CompletableFuture[]::new)).thenApply(v->
-                cf.stream()
-                    .map(CompletableFuture::join)
-                    .flatMap(Collection::stream)
-                    .toList()).join();
+        return allOf(cf.toArray(CompletableFuture[]::new)).thenApply(v-> cf.stream()
+        		.map(CompletableFuture::join)
+                .flatMap(Collection::stream)
+                .toList()).join();
     }
 
-    private <U extends EventTrace> List<EventTrace> filterAndApply(Collection<EventTrace> c, Class<U> clazz, Consumer<List<U>> saveFn) {
+    static <U extends EventTrace> List<EventTrace> filterAndApply(Collection<EventTrace> c, Class<U> clazz, Consumer<List<U>> saveFn) {
         var list = c.stream()
                 .filter(clazz::isInstance)
                 .map(clazz::cast)

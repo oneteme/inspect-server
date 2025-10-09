@@ -27,7 +27,7 @@ public class PurgeService {
         @Override
         public void execute() {
             var now = LocalDate.now().atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
-            List<InstanceEnvironment> instances = purgeDao.getInstances(null);
+            var instances = purgeDao.getInstances(null);
             for (InstanceEnvironment instance : instances) {
                 if(instance.getConfiguration() != null) {
                     Instant dateLimit = now.minus(instance.getConfiguration().getTracing().getRemote().getRetentionMaxAge());
