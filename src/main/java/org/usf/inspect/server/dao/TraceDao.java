@@ -395,7 +395,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid,?::uuid)""", toInsert, (ps, r
             if(completedMetrics.length > 0) {
                 template.update(new StringBuilder("DELETE FROM e_cmp_mtc WHERE id_cmp_mtc IN(?::uuid")
                 		.append(",?::uuid".repeat(completedMetrics.length - 1))
-                		.append(" AND cd_typ=").append(type.getValue()).toString(), completedMetrics);
+                		.append(") AND cd_typ=").append(type.getValue()).toString(), completedMetrics);
             }
         }
         //savePoint !!
