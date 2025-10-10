@@ -152,7 +152,7 @@ public class PurgeDao {
     			"e_dtb_stg",
     			"e_ins_trc",
     			"e_rsc_usg")
-    	.map("VACUUM ANALYZE "::concat)
+    	.map(v-> "VACUUM ANALYZE "+v+';')
     	.forEach(template::execute);
     }
 
