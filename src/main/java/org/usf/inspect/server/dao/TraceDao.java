@@ -235,11 +235,11 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid,?::uuid)""", toInsert
     public void saveLocalRequests(List<LocalRequest> requests){
         completableProcess(LOCAL_REQUEST, requests, 
         		toUpdate -> executeBatch("""
-UPDATE e_lcl_rqt SET va_nam=?,va_lct=?,dh_str=?,dh_end=?,va_usr=?,va_thr=?,va_fail=?,va_typ=? 
+UPDATE e_lcl_rqt SET va_nam=?,va_lct=?,dh_str=?,dh_end=?,va_usr=?,va_thr=?,va_fail=?,va_typ=?
 WHERE id_lcl_rqt = ?::uuid""", toUpdate, TraceDao::localRequestSetter), 
                 toInsert -> executeBatch("""
 INSERT INTO e_lcl_rqt(va_nam,va_lct,dh_str,dh_end,va_usr,va_thr,va_fail,va_typ,id_lcl_rqt,cd_prn_ses,cd_ins)
-(?,?,?,?,?,?,?,?,?::uuid,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
+values(?,?,?,?,?,?,?,?,?::uuid,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
 			localRequestSetter(ps, req);
             ps.setString(10, req.getSessionId());
             ps.setString(11, req.getInstanceId());
