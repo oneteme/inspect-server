@@ -123,64 +123,43 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
                 executeBatch("""
 update e_rst_ses set va_mth = ?, va_pcl = ?, va_hst = ?, cd_prt = ?, va_pth = ?, va_qry = ?, va_cnt_typ = ?, va_ath_sch = ?, cd_stt = ?, va_i_sze = ?, va_o_sze = ?, va_i_cnt_enc = ?, va_o_cnt_enc = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_err_typ = ?, va_err_msg = ?, va_stk = ?, va_nam = ?, va_usr = ?, va_usr_agt = ?, va_cch_ctr = ?, va_msk = ?
 where id_ses = ?::uuid""", toUpdate, (ps, ses) -> {
-            var exp = ses.getException();
-            ps.setString(1, ses.getMethod());
-            ps.setString(2, ses.getProtocol());
-            ps.setString(3, ses.getHost());
-            ps.setInt(4, ses.getPort());
-            ps.setString(5, ses.getPath());
-            ps.setString(6, ses.getQuery());
-            ps.setString(7, contentTypeExtract(ses.getContentType()));
-            ps.setString(8, ses.getAuthScheme());
-            ps.setInt(9, ses.getStatus());
-            ps.setLong(10, ses.getInDataSize());
-            ps.setLong(11, ses.getOutDataSize());
-            ps.setString(12, ses.getInContentEncoding());
-            ps.setString(13, ses.getOutContentEncoding());
-            ps.setTimestamp(14, fromNullableInstant(ses.getStart()));
-            ps.setTimestamp(15, fromNullableInstant(ses.getEnd()));
-            ps.setString(16, ses.getThreadName());
-            ps.setString(17, nonNull(exp) ? exp.getType() : null);
-            ps.setString(18, nonNull(exp) ? exp.getMessage() : null);
-            ps.setObject(19, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
-            ps.setString(20, ses.getName());
-            ps.setString(21, ses.getUser());
-            ps.setString(22, userAgentExtract(ses.getUserAgent()));
-            ps.setString(23, ses.getCacheControl());
-            ps.setInt(24, ses.getRequestsMask());
-            ps.setString(25, ses.getId());
+            restSessionSetter(ps, ses, mapper);
         }), toInsert ->
                 executeBatch("""
-insert into e_rst_ses(id_ses,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_cnt_typ,va_ath_sch,cd_stt,va_i_sze,va_o_sze,va_i_cnt_enc,va_o_cnt_enc,dh_str,dh_end,va_thr,va_err_typ,va_err_msg,va_stk,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_msk,cd_ins)
-values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid)""", toInsert, (ps, ses) -> {
-            var exp = ses.getException();
-            ps.setString(1, ses.getId());
-            ps.setString(2, ses.getMethod());
-            ps.setString(3, ses.getProtocol());
-            ps.setString(4, ses.getHost());
-            ps.setInt(5, ses.getPort());
-            ps.setString(6, ses.getPath());
-            ps.setString(7, ses.getQuery());
-            ps.setString(8, contentTypeExtract(ses.getContentType()));
-            ps.setString(9, ses.getAuthScheme());
-            ps.setInt(10, ses.getStatus());
-            ps.setLong(11, ses.getInDataSize());
-            ps.setLong(12, ses.getOutDataSize());
-            ps.setString(13, ses.getInContentEncoding());
-            ps.setString(14, ses.getOutContentEncoding());
-            ps.setTimestamp(15, fromNullableInstant(ses.getStart()));
-            ps.setTimestamp(16, fromNullableInstant(ses.getEnd()));
-            ps.setString(17, ses.getThreadName());
-            ps.setString(18, nonNull(exp) ? exp.getType() : null);
-            ps.setString(19, nonNull(exp) ? exp.getMessage() : null);
-            ps.setObject(20, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
-            ps.setString(21, ses.getName());
-            ps.setString(22, ses.getUser());
-            ps.setString(23, userAgentExtract(ses.getUserAgent()));
-            ps.setString(24, ses.getCacheControl());
-            ps.setInt(25, ses.getRequestsMask());
+insert into e_rst_ses(va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_cnt_typ,va_ath_sch,cd_stt,va_i_sze,va_o_sze,va_i_cnt_enc,va_o_cnt_enc,dh_str,dh_end,va_thr,va_err_typ,va_err_msg,va_stk,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_msk,id_ses,cd_ins)
+values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, ses) -> {
+            restSessionSetter(ps, ses, mapper);
             ps.setString(26, ses.getInstanceId());
         }));
+    }
+
+    static void restSessionSetter(PreparedStatement ps, RestSession ses, ObjectMapper mapper) throws SQLException, JsonProcessingException {
+        var exp = ses.getException();
+        ps.setString(1, ses.getMethod());
+        ps.setString(2, ses.getProtocol());
+        ps.setString(3, ses.getHost());
+        ps.setInt(4, ses.getPort());
+        ps.setString(5, ses.getPath());
+        ps.setString(6, ses.getQuery());
+        ps.setString(7, contentTypeExtract(ses.getContentType()));
+        ps.setString(8, ses.getAuthScheme());
+        ps.setInt(9, ses.getStatus());
+        ps.setLong(10, ses.getInDataSize());
+        ps.setLong(11, ses.getOutDataSize());
+        ps.setString(12, ses.getInContentEncoding());
+        ps.setString(13, ses.getOutContentEncoding());
+        ps.setTimestamp(14, fromNullableInstant(ses.getStart()));
+        ps.setTimestamp(15, fromNullableInstant(ses.getEnd()));
+        ps.setString(16, ses.getThreadName());
+        ps.setString(17, nonNull(exp) ? exp.getType() : null);
+        ps.setString(18, nonNull(exp) ? exp.getMessage() : null);
+        ps.setObject(19, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
+        ps.setString(20, ses.getName());
+        ps.setString(21, ses.getUser());
+        ps.setString(22, userAgentExtract(ses.getUserAgent()));
+        ps.setString(23, ses.getCacheControl());
+        ps.setInt(24, ses.getRequestsMask());
+        ps.setString(25, ses.getId());
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -189,38 +168,30 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid)""", toIn
                 executeBatch("""
 update e_main_ses set va_nam = ?, va_usr = ?, dh_str = ?, dh_end = ?, va_typ = ?, va_lct = ?, va_thr = ?, va_err_typ = ?, va_err_msg = ?, va_stk = ?, va_msk = ?
 where id_ses = ?::uuid""", toUpdate, (ps, ses) -> {
-            var exp = ses.getException();
-            ps.setString(1, ses.getName());
-            ps.setString(2, ses.getUser());
-            ps.setTimestamp(3, fromNullableInstant(ses.getStart()));
-            ps.setTimestamp(4, fromNullableInstant(ses.getEnd()));
-            ps.setString(5, valueOfNullable(ses.getType()));
-            ps.setString(6, ses.getLocation());
-            ps.setString(7, ses.getThreadName());
-            ps.setString(8, nonNull(exp) ? exp.getType() : null);
-            ps.setString(9, nonNull(exp) ? exp.getMessage() : null);
-            ps.setObject(10, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
-            ps.setInt(11, ses.getRequestsMask());
-            ps.setString(12, ses.getId());
-        }), toInsert ->
+                    mainSessionSetter(ps, ses, mapper);
+                }), toInsert ->
                 executeBatch("""
-insert into e_main_ses(id_ses,va_nam,va_usr,dh_str,dh_end,va_typ,va_lct,va_thr,va_err_typ,va_err_msg,va_stk,va_msk,cd_ins)
-values(?::uuid,?,?,?,?,?,?,?,?,?,?::json,?,?::uuid)""", toInsert, (ps, ses) -> {
-            var exp = ses.getException();
-            ps.setString(1, ses.getId());
-            ps.setString(2, ses.getName());
-            ps.setString(3, ses.getUser());
-            ps.setTimestamp(4, fromNullableInstant(ses.getStart()));
-            ps.setTimestamp(5, fromNullableInstant(ses.getEnd()));
-            ps.setString(6, valueOfNullable(ses.getType()));
-            ps.setString(7, ses.getLocation());
-            ps.setString(8, ses.getThreadName());
-            ps.setString(9, nonNull(exp) ? exp.getType() : null);
-            ps.setString(10, nonNull(exp) ? exp.getMessage() : null);
-            ps.setObject(11, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
-            ps.setInt(12, ses.getRequestsMask());
+insert into e_main_ses(va_nam,va_usr,dh_str,dh_end,va_typ,va_lct,va_thr,va_err_typ,va_err_msg,va_stk,va_msk,id_ses,cd_ins)
+values(?,?,?,?,?,?,?,?,?,?::json,?,?::uuid,?::uuid)""", toInsert, (ps, ses) -> {
+            mainSessionSetter(ps, ses, mapper);
             ps.setString(13, ses.getInstanceId());
         }));
+    }
+
+    static void mainSessionSetter(PreparedStatement ps, MainSession ses, ObjectMapper mapper) throws SQLException, JsonProcessingException {
+        var exp = ses.getException();
+        ps.setString(1, ses.getName());
+        ps.setString(2, ses.getUser());
+        ps.setTimestamp(3, fromNullableInstant(ses.getStart()));
+        ps.setTimestamp(4, fromNullableInstant(ses.getEnd()));
+        ps.setString(5, valueOfNullable(ses.getType()));
+        ps.setString(6, ses.getLocation());
+        ps.setString(7, ses.getThreadName());
+        ps.setString(8, nonNull(exp) ? exp.getType() : null);
+        ps.setString(9, nonNull(exp) ? exp.getMessage() : null);
+        ps.setObject(10, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
+        ps.setInt(11, ses.getRequestsMask());
+        ps.setString(12, ses.getId());
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -228,52 +199,36 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?::json,?,?::uuid)""", toInsert, (ps, ses) -> {
         completableProcess(REST_REQUEST, requests, toUpdate ->
                 executeBatch("""
 update e_rst_rqt set va_mth = ?, va_pcl = ?, va_hst = ?, cd_prt = ?, va_pth = ?, va_qry = ?, va_cnt_typ = ?, va_ath_sch = ?, cd_stt = ?, va_i_sze = ?, va_o_sze = ?, va_i_cnt_enc = ?, va_o_cnt_enc = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_bdy_cnt = ?, va_lnk = ?
-where id_rst_rqt = ?::uuid""", toUpdate, (ps, req) -> {
-            ps.setString(1, req.getMethod());
-            ps.setString(2, req.getProtocol());
-            ps.setString(3, req.getHost());
-            ps.setInt(4, req.getPort());
-            ps.setString(5, req.getPath());
-            ps.setString(6, req.getQuery());
-            ps.setString(7, contentTypeExtract(req.getContentType()));
-            ps.setString(8, req.getAuthScheme());
-            ps.setInt(9, req.getStatus());
-            ps.setLong(10, req.getInDataSize());
-            ps.setLong(11, req.getOutDataSize());
-            ps.setString(12, req.getInContentEncoding());
-            ps.setString(13, req.getOutContentEncoding());
-            ps.setTimestamp(14, fromNullableInstant(req.getStart()));
-            ps.setTimestamp(15, fromNullableInstant(req.getEnd()));
-            ps.setString(16, req.getThreadName());
-            ps.setString(17, req.getBodyContent());
-            ps.setBoolean(18, req.isLinked());
-            ps.setString(19, req.getId());
-        }), toInsert ->
+where id_rst_rqt = ?::uuid""", toUpdate, TraceDao::restRequestSetter), toInsert ->
                 executeBatch("""
-insert into e_rst_rqt(id_rst_rqt,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_cnt_typ,va_ath_sch,cd_stt,va_i_sze,va_o_sze,va_i_cnt_enc,va_o_cnt_enc,dh_str,dh_end,va_thr,va_bdy_cnt,va_lnk,cd_prn_ses,cd_ins)
-values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
-            ps.setString(1, req.getId());
-            ps.setString(2, req.getMethod());
-            ps.setString(3, req.getProtocol());
-            ps.setString(4, req.getHost());
-            ps.setInt(5, req.getPort());
-            ps.setString(6, req.getPath());
-            ps.setString(7, req.getQuery());
-            ps.setString(8, contentTypeExtract(req.getContentType()));
-            ps.setString(9, req.getAuthScheme());
-            ps.setInt(10, req.getStatus());
-            ps.setLong(11, req.getInDataSize());
-            ps.setLong(12, req.getOutDataSize());
-            ps.setString(13, req.getInContentEncoding());
-            ps.setString(14, req.getOutContentEncoding());
-            ps.setTimestamp(15, fromNullableInstant(req.getStart()));
-            ps.setTimestamp(16, fromNullableInstant(req.getEnd()));
-            ps.setString(17, req.getThreadName());
-            ps.setString(18, req.getBodyContent());
-            ps.setBoolean(19, req.isLinked());
+insert into e_rst_rqt(va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_cnt_typ,va_ath_sch,cd_stt,va_i_sze,va_o_sze,va_i_cnt_enc,va_o_cnt_enc,dh_str,dh_end,va_thr,va_bdy_cnt,va_lnk,id_rst_rqt,cd_prn_ses,cd_ins)
+values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
+            restRequestSetter(ps, req);
             ps.setString(20, req.getSessionId());
             ps.setString(21, req.getInstanceId());
         }));
+    }
+
+    static void restRequestSetter(PreparedStatement ps, RestRequest req) throws SQLException {
+        ps.setString(1, req.getMethod());
+        ps.setString(2, req.getProtocol());
+        ps.setString(3, req.getHost());
+        ps.setInt(4, req.getPort());
+        ps.setString(5, req.getPath());
+        ps.setString(6, req.getQuery());
+        ps.setString(7, contentTypeExtract(req.getContentType()));
+        ps.setString(8, req.getAuthScheme());
+        ps.setInt(9, req.getStatus());
+        ps.setLong(10, req.getInDataSize());
+        ps.setLong(11, req.getOutDataSize());
+        ps.setString(12, req.getInContentEncoding());
+        ps.setString(13, req.getOutContentEncoding());
+        ps.setTimestamp(14, fromNullableInstant(req.getStart()));
+        ps.setTimestamp(15, fromNullableInstant(req.getEnd()));
+        ps.setString(16, req.getThreadName());
+        ps.setString(17, req.getBodyContent());
+        ps.setBoolean(18, req.isLinked());
+        ps.setString(19, req.getId());
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -309,34 +264,27 @@ INSERT INTO e_lcl_rqt(va_nam,va_lct,dh_str,dh_end,va_usr,va_thr,va_fail,va_typ,i
         completableProcess(SMTP_REQUEST, requests, toUpdate ->
                 executeBatch("""
 update e_smtp_rqt set va_hst = ?, cd_prt = ?, va_pcl = ?, va_usr = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_cmd = ?, va_fail = ?
-where id_smtp_rqt = ?::uuid""", toUpdate, (ps, req) -> {
-            ps.setString(1, req.getHost());
-            ps.setInt(2, req.getPort());
-            ps.setString(3, req.getProtocol());
-            ps.setString(4, req.getUser());
-            ps.setTimestamp(5, fromNullableInstant(req.getStart()));
-            ps.setTimestamp(6, fromNullableInstant(req.getEnd()));
-            ps.setString(7, req.getThreadName());
-            ps.setString(8, req.getCommand());
-            ps.setBoolean(9, req.isFailed());
-            ps.setString(10, req.getId());
-        }), toInsert ->
+where id_smtp_rqt = ?::uuid""", toUpdate, TraceDao::mailRequestSetter), toInsert ->
                 executeBatch("""
-insert into e_smtp_rqt(id_smtp_rqt,va_hst,cd_prt,va_pcl,va_usr,dh_str,dh_end,va_thr,va_cmd,va_fail,cd_prn_ses,cd_ins)
-values(?::uuid,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
-            ps.setString(1, req.getId());
-            ps.setString(2, req.getHost());
-            ps.setInt(3, req.getPort());
-            ps.setString(4, req.getProtocol());
-            ps.setString(5, req.getUser());
-            ps.setTimestamp(6, fromNullableInstant(req.getStart()));
-            ps.setTimestamp(7, fromNullableInstant(req.getEnd()));
-            ps.setString(8, req.getThreadName());
-            ps.setString(9, req.getCommand());
-            ps.setBoolean(10, req.isFailed());
+insert into e_smtp_rqt(va_hst,cd_prt,va_pcl,va_usr,dh_str,dh_end,va_thr,va_cmd,va_fail,id_smtp_rqt,cd_prn_ses,cd_ins)
+values(?,?,?,?,?,?,?,?,?,?::uuid,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
+            mailRequestSetter(ps, req);
             ps.setString(11, req.getSessionId());
             ps.setString(12, req.getInstanceId());
         }));
+    }
+
+    static void mailRequestSetter(PreparedStatement ps, MailRequest req) throws SQLException {
+        ps.setString(1, req.getHost());
+        ps.setInt(2, req.getPort());
+        ps.setString(3, req.getProtocol());
+        ps.setString(4, req.getUser());
+        ps.setTimestamp(5, fromNullableInstant(req.getStart()));
+        ps.setTimestamp(6, fromNullableInstant(req.getEnd()));
+        ps.setString(7, req.getThreadName());
+        ps.setString(8, req.getCommand());
+        ps.setBoolean(9, req.isFailed());
+        ps.setString(10, req.getId());
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -344,38 +292,29 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
         completableProcess(FTP_REQUEST, requests, toUpdate ->
                 executeBatch("""
 update e_ftp_rqt set va_hst = ?, cd_prt = ?, va_pcl = ?, va_srv_vrs = ?, va_clt_vrs = ?, va_usr = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_cmd = ?, va_fail = ?
-where id_ftp_rqt = ?::uuid""", toUpdate, (ps, req) -> {
-            ps.setString(1, req.getHost());
-            ps.setInt(2, req.getPort());
-            ps.setString(3, req.getProtocol());
-            ps.setString(4, req.getServerVersion());
-            ps.setString(5, req.getClientVersion());
-            ps.setString(6, req.getUser());
-            ps.setTimestamp(7, fromNullableInstant(req.getStart()));
-            ps.setTimestamp(8, fromNullableInstant(req.getEnd()));
-            ps.setString(9, req.getThreadName());
-            ps.setString(10, req.getCommand());
-            ps.setBoolean(11, req.isFailed());
-            ps.setString(12, req.getId());
-        }), toInsert ->
+where id_ftp_rqt = ?::uuid""", toUpdate, TraceDao::ftpRequestSetter), toInsert ->
                 executeBatch("""
-insert into e_ftp_rqt(id_ftp_rqt,va_hst,cd_prt,va_pcl,va_srv_vrs,va_clt_vrs,va_usr,dh_str,dh_end,va_thr,va_cmd,va_fail,cd_prn_ses,cd_ins)
-values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
-                    ps.setString(1, req.getId());
-                    ps.setString(2, req.getHost());
-                    ps.setInt(3, req.getPort());
-                    ps.setString(4, req.getProtocol());
-                    ps.setString(5, req.getServerVersion());
-                    ps.setString(6, req.getClientVersion());
-                    ps.setString(7, req.getUser());
-                    ps.setTimestamp(8, fromNullableInstant(req.getStart()));
-                    ps.setTimestamp(9, fromNullableInstant(req.getEnd()));
-                    ps.setString(10, req.getThreadName());
-                    ps.setString(11, req.getCommand());
-                    ps.setBoolean(12, req.isFailed());
+insert into e_ftp_rqt(va_hst,cd_prt,va_pcl,va_srv_vrs,va_clt_vrs,va_usr,dh_str,dh_end,va_thr,va_cmd,va_fail,id_ftp_rqt,cd_prn_ses,cd_ins)
+values(?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
+                    ftpRequestSetter(ps, req);
                     ps.setString(13, req.getSessionId());
                     ps.setString(14, req.getInstanceId());
                 }));
+    }
+
+    static void ftpRequestSetter(PreparedStatement ps, FtpRequest req) throws SQLException {
+        ps.setString(1, req.getHost());
+        ps.setInt(2, req.getPort());
+        ps.setString(3, req.getProtocol());
+        ps.setString(4, req.getServerVersion());
+        ps.setString(5, req.getClientVersion());
+        ps.setString(6, req.getUser());
+        ps.setTimestamp(7, fromNullableInstant(req.getStart()));
+        ps.setTimestamp(8, fromNullableInstant(req.getEnd()));
+        ps.setString(9, req.getThreadName());
+        ps.setString(10, req.getCommand());
+        ps.setBoolean(11, req.isFailed());
+        ps.setString(12, req.getId());
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -383,80 +322,60 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) ->
         completableProcess(LDAP_REQUEST, requests, toUpdate ->
                 executeBatch("""
 update e_ldap_rqt set va_hst = ?, cd_prt = ?, va_pcl = ?, va_usr = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_cmd = ?, va_fail = ?
-where id_ldap_rqt = ?::uuid""", toUpdate, (ps, req) -> {
-                ps.setString(1, req.getHost());
-                ps.setInt(2, req.getPort());
-                ps.setString(3, req.getProtocol());
-                ps.setString(4, req.getUser());
-                ps.setTimestamp(5, fromNullableInstant(req.getStart()));
-                ps.setTimestamp(6, fromNullableInstant(req.getEnd()));
-                ps.setString(7, req.getThreadName());
-                ps.setString(8, req.getCommand());
-                ps.setBoolean(9, req.isFailed());
-                ps.setString(10, req.getId());
-            }), toInsert ->
+where id_ldap_rqt = ?::uuid""", toUpdate, TraceDao::ldapRequestSetter), toInsert ->
                 executeBatch("""
-insert into e_ldap_rqt(id_ldap_rqt,va_hst,cd_prt,va_pcl,va_usr,dh_str,dh_end,va_thr,va_cmd,va_fail,cd_prn_ses,cd_ins)
-values(?::uuid,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
-                ps.setString(1, req.getId());
-                ps.setString(2, req.getHost());
-                ps.setInt(3, req.getPort());
-                ps.setString(4, req.getProtocol());
-                ps.setString(5, req.getUser());
-                ps.setTimestamp(6, fromNullableInstant(req.getStart()));
-                ps.setTimestamp(7, fromNullableInstant(req.getEnd()));
-                ps.setString(8, req.getThreadName());
-                ps.setString(9, req.getCommand());
-                ps.setBoolean(10, req.isFailed());
+insert into e_ldap_rqt(va_hst,cd_prt,va_pcl,va_usr,dh_str,dh_end,va_thr,va_cmd,va_fail,id_ldap_rqt,cd_prn_ses,cd_ins)
+values(?,?,?,?,?,?,?,?,?,?::uuid,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
+                ldapRequestSetter(ps, req);
                 ps.setString(11, req.getSessionId());
                 ps.setString(12, req.getInstanceId());
             }));
     }
 
+    static void ldapRequestSetter(PreparedStatement ps, DirectoryRequest req) throws SQLException {
+        ps.setString(1, req.getHost());
+        ps.setInt(2, req.getPort());
+        ps.setString(3, req.getProtocol());
+        ps.setString(4, req.getUser());
+        ps.setTimestamp(5, fromNullableInstant(req.getStart()));
+        ps.setTimestamp(6, fromNullableInstant(req.getEnd()));
+        ps.setString(7, req.getThreadName());
+        ps.setString(8, req.getCommand());
+        ps.setBoolean(9, req.isFailed());
+        ps.setString(10, req.getId());
+    }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveDatabaseRequests(List<DatabaseRequest> requests) {
         completableProcess(JDBC_REQUEST, requests, toUpdate ->
                 executeBatch("""
 update e_dtb_rqt set va_hst = ?, cd_prt = ?, va_she = ?, va_nam = ?, va_sha = ?, dh_str = ?, dh_end = ?, va_usr = ?, va_thr = ?, va_drv = ?, va_prd_nam = ?, va_prd_vrs = ?, va_cmd = ?, va_fail = ?
-where id_dtb_rqt = ?::uuid""", toUpdate, (ps, req) -> {
-                ps.setString(1, req.getHost());
-                ps.setInt(2, req.getPort());
-                ps.setString(3, req.getScheme());
-                ps.setString(4, req.getName());
-                ps.setString(5, req.getSchema());
-                ps.setTimestamp(6, fromNullableInstant(req.getStart()));
-                ps.setTimestamp(7, fromNullableInstant(req.getEnd()));
-                ps.setString(8, req.getUser());
-                ps.setString(9, req.getThreadName());
-                ps.setString(10, req.getDriverVersion());
-                ps.setString(11, req.getProductName());
-                ps.setString(12, req.getProductVersion());
-                ps.setString(13, req.getCommand());
-                ps.setBoolean(14, req.isFailed());
-                ps.setString(15, req.getId());
-            }), toInsert ->
+where id_dtb_rqt = ?::uuid""", toUpdate, TraceDao::databaseRequestSetter), toInsert ->
                 executeBatch("""
-insert into e_dtb_rqt(id_dtb_rqt,va_hst,cd_prt,va_she,va_nam,va_sha,dh_str,dh_end,va_usr,va_thr,va_drv,va_prd_nam,va_prd_vrs,va_cmd,va_fail,cd_prn_ses,cd_ins)
-values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
-                ps.setString(1, req.getId());
-                ps.setString(2, req.getHost());
-                ps.setInt(3, req.getPort());
-                ps.setString(4, req.getScheme());
-                ps.setString(5, req.getName());
-                ps.setString(6, req.getSchema());
-                ps.setTimestamp(7, fromNullableInstant(req.getStart()));
-                ps.setTimestamp(8, fromNullableInstant(req.getEnd()));
-                ps.setString(9, req.getUser());
-                ps.setString(10, req.getThreadName());
-                ps.setString(11, req.getDriverVersion());
-                ps.setString(12, req.getProductName());
-                ps.setString(13, req.getProductVersion());
-                ps.setString(14, req.getCommand());
-                ps.setBoolean(15, req.isFailed());
+insert into e_dtb_rqt(va_hst,cd_prt,va_she,va_nam,va_sha,dh_str,dh_end,va_usr,va_thr,va_drv,va_prd_nam,va_prd_vrs,va_cmd,va_fail,id_dtb_rqt,cd_prn_ses,cd_ins)
+values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid,?::uuid)""", toInsert, (ps, req) -> {
+                databaseRequestSetter(ps, req);
                 ps.setString(16, req.getSessionId());
                 ps.setString(17, req.getInstanceId());
             }));
+    }
+
+    static void databaseRequestSetter(PreparedStatement ps, DatabaseRequest req) throws SQLException {
+        ps.setString(1, req.getHost());
+        ps.setInt(2, req.getPort());
+        ps.setString(3, req.getScheme());
+        ps.setString(4, req.getName());
+        ps.setString(5, req.getSchema());
+        ps.setTimestamp(6, fromNullableInstant(req.getStart()));
+        ps.setTimestamp(7, fromNullableInstant(req.getEnd()));
+        ps.setString(8, req.getUser());
+        ps.setString(9, req.getThreadName());
+        ps.setString(10, req.getDriverVersion());
+        ps.setString(11, req.getProductName());
+        ps.setString(12, req.getProductVersion());
+        ps.setString(13, req.getCommand());
+        ps.setBoolean(14, req.isFailed());
+        ps.setString(15, req.getId());
     }
 
     private <T extends CompletableMetric> void completableProcess(
@@ -476,7 +395,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, r
             if(completedMetrics.length > 0) {
                 template.update(new StringBuilder("DELETE FROM e_cmp_mtc WHERE id_cmp_mtc IN(?::uuid")
                 		.append(",?::uuid".repeat(completedMetrics.length - 1))
-                		.append(" AND cd_typ=").append(type.getValue()).toString(), completedMetrics);
+                		.append(") AND cd_typ=").append(type.getValue()).toString(), completedMetrics);
             }
         }
         //savePoint !!
