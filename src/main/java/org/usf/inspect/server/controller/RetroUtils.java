@@ -12,6 +12,7 @@ import org.usf.inspect.server.model.wrapper.RestSessionWrapper;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -78,9 +79,7 @@ public final class RetroUtils {
             }, traces::add);
             toV4(s.getId(), s.getRestRequests(), (e) -> {
                 e.setLinked(nonNull(e.getId()));
-                if(isNull(e.getId())){ //req.id = ses.id
-                    e.setId(nextId());
-                }
+
                 var stage = createStage(e.getStart(), e.getEnd(), HttpRequestStage::new);
                 if(e.getException() != null) {
                     if(e.getException().getType() == null){
@@ -92,7 +91,7 @@ public final class RetroUtils {
                 }
                 return List.of(stage);
             }, traces::add);
-            toV4(s.getId(), s.getLocalRequests(), null, traces::add);
+            toV4(s.getId(), s.getLocalRequests(), r-> Collections.emptyList(), traces::add);
         }
         return traces;
     }
@@ -103,13 +102,15 @@ public final class RetroUtils {
                 var req = o.unwrap();
                 req.setSessionId(sessionId);
                 consumer.accept(req);
-                if(fn != null) {
-                    var inc = 0;
-                    for(var s : fn.apply(o)) {
-                        s.setRequestId(req.getId());
-                        s.setOrder(inc++);
-                        consumer.accept(s);
-                    }
+                var list = fn.apply(o);
+                if(isNull(req.getId())){ //req.id = ses.id
+                    req.setId(nextId());
+                }
+                var inc = 0;
+                for(var s : list) {
+                    s.setRequestId(req.getId());
+                    s.setOrder(inc++);
+                    consumer.accept(s);
                 }
             }
         }
