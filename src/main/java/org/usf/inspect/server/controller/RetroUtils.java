@@ -18,8 +18,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
+import static java.util.Objects.*;
 import static org.usf.inspect.core.ExceptionInfo.mainCauseException;
 import static org.usf.inspect.core.HttpAction.PROCESS;
 import static org.usf.inspect.core.RequestMask.*;
@@ -67,6 +66,14 @@ public final class RetroUtils {
             }, traces::add);
             toV4(s.getId(), s.getMailRequests(), m -> {
                 m.setFailed(isFailed(m.getActions()));
+                if(nonNull(m.getActions())) {
+                    var sa = m.getActions().stream().filter(a -> "SEND".equals(a.getName())).toList();
+                    if(nonNull(m.getMails()) && m.getMails().size() == sa.size()){
+                        for(var i = 0; i < m.getMails().size(); i++) {
+                            sa.get(i).setMail(m.getMails().get(i));
+                        }
+                    }
+                }
                 return m.getActions();
             }, traces::add);
             toV4(s.getId(), s.getRestRequests(), (e) -> {
