@@ -46,7 +46,7 @@ public final class RetroUtils {
                 }
                 var restSession = rs.unwrap();
                 restSession.setRequestsMask(mask(rs));
-                var stage = createStage(restSession.getId(), restSession.getStart(), restSession.getEnd(), HttpSessionStage::new);
+                var stage = createStage(restSession.getStart(), restSession.getEnd(), HttpSessionStage::new);
                 stage.setRequestId(rs.getId());
                 stage.setOrder(0);
                 traces.add(stage);
@@ -70,8 +70,11 @@ public final class RetroUtils {
                 return m.getActions();
             }, traces::add);
             toV4(s.getId(), s.getRestRequests(), (e) -> {
-                var stage = createStage(e.getId(), e.getStart(), e.getEnd(), HttpRequestStage::new);
                 e.setLinked(nonNull(e.getId()));
+                if(isNull(e.getId())){ //req.id = ses.id
+                    e.setId(nextId());
+                }
+                var stage = createStage(e.getStart(), e.getEnd(), HttpRequestStage::new);
                 if(e.getException() != null) {
                     if(e.getException().getType() == null){
                         e.setBodyContent(e.getException().getMessage());
@@ -93,9 +96,6 @@ public final class RetroUtils {
                 var req = o.unwrap();
                 req.setSessionId(sessionId);
                 consumer.accept(req);
-                if(isNull(req.getId())){ //req.id = ses.id
-                    req.setId(nextId());
-                }
                 if(fn != null) {
                     var inc = 0;
                     for(var s : fn.apply(o)) {
@@ -108,13 +108,11 @@ public final class RetroUtils {
         }
     }
 
-    private static <T extends AbstractStage> T createStage(String id, Instant start, Instant end, Supplier<T> supp) {
+    private static <T extends AbstractStage> T createStage(Instant start, Instant end, Supplier<T> supp) {
         var stg = supp.get();
         stg.setName(PROCESS.name());
         stg.setStart(start);
         stg.setEnd(end);
-        stg.setRequestId(id);
-        stg.setOrder(0);
         return stg;
     }
 
