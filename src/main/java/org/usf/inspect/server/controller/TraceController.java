@@ -127,6 +127,7 @@ public class TraceController {
 
     @PostMapping("state/{state}")
     public void updateState(@PathVariable BasicDispatchState state){
+		log.info("update dispatcher state to {}", state);
 		dispatcher.setState(state);
     }
 
