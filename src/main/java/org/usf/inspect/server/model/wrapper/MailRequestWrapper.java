@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;
 import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.core.Mail;
 import org.usf.inspect.core.MailRequest;
 import org.usf.inspect.core.MailRequestStage;
 
@@ -22,6 +23,7 @@ public class MailRequestWrapper implements EventTrace, Wrapper<MailRequest> {
     private final MailRequest request = new MailRequest();
 
     private List<MailRequestStage> actions;
+    private List<Mail> mails;
 
     @Override
     public MailRequest unwrap() {
