@@ -134,14 +134,14 @@ public class PurgeDao {
                 format(DELETE_EXCEPTION_BY_NO_INSTANCE, SMTP, "e_smtp_rqt", "id_smtp_rqt"),
                 format(DELETE_EXCEPTION_BY_NO_INSTANCE, FTP, "e_ftp_rqt", "id_ftp_rqt"),
                 format(DELETE_EXCEPTION_BY_NO_INSTANCE, LOCAL, "e_lcl_rqt", "id_lcl_rqt"),
-                format(DELETE_COMPLETABLE_METRIC, RequestCompletableType.FTP_REQUEST, "e_ftp_rqt", "id_ftp_rqt"),
-                format(DELETE_COMPLETABLE_METRIC, RequestCompletableType.JDBC_REQUEST, "e_dtb_rqt", "id_dtb_rqt"),
-                format(DELETE_COMPLETABLE_METRIC, RequestCompletableType.LDAP_REQUEST, "e_ldap_rqt", "id_ldap_rqt"),
-                format(DELETE_COMPLETABLE_METRIC, RequestCompletableType.REST_REQUEST, "e_rst_rqt", "id_rst_rqt"),
-                format(DELETE_COMPLETABLE_METRIC, RequestCompletableType.REST_SESSION, "e_rst_ses", "id_ses"),
-                format(DELETE_COMPLETABLE_METRIC, RequestCompletableType.SMTP_REQUEST, "e_smtp_rqt", "id_smtp_rqt"),
-                format(DELETE_COMPLETABLE_METRIC, RequestCompletableType.LOCAL_REQUEST, "e_lcl_rqt", "id_lcl_rqt"),
-                format(DELETE_COMPLETABLE_METRIC, RequestCompletableType.MAIN_SESSION, "e_main_ses", "id_ses")
+                format(DELETE_COMPLETABLE_METRIC, RequestCompletableType.FTP_REQUEST.getValue(), "e_ftp_rqt", "id_ftp_rqt"),
+                format(DELETE_COMPLETABLE_METRIC, RequestCompletableType.JDBC_REQUEST.getValue(), "e_dtb_rqt", "id_dtb_rqt"),
+                format(DELETE_COMPLETABLE_METRIC, RequestCompletableType.LDAP_REQUEST.getValue(), "e_ldap_rqt", "id_ldap_rqt"),
+                format(DELETE_COMPLETABLE_METRIC, RequestCompletableType.REST_REQUEST.getValue(), "e_rst_rqt", "id_rst_rqt"),
+                format(DELETE_COMPLETABLE_METRIC, RequestCompletableType.REST_SESSION.getValue(), "e_rst_ses", "id_ses"),
+                format(DELETE_COMPLETABLE_METRIC, RequestCompletableType.SMTP_REQUEST.getValue(), "e_smtp_rqt", "id_smtp_rqt"),
+                format(DELETE_COMPLETABLE_METRIC, RequestCompletableType.LOCAL_REQUEST.getValue(), "e_lcl_rqt", "id_lcl_rqt"),
+                format(DELETE_COMPLETABLE_METRIC, RequestCompletableType.MAIN_SESSION.getValue(), "e_main_ses", "id_ses")
         );
     }
 
