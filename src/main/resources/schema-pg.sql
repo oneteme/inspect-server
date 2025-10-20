@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS e_rst_ses (
     va_usr_agt varchar,
     va_cch_ctr varchar,
     va_msk int,
+    va_lnk boolean,
     cd_ins UUID
 )
 PARTITION BY RANGE (dh_str);
