@@ -5,6 +5,10 @@ server:
     mime-types: application/json
     min-response-size: 1MB
 spring:
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
   application:
     name: inspect
   datasource:
@@ -33,7 +37,7 @@ logging:
 
 inspect:
   collector: 
-    enabled: true #default=false, enables the collector
+    enabled: false #default=false, enables the collector
     debug-mode: true #default=false, enables collector debug mode
     scheduling:
       interval: 15s #default=60s, interval between trace dispatches

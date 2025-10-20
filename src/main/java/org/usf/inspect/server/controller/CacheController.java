@@ -34,7 +34,7 @@ public class CacheController {
     @Value("${spring.profiles.active:}")
     private String activeProfile;
 
-	private String host = null;
+	private String host = "https://inspect-server-dev-asm.calamar.had.enedis.fr";
 
 	public CacheController(ObjectMapper mapper, DatabaseDispatcherService service, RestTemplateBuilder builder) {
 		this.service = service;
@@ -77,7 +77,7 @@ public class CacheController {
             if(nonNull(arr) && arr.length > 0) {
                 var cnt = service.addTraces(asList(arr)); //save sessions on database
                 if(!cnt.isEmpty()) {
-                    log.warn("{} sessions was imported from file, but {} sessions was not saved", arr.length, cnt);
+                    log.warn("{} sessions was imported from file, but {} sessions was not saved", arr.length, cnt.size());
                 }
                 return arr.length;
             }
