@@ -34,7 +34,7 @@ public class CacheController {
     @Value("${spring.profiles.active:}")
     private String activeProfile;
 
-	private String host = "https://inspect-server-dev-asm.calamar.had.enedis.fr";
+	private String host = null;
 
 	public CacheController(ObjectMapper mapper, DatabaseDispatcherService service, RestTemplateBuilder builder) {
 		this.service = service;
