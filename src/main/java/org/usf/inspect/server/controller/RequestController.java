@@ -152,6 +152,14 @@ public class RequestController {
         return requestService.getLdapRequestsByFilter(jsf);
     }
 
+    @GetMapping("session/{sessionId}/log/entry")
+    public List<LogEntry> getLogEntriesBySessionId(
+            @QueryRequestFilter(view = "log_entry",
+                    column = "start,log_level,log_message,stacktrace", order = "start.desc") QueryComposer request,
+            @PathVariable String sessionId)  {
+        return INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(sessionId))), InspectMappers.instanceLogEntryMapper(mapper));
+    }
+
 
     @GetMapping("session/rest")
     public List<RestSessionDto> getRestSessions(
