@@ -282,3 +282,48 @@ create table if not exists e_cmp_mtc (
     id_cmp_mtc uuid,
     cd_typ smallint
 );
+
+
+-- Ajouter les index du cd instance dans les requests
+CREATE UNIQUE INDEX IF NOT EXISTS idx_main_ses_id_ses_dh_str ON e_main_ses(id_ses, dh_str DESC);
+CREATE INDEX IF NOT EXISTS idx_main_ses_cd_ins ON e_main_ses(cd_ins);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_rst_ses_id_ses_dh_str ON e_rst_ses(id_ses, dh_str DESC);
+CREATE INDEX IF NOT EXISTS idx_rst_ses_cd_ins ON e_rst_ses(cd_ins);
+CREATE INDEX IF NOT EXISTS idx_rst_ses_stg_cd_prn_ses ON e_rst_ses_stg(cd_prn_ses);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_rst_rqt_id_rst_rqt_dh_str ON e_rst_rqt(id_rst_rqt, dh_str DESC);
+CREATE INDEX IF NOT EXISTS idx_rst_rqt_cd_prn_ses ON e_rst_rqt(cd_prn_ses);
+CREATE INDEX IF NOT EXISTS idx_rst_rqt_va_hst ON e_rst_rqt(va_hst);
+CREATE INDEX IF NOT EXISTS idx_rst_rqt_cd_ins ON e_rst_rqt(cd_ins);
+CREATE INDEX IF NOT EXISTS idx_rst_rqt_stg_cd_rst_rqt ON e_rst_rqt_stg(cd_rst_rqt);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_smtp_rqt_id_smtp_rqt_dh_str ON e_smtp_rqt(id_smtp_rqt, dh_str DESC);
+CREATE INDEX IF NOT EXISTS idx_smtp_rqt_cd_prn_ses ON e_smtp_rqt(cd_prn_ses);
+CREATE INDEX IF NOT EXISTS idx_smtp_rqt_va_hst ON e_smtp_rqt(va_hst);
+CREATE INDEX IF NOT EXISTS idx_smtp_rqt_cd_ins ON e_smtp_rqt(cd_ins);
+CREATE INDEX IF NOT EXISTS idx_smtp_stg_cd_smtp_rqt ON e_smtp_stg(cd_smtp_rqt);
+CREATE INDEX IF NOT EXISTS idx_smtp_mail_cd_smtp_rqt ON e_smtp_mail(cd_smtp_rqt);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ftp_rqt_id_ftp_rqt_dh_str ON e_ftp_rqt(id_ftp_rqt, dh_str DESC);
+CREATE INDEX IF NOT EXISTS idx_ftp_rqt_cd_prn_ses ON e_ftp_rqt(cd_prn_ses);
+CREATE INDEX IF NOT EXISTS idx_ftp_rqt_va_hst ON e_ftp_rqt(va_hst);
+CREATE INDEX IF NOT EXISTS idx_ftp_rqt_cd_ins ON e_ftp_rqt(cd_ins);
+CREATE INDEX IF NOT EXISTS idx_ftp_stg_cd_ftp_rqt ON e_ftp_stg(cd_ftp_rqt);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ldap_rqt_id_ldap_rqt_dh_str ON e_ldap_rqt(id_ldap_rqt, dh_str DESC);
+CREATE INDEX IF NOT EXISTS idx_ldap_rqt_cd_prn_ses ON e_ldap_rqt(cd_prn_ses);
+CREATE INDEX IF NOT EXISTS idx_ldap_rqt_va_hst ON e_ldap_rqt(va_hst);
+CREATE INDEX IF NOT EXISTS idx_ldap_rqt_cd_ins ON e_ldap_rqt(cd_ins);
+CREATE INDEX IF NOT EXISTS idx_ldap_stg_cd_ldap_rqt ON e_ldap_stg(cd_ldap_rqt);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_dtb_rqt_id_dtb_rqt_dh_str ON e_dtb_rqt(id_dtb_rqt, dh_str DESC);
+CREATE INDEX IF NOT EXISTS idx_dtb_rqt_cd_prn_ses ON e_dtb_rqt(cd_prn_ses);
+CREATE INDEX IF NOT EXISTS idx_dtb_rqt_va_hst ON e_dtb_rqt(va_hst);
+CREATE INDEX IF NOT EXISTS idx_dtb_rqt_cd_ins ON e_dtb_rqt(cd_ins);
+CREATE INDEX IF NOT EXISTS idx_dtb_stg_cd_dtb_rqt ON e_dtb_stg(cd_dtb_rqt);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_lcl_rqt_id_lcl_rqt_dh_str ON e_lcl_rqt(id_lcl_rqt, dh_str DESC);
+CREATE INDEX IF NOT EXISTS idx_lcl_rqt_cd_prn_ses ON e_lcl_rqt(cd_prn_ses);
+CREATE INDEX IF NOT EXISTS idx_exc_inf_cd_rqt ON e_exc_inf(cd_rqt);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_env_ins_id_ins ON e_env_ins(id_ins);
+CREATE INDEX IF NOT EXISTS idx_env_ins_va_app_va_env ON e_env_ins(va_app, va_env);
+CREATE INDEX IF NOT EXISTS idx_usr_acn_cd_prn_ses ON e_usr_acn(cd_prn_ses);
+CREATE INDEX IF NOT EXISTS idx_ins_trc_cd_ins ON e_ins_trc(cd_ins);
+CREATE INDEX IF NOT EXISTS idx_log_ent_cd_ins ON e_log_ent(cd_ins);
+CREATE INDEX IF NOT EXISTS idx_log_ent_cd_prn_ses ON e_log_ent(cd_prn_ses);
+CREATE INDEX IF NOT EXISTS idx_rsc_usg_cd_ins ON e_rsc_usg(cd_ins);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_cmp_mtc_id_cmp_mtc_va_typ ON e_cmp_mtc(id_cmp_mtc, cd_typ);
