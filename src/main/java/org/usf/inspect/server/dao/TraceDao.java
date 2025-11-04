@@ -121,13 +121,13 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     public void saveRestSessions(List<RestSession> sessions) {
         completableProcess(REST_SESSION, sessions, toUpdate ->
                 executeBatch("""
-update e_rst_ses set va_mth = ?, va_pcl = ?, va_hst = ?, cd_prt = ?, va_pth = ?, va_qry = ?, va_cnt_typ = ?, va_ath_sch = ?, cd_stt = ?, va_i_sze = ?, va_o_sze = ?, va_i_cnt_enc = ?, va_o_cnt_enc = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_err_typ = ?, va_err_msg = ?, va_stk = ?, va_nam = ?, va_usr = ?, va_usr_agt = ?, va_cch_ctr = ?, va_msk = ?, va_lnk = ?
+update e_rst_ses set va_mth = ?, va_pcl = ?, va_hst = ?, cd_prt = ?, va_pth = ?, va_qry = ?, va_cnt_typ = ?, va_ath_sch = ?, cd_stt = ?, va_i_sze = ?, va_o_sze = ?, va_i_cnt_enc = ?, va_o_cnt_enc = ?, dh_str = ?, dh_end = ?, va_thr = ?, va_err_typ = ?, va_err_msg = ?, va_stk = ?, va_nam = ?, va_usr = ?, va_usr_agt = ?, va_cch_ctr = ?, va_msk = ?
 where id_ses = ?::uuid""", toUpdate, (ps, ses) -> {
             restSessionSetter(ps, ses, mapper);
         }), toInsert ->
                 executeBatch("""
-insert into e_rst_ses(va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_cnt_typ,va_ath_sch,cd_stt,va_i_sze,va_o_sze,va_i_cnt_enc,va_o_cnt_enc,dh_str,dh_end,va_thr,va_err_typ,va_err_msg,va_stk,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_msk,va_lnk,id_ses,cd_ins)
-values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, ses) -> {
+insert into e_rst_ses(va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_cnt_typ,va_ath_sch,cd_stt,va_i_sze,va_o_sze,va_i_cnt_enc,va_o_cnt_enc,dh_str,dh_end,va_thr,va_err_typ,va_err_msg,va_stk,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_msk,id_ses,cd_ins)
+values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", toInsert, (ps, ses) -> {
             restSessionSetter(ps, ses, mapper);
             ps.setString(26, ses.getInstanceId());
         }));
@@ -159,8 +159,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid)""", to
         ps.setString(22, userAgentExtract(ses.getUserAgent()));
         ps.setString(23, ses.getCacheControl());
         ps.setInt(24, ses.getRequestsMask());
-        ps.setBoolean(25, ses.isLinked());
-        ps.setString(26, ses.getId());
+        ps.setString(25, ses.getId());
     }
 
     @Transactional(rollbackFor = Throwable.class)
