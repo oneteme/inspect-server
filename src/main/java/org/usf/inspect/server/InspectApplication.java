@@ -16,9 +16,12 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.usf.inspect.core.*;
+import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
+import org.usf.inspect.server.model.InstanceTrace;
 import org.usf.inspect.server.model.wrapper.MainSessionWrapper;
 import org.usf.inspect.server.model.wrapper.RestSessionWrapper;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.springframework.http.converter.json.Jackson2ObjectMapperBuilder.json;
@@ -38,7 +41,7 @@ public class InspectApplication {
 	@Primary
 	ObjectMapper mapper(){
 		var mapper = json()
-				.modules(new JavaTimeModule(), new ParameterNamesModule(), coreModule())
+				.modules(new JavaTimeModule(), new ParameterNamesModule(), coreModule().registerSubtypes(new NamedType(InstanceTrace.class, "inst-trc"), new NamedType(InstanceEnvironmentUpdate.class, "inst-updt")))
 				.build()
 			    .setSerializationInclusion(JsonInclude.Include.NON_EMPTY); // !null & !empty
 		mapper.configure(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL, true);
@@ -58,8 +61,11 @@ public class InspectApplication {
 
 	@Bean
 	EventTraceScheduledDispatcher dispatcher(InspectServerConfiguration conf, DispatcherAgent agent, ObjectMapper mapper) {
-		var dump = new EventTraceDumper(conf.getTracing().getDump().getLocation(), mapper);
-		var dspt = new EventTraceScheduledDispatcher(conf.getTracing(), conf.getScheduling(), agent, List.of(dump));
+		var hooks = new ArrayList<DispatchHook>();
+		if(conf.getTracing().getDump().isEnabled()) {
+			hooks.add(new EventTraceDumper(conf.getTracing().getDump().getLocation(), mapper));
+		}
+		var dspt = new EventTraceScheduledDispatcher(conf.getTracing(), conf.getScheduling(), agent, hooks);
 		dspt.setState(DISABLE); //until ready state
 		return dspt;
 	}
