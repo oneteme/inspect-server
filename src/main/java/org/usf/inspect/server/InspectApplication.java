@@ -41,7 +41,9 @@ public class InspectApplication {
 	@Primary
 	ObjectMapper mapper(){
 		var mapper = json()
-				.modules(new JavaTimeModule(), new ParameterNamesModule(), coreModule().registerSubtypes(new NamedType(InstanceTrace.class, "inst-trc"), new NamedType(InstanceEnvironmentUpdate.class, "inst-updt")))
+				.modules(new JavaTimeModule(), new ParameterNamesModule(), coreModule().registerSubtypes(
+						new NamedType(InstanceTrace.class, "inst-trc"), 
+						new NamedType(InstanceEnvironmentUpdate.class, "inst-updt")))
 				.build()
 			    .setSerializationInclusion(JsonInclude.Include.NON_EMPTY); // !null & !empty
 		mapper.configure(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL, true);
