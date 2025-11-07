@@ -196,6 +196,15 @@ public class RequestController {
                 .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null));
     }
 
+    @GetMapping("session/rest/{idSession}/stage")
+    public ResponseEntity<List<HttpSessionStage>> getRestSessionStages (
+            @QueryRequestFilter(view = "rest_session_stage",
+                    column = "name,order,start,end",
+                    order = "order") QueryComposer request,
+            @PathVariable String idSession) {
+        return ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.restSessionStageMapper()));
+    }
+
     @GetMapping("{type}/{id}/parent")
     public ResponseEntity<Map<String, String>> getSessionParent(
             @PathVariable String type,

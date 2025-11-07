@@ -346,6 +346,17 @@ public final class InspectMappers {
         };
     }
 
+    public static RowMapper<HttpSessionStage> restSessionStageMapper(){
+        return rs -> {
+            HttpSessionStage out= new HttpSessionStage();
+            out.setName(rs.getString(NAME.reference()));
+            out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
+            out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+            out.setOrder(rs.getInt(ORDER.reference()));
+            return out;
+        };
+    }
+
     public static RowMapper<FtpRequestDto> ftpRequestLazyMapper(){
         return rs -> {
             FtpRequestDto out = createBaseFtpRequest(rs);
