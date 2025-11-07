@@ -4,8 +4,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.usf.inspect.core.InstanceEnvironment;
+import org.usf.inspect.core.SessionManager;
 import org.usf.inspect.server.dao.PurgeDao;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -29,13 +31,10 @@ public class PurgeService {
             var now = LocalDate.now().atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
             var instances = purgeDao.getInstances(null);
             for (InstanceEnvironment instance : instances) {
-                if(instance.getConfiguration() != null) {
-                    Instant dateLimit = now.minus(instance.getConfiguration().getTracing().getRemote().getRetentionMaxAge());
-                    var deleted = purgeDao.purgeByInstance(dateLimit, instance.getEnv(), instance.getName());
-                    log.info("[{}]:{} => {} rows deleted before {}", instance.getEnv(), instance.getName(), IntStream.of(deleted).sum(), dateLimit);
-                } else {
-                    log.info("[{}]:{} => no configuration", instance.getEnv(), instance.getName());
-                }
+                Instant dateLimit = now.minus(instance.getConfiguration() != null ? instance.getConfiguration().getTracing().getRemote().getRetentionMaxAge() : Duration.ofDays(60));
+                var deleted = purgeDao.purgeByInstance(dateLimit, instance.getEnv(), instance.getName());
+                log.info("------ Purge complete ------ [{}]:[{}] — [{}] rows deleted before [{}]", instance.getEnv(), instance.getName(), IntStream.of(deleted).sum(), dateLimit);
+                SessionManager.emitInfo("Purge completed for instance [" + instance.getEnv() + "]:[" + instance.getName() + "] — [" + IntStream.of(deleted).sum() + "] rows deleted before [" + dateLimit + "]");
             }
         }
     }
@@ -55,24 +54,27 @@ public class PurgeService {
         public void execute() {
             for (String app : apps) {
                 var deleted = purgeDao.purgeByInstance(dateLimit, env, app);
-                log.info("[{}]:{} => {} rows deleted before {}", env, app, IntStream.of(deleted).sum(), dateLimit);
+                log.info("------ Purge complete ------ [{}]:[{}] — [{}] rows deleted before [{}]", env, app, IntStream.of(deleted).sum(), dateLimit);
+                SessionManager.emitInfo("Purge completed for instance [" + env + "]:[" + app + "] — [" + IntStream.of(deleted).sum() + "] rows deleted before [" + dateLimit + "]");
             }
         }
     }
 
     private void performPurge(PurgeStrategy strategy) {
-        log.info("[start] => purging old data");
+        log.info("------ Purge start ------");
         try {
+            log.info("------ Purge execute ------");
             strategy.execute();
         } catch(Exception e) {
-            log.error("[error] => purging old data", e);
+            log.error("------ Purge error ------", e);
         } finally {
             var deleted = purgeDao.finalizePurge();
-            log.info("[finalize] => {} rows deleted", IntStream.of(deleted).sum());
-            log.info("[vacuum] => purging old data");
+            log.info("------ Purge finally ------ [{}] rows deleted", IntStream.of(deleted).sum());
+            SessionManager.emitInfo("Purge finally — [" + IntStream.of(deleted).sum() + "] rows deleted");
+            log.info("------ Purge vacuum ------");
             purgeDao.vacuumAnalyze();
         }
-        log.info("[end] => purging old data");
+        log.info("------ Purge end ------");
     }
 
     public void purge() {
