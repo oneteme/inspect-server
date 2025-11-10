@@ -2,7 +2,6 @@ package org.usf.inspect.server.config.constant;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.usf.inspect.core.RequestMask;
 import org.usf.jquery.core.ViewJoin;
 import org.usf.jquery.web.Builder;
 import org.usf.jquery.web.ViewDecorator;
