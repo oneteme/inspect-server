@@ -389,7 +389,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid,?::uuid)""", toInsert, (ps, r
         if(!toUpdate.isEmpty()) {
             updateBatchExecutor.applyAsLong(toUpdate.iterator()); //already logged
             var completedMetrics = toUpdate.stream()
-                    .filter(s-> nonNull(s.getEnd()))
+                    .filter(CompletableMetric::wasCompleted)
                     .map(CompletableMetric::getId)
                     .toArray(); //Insertion des sessions uncompleted
             if(completedMetrics.length > 0) {
@@ -403,12 +403,12 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid,?::uuid)""", toInsert, (ps, r
         if(!toInsert.isEmpty()) {
             insertBatchExecutor.applyAsLong(toInsert.iterator());
             var uncompletedMetrics = toInsert.stream()
-                    .filter(s-> isNull(s.getEnd()))
+                    .filter(s-> !s.wasCompleted())
                     .map(CompletableMetric::getId)
                     .toList(); //Insertion des sessions uncompleted
             if(!uncompletedMetrics.isEmpty()) {
                 executeBatch(new StringBuilder("INSERT INTO e_cmp_mtc(id_cmp_mtc,cd_typ) VALUES(?::uuid,")
-                		.append(type.getValue()).append(')').toString(), uncompletedMetrics.iterator(), 
+                		.append(type.getValue()).append(')').toString(), uncompletedMetrics.iterator(),
                 		(ps, id) -> ps.setString(1, id));
             }
         }
