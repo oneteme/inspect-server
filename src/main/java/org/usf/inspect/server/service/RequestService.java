@@ -496,7 +496,7 @@ public class RequestService {
         }
         var v = new QueryComposer()
                 .columns(getColumns(
-                        REST_REQUEST, ID, PROTOCOL, HOST, PATH, QUERY, METHOD, STATUS, START, END, THREAD, LINKED, PARENT
+                        REST_REQUEST, ID, PROTOCOL, BODY_CONTENT, HOST, PATH, QUERY, METHOD, STATUS, START, END, THREAD, LINKED, PARENT
                 ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(REST_REQUEST.join(EXCEPTION_JOIN))
@@ -520,6 +520,7 @@ public class RequestService {
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setLinked(rs.getBoolean(LINKED.reference()));
                 out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
+                out.setBodyContent(rs.getString(BODY_CONTENT.reference()));
                 outs.add(out);
             }
             return outs;
