@@ -181,58 +181,70 @@ public final class InspectMappers {
         };
     }
 
-    public static RestSession createBaseRestSession(ResultSet rs) throws SQLException {
-        if (rs.next()) {
-            RestSession out = new RestSession();
-            out.setId(rs.getString(ID.reference()));
-            out.setMethod(rs.getString(METHOD.reference()));
-            out.setProtocol(rs.getString(PROTOCOL.reference()));
-            out.setHost(rs.getString(HOST.reference()));
-            out.setPort(rs.getInt(PORT.reference()));
-            out.setPath(rs.getString(PATH.reference()));
-            out.setQuery(rs.getString(QUERY.reference()));
-            out.setContentType(rs.getString(MEDIA.reference()));
-            out.setAuthScheme(rs.getString(AUTH.reference()));
-            out.setStatus(rs.getInt(STATUS.reference()));
-            out.setInDataSize(rs.getLong(SIZE_IN.reference()));
-            out.setOutDataSize(rs.getLong(SIZE_OUT.reference()));
-            out.setInContentEncoding(rs.getString(CONTENT_ENCODING_IN.reference()));
-            out.setOutContentEncoding(rs.getString(CONTENT_ENCODING_OUT.reference()));
-            out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
-            out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
-            out.setThreadName(rs.getString(THREAD.reference()));
-            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
-            out.setName(rs.getString(API_NAME.reference()));
-            out.setUserAgent(rs.getString(USER_AGT.reference()));
-            out.setUser(rs.getString(USER.reference()));
-            out.setRequestsMask(rs.getInt(MASK.reference()));
-            out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
-            out.setCacheControl(rs.getString(CACHE_CONTROL.reference()));
-            return out;
-        }
-        return null;
+    public static ResultSetMapper<RestSession> createBaseRestSession(ObjectMapper mapper) throws SQLException {
+        return rs->{
+            if (rs.next()) {
+                RestSession out = new RestSession();
+                out.setId(rs.getString(ID.reference()));
+                out.setMethod(rs.getString(METHOD.reference()));
+                out.setProtocol(rs.getString(PROTOCOL.reference()));
+                out.setHost(rs.getString(HOST.reference()));
+                out.setPort(rs.getInt(PORT.reference()));
+                out.setPath(rs.getString(PATH.reference()));
+                out.setQuery(rs.getString(QUERY.reference()));
+                out.setContentType(rs.getString(MEDIA.reference()));
+                out.setAuthScheme(rs.getString(AUTH.reference()));
+                out.setStatus(rs.getInt(STATUS.reference()));
+                out.setInDataSize(rs.getLong(SIZE_IN.reference()));
+                out.setOutDataSize(rs.getLong(SIZE_OUT.reference()));
+                out.setInContentEncoding(rs.getString(CONTENT_ENCODING_IN.reference()));
+                out.setOutContentEncoding(rs.getString(CONTENT_ENCODING_OUT.reference()));
+                out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
+                out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                out.setThreadName(rs.getString(THREAD.reference()));
+                try {
+                    out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), rs.getString(STACKTRACE.reference()) != null ? mapper.readValue(rs.getString(STACKTRACE.reference()), new TypeReference<StackTraceRow[]>() {
+                    }) : null));
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+                out.setName(rs.getString(API_NAME.reference()));
+                out.setUserAgent(rs.getString(USER_AGT.reference()));
+                out.setUser(rs.getString(USER.reference()));
+                out.setRequestsMask(rs.getInt(MASK.reference()));
+                out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
+                out.setCacheControl(rs.getString(CACHE_CONTROL.reference()));
+                return out;
+            }
+            return null;
+        };
     }
 
-    public static MainSession createBaseMainsession(ResultSet rs) throws SQLException {
-        if(rs.next()) {
-            MainSession out = new MainSession();
-            out.setId(rs.getString(ID.reference()));
-            out.setName(rs.getString(NAME.reference()));
-            out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
-            out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
-            out.setType(rs.getString(TYPE.reference()));
-            out.setLocation(rs.getString(LOCATION.reference()));
-            out.setThreadName(rs.getString(THREAD.reference()));
-            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
-            out.setUser(rs.getString(USER.reference()));
-            out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
-            out.setRequestsMask(rs.getInt(MASK.reference()));
-            return out;
-        }
-        return null;
+    public static ResultSetMapper<MainSession> createBaseMainSession(ObjectMapper mapper) throws SQLException {
+        return rs-> {
+            if (rs.next()) {
+                MainSession out = new MainSession();
+                out.setId(rs.getString(ID.reference()));
+                out.setName(rs.getString(NAME.reference()));
+                out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
+                out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                out.setType(rs.getString(TYPE.reference()));
+                out.setLocation(rs.getString(LOCATION.reference()));
+                out.setThreadName(rs.getString(THREAD.reference()));
+                try {
+                    out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), rs.getString(STACKTRACE.reference()) != null ? mapper.readValue(rs.getString(STACKTRACE.reference()), new TypeReference<StackTraceRow[]>() {
+                    }) : null));
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+                out.setUser(rs.getString(USER.reference()));
+                out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
+                out.setRequestsMask(rs.getInt(MASK.reference()));
+                return out;
+            }
+            return null;
+        };
     }
-
-
     
     public static RowMapper<MainSession> mainSessionDumpMapper(){
         return rs -> {
@@ -320,7 +332,7 @@ public final class InspectMappers {
         return out;
     }
     
-    public static RowMapper<DatabaseRequestStage> databaseRequestStageMapper(){
+    public static RowMapper<DatabaseRequestStage> databaseRequestStageMapper(ObjectMapper mapper){
         return rs -> {
             DatabaseRequestStage out= new DatabaseRequestStage();
             out.setName(rs.getString(NAME.reference()));
@@ -328,19 +340,27 @@ public final class InspectMappers {
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
             out.setCount(ofNullable(rs.getString(ACTION_COUNT.reference())).map(str -> Arrays.stream(str.split(",")).mapToLong(Long::parseLong).toArray()).orElse(null));
             out.setCommand(rs.getString(COMMAND.reference()));
-            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
+            try {
+                out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), rs.getString(STACKTRACE.reference()) != null ? mapper.readValue(rs.getString(STACKTRACE.reference()), new TypeReference<StackTraceRow[]>() {}) : null));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
             out.setOrder(rs.getInt(ORDER.reference()));
             return out;
         };
     }
 
-    public static RowMapper<HttpRequestStage> restRequestStageMapper(){
+    public static RowMapper<HttpRequestStage> restRequestStageMapper(ObjectMapper mapper) {
         return rs -> {
             HttpRequestStage out= new HttpRequestStage();
             out.setName(rs.getString(NAME.reference()));
             out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
-            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
+            try {
+                out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), rs.getString(STACKTRACE.reference()) != null ? mapper.readValue(rs.getString(STACKTRACE.reference()), new TypeReference<StackTraceRow[]>() {}) : null));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
             out.setOrder(rs.getInt(ORDER.reference()));
             return out;
         };
@@ -391,14 +411,18 @@ public final class InspectMappers {
         return null;
     }
     
-    public static RowMapper<FtpRequestStage> ftpRequestStageMapper(){
+    public static RowMapper<FtpRequestStage> ftpRequestStageMapper(ObjectMapper mapper){
         return rs -> {
             FtpRequestStage out = new FtpRequestStage();
             out.setName(rs.getString(NAME.reference()));
             out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
             out.setArgs(ofNullable(rs.getString(ARG.reference())).map(str -> Arrays.stream(str.split(",")).toArray(String[]::new)).orElse(null));
-            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
+            try {
+                out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), rs.getString(STACKTRACE.reference()) != null ? mapper.readValue(rs.getString(STACKTRACE.reference()), new TypeReference<StackTraceRow[]>() {}) : null));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
             out.setOrder(rs.getInt(ORDER.reference()));
             return out;
         };
@@ -435,13 +459,17 @@ public final class InspectMappers {
         return null;
     }
 
-    public static RowMapper<MailRequestStage> mailRequestStageMapper(){
+    public static RowMapper<MailRequestStage> mailRequestStageMapper(ObjectMapper mapper){
         return rs -> {
             MailRequestStage out = new MailRequestStage();
             out.setName(rs.getString(NAME.reference()));
             out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
-            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
+            try {
+                out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), rs.getString(STACKTRACE.reference()) != null ? mapper.readValue(rs.getString(STACKTRACE.reference()), new TypeReference<StackTraceRow[]>() {}) : null));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
             out.setOrder(rs.getInt(ORDER.reference()));
             return out;
         };
@@ -492,13 +520,17 @@ public final class InspectMappers {
         return null;
     }
     
-    public static RowMapper<DirectoryRequestStage> ldapRequestStageMapper(){
+    public static RowMapper<DirectoryRequestStage> ldapRequestStageMapper(ObjectMapper mapper){
         return rs -> {
             var out = new DirectoryRequestStage();
             out.setName(rs.getString(NAME.reference()));
             out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
-            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
+            try {
+                out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), rs.getString(STACKTRACE.reference()) != null ? mapper.readValue(rs.getString(STACKTRACE.reference()), new TypeReference<StackTraceRow[]>() {}) : null));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
             out.setOrder(rs.getInt(ORDER.reference()));
             return out;
         };
