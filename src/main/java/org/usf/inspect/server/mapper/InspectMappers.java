@@ -340,6 +340,7 @@ public final class InspectMappers {
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
             out.setCount(ofNullable(rs.getString(ACTION_COUNT.reference())).map(str -> Arrays.stream(str.split(",")).mapToLong(Long::parseLong).toArray()).orElse(null));
             out.setCommand(rs.getString(COMMAND.reference()));
+            out.setArgs(ofNullable(rs.getString(ARG.reference())).map(str -> Arrays.stream(str.split(",")).toArray(String[]::new)).orElse(null));
             try {
                 out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), rs.getString(STACKTRACE.reference()) != null ? mapper.readValue(rs.getString(STACKTRACE.reference()), new TypeReference<StackTraceRow[]>() {}) : null));
             } catch (JsonProcessingException e) {
@@ -417,6 +418,7 @@ public final class InspectMappers {
             out.setName(rs.getString(NAME.reference()));
             out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+            out.setCommand(rs.getString(COMMAND.reference()));
             out.setArgs(ofNullable(rs.getString(ARG.reference())).map(str -> Arrays.stream(str.split(",")).toArray(String[]::new)).orElse(null));
             try {
                 out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), rs.getString(STACKTRACE.reference()) != null ? mapper.readValue(rs.getString(STACKTRACE.reference()), new TypeReference<StackTraceRow[]>() {}) : null));
@@ -463,6 +465,7 @@ public final class InspectMappers {
         return rs -> {
             MailRequestStage out = new MailRequestStage();
             out.setName(rs.getString(NAME.reference()));
+            out.setCommand(rs.getString(COMMAND.reference()));
             out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
             try {
@@ -524,6 +527,7 @@ public final class InspectMappers {
         return rs -> {
             var out = new DirectoryRequestStage();
             out.setName(rs.getString(NAME.reference()));
+            out.setCommand(rs.getString(COMMAND.reference()));
             out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
             try {
