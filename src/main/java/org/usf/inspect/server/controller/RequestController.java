@@ -359,7 +359,7 @@ public class RequestController {
     public ResponseEntity<List<DatabaseRequestStage>> getDatabaseRequestStages(
             @QueryRequestFilter(
                     view = "database_stage",
-                    column = "name,order,start,end,action_count,command,exception.err_type,exception.err_msg,exception.stacktrace",
+                    column = "name,order,start,end,arg,action_count,command,exception.err_type,exception.err_msg,exception.stacktrace",
                     join = "exception",
                     order = "order") QueryComposer request, @PathVariable String idDatabase) {
         return ok().body(INSPECT.execute(request.filters(column("cd_dtb_rqt").eq(fromString(idDatabase))), InspectMappers.databaseRequestStageMapper(mapper)));
@@ -407,7 +407,7 @@ public class RequestController {
     public ResponseEntity<List<FtpRequestStage>> getFtpRequestStages(
             @QueryRequestFilter(
                     view = "ftp_stage",
-                    column = "name,order,start,end,arg,exception.err_type,exception.err_msg,exception.stacktrace",
+                    column = "name,order,start,end,command,arg,exception.err_type,exception.err_msg,exception.stacktrace",
                     join = "exception",
                     order = "order") QueryComposer request, @PathVariable String idFtp) {
         return ok().body(INSPECT.execute(request.filters(column("cd_ftp_rqt").eq(fromString(idFtp))), InspectMappers.ftpRequestStageMapper(mapper)));
@@ -459,7 +459,7 @@ public class RequestController {
     public ResponseEntity<List<MailRequestStage>> getSmtpRequestStages(
             @QueryRequestFilter(
                     view = "smtp_stage",
-                    column = "name,order,start,end,exception.err_type,exception.err_msg,exception.stacktrace",
+                    column = "name,order,start,command,end,exception.err_type,exception.err_msg,exception.stacktrace",
                     join = "exception",
                     order = "order") QueryComposer request, @PathVariable String idSmtp) {
         return ok().body(INSPECT.execute(request.filters(column("cd_smtp_rqt").eq(fromString(idSmtp))), InspectMappers.mailRequestStageMapper(mapper)));
@@ -536,7 +536,7 @@ public class RequestController {
     public ResponseEntity<List<DirectoryRequestStage>> getLdapRequestStages(
             @QueryRequestFilter(
                     view = "ldap_stage",
-                    column = "name,order,start,end,arg,exception.err_type,exception.err_msg,exception.stacktrace",
+                    column = "name,order,start,end,command,arg,exception.err_type,exception.err_msg,exception.stacktrace",
                     join = "exception",
                     order = "order") QueryComposer request, @PathVariable String idLdap) {
         return ok().body(INSPECT.execute(request.filters(column("cd_ldap_rqt").eq(fromString(idLdap))), InspectMappers.ldapRequestStageMapper(mapper)));

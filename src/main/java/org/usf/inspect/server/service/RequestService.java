@@ -624,7 +624,7 @@ public class RequestService {
         var v = new QueryComposer()
                 .columns(
                         getColumns(
-                                FTP_REQUEST, ID, HOST, START, END, THREAD, FAILED, PARENT
+                                FTP_REQUEST, ID, HOST, START, END, COMMAND, THREAD, FAILED, PARENT
                         )
                 )
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
@@ -640,6 +640,7 @@ public class RequestService {
                 out.setHost(rs.getString(HOST.reference()));
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                out.setCommand(rs.getString(COMMAND.reference()));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setFailed(rs.getBoolean(FAILED.reference()));
                 out.setSessionId(rs.getString(PARENT.reference()));
@@ -699,7 +700,7 @@ public class RequestService {
         var v = new QueryComposer()
                 .columns(
                         getColumns(
-                                SMTP_REQUEST, ID, HOST, START, END, THREAD, FAILED, PARENT
+                                SMTP_REQUEST, ID, HOST, START, END, COMMAND, THREAD, FAILED, PARENT
                         ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(SMTP_REQUEST.join(EXCEPTION_JOIN))
@@ -714,6 +715,7 @@ public class RequestService {
                 out.setHost(rs.getString(HOST.reference()));
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                out.setCommand(rs.getString(COMMAND.reference()));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setFailed(rs.getBoolean(FAILED.reference()));
                 out.setSessionId(rs.getString(PARENT.reference()));
@@ -770,7 +772,7 @@ public class RequestService {
         var v = new QueryComposer()
                 .columns(
                         getColumns(
-                                LDAP_REQUEST, ID, HOST, START, END, THREAD, FAILED, PARENT
+                                LDAP_REQUEST, ID, HOST, START, END, COMMAND, THREAD, FAILED, PARENT
                         ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(LDAP_REQUEST.join(EXCEPTION_JOIN))
@@ -785,6 +787,7 @@ public class RequestService {
                 out.setHost(rs.getString(HOST.reference()));
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                out.setCommand(rs.getString(COMMAND.reference()));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setFailed(rs.getBoolean(FAILED.reference()));
                 out.setSessionId(rs.getString(PARENT.reference()));
