@@ -178,6 +178,23 @@ values(?,?,?,?,?,?,?,?,?,?::json,?,?::uuid,?::uuid)""", toInsert, (ps, ses) -> {
         }));
     }
 
+    @Transactional(rollbackFor = Throwable.class)
+    public void saveMainSessions2(List<MainSession2> mainSessions, List<MainSessionCallback> mainSessionCallbacks) {
+
+        completableProcess(MAIN_SESSION, sessions, toUpdate ->
+                executeBatch("""
+update e_main_ses set va_nam = ?, va_usr = ?, dh_str = ?, dh_end = ?, va_typ = ?, va_lct = ?, va_thr = ?, va_err_typ = ?, va_err_msg = ?, va_stk = ?, va_msk = ?
+where id_ses = ?::uuid""", toUpdate, (ps, ses) -> {
+                    mainSessionSetter(ps, ses, mapper);
+                }), toInsert ->
+                executeBatch("""
+insert into e_main_ses(va_nam,va_usr,dh_str,dh_end,va_typ,va_lct,va_thr,va_err_typ,va_err_msg,va_stk,va_msk,id_ses,cd_ins)
+values(?,?,?,?,?,?,?,?,?,?::json,?,?::uuid,?::uuid)""", toInsert, (ps, ses) -> {
+                    mainSessionSetter(ps, ses, mapper);
+                    ps.setString(13, ses.getInstanceId());
+                }));
+    }
+
     static void mainSessionSetter(PreparedStatement ps, MainSession ses, ObjectMapper mapper) throws SQLException, JsonProcessingException {
         var exp = ses.getException();
         ps.setString(1, ses.getName());
@@ -376,6 +393,41 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid,?::uuid,?::uuid)""", toInsert, (ps, r
         ps.setString(13, req.getCommand());
         ps.setBoolean(14, req.isFailed());
         ps.setString(15, req.getId());
+    }
+
+    private <T extends CompletableMetric> void completableProcess2(
+            List<T> items,
+            ToLongFunction<Iterator<T>> updateBatchExecutor,
+            ToLongFunction<Iterator<T>> insertBatchExecutor) {
+        var completableMetrics = template.queryForList("SELECT id_cmp_mtc FROM e_cmp_mtc WHERE cd_typ=" + type.getValue(), String.class);
+        var toUpdate = items.stream().filter(s -> completableMetrics.contains(s.getId())).toList();
+
+        if(!toUpdate.isEmpty()) {
+            updateBatchExecutor.applyAsLong(toUpdate.iterator()); //already logged
+            var completedMetrics = toUpdate.stream()
+                    .filter(CompletableMetric::wasCompleted)
+                    .map(CompletableMetric::getId)
+                    .toArray(); //Insertion des sessions uncompleted
+            if(completedMetrics.length > 0) {
+                template.update(new StringBuilder("DELETE FROM e_cmp_mtc WHERE id_cmp_mtc IN(?::uuid")
+                        .append(",?::uuid".repeat(completedMetrics.length - 1))
+                        .append(") AND cd_typ=").append(type.getValue()).toString(), completedMetrics);
+            }
+        }
+        //savePoint !!
+        var toInsert = items.stream().filter(s -> !completableMetrics.contains(s.getId())).toList();
+        if(!toInsert.isEmpty()) {
+            insertBatchExecutor.applyAsLong(toInsert.iterator());
+            var uncompletedMetrics = toInsert.stream()
+                    .filter(s-> !s.wasCompleted())
+                    .map(CompletableMetric::getId)
+                    .toList(); //Insertion des sessions uncompleted
+            if(!uncompletedMetrics.isEmpty()) {
+                executeBatch(new StringBuilder("INSERT INTO e_cmp_mtc(id_cmp_mtc,cd_typ) VALUES(?::uuid,")
+                                .append(type.getValue()).append(')').toString(), uncompletedMetrics.iterator(),
+                        (ps, id) -> ps.setString(1, id));
+            }
+        }
     }
 
     private <T extends CompletableMetric> void completableProcess(
