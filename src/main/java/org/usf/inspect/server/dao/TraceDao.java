@@ -512,7 +512,7 @@ where id_ldap_rqt = ?::uuid""", requests.iterator(), (ps, req) -> {
     @Transactional(rollbackFor = Throwable.class)
     public Long savePartialDatabaseRequests(List<DatabaseRequest2> requests) {
         return executeBatch("""
-insert into e_dtb_rqt(id_dtb_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_she,va_nam,va_sha,dh_str,va_usr,va_thr,va_drv,va_prd_nam,va_prd_vrs)
+insert into e_dtb_rqt(id_dtb_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_she,va_nam,va_sha,va_usr,va_thr,va_drv,va_prd_nam,va_prd_vrs,dh_str)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), TraceDao::databaseRequestSetter);
     }
 
