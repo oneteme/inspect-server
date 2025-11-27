@@ -2,7 +2,6 @@ package org.usf.inspect.server.dao;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -11,28 +10,19 @@ import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.*;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.InstanceTrace;
-import org.usf.inspect.server.model.RequestCompletableType;
 import org.usf.inspect.server.service.DatabaseDispatcherService;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.function.ToLongBiFunction;
-import java.util.function.ToLongFunction;
-import java.util.stream.Collectors;
 
 import static java.sql.Types.*;
 import static java.util.Arrays.stream;
-import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.*;
 import static org.usf.inspect.core.RequestMask.*;
 import static org.usf.inspect.server.Utils.*;
-import static org.usf.inspect.server.model.RequestCompletableType.*;
 
 
 /**
