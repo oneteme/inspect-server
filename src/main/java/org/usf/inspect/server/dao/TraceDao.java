@@ -125,67 +125,63 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     }
 
     // New version
-
     @Transactional(rollbackFor = Throwable.class)
     public Long savePartialRestSessions(List<HttpSession2> sessions) {
         return executeBatch("""
-insert into e_rst_ses(id_ses,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_cnt_typ,va_ath_sch,cd_stt,va_i_sze,va_o_sze,va_i_cnt_enc,va_o_cnt_enc,dh_str,dh_end,va_thr,va_err_typ,va_err_msg,va_stk,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_msk,va_lnk,cd_ins)
-values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid)""", sessions.iterator(), (ps, ses) -> {
+insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,va_lnk,dh_str,va_err_typ,va_err_msg,va_stk,va_nam,va_usr,va_usr_agt,va_cch_ctr)
+values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
             var exp = ses.getException();
             restSessionSetter(ps, ses);
-            ps.setString(14, nonNull(exp) ? exp.getType() : null);
-            ps.setString(15, nonNull(exp) ? exp.getMessage() : null);
-            ps.setObject(16, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
-            ps.setString(17, ses.getName());
-            ps.setString(18, ses.getUser());
-            ps.setString(19, userAgentExtract(ses.getUserAgent()));
-            ps.setString(20, ses.getCacheControl());
-            // add instance id
+            ps.setString(15, nonNull(exp) ? exp.getType() : null);
+            ps.setString(16, nonNull(exp) ? exp.getMessage() : null);
+            ps.setObject(17, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
+            ps.setString(18, ses.getName());
+            ps.setString(19, ses.getUser());
+            ps.setString(20, userAgentExtract(ses.getUserAgent()));
+            ps.setString(21, ses.getCacheControl());
         });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public Long saveCompleteRestSessions(List<DatabaseDispatcherService.Pair<HttpSession2, HttpSessionCallback>> sessions) {
         return executeBatch("""
-insert into e_rst_ses(id_ses,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,dh_str,va_thr,va_lnk,va_err_typ,va_err_msg,va_stk,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_msk,va_cnt_typ,cd_stt,va_i_sze,va_i_cnt_enc,dh_end,cd_ins)
-values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?::uuid)""", sessions.iterator(), (ps, ses) -> {
+insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,dh_end,va_err_typ,va_err_msg,va_stk,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_cnt_typ,cd_stt,va_o_sze,va_o_cnt_enc,va_msk)
+values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
             var session = ses.getV1();
             var callback = ses.getV2();
             var exp = nonNull(callback.getException()) ? callback.getException() : session.getException();
-
             restSessionSetter(ps, session);
-            ps.setString(14, nonNull(exp) ? exp.getType() : null);
-            ps.setString(15, nonNull(exp) ? exp.getMessage() : null);
-            ps.setObject(16, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
-            ps.setString(17, nonNull(callback.getName()) ? callback.getName() : session.getName());
-            ps.setString(18, nonNull(callback.getUser()) ? callback.getUser() : session.getUser());
-            ps.setString(19, userAgentExtract(nonNull(callback.getUserAgent()) ? callback.getUserAgent() : session.getUserAgent()));
-            ps.setString(20, nonNull(callback.getCacheControl()) ? callback.getCacheControl() : session.getCacheControl());
-            //ps.setString(26, ses.getInstanceId());
-
-            ps.setString(21, contentTypeExtract(callback.getContentType()));
-            ps.setInt(22, callback.getStatus());
-            ps.setLong(23, callback.getDataSize());
-            ps.setString(24, callback.getContentEncoding());
-            ps.setTimestamp(25, fromNullableInstant(callback.getEnd()));
-            ps.setInt(26, callback.getRequestMask().get());
+            ps.setTimestamp(15, fromNullableInstant(callback.getEnd()));
+            ps.setString(16, nonNull(exp) ? exp.getType() : null);
+            ps.setString(17, nonNull(exp) ? exp.getMessage() : null);
+            ps.setObject(18, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
+            ps.setString(19, nonNull(callback.getName()) ? callback.getName() : session.getName());
+            ps.setString(20, nonNull(callback.getUser()) ? callback.getUser() : session.getUser());
+            ps.setString(21, userAgentExtract(nonNull(callback.getUserAgent()) ? callback.getUserAgent() : session.getUserAgent()));
+            ps.setString(22, nonNull(callback.getCacheControl()) ? callback.getCacheControl() : session.getCacheControl());
+            ps.setString(23, contentTypeExtract(callback.getContentType()));
+            ps.setInt(24, callback.getStatus());
+            ps.setLong(25, callback.getDataSize());
+            ps.setString(26, callback.getContentEncoding());
+            ps.setInt(27, callback.getRequestMask().get());
         });
     }
 
     static void restSessionSetter(PreparedStatement ps, HttpSession2 ses) throws SQLException {
         ps.setString(1, ses.getId());
-        ps.setString(2, ses.getMethod());
-        ps.setString(3, ses.getProtocol());
-        ps.setString(4, ses.getHost());
-        ps.setInt(5, ses.getPort());
-        ps.setString(6, ses.getPath());
-        ps.setString(7, ses.getQuery());
-        ps.setString(8, ses.getAuthScheme());
-        ps.setLong(9, ses.getDataSize());
-        ps.setString(10, ses.getContentEncoding());
-        ps.setTimestamp(11, fromNullableInstant(ses.getStart()));
+        ps.setString(2, ses.getInstanceId());
+        ps.setString(3, ses.getMethod());
+        ps.setString(4, ses.getProtocol());
+        ps.setString(5, ses.getHost());
+        ps.setInt(6, ses.getPort());
+        ps.setString(7, ses.getPath());
+        ps.setString(8, ses.getQuery());
+        ps.setString(9, ses.getAuthScheme());
+        ps.setLong(10, ses.getDataSize());
+        ps.setString(11, ses.getContentEncoding());
         ps.setString(12, ses.getThreadName());
         ps.setBoolean(13, ses.isLinked());
+        ps.setTimestamp(14, fromNullableInstant(ses.getStart()));
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -207,47 +203,46 @@ where id_ses = ?::uuid""", sessions.iterator(), (ps, ses) -> {
             ps.setString(11, ses.getContentEncoding());
             ps.setTimestamp(12, fromNullableInstant(ses.getEnd()));
             ps.setInt(13, ses.getRequestMask().get());
+            ps.setString(14, ses.getId());
         });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public Long savePartialMainSessions(List<MainSession2> sessions) {
         return executeBatch("""
-insert into e_main_ses(id_ses,va_nam,va_usr,va_typ,va_lct,va_thr,dh_str,cd_ins)
-values(?::uuid,?,?,?,?,?,?,?::uuid)""", sessions.iterator(), (ps, ses) -> {
+insert into e_main_ses(id_ses,cd_ins,va_nam,va_usr,va_typ,va_lct,va_thr,dh_str)
+values(?::uuid,?::uuid,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
             mainSessionSetter(ps, ses);
-            ps.setTimestamp(7, fromNullableInstant(ses.getStart()));
-            // add instance id
+            ps.setTimestamp(8, fromNullableInstant(ses.getStart()));
         });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public Long saveCompleteMainSessions(List<DatabaseDispatcherService.Pair<MainSession2, MainSessionCallback>> sessions) {
         return executeBatch("""
-insert into e_main_ses(id_ses,va_nam,va_usr,va_typ,va_lct,va_thr,dh_str,dh_end,va_err_typ,va_err_msg,va_stk,va_msk,cd_ins)
-values(?::uuid,?,?,?,?,?,?,?,?,?,?::json,?,?::uuid)""", sessions.iterator(), (ps, ses) -> {
+insert into e_main_ses(id_ses,cd_ins,va_nam,va_usr,va_typ,va_lct,va_thr,dh_str,dh_end,va_err_typ,va_err_msg,va_stk,va_msk)
+values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
             var session = ses.getV1();
             var callback = ses.getV2();
             var exp = callback.getException();
-
             mainSessionSetter(ps, session);
-            ps.setTimestamp(7, fromNullableInstant(nonNull(callback.getStart()) ? callback.getStart() : session.getStart()));
-            ps.setTimestamp(8, fromNullableInstant(callback.getEnd()));
-            ps.setString(9, nonNull(exp) ? exp.getType() : null);
-            ps.setString(10, nonNull(exp) ? exp.getMessage() : null);
-            ps.setObject(11, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
-            ps.setInt(12, callback.getRequestMask().get());
-            // add instance id
+            ps.setTimestamp(8, fromNullableInstant(nonNull(callback.getStart()) ? callback.getStart() : session.getStart()));
+            ps.setTimestamp(9, fromNullableInstant(callback.getEnd()));
+            ps.setString(10, nonNull(exp) ? exp.getType() : null);
+            ps.setString(11, nonNull(exp) ? exp.getMessage() : null);
+            ps.setObject(12, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
+            ps.setInt(13, callback.getRequestMask().get());
         });
     }
 
     static void mainSessionSetter(PreparedStatement ps, MainSession2 ses) throws SQLException {
         ps.setString(1, ses.getId());
-        ps.setString(2, ses.getName());
-        ps.setString(3, ses.getUser());
-        ps.setString(4, valueOfNullable(ses.getType()));
-        ps.setString(5, ses.getLocation());
-        ps.setString(6, ses.getThreadName());
+        ps.setString(2, ses.getInstanceId());
+        ps.setString(3, ses.getName());
+        ps.setString(4, ses.getUser());
+        ps.setString(5, valueOfNullable(ses.getType()));
+        ps.setString(6, ses.getLocation());
+        ps.setString(7, ses.getThreadName());
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -269,25 +264,23 @@ where id_ses = ?::uuid""", sessions.iterator(), (ps, ses) -> {
     @Transactional(rollbackFor = Throwable.class)
     public Long savePartialRestRequests(List<HttpRequest2> requests) {
         return executeBatch("""
-insert into e_rst_rqt(id_rst_rqt,cd_prn_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,dh_str,va_thr)
-values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, req) -> {
-            restRequestSetter(ps, req);
-        });
+insert into e_rst_rqt(id_rst_rqt,cd_prn_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,dh_str)
+values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), TraceDao::restRequestSetter);
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public Long saveCompleteRestRequests(List<DatabaseDispatcherService.Pair<HttpRequest2, HttpRequestCallback>> requests) {
         return executeBatch("""
-insert into e_rst_rqt(id_rst_rqt,cd_prn_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,dh_str,va_thr,va_cnt_typ,cd_stt,va_i_sze,va_i_cnt_enc,dh_end,va_bdy_cnt,va_lnk)
+insert into e_rst_rqt(id_rst_rqt,cd_prn_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,dh_str,dh_end,va_thr,va_cnt_typ,cd_stt,va_i_sze,va_i_cnt_enc,va_bdy_cnt,va_lnk)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, ses) -> {
             var request = ses.getV1();
             var callback = ses.getV2();
             restRequestSetter(ps, request);
-            ps.setString(15, contentTypeExtract(callback.getContentType()));
-            ps.setInt(16, callback.getStatus());
-            ps.setLong(17, callback.getDataSize());
-            ps.setString(18, callback.getContentEncoding());
-            ps.setTimestamp(19, fromNullableInstant(callback.getEnd()));
+            ps.setTimestamp(15, fromNullableInstant(callback.getEnd()));
+            ps.setString(16, contentTypeExtract(callback.getContentType()));
+            ps.setInt(17, callback.getStatus());
+            ps.setLong(18, callback.getDataSize());
+            ps.setString(19, callback.getContentEncoding());
             ps.setString(20, callback.getBodyContent());
             ps.setBoolean(21, callback.isLinked());
         });
@@ -296,7 +289,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests
     static void restRequestSetter(PreparedStatement ps, HttpRequest2 req) throws SQLException {
         ps.setString(1, req.getId());
         ps.setString(2, req.getSessionId());
-        ps.setString(3, null);// add instance id
+        ps.setString(3, req.getInstanceId());
         ps.setString(4, req.getMethod());
         ps.setString(5, req.getProtocol());
         ps.setString(6, req.getHost());
@@ -306,8 +299,8 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests
         ps.setString(10, req.getAuthScheme());
         ps.setLong(11, req.getDataSize());
         ps.setString(12, req.getContentEncoding());
-        ps.setTimestamp(13, fromNullableInstant(req.getStart()));
-        ps.setString(14, req.getThreadName());
+        ps.setString(13, req.getThreadName());
+        ps.setTimestamp(14, fromNullableInstant(req.getStart()));
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -361,7 +354,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, pa
     static void localRequestSetter(PreparedStatement ps, LocalRequest2 req) throws SQLException {
         ps.setString(1, req.getId());
         ps.setString(2, req.getSessionId());
-        ps.setString(3, null); //instance id
+        ps.setString(3, req.getInstanceId()); //instance id
         ps.setString(4, req.getType());
         ps.setString(5, req.getName());
         ps.setString(6, req.getLocation());
@@ -392,9 +385,7 @@ where id_lcl_rqt = ?::uuid""", requests.iterator(), (ps, req) -> {
     public Long savePartialMailRequests(List<MailRequest2> requests) {
         return executeBatch("""
 insert into e_smtp_rqt(id_smtp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str)
-values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests.iterator(), (ps, req) -> {
-            mailRequestSetter(ps, req);
-        });
+values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests.iterator(), TraceDao::mailRequestSetter);
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -414,7 +405,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, 
     static void mailRequestSetter(PreparedStatement ps, MailRequest2 req) throws SQLException {
         ps.setString(1, req.getId());
         ps.setString(2, req.getSessionId());
-        ps.setString(3, null); //instance id
+        ps.setString(3, req.getInstanceId()); //instance id
         ps.setString(4, req.getHost());
         ps.setInt(5, req.getPort());
         ps.setString(6, req.getProtocol());
@@ -440,9 +431,7 @@ where id_smtp_rqt = ?::uuid""", requests.iterator(), (ps, req) -> {
     public Long savePartialFtpRequests(List<FtpRequest2> requests) {
         return executeBatch("""
 insert into e_ftp_rqt(id_ftp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_srv_vrs,va_clt_vrs,va_usr,va_thr,dh_str)
-values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, req) -> {
-            ftpRequestSetter(ps, req);
-        });
+values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests.iterator(), TraceDao::ftpRequestSetter);
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -462,7 +451,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (
     static void ftpRequestSetter(PreparedStatement ps, FtpRequest2 req) throws SQLException {
         ps.setString(1, req.getId());
         ps.setString(2, req.getSessionId());
-        ps.setString(3, null); // instance id
+        ps.setString(3, req.getInstanceId());
         ps.setString(4, req.getHost());
         ps.setInt(5, req.getPort());
         ps.setString(6, req.getProtocol());
@@ -489,9 +478,7 @@ where id_ftp_rqt = ?::uuid""", requests.iterator(), (ps, req) -> {
     public Long savePartialLdapRequests(List<DirectoryRequest2> requests) {
         return executeBatch("""
 insert into e_ldap_rqt(id_ldap_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str)
-values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests.iterator(), (ps, req) -> {
-            ldapRequestSetter(ps, req);
-        });
+values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests.iterator(), TraceDao::ldapRequestSetter);
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -511,7 +498,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, 
     static void ldapRequestSetter(PreparedStatement ps, DirectoryRequest2 req) throws SQLException {
         ps.setString(1, req.getId());
         ps.setString(2, req.getSessionId());
-        ps.setString(3, null); // instance id
+        ps.setString(3, req.getInstanceId());
         ps.setString(4, req.getHost());
         ps.setInt(5, req.getPort());
         ps.setString(6, req.getProtocol());
@@ -536,9 +523,7 @@ where id_ldap_rqt = ?::uuid""", requests.iterator(), (ps, req) -> {
     public Long savePartialDatabaseRequests(List<DatabaseRequest2> requests) {
         return executeBatch("""
 insert into e_dtb_rqt(id_dtb_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_she,va_nam,va_sha,dh_str,va_usr,va_thr,va_drv,va_prd_nam,va_prd_vrs)
-values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, req) -> {
-            databaseRequestSetter(ps, req);
-        });
+values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), TraceDao::databaseRequestSetter);
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -558,7 +543,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterato
     static void databaseRequestSetter(PreparedStatement ps, DatabaseRequest2 req) throws SQLException {
         ps.setString(1, req.getId());
         ps.setString(2, req.getSessionId());
-        ps.setString(3, null); // instance id
+        ps.setString(3, req.getInstanceId());
         ps.setString(4, req.getHost());
         ps.setInt(5, req.getPort());
         ps.setString(6, req.getScheme());
