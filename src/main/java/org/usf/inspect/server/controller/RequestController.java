@@ -22,6 +22,7 @@ import org.usf.jquery.web.Keyword;
 import org.usf.jquery.web.QueryRequestFilter;
 
 import java.sql.SQLException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -201,7 +202,11 @@ public class RequestController {
             column = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,err_type,err_msg,stacktrace,mask,user,user_agt,cache_control,instance_env") QueryComposer request,
             @PathVariable String idSession) throws SQLException {
         return Optional.ofNullable(INSPECT.execute(request.filters(column("id_ses").eq(fromString(idSession))), InspectMappers.createBaseRestSession(mapper)))
-                .map(o -> o.wasCompleted() ? ok().cacheControl(maxAge(1, DAYS)).body(o) : ok().body(o))
+                .map(o -> {
+                    Instant end = o.getEnd();
+                    boolean cacheable = end != null && Duration.between(Instant.now(), end).toDays() > 2;
+                    return cacheable ? ok().cacheControl(maxAge(30, DAYS)).body(o) : ok().body(o);
+                })
                 .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null));
     }
 
@@ -279,7 +284,11 @@ public class RequestController {
                 column = "id,name,start,end,type,location,thread,err_type,err_msg,stacktrace,mask,user,instance_env") QueryComposer request,
             @PathVariable String idSession) throws SQLException {
         return Optional.ofNullable(INSPECT.execute(request.filters(column("id_ses").eq(fromString(idSession))), InspectMappers.createBaseMainSession(mapper)))
-                .map(o -> o.wasCompleted() ? ok().cacheControl(maxAge(1, DAYS)).body(o) : ok().body(o))
+                .map(o -> {
+                    Instant end = o.getEnd();
+                    boolean cacheable = end != null && Duration.between(Instant.now(), end).toDays() > 2;
+                    return cacheable ? ok().cacheControl(maxAge(30, DAYS)).body(o) : ok().body(o);
+                })
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
@@ -331,7 +340,11 @@ public class RequestController {
                     column = "id,protocol,auth,host,port,path,query,method,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,body_content,instance_env,parent") QueryComposer request,
             @PathVariable String idRequest) {
         return  Optional.ofNullable(INSPECT.execute(request.filters(column("id_rst_rqt").eq(fromString(idRequest))), InspectMappers::restRequestMapperComplete))
-                .map(o -> o.wasCompleted() ? ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o) : ok().body(o))
+                .map(o -> {
+                    Instant end = o.getEnd();
+                    boolean cacheable = end != null && Duration.between(Instant.now(), end).toDays() > 2;
+                    return cacheable ? ok().cacheControl(maxAge(30, DAYS)).body(o) : ok().body(o);
+                })
                 .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null));
     }
 
@@ -351,7 +364,11 @@ public class RequestController {
                     view = "database_request",
                     column = "id,host,port,db,start,end,user,thread,driver,db_name,db_version,command,schema,failed,instance_env,parent") QueryComposer request, @PathVariable String idDatabase) {
         return Optional.ofNullable(INSPECT.execute(request.filters(column("id_dtb_rqt").eq(fromString(idDatabase))), InspectMappers::databaseRequestComplete))
-                .map(o -> o.wasCompleted() ? ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o) : ok().body(o))
+                .map(o -> {
+                    Instant end = o.getEnd();
+                    boolean cacheable = end != null && Duration.between(Instant.now(), end).toDays() > 2;
+                    return cacheable ? ok().cacheControl(maxAge(30, DAYS)).body(o) : ok().body(o);
+                })
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
@@ -399,7 +416,11 @@ public class RequestController {
                     column = "id,host,port,protocol,server_version,client_version,start,end,user,thread,failed,instance_env,parent") QueryComposer request,
             @PathVariable String idFtp){
         return Optional.ofNullable(INSPECT.execute(request.filters(column("id_ftp_rqt").eq(fromString(idFtp))), InspectMappers::ftpRequestComplete))
-                .map(o -> o.wasCompleted() ? ok().cacheControl(maxAge(1, DAYS)).body(o) : ok().body(o))
+                .map(o -> {
+                    Instant end = o.getEnd();
+                    boolean cacheable = end != null && Duration.between(Instant.now(), end).toDays() > 2;
+                    return cacheable ? ok().cacheControl(maxAge(30, DAYS)).body(o) : ok().body(o);
+                })
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
@@ -451,7 +472,11 @@ public class RequestController {
                     column = "id,host,port,start,end,user,thread,failed,instance_env,parent") QueryComposer request,
             @PathVariable String idSmtp){
         return Optional.ofNullable(INSPECT.execute(request.filters(column("id_smtp_rqt").eq(fromString(idSmtp))), InspectMappers::mailRequestCompleteMapper))
-                .map(o -> o.wasCompleted() ? ok().cacheControl(maxAge(1, DAYS)).body(o) : ok().body(o))
+                .map(o -> {
+                    Instant end = o.getEnd();
+                    boolean cacheable = end != null && Duration.between(Instant.now(), end).toDays() > 2;
+                    return cacheable ? ok().cacheControl(maxAge(30, DAYS)).body(o) : ok().body(o);
+                })
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
@@ -527,7 +552,11 @@ public class RequestController {
                     column = "id,host,port,protocol,start,end,user,thread,failed,instance_env,parent") QueryComposer request,
             @PathVariable String idLdap){
         return Optional.ofNullable(INSPECT.execute(request.filters(column("id_ldap_rqt").eq(fromString(idLdap))), InspectMappers::ldapRequestCompleteMapper))
-                .map(o -> o.wasCompleted() ? ok().cacheControl(maxAge(1, DAYS)).body(o) : ok().body(o))
+                .map(o -> {
+                    Instant end = o.getEnd();
+                    boolean cacheable = end != null && Duration.between(Instant.now(), end).toDays() > 2;
+                    return cacheable ? ok().cacheControl(maxAge(30, DAYS)).body(o) : ok().body(o);
+                })
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 

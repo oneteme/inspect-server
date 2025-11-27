@@ -23,7 +23,6 @@ import static java.util.Objects.*;
 import static org.usf.inspect.core.ExceptionInfo.mainCauseException;
 import static org.usf.inspect.core.HttpAction.PROCESS;
 import static org.usf.inspect.core.RequestMask.*;
-import static org.usf.inspect.core.SessionManager.nextId;
 import static org.usf.inspect.server.Utils.isEmpty;
 
 @Slf4j
@@ -32,7 +31,7 @@ public final class RetroUtils {
 
     public static List<EventTrace> toV4(Session[] sessions) {
         List<EventTrace> traces = new ArrayList<>();
-        for(Session s : sessions) {
+        /*for(Session s : sessions) {
             if(s instanceof MainSessionWrapper ms) {
                 if(isNull(ms.getId())) {
                     ms.setId(nextId());
@@ -92,11 +91,11 @@ public final class RetroUtils {
                 return List.of(stage);
             }, traces::add);
             toV4(s.getId(), s.getLocalRequests(), r-> Collections.emptyList(), traces::add);
-        }
+        }*/
         return traces;
     }
 
-    private static <T extends Wrapper<? extends AbstractRequest>, U extends AbstractStage> void toV4(String sessionId, Collection<T> requests, Function<T, List<U>> fn, Consumer<EventTrace> consumer) {
+    /*private static <T extends Wrapper<? extends AbstractRequest>, U extends AbstractStage> void toV4(String sessionId, Collection<T> requests, Function<T, List<U>> fn, Consumer<EventTrace> consumer) {
         if(requests != null && !requests.isEmpty()) {
             for(var o : requests) {
                 var req = o.unwrap();
@@ -114,7 +113,7 @@ public final class RetroUtils {
                 }
             }
         }
-    }
+    }*/
 
     private static <T extends AbstractStage> T createStage(Instant start, Instant end, Supplier<T> supp) {
         var stg = supp.get();

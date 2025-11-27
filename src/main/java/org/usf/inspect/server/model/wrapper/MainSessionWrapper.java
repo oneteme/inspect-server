@@ -2,8 +2,9 @@ package org.usf.inspect.server.model.wrapper;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.usf.inspect.core.CompletableMetric;
 import org.usf.inspect.core.ExceptionInfo;
-import org.usf.inspect.core.MainSession;
+import org.usf.inspect.server.model.MainSession;
 import org.usf.inspect.server.model.Session;
 import org.usf.inspect.server.model.UserAction;
 
@@ -99,6 +100,11 @@ public class MainSessionWrapper implements Wrapper<MainSession>, Session {
         return mainSession.getId();
     }
 
+    @Override
+    public CompletableMetric copy() {
+        throw new UnsupportedOperationException("Copying of RestSessionWrapper is not supported");
+    }
+
     public void setUser(String user) {
         mainSession.setUser(user);
     }
@@ -129,16 +135,6 @@ public class MainSessionWrapper implements Wrapper<MainSession>, Session {
 
     public String getInstanceId() {
         return mainSession.getInstanceId();
-    }
-
-    @Override
-    public MainSession copy() {
-        return mainSession.copy();
-    }
-
-    @Override
-    public boolean wasCompleted() {
-        return mainSession.wasCompleted();
     }
 
     @Override
