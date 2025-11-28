@@ -3,7 +3,7 @@ package org.usf.inspect.server.dto;
 import lombok.Getter;
 import lombok.Setter;
 import org.usf.inspect.core.ExceptionInfo;
-import org.usf.inspect.core.MailRequest;
+import org.usf.inspect.server.model.MailRequest;
 
 @Getter
 @Setter

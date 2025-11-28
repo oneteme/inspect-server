@@ -4,10 +4,9 @@ import lombok.Getter;
 import lombok.Setter;
 import org.usf.inspect.core.CompletableMetric;
 import org.usf.inspect.core.ExceptionInfo;
-import org.usf.inspect.core.RestSession;
+import org.usf.inspect.server.model.RestSession;
 import org.usf.inspect.server.model.Session;
 
-import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 
@@ -43,10 +42,6 @@ public class RestSessionWrapper implements Wrapper<RestSession>, Session {
 
     public ExceptionInfo getException() {
         return restSession.getException();
-    }
-
-    public void setURI(URI uri) {
-        restSession.setURI(uri);
     }
 
     public String getSessionId() {
@@ -191,10 +186,6 @@ public class RestSessionWrapper implements Wrapper<RestSession>, Session {
 
     public int getStatus() {
         return restSession.getStatus();
-    }
-
-    public boolean wasCompleted() {
-        return restSession.wasCompleted();
     }
 
     public String getId() {

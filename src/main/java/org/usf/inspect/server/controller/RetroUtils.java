@@ -3,27 +3,30 @@ package org.usf.inspect.server.controller;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.usf.inspect.core.*;
+import org.usf.inspect.core.AbstractStage;
+import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.core.HttpRequestStage;
+import org.usf.inspect.core.HttpSessionStage;
+import org.usf.inspect.server.model.AbstractRequest;
 import org.usf.inspect.server.model.Session;
-import org.usf.inspect.server.model.wrapper.Wrapper;
 import org.usf.inspect.server.model.wrapper.MainSessionWrapper;
 import org.usf.inspect.server.model.wrapper.RestSessionWrapper;
+import org.usf.inspect.server.model.wrapper.Wrapper;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static java.util.Objects.*;
-import static org.usf.inspect.core.ExceptionInfo.mainCauseException;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static org.usf.inspect.core.HttpAction.PROCESS;
 import static org.usf.inspect.core.RequestMask.*;
-import static org.usf.inspect.core.SessionManager.nextId;
+import static org.usf.inspect.core.SessionContextManager.nextId;
 import static org.usf.inspect.server.Utils.isEmpty;
 
 @Slf4j
@@ -39,7 +42,8 @@ public final class RetroUtils {
                 }
                 var mainSession = ms.unwrap();
                 mainSession.setRequestsMask(mask(ms));
-                traces.add(mainSession);
+                traces.add(mainSession.toSession());
+                traces.add(mainSession.toCallback());
             } else if (s instanceof RestSessionWrapper rs) {
                 if(isNull(rs.getId())) {
                     log.warn("RestSesstion.id is null : {}", rs);
@@ -50,7 +54,8 @@ public final class RetroUtils {
                 stage.setRequestId(rs.getId());
                 stage.setOrder(0);
                 traces.add(stage);
-                traces.add(restSession);
+                traces.add(restSession.toSession());
+                traces.add(restSession.toCallback());
             }
             toV4(s.getId(), s.getDatabaseRequests(), d -> {
                 d.setCommand(d.mainCommand());
@@ -77,9 +82,8 @@ public final class RetroUtils {
                 }
                 return m.getActions();
             }, traces::add);
+            if(s.getRestRequests() != null) s.getRestRequests().forEach(e-> e.setLinked(nonNull(e.getId())));
             toV4(s.getId(), s.getRestRequests(), (e) -> {
-                e.setLinked(nonNull(e.getId()));
-
                 var stage = createStage(e.getStart(), e.getEnd(), HttpRequestStage::new);
                 if(e.getException() != null) {
                     if(e.getException().getType() == null){
@@ -101,11 +105,12 @@ public final class RetroUtils {
             for(var o : requests) {
                 var req = o.unwrap();
                 req.setSessionId(sessionId);
-                consumer.accept(req);
                 var list = fn.apply(o);
                 if(isNull(req.getId())){ //req.id = ses.id
                     req.setId(nextId());
                 }
+                consumer.accept(req.toRequest());
+                consumer.accept(req.toCallback());
                 var inc = 0;
                 for(var s : list) {
                     s.setRequestId(req.getId());

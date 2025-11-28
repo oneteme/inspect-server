@@ -8,8 +8,8 @@ import lombok.Setter;
 import lombok.experimental.Delegate;
 import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.core.Mail;
-import org.usf.inspect.core.MailRequest;
 import org.usf.inspect.core.MailRequestStage;
+import org.usf.inspect.server.model.MailRequest;
 
 import java.util.List;
 

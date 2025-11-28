@@ -7,7 +7,7 @@ import lombok.Setter;
 import lombok.experimental.Delegate;
 import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.core.ExceptionInfo;
-import org.usf.inspect.core.RestRequest;
+import org.usf.inspect.server.model.RestRequest;
 
 @Getter
 @Setter

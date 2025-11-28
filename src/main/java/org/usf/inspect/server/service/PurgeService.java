@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.usf.inspect.core.InstanceEnvironment;
-import org.usf.inspect.core.SessionManager;
+import org.usf.inspect.core.SessionContextManager;
 import org.usf.inspect.server.dao.PurgeDao;
 
 import java.time.Duration;
@@ -34,7 +34,7 @@ public class PurgeService {
                 Instant dateLimit = now.minus(instance.getConfiguration() != null ? instance.getConfiguration().getTracing().getRemote().getRetentionMaxAge() : Duration.ofDays(60));
                 var deleted = purgeDao.purgeByInstance(dateLimit, instance.getEnv(), instance.getName());
                 log.info("------ Purge complete ------ [{}]:[{}] — [{}] rows deleted before [{}]", instance.getEnv(), instance.getName(), IntStream.of(deleted).sum(), dateLimit);
-                SessionManager.emitInfo("Purge completed for instance [" + instance.getEnv() + "]:[" + instance.getName() + "] — [" + IntStream.of(deleted).sum() + "] rows deleted before [" + dateLimit + "]");
+                SessionContextManager.emitInfo("Purge completed for instance [" + instance.getEnv() + "]:[" + instance.getName() + "] — [" + IntStream.of(deleted).sum() + "] rows deleted before [" + dateLimit + "]");
             }
         }
     }
@@ -55,7 +55,7 @@ public class PurgeService {
             for (String app : apps) {
                 var deleted = purgeDao.purgeByInstance(dateLimit, env, app);
                 log.info("------ Purge complete ------ [{}]:[{}] — [{}] rows deleted before [{}]", env, app, IntStream.of(deleted).sum(), dateLimit);
-                SessionManager.emitInfo("Purge completed for instance [" + env + "]:[" + app + "] — [" + IntStream.of(deleted).sum() + "] rows deleted before [" + dateLimit + "]");
+                SessionContextManager.emitInfo("Purge completed for instance [" + env + "]:[" + app + "] — [" + IntStream.of(deleted).sum() + "] rows deleted before [" + dateLimit + "]");
             }
         }
     }
@@ -70,7 +70,7 @@ public class PurgeService {
         } finally {
             var deleted = purgeDao.finalizePurge();
             log.info("------ Purge finally ------ [{}] rows deleted", IntStream.of(deleted).sum());
-            SessionManager.emitInfo("Purge finally — [" + IntStream.of(deleted).sum() + "] rows deleted");
+            SessionContextManager.emitInfo("Purge finally — [" + IntStream.of(deleted).sum() + "] rows deleted");
             log.info("------ Purge vacuum ------");
             purgeDao.vacuumAnalyze();
         }
