@@ -177,7 +177,7 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", se
     @Transactional(rollbackFor = Throwable.class)
     public Long updateRestSessions(List<HttpSessionCallback> sessions) {
         return executeBatch("""
-update e_rst_ses set va_err_typ = ?, va_err_msg = ?, va_stk = ?, va_nam = ?, va_usr = ?, va_usr_agt = ?, va_cch_ctr = ?, va_cnt_typ = ?, cd_stt = ?, va_o_sze = ?, va_o_cnt_enc = ?, dh_end = ?, va_msk = ?
+update e_rst_ses set va_err_typ = coalesce(?, va_err_typ), va_err_msg = coalesce(?, va_err_msg), va_stk = coalesce(?, va_stk), va_nam = coalesce(?, va_nam), va_usr = coalesce(?, va_usr), va_usr_agt = coalesce(?, va_usr_agt), va_cch_ctr = coalesce(?, va_usr_agt), va_cnt_typ = ?, cd_stt = ?, va_o_sze = ?, va_o_cnt_enc = ?, dh_end = ?, va_msk = ?
 where id_ses = ?::uuid""", sessions.iterator(), (ps, ses) -> {
             var exp = ses.getException();
             ps.setString(1, nonNull(exp) ? exp.getType() : null);
@@ -200,9 +200,12 @@ where id_ses = ?::uuid""", sessions.iterator(), (ps, ses) -> {
     @Transactional(rollbackFor = Throwable.class)
     public Long savePartialMainSessions(List<MainSession2> sessions) {
         return executeBatch("""
-insert into e_main_ses(id_ses,cd_ins,va_nam,va_usr,va_typ,va_lct,va_thr,dh_str)
+insert into e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str)
 values(?::uuid,?::uuid,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
             mainSessionSetter(ps, ses);
+            ps.setString(5, ses.getLocation());
+            ps.setString(6, ses.getName());
+            ps.setString(7, ses.getUser());
             ps.setTimestamp(8, fromNullableInstant(ses.getStart()));
         });
     }
@@ -210,12 +213,15 @@ values(?::uuid,?::uuid,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
     @Transactional(rollbackFor = Throwable.class)
     public Long saveCompleteMainSessions(List<DatabaseDispatcherService.Pair<MainSession2, MainSessionCallback>> sessions) {
         return executeBatch("""
-insert into e_main_ses(id_ses,cd_ins,va_nam,va_usr,va_typ,va_lct,va_thr,dh_str,dh_end,va_err_typ,va_err_msg,va_stk,va_msk)
+insert into e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str,dh_end,va_err_typ,va_err_msg,va_stk,va_msk)
 values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
             var session = ses.getV1();
             var callback = ses.getV2();
             var exp = callback.getException();
             mainSessionSetter(ps, session);
+            ps.setString(5, nonNull(callback.getLocation()) ? callback.getLocation() : session.getLocation());
+            ps.setString(6, nonNull(callback.getName()) ? callback.getName() : session.getName());
+            ps.setString(7, nonNull(callback.getUser()) ? callback.getUser() : session.getUser());
             ps.setTimestamp(8, fromNullableInstant(nonNull(callback.getStart()) ? callback.getStart() : session.getStart()));
             ps.setTimestamp(9, fromNullableInstant(callback.getEnd()));
             ps.setString(10, nonNull(exp) ? exp.getType() : null);
@@ -228,26 +234,26 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses)
     static void mainSessionSetter(PreparedStatement ps, MainSession2 ses) throws SQLException {
         ps.setString(1, ses.getId());
         ps.setString(2, ses.getInstanceId());
-        ps.setString(3, ses.getName());
-        ps.setString(4, ses.getUser());
-        ps.setString(5, valueOfNullable(ses.getType()));
-        ps.setString(6, ses.getLocation());
-        ps.setString(7, ses.getThreadName());
+        ps.setString(3, valueOfNullable(ses.getType()));
+        ps.setString(4, ses.getThreadName());
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public Long updateMainSessions(List<MainSessionCallback> sessions) {
         return executeBatch("""
-update e_main_ses set dh_str = ?, dh_end = ?, va_err_typ = ?, va_err_msg = ?, va_stk = ?, va_msk = ?
+update e_main_ses set va_lct = coalesce(?, va_lct), va_nam = coalesce(?, va_nam), va_usr = coalesce(?, va_usr), dh_str = coalesce(?, dh_str), dh_end = ?, va_err_typ = ?, va_err_msg = ?, va_stk = ?, va_msk = ?
 where id_ses = ?::uuid""", sessions.iterator(), (ps, ses) -> {
             var exp = ses.getException();
-            ps.setTimestamp(1, fromNullableInstant(ses.getStart()));
-            ps.setTimestamp(2, fromNullableInstant(ses.getEnd()));
-            ps.setString(3, nonNull(exp) ? exp.getType() : null);
-            ps.setString(4, nonNull(exp) ? exp.getMessage() : null);
-            ps.setObject(5, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
-            ps.setInt(6, ses.getRequestMask().get());
-            ps.setString(7, ses.getId());
+            ps.setString(1, ses.getLocation());
+            ps.setString(2, ses.getName());
+            ps.setString(3, ses.getUser());
+            ps.setTimestamp(4, fromNullableInstant(ses.getStart()));
+            ps.setTimestamp(5, fromNullableInstant(ses.getEnd()));
+            ps.setString(6, nonNull(exp) ? exp.getType() : null);
+            ps.setString(7, nonNull(exp) ? exp.getMessage() : null);
+            ps.setObject(8, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
+            ps.setInt(9, ses.getRequestMask().get());
+            ps.setString(10, ses.getId());
         });
     }
 
@@ -261,7 +267,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), T
     @Transactional(rollbackFor = Throwable.class)
     public Long saveCompleteRestRequests(List<DatabaseDispatcherService.Pair<HttpRequest2, HttpRequestCallback>> requests) {
         return executeBatch("""
-insert into e_rst_rqt(id_rst_rqt,cd_prn_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,dh_str,dh_end,va_thr,va_cnt_typ,cd_stt,va_i_sze,va_i_cnt_enc,va_bdy_cnt,va_lnk)
+insert into e_rst_rqt(id_rst_rqt,cd_prn_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,dh_str,dh_end,va_cnt_typ,cd_stt,va_i_sze,va_i_cnt_enc,va_bdy_cnt,va_lnk)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, ses) -> {
             var request = ses.getV1();
             var callback = ses.getV2();
@@ -355,7 +361,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, pa
     @Transactional(rollbackFor = Throwable.class)
     public Long updateLocalRequests(List<LocalRequestCallback> requests) {
         var rows = executeBatch("""
-update e_lcl_rqt set dh_str = ?, dh_end = ?, va_fail = ?
+update e_lcl_rqt set dh_str = coalesce(?, dh_str), dh_end = ?, va_fail = ?
 where id_lcl_rqt = ?::uuid""", requests.iterator(), (ps, req) -> {
             ps.setTimestamp(1, fromNullableInstant(req.getStart()));
             ps.setTimestamp(2, fromNullableInstant(req.getEnd()));
