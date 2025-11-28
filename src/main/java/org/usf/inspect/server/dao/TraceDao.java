@@ -11,7 +11,6 @@ import org.usf.inspect.core.*;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.InstanceTrace;
 import org.usf.inspect.server.model.Pair;
-import org.usf.inspect.server.service.DatabaseDispatcherService;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
