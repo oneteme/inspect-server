@@ -5,9 +5,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;
-import org.usf.inspect.core.*;
-
-import java.time.Instant;
+import org.usf.inspect.core.ExceptionInfo;
+import org.usf.inspect.core.HttpSession2;
+import org.usf.inspect.core.HttpSessionCallback;
 
 /**
  * 
@@ -30,12 +30,41 @@ public class RestSession extends AbstractSession {
 		this.rest = new RestRequest();
 	}
 
-	RestSession(RestSession ses) {
-		super(ses);
-		this.rest = new RestRequest(ses.rest);
-		this.name = ses.name;
-		this.userAgent = ses.userAgent;
-		this.cacheControl = ses.cacheControl;
-		this.exception = ses.exception;
-	}
+    public HttpSession2 toSession() {
+        HttpSession2 ses = new HttpSession2(getId(), getStart(), getThreadName());
+        ses.setMethod(getMethod());
+        ses.setProtocol(getProtocol());
+        ses.setHost(getHost());
+        ses.setPort(getPort());
+        ses.setPath(getPath());
+        ses.setQuery(getQuery());
+        ses.setAuthScheme(getAuthScheme());
+        ses.setDataSize(getInDataSize());
+        ses.setContentEncoding(getInContentEncoding());
+        ses.setName(getName());
+        ses.setUser(getUser());
+        ses.setInstanceId(getInstanceId());
+        ses.setLinked(isLinked());
+        ses.setUserAgent(getUserAgent());
+        ses.setCacheControl(getCacheControl());
+        ses.setException(getException());
+        return ses;
+    }
+
+    public HttpSessionCallback toCallback() {
+        HttpSessionCallback cb = new HttpSessionCallback(getId());
+        cb.setEnd(getEnd());
+        cb.setDataSize(getOutDataSize());
+        cb.setContentEncoding(getOutContentEncoding());
+        cb.setName(getName());
+        cb.setUser(getUser());
+        cb.setUserAgent(getUserAgent());
+        cb.setCacheControl(getCacheControl());
+        cb.setBodyContent(getBodyContent());
+        cb.setStatus(getStatus());
+        cb.setContentType(getContentType());
+        cb.setRequestMask(getRequestsMask());
+        cb.setException(getException());
+        return cb;
+    }
 }

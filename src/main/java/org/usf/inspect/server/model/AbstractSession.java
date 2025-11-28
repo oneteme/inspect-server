@@ -2,6 +2,7 @@ package org.usf.inspect.server.model;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.usf.inspect.core.EventTrace;
 
 /**
  * 
@@ -10,14 +11,10 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public abstract class AbstractSession {
+public abstract class AbstractSession implements EventTrace {
 
 	private int requestsMask;
 
 	AbstractSession() {
-	}
-
-	AbstractSession(AbstractSession req) {
-		this.requestsMask = req.requestsMask;
 	}
 }

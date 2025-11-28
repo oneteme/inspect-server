@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.*;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.InstanceTrace;
+import org.usf.inspect.server.model.Pair;
 import org.usf.inspect.server.service.DatabaseDispatcherService;
 
 import java.sql.PreparedStatement;
@@ -133,7 +134,7 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.itera
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public Long saveCompleteRestSessions(List<DatabaseDispatcherService.Pair<HttpSession2, HttpSessionCallback>> sessions) {
+    public Long saveCompleteRestSessions(List<Pair<HttpSession2, HttpSessionCallback>> sessions) {
         return executeBatch("""
 insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,dh_end,va_err_typ,va_err_msg,va_stk,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_cnt_typ,cd_stt,va_o_sze,va_o_cnt_enc,va_msk)
 values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
@@ -211,7 +212,7 @@ values(?::uuid,?::uuid,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public Long saveCompleteMainSessions(List<DatabaseDispatcherService.Pair<MainSession2, MainSessionCallback>> sessions) {
+    public Long saveCompleteMainSessions(List<Pair<MainSession2, MainSessionCallback>> sessions) {
         return executeBatch("""
 insert into e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str,dh_end,va_err_typ,va_err_msg,va_stk,va_msk)
 values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
@@ -265,7 +266,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), T
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public Long saveCompleteRestRequests(List<DatabaseDispatcherService.Pair<HttpRequest2, HttpRequestCallback>> requests) {
+    public Long saveCompleteRestRequests(List<Pair<HttpRequest2, HttpRequestCallback>> requests) {
         return executeBatch("""
 insert into e_rst_rqt(id_rst_rqt,cd_prn_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,dh_str,dh_end,va_cnt_typ,cd_stt,va_i_sze,va_i_cnt_enc,va_bdy_cnt,va_lnk)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, ses) -> {
@@ -326,7 +327,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests.iterator(), (ps, req) -
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public Long saveCompleteLocalRequests(List<DatabaseDispatcherService.Pair<LocalRequest2, LocalRequestCallback>> requests) {
+    public Long saveCompleteLocalRequests(List<Pair<LocalRequest2, LocalRequestCallback>> requests) {
         var rows = executeBatch("""
 insert into e_lcl_rqt(id_lcl_rqt,cd_prn_ses,cd_ins,va_typ,va_nam,va_lct,va_usr,va_thr,dh_str,dh_end,va_fail)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, pair) -> {
@@ -338,7 +339,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, pa
             ps.setBoolean(11, nonNull(callback.getException()));
         });
         var exceptions = requests.stream()
-                .map(DatabaseDispatcherService.Pair::getV2)
+                .map(Pair::getV2)
                 .filter(r -> nonNull(r.getException()))
                 .toList();
         if(!exceptions.isEmpty()) {
@@ -385,7 +386,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests.iterator(), TraceDao::m
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public Long saveCompleteMailRequests(List<DatabaseDispatcherService.Pair<MailRequest2, MailRequestCallback>> requests) {
+    public Long saveCompleteMailRequests(List<Pair<MailRequest2, MailRequestCallback>> requests) {
         return executeBatch("""
 insert into e_smtp_rqt(id_smtp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str,dh_end,va_cmd,va_fail)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, pair) -> {
@@ -431,7 +432,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests.iterator(), TraceDa
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public Long saveCompleteFtpRequests(List<DatabaseDispatcherService.Pair<FtpRequest2, FtpRequestCallback>> requests) {
+    public Long saveCompleteFtpRequests(List<Pair<FtpRequest2, FtpRequestCallback>> requests) {
         return executeBatch("""
 insert into e_ftp_rqt(id_ftp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_srv_vrs,va_clt_vrs,va_usr,va_thr,dh_str,dh_end,va_cmd,va_fail)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, pair) -> {
@@ -478,7 +479,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests.iterator(), TraceDao::l
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public Long saveCompleteLdapRequests(List<DatabaseDispatcherService.Pair<DirectoryRequest2, DirectoryRequestCallback>> requests) {
+    public Long saveCompleteLdapRequests(List<Pair<DirectoryRequest2, DirectoryRequestCallback>> requests) {
         return executeBatch("""
 insert into e_ldap_rqt(id_ldap_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str,dh_end,va_cmd,va_fail)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, pair) -> {
@@ -523,7 +524,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), T
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public Long saveCompleteDatabaseRequests(List<DatabaseDispatcherService.Pair<DatabaseRequest2, DatabaseRequestCallback>> requests) {
+    public Long saveCompleteDatabaseRequests(List<Pair<DatabaseRequest2, DatabaseRequestCallback>> requests) {
         return executeBatch("""
 insert into e_dtb_rqt(id_dtb_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_she,va_nam,va_sha,va_usr,va_thr,va_drv,va_prd_nam,va_prd_vrs,dh_str,dh_end,va_cmd,va_fail)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, pair) -> {

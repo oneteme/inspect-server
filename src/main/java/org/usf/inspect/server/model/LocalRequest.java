@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Getter;
 import lombok.Setter;
 import org.usf.inspect.core.ExceptionInfo;
+import org.usf.inspect.core.LocalRequest2;
+import org.usf.inspect.core.LocalRequestCallback;
 
 /**
  * 
@@ -21,11 +23,21 @@ public class LocalRequest extends AbstractRequest {
 	
 	@JsonCreator public LocalRequest() { }
 
-	LocalRequest(LocalRequest req) {
-		super(req);
-		this.name = req.name;
-		this.type = req.type;
-		this.location = req.location;
-		this.exception = req.exception;
-	}
+    public LocalRequest2 toRequest() {
+        var req = new LocalRequest2(getId(), getSessionId(), getStart(), getThreadName());
+        req.setLocation(getLocation());
+        req.setUser(getUser());
+        req.setName(getName());
+        req.setType(getType());
+        req.setInstanceId(getInstanceId());
+        return req;
+    }
+
+    public LocalRequestCallback toCallback() {
+        var callback = new LocalRequestCallback(getId());
+        callback.setEnd(getEnd());
+        callback.setCommand(getCommand());
+        callback.setException(getException());
+        return callback;
+    }
 }

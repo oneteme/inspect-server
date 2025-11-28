@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.usf.inspect.core.*;
 
 import java.time.Instant;
 
@@ -15,7 +16,7 @@ import java.time.Instant;
 @Getter
 @Setter
 @NoArgsConstructor
-public abstract class AbstractRequest {
+public abstract class AbstractRequest implements EventTrace {
 	
 	private Instant start;
 	private Instant end;
@@ -36,4 +37,9 @@ public abstract class AbstractRequest {
 		this.sessionId = req.sessionId;
 		this.instanceId = req.instanceId;
 	}
+
+
+    public abstract Initializer toRequest();
+
+    public abstract Callback toCallback();
 }

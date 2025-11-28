@@ -3,6 +3,8 @@ package org.usf.inspect.server.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Getter;
 import lombok.Setter;
+import org.usf.inspect.core.DatabaseRequest2;
+import org.usf.inspect.core.DatabaseRequestCallback;
 
 /**
  * 
@@ -25,16 +27,26 @@ public class DatabaseRequest extends AbstractRequest {
 
 	@JsonCreator public DatabaseRequest() { }
 
-	DatabaseRequest(DatabaseRequest req) {
-		super(req);
-		this.scheme = req.scheme;
-		this.host = req.host;
-		this.port = req.port;
-		this.name = req.name;
-		this.schema = req.schema;
-		this.driverVersion = req.driverVersion;
-		this.productName = req.productName;
-		this.productVersion = req.productVersion;
-		this.failed = req.failed;
-	}
+    public DatabaseRequest2 toRequest(){
+        DatabaseRequest2 req = new DatabaseRequest2(getId(), getSessionId(), getStart(), getThreadName());
+        req.setScheme(getScheme());
+        req.setHost(getHost());
+        req.setPort(getPort());
+        req.setName(getName());
+        req.setSchema(getSchema());
+        req.setDriverVersion(getDriverVersion());
+        req.setProductName(getProductName());
+        req.setProductVersion(getProductVersion());
+        req.setUser(getUser());
+        req.setInstanceId(getInstanceId());
+        return req;
+    }
+
+    public DatabaseRequestCallback toCallback(){
+        DatabaseRequestCallback cb = new DatabaseRequestCallback(getId());
+        cb.setFailed(isFailed());
+        cb.setEnd(getEnd());
+        cb.setCommand(getCommand());
+        return cb;
+    }
 }

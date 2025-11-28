@@ -3,6 +3,8 @@ package org.usf.inspect.server.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Getter;
 import lombok.Setter;
+import org.usf.inspect.core.HttpRequest2;
+import org.usf.inspect.core.HttpRequestCallback;
 
 /**
  * 
@@ -49,4 +51,33 @@ public class RestRequest extends AbstractRequest { //APiRequest
 		this.bodyContent = req.bodyContent;
         this.linked = req.linked;
 	}
+
+    public HttpRequest2 toRequest() {
+        HttpRequest2 req = new HttpRequest2(getId(), getSessionId(), getStart(), getThreadName());
+        req.setProtocol(getProtocol());
+        req.setHost(getHost());
+        req.setPort(getPort());
+        req.setMethod(getMethod());
+        req.setPath(getPath());
+        req.setQuery(getQuery());
+        req.setAuthScheme(getAuthScheme());
+        req.setDataSize(getOutDataSize());
+        req.setContentEncoding(getOutContentEncoding());
+        req.setUser(getUser());
+        req.setInstanceId(getInstanceId());
+        return req;
+    }
+
+    public HttpRequestCallback toCallback() {
+        HttpRequestCallback cb = new HttpRequestCallback(getId());
+        cb.setStatus(getStatus());
+        cb.setContentType(getContentType());
+        cb.setDataSize(getInDataSize());
+        cb.setContentEncoding(getInContentEncoding());
+        cb.setBodyContent(getBodyContent());
+        cb.setEnd(getEnd());
+        cb.setLinked(isLinked());
+        cb.setCommand(getCommand());
+        return cb;
+    }
 }

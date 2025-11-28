@@ -3,6 +3,8 @@ package org.usf.inspect.server.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Getter;
 import lombok.Setter;
+import org.usf.inspect.core.MailRequest2;
+import org.usf.inspect.core.MailRequestCallback;
 
 /**
  * 
@@ -20,11 +22,21 @@ public class MailRequest extends AbstractRequest {
 
 	@JsonCreator public MailRequest() { }
 
-	MailRequest(MailRequest req) {
-		super(req);
-		this.protocol = req.protocol;
-		this.host = req.host;
-		this.port = req.port;
-		this.failed = req.failed;
-	}
+	public MailRequest2 toRequest() {
+        MailRequest2 req = new MailRequest2(getId(), getSessionId(), getStart(), getThreadName());
+        req.setInstanceId(getInstanceId());
+        req.setUser(getUser());
+        req.setProtocol(getProtocol());
+        req.setHost(getHost());
+        req.setPort(getPort());
+        return req;
+    }
+
+    public MailRequestCallback toCallback() {
+        MailRequestCallback cb = new MailRequestCallback(getId());
+        cb.setEnd(getEnd());
+        cb.setCommand(getCommand());
+        cb.setFailed(isFailed());
+        return cb;
+    }
 }

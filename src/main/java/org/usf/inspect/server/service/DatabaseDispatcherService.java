@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.usf.inspect.server.model.Pair;
 
 @Slf4j
 @Service
@@ -146,18 +147,11 @@ public class DatabaseDispatcherService implements DispatcherAgent {
                     insertCompleteBatchExecutor.applyAsLong(completeRequests);
                 } catch (Exception e) {
                     log.error("error while resolving complete requests: {}", e.getMessage());
-                    res.addAll(completeRequests.stream().flatMap(p-> Stream.of(p.v1, p.v2)).toList());
+                    res.addAll(completeRequests.stream().flatMap(p-> Stream.of(p.getV1(), p.getV2())).toList());
                 }
             }
             return res;
         }
-    }
-
-    @Getter
-    @RequiredArgsConstructor
-    public static class Pair<R,C>{
-        final R v1;
-        final C v2;
     }
 
     static <U extends EventTrace> List<EventTrace> filterAndApply(Collection<EventTrace> c, Class<U> clazz, Consumer<List<U>> saveFn) {
