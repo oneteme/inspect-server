@@ -63,11 +63,11 @@ public final class InspectMappers {
         return rs ->
             new InstanceTrace(
                     rs.getInt(PENDING.reference()),
-                    rs.getInt(ATTEMPTS.reference()),
-                    rs.getInt(TRACE_COUNT.reference()),
                     rs.getString(FILENAME.reference()),
                     fromNullableTimestamp(rs.getTimestamp(START.reference())),
-                    rs.getString(INSTANCE_ENV.reference())
+                    rs.getString(INSTANCE_ENV.reference()),
+                    rs.getInt(TRACE_COUNT.reference()),
+                    rs.getInt(ATTEMPTS.reference())
             );
     }
 

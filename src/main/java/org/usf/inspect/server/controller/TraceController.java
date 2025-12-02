@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.*;
 import org.usf.inspect.core.*;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.InstanceTrace;
+import org.usf.inspect.server.service.DatabaseDispatcherService;
+import org.usf.inspect.server.service.TraceBatchResolver;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -17,12 +19,15 @@ import java.util.function.Predicate;
 import static java.time.Instant.now;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static java.util.regex.Pattern.compile;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 import static org.springframework.http.ResponseEntity.*;
+import static org.usf.inspect.server.service.DatabaseDispatcherService.*;
+import static org.usf.inspect.server.service.TraceBatchResolver.*;
 import static org.usf.jquery.core.Utils.isBlank;
 
 @Slf4j
@@ -69,9 +74,12 @@ public class TraceController {
     		if(isNull(traces)) {
     			traces = new ArrayList<>();
     		}
-    		int size = traces.size();
-    		traces.add(new InstanceTrace(pending, attempts, size, filename, now, id));
-    		if(nonNull(end)){
+            InstanceTrace instanceTrace = new InstanceTrace(attempts, filename, now, id);
+            resolve(traces, AbstractSession2.class, AbstractSessionCallback.class, TraceBatchResolver::reduceCallback, instanceTrace);
+            resolve(traces, AbstractRequest2.class, AbstractRequestCallback.class, TraceBatchResolver::defaultReduceCallback, instanceTrace);
+            filterAndApply(traces, AbstractStage.class, t -> instanceTrace.addTraceCount(t.size()));
+            traces.add(instanceTrace);
+            if(nonNull(end)){
     			traces.add(new InstanceEnvironmentUpdate(id, end));
     		}
     		for(var e : traces) {
