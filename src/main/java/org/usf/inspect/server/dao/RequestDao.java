@@ -17,11 +17,11 @@ public class RequestDao {
 
     public List<String> selectChildsById(String id) {
         var query = "with recursive recusive(prnt,chld) as (" +
-                " select ''::varchar as prnt, ?::varchar as chld " +
+                " select null::uuid as prnt, ?::uuid as chld " +
                 " union all " +
-                " select  recusive.chld::varchar, E_RST_RQT.ID_RST_RQT::varchar " +
+                " select  recusive.chld, E_RST_RQT.ID_RST_RQT " +
                 " from E_RST_RQT, recusive " +
-                " where recusive.chld::varchar = E_RST_RQT.CD_PRN_SES::varchar " +
+                " where recusive.chld = E_RST_RQT.CD_PRN_SES " +
                 ") select distinct(chld) from recusive";
         return template.query(query, (rs, row) -> rs.getString("chld"), id).stream()
         		.filter(Objects::nonNull)
