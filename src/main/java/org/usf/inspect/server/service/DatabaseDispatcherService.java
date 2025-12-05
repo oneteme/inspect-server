@@ -102,8 +102,8 @@ public class DatabaseDispatcherService implements DispatcherAgent {
 
         public List<EventTrace> resolve(Collection<EventTrace> traces){
             var map = traces.stream().filter(o-> initClazz.isInstance(o) || callbackClazz.isInstance(o) )
-                    .map(Compleatable.class::cast)
-                    .collect(Collectors.groupingBy(Compleatable::getId));
+                    .map(CompletableTrace.class::cast)
+                    .collect(Collectors.groupingBy(CompletableTrace::getId));
 
             List<T> requests = new ArrayList<>();
             List<U> callbackRequests = new ArrayList<>();
