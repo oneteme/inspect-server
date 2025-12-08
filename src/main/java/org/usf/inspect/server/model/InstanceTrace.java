@@ -25,6 +25,10 @@ public class InstanceTrace implements EventTrace {
         pending += delta;
     }
 
+    public void removePending(int delta) {
+        pending -= delta;
+    }
+
     public void addTraceCount(int delta) {
         traceCount += delta;
     }

@@ -12,6 +12,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
@@ -59,8 +62,28 @@ public class DatabaseDispatcherService implements DispatcherAgent {
 	
 	public List<EventTrace> addTraces(List<EventTrace> traces) {
         var cf = new ArrayList<CompletableFuture<Collection<EventTrace>>>();
-        cf.add(supplyAsync(()-> resolve(traces, MainSession2.class, MainSessionCallback.class, dao::savePartialMainSessions, dao::updateMainSessions, dao::saveCompleteMainSessions, TraceBatchResolver::reduceCallback), executor));
-        cf.add(supplyAsync(()-> resolve(traces, HttpSession2.class, HttpSessionCallback.class, dao::savePartialRestSessions, dao::updateRestSessions, dao::saveCompleteRestSessions, TraceBatchResolver::reduceCallback), executor));
+        cf.add(supplyAsync(()-> {
+            var unsaved = resolve(traces, MainSession2.class, MainSessionCallback.class, dao::savePartialMainSessions, dao::updateMainSessions, dao::saveCompleteMainSessions);
+            if(unsaved.isEmpty()){
+                unsaved.addAll(filterAndApply(traces, (e, consumer) -> {
+                    if(e instanceof SessionMaskUpdate smu && smu.isMain()) {
+                        consumer.accept(smu);
+                    }
+                }, dao::updateMaskMainSessions, SessionMaskUpdate.class));
+            }
+            return unsaved;
+        }, executor));
+        cf.add(supplyAsync(()-> {
+            var unsaved = resolve(traces, HttpSession2.class, HttpSessionCallback.class, dao::savePartialRestSessions, dao::updateRestSessions, dao::saveCompleteRestSessions);
+            if(unsaved.isEmpty()){
+                unsaved.addAll(filterAndApply(traces, (e, consumer) -> {
+                    if(e instanceof SessionMaskUpdate smu && !smu.isMain()) {
+                        consumer.accept(smu);
+                    }
+                }, dao::updateMaskRestSessions, SessionMaskUpdate.class));
+            }
+            return unsaved;
+        }, executor));
         cf.add(supplyAsync(()-> resolve(traces, HttpRequest2.class, HttpRequestCallback.class, dao::savePartialRestRequests, dao::updateRestRequests, dao::saveCompleteRestRequests), executor));
         cf.add(supplyAsync(()-> resolve(traces, LocalRequest2.class, LocalRequestCallback.class, dao::savePartialLocalRequests, dao::updateLocalRequests, dao::saveCompleteLocalRequests), executor));
         cf.add(supplyAsync(()-> resolve(traces, MailRequest2.class, MailRequestCallback.class, dao::savePartialMailRequests, dao::updateMailRequests, dao::saveCompleteMailRequests), executor));
@@ -85,9 +108,16 @@ public class DatabaseDispatcherService implements DispatcherAgent {
     }
 
     public static <U extends EventTrace> List<EventTrace> filterAndApply(Collection<EventTrace> c, Class<U> clazz, Consumer<List<U>> saveFn) {
+        return filterAndApply(c, (e, consumer) -> {
+            if(clazz.isInstance(e)) {
+                consumer.accept(clazz.cast(e));
+            }
+        }, saveFn, clazz);
+    }
+
+    public static <U extends EventTrace> List<EventTrace> filterAndApply(Collection<EventTrace> c, BiConsumer<EventTrace, ? super Consumer<U>> mapper, Consumer<List<U>> saveFn, Class<U> clazz) {
         var list = c.stream()
-                .filter(clazz::isInstance)
-                .map(clazz::cast)
+                .mapMulti(mapper)
                 .toList();
         if(!list.isEmpty()) {
             log.debug("saving {} {}..", list.size(), clazz.getSimpleName());

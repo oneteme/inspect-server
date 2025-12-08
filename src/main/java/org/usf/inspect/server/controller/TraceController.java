@@ -75,8 +75,7 @@ public class TraceController {
     			traces = new ArrayList<>();
     		}
             InstanceTrace instanceTrace = new InstanceTrace(attempts, filename, now, id);
-            resolve(traces, AbstractSession2.class, AbstractSessionCallback.class, TraceBatchResolver::reduceCallback, instanceTrace);
-            resolve(traces, AbstractRequest2.class, AbstractRequestCallback.class, TraceBatchResolver::defaultReduceCallback, instanceTrace);
+            resolve(traces, instanceTrace);
             filterAndApply(traces, AbstractStage.class, t -> instanceTrace.addTraceCount(t.size()));
             traces.add(instanceTrace);
             if(nonNull(end)){

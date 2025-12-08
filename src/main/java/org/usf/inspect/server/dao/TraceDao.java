@@ -198,6 +198,14 @@ where id_ses = ?::uuid""", sessions.iterator(), (ps, ses) -> {
     }
 
     @Transactional(rollbackFor = Throwable.class)
+    public void updateMaskRestSessions(List<SessionMaskUpdate> sessions) {
+        executeBatch("update e_rst_ses set va_msk = (?|va_msk) where id_ses = ?::uuid", sessions.iterator(), (ps, ses) -> {
+            ps.setInt(1, ses.getMask());
+            ps.setString(2, ses.getId());
+        });
+    }
+
+    @Transactional(rollbackFor = Throwable.class)
     public void savePartialMainSessions(List<MainSession2> sessions) {
         executeBatch("""
 insert into e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str)
@@ -254,6 +262,14 @@ where id_ses = ?::uuid""", sessions.iterator(), (ps, ses) -> {
             ps.setObject(8, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
             ps.setInt(9, ses.getRequestMask().get());
             ps.setString(10, ses.getId());
+        });
+    }
+
+    @Transactional(rollbackFor = Throwable.class)
+    public void updateMaskMainSessions(List<SessionMaskUpdate> sessions) {
+        executeBatch("update e_main_ses set va_msk = (?|va_msk) where id_ses = ?::uuid", sessions.iterator(), (ps, ses) -> {
+            ps.setInt(1, ses.getMask());
+            ps.setString(2, ses.getId());
         });
     }
 

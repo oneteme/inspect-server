@@ -26,18 +26,6 @@ public abstract class AbstractRequest implements EventTrace {
 	private String command;
 	private String sessionId;
 	private String instanceId;
-	
-	AbstractRequest(AbstractRequest req) {
-		this.start = req.start;
-		this.end = req.end;
-		this.threadName = req.threadName;
-		this.user = req.user;
-		this.id = req.id;
-		this.command = req.command;
-		this.sessionId = req.sessionId;
-		this.instanceId = req.instanceId;
-	}
-
 
     public abstract Initializer toRequest();
 
