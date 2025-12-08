@@ -33,25 +33,6 @@ public class RestRequest extends AbstractRequest { //APiRequest
 	
 	@JsonCreator public RestRequest() { }
 
-	RestRequest(RestRequest req) {
-		super(req);
-		this.protocol = req.protocol;
-		this.host = req.host;
-		this.port = req.port;
-		this.method = req.method;
-		this.path = req.path;
-		this.query = req.query;
-		this.contentType = req.contentType;
-		this.authScheme = req.authScheme;
-		this.status = req.status;
-		this.inDataSize = req.inDataSize;
-		this.outDataSize = req.outDataSize;
-		this.inContentEncoding = req.inContentEncoding;
-		this.outContentEncoding = req.outContentEncoding;
-		this.bodyContent = req.bodyContent;
-        this.linked = req.linked;
-	}
-
     public HttpRequest2 toRequest() {
         HttpRequest2 req = new HttpRequest2(getId(), getSessionId(), getStart(), getThreadName());
         req.setProtocol(getProtocol());
