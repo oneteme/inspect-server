@@ -39,7 +39,7 @@ public class DatabaseDispatcherService implements DispatcherAgent {
 	private final ObjectMapper mapper;
 	private final ExecutorService executor = wrap(newFixedThreadPool(5));
 
-    @Override
+  @Override
 	public void dispatch(InstanceEnvironment instance) {
         dao.saveInstanceEnvironment(instance);
 	}
