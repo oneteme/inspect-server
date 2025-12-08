@@ -2,10 +2,7 @@ package org.usf.inspect.server.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.usf.inspect.core.Callback;
-import org.usf.inspect.core.CompletableTrace;
-import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.Initializer;
+import org.usf.inspect.core.*;
 import org.usf.inspect.server.model.InstanceTrace;
 import org.usf.inspect.server.model.Pair;
 
@@ -15,6 +12,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import static org.usf.inspect.core.SessionContextManager.*;
+import static org.usf.inspect.core.SessionContextManager.emitWarn;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -41,9 +41,11 @@ public class TraceBatchResolver<T extends Initializer, U extends Callback>  {
             var calls = o.stream().filter(callbackClazz::isInstance).map(callbackClazz::cast).toList();
             if(inits.size() > 1) {
                 log.warn("Multiple {} found for the same identifier, unable to reduce the list.", initClazz.getSimpleName());
+                emitWarn("Multiple " + initClazz.getSimpleName() + " found for the same identifier, unable to reduce the list.");
             }
             if(calls.size() > 1) {
                 log.warn("Multiple {} found for the same identifier, unable to reduce the list.", callbackClazz.getSimpleName());
+                emitWarn("Multiple " + callbackClazz.getSimpleName() + " found for the same identifier, unable to reduce the list.");
             }
             var init = inits.stream().min(Comparator.comparing(Initializer::getStart));
             var call = calls.stream().max(Comparator.comparing(Callback::getEnd));
