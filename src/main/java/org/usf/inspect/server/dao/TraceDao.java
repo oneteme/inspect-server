@@ -118,8 +118,8 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     @Transactional(rollbackFor = Throwable.class)
     public void savePartialRestSessions(List<HttpSession2> sessions) {
         executeBatch("""
-insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,va_lnk,dh_str,va_err_typ,va_err_msg,va_stk,va_nam,va_usr,va_usr_agt,va_cch_ctr)
-values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
+insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,va_lnk,dh_str,va_err_typ,va_err_msg,va_stk,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_msk)
+values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
             var exp = ses.getException();
             restSessionSetter(ps, ses);
             ps.setString(15, nonNull(exp) ? exp.getType() : null);
@@ -129,6 +129,7 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.itera
             ps.setString(19, ses.getUser());
             ps.setString(20, userAgentExtract(ses.getUserAgent()));
             ps.setString(21, ses.getCacheControl());
+            ps.setInt(22, 0);
         });
     }
 
@@ -199,7 +200,7 @@ where id_ses = ?::uuid""", sessions.iterator(), (ps, ses) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateMaskRestSessions(List<SessionMaskUpdate> sessions) {
-        executeBatch("update e_rst_ses set va_msk = (?|va_msk) where id_ses = ?::uuid", sessions.iterator(), (ps, ses) -> {
+        executeBatch("update e_rst_ses set va_msk = ? where id_ses = ?::uuid", sessions.iterator(), (ps, ses) -> {
             ps.setInt(1, ses.getMask());
             ps.setString(2, ses.getId());
         });
@@ -208,13 +209,14 @@ where id_ses = ?::uuid""", sessions.iterator(), (ps, ses) -> {
     @Transactional(rollbackFor = Throwable.class)
     public void savePartialMainSessions(List<MainSession2> sessions) {
         executeBatch("""
-insert into e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str)
-values(?::uuid,?::uuid,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
+insert into e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str,va_msk)
+values(?::uuid,?::uuid,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
             mainSessionSetter(ps, ses);
             ps.setString(5, ses.getLocation());
             ps.setString(6, ses.getName());
             ps.setString(7, ses.getUser());
             ps.setTimestamp(8, fromNullableInstant(ses.getStart()));
+            ps.setInt(9, 0);
         });
     }
 
@@ -267,7 +269,7 @@ where id_ses = ?::uuid""", sessions.iterator(), (ps, ses) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateMaskMainSessions(List<SessionMaskUpdate> sessions) {
-        executeBatch("update e_main_ses set va_msk = (?|va_msk) where id_ses = ?::uuid", sessions.iterator(), (ps, ses) -> {
+        executeBatch("update e_main_ses set va_msk = ? where id_ses = ?::uuid", sessions.iterator(), (ps, ses) -> {
             ps.setInt(1, ses.getMask());
             ps.setString(2, ses.getId());
         });
