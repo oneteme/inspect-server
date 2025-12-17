@@ -202,11 +202,7 @@ public class RequestController {
             column = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,err_type,err_msg,stacktrace,mask,user,user_agt,cache_control,instance_env") QueryComposer request,
             @PathVariable String idSession) throws SQLException {
         return Optional.ofNullable(INSPECT.execute(request.filters(column("id_ses").eq(fromString(idSession))), InspectMappers.createBaseRestSession(mapper)))
-                .map(o -> {
-                    Instant end = o.getEnd();
-                    boolean cacheable = end != null && Duration.between(Instant.now(), end).toDays() > 2;
-                    return cacheable ? ok().cacheControl(maxAge(30, DAYS)).body(o) : ok().body(o);
-                })
+                .map(o -> ok().body(o))
                 .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null));
     }
 
@@ -284,11 +280,7 @@ public class RequestController {
                 column = "id,name,start,end,type,location,thread,err_type,err_msg,stacktrace,mask,user,instance_env") QueryComposer request,
             @PathVariable String idSession) throws SQLException {
         return Optional.ofNullable(INSPECT.execute(request.filters(column("id_ses").eq(fromString(idSession))), InspectMappers.createBaseMainSession(mapper)))
-                .map(o -> {
-                    Instant end = o.getEnd();
-                    boolean cacheable = end != null && Duration.between(Instant.now(), end).toDays() > 2;
-                    return cacheable ? ok().cacheControl(maxAge(30, DAYS)).body(o) : ok().body(o);
-                })
+                .map(o -> ok().body(o))
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
