@@ -107,49 +107,58 @@ public class RequestController {
                                                 @RequestParam(required = false, name = "host") String[] hosts,
                                                 @RequestParam(required = false, name = "start") Instant start,
                                                 @RequestParam(required = false, name = "end") Instant end,
-                                                @RequestParam(required = false, name = "rangestatus") String[] rangestatus)  {
+                                                @RequestParam(required = false, name = "rangestatus") String[] rangestatus,
+                                                @RequestParam(required = false, name = "lazy") boolean lazy)  {
 
-        JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, environments, null, start, end, null, null, hosts, null, null, null, null, null, null, null, rangestatus);
+        JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, environments, null, start, end, null, null, hosts, null, null, null, null, null, null, null, rangestatus, lazy);
         return requestService.getRestRequests(jsf);
     }
 
     @GetMapping("request/database")
     public List<DatabaseRequestDto> getDatabaseRequestForSearch(@RequestParam(required = false, name = "env") String[] environments,
-                                                        @RequestParam(required = false, name = "host") String[] hosts,
-                                                        @RequestParam(required = false, name = "start") Instant start,
-                                                        @RequestParam(required = false, name = "end") Instant end,
-                                                        @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus)  {
-        JqueryRequestFilter jsf = new JqueryRequestFilter(environments, hosts, start, end, rangestatus);
+                                                                @RequestParam(required = false, name = "host") String[] hosts,
+                                                                @RequestParam(required = false, name = "start") Instant start,
+                                                                @RequestParam(required = false, name = "end") Instant end,
+                                                                @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus,
+                                                                @RequestParam(required = false, name = "lazy") boolean lazy
+    )  {
+        JqueryRequestFilter jsf = new JqueryRequestFilter(environments, hosts, start, end, rangestatus, lazy);
         return requestService.getDatabaseRequests(jsf);
     }
 
     @GetMapping("request/ftp")
     public List<FtpRequestDto> getFtpRequestForSearch(@RequestParam(required = false, name = "env") String[] environments,
-                                                   @RequestParam(required = false, name = "host") String[] hosts,
-                                                   @RequestParam(required = false, name = "start") Instant start,
-                                                   @RequestParam(required = false, name = "end") Instant end,
-                                                   @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus)  {
-        JqueryRequestFilter jsf = new JqueryRequestFilter(environments,hosts,start,end, rangestatus);
+                                                      @RequestParam(required = false, name = "host") String[] hosts,
+                                                      @RequestParam(required = false, name = "start") Instant start,
+                                                      @RequestParam(required = false, name = "end") Instant end,
+                                                      @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus,
+                                                      @RequestParam(required = false, name = "lazy") boolean lazy
+    )  {
+        JqueryRequestFilter jsf = new JqueryRequestFilter(environments,hosts,start,end, rangestatus, lazy);
         return requestService.getFtpRequests(jsf);
     }
 
     @GetMapping("request/smtp")
     public List<MailRequestDto> getSmtpRequestForSearch(@RequestParam(required = false, name = "env") String[] environments,
-                                                    @RequestParam(required = false, name = "host") String[] hosts,
-                                                    @RequestParam(required = false, name = "start") Instant start,
-                                                    @RequestParam(required = false, name = "end") Instant end,
-                                                    @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus)  {
-        JqueryRequestFilter jsf = new JqueryRequestFilter(environments,hosts,start,end, rangestatus);
+                                                        @RequestParam(required = false, name = "host") String[] hosts,
+                                                        @RequestParam(required = false, name = "start") Instant start,
+                                                        @RequestParam(required = false, name = "end") Instant end,
+                                                        @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus,
+                                                        @RequestParam(required = false, name = "lazy") boolean lazy
+    )  {
+        JqueryRequestFilter jsf = new JqueryRequestFilter(environments,hosts,start,end, rangestatus, lazy);
         return requestService.getSmtpRequestsByFilter(jsf);
     }
 
     @GetMapping("request/ldap")
     public List<DirectoryRequestDto> getLdapRequestForSearch(@RequestParam(required = false, name = "env") String[] environments,
-                                                    @RequestParam(required = false, name = "host") String[] hosts,
-                                                    @RequestParam(required = false, name = "start") Instant start,
-                                                    @RequestParam(required = false, name = "end") Instant end,
-                                                    @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus)  {
-        JqueryRequestFilter jsf = new JqueryRequestFilter(environments,hosts,start,end, rangestatus);
+                                                             @RequestParam(required = false, name = "host") String[] hosts,
+                                                             @RequestParam(required = false, name = "start") Instant start,
+                                                             @RequestParam(required = false, name = "end") Instant end,
+                                                             @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus,
+                                                             @RequestParam(required = false, name = "lazy") boolean lazy
+    )  {
+        JqueryRequestFilter jsf = new JqueryRequestFilter(environments, hosts, start, end, rangestatus, lazy);
         return requestService.getLdapRequestsByFilter(jsf);
     }
 
@@ -180,9 +189,11 @@ public class RequestController {
             @RequestParam(required = false, name = "user") String[] users,
             @RequestParam(required = false, name = "appname") String[] appNames,
             @RequestParam(required = false, name = "env") String[] environments,
-            @RequestParam(required = false, name = "rangestatus") String[] rangestatus)  {
+            @RequestParam(required = false, name = "rangestatus") String[] rangestatus,
+            @RequestParam(required = false, name = "lazy") boolean lazy
+    )  {
 
-        JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(appNames, environments, users, start, end, methods, protocols, hosts, ports, medias, auths, status, apiNames, path, query,rangestatus);
+        JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(appNames, environments, users, start, end, methods, protocols, hosts, ports, medias, auths, status, apiNames, path, query,rangestatus, lazy);
         return requestService.getRestSessionsForSearch(jsf);
     }
 
@@ -256,10 +267,11 @@ public class RequestController {
             @RequestParam(required = false, name = "end") Instant end,
             @RequestParam(required = false, name = "user") String[] users,
             @RequestParam(required = false, name = "appname") String[] appNames,
-            @RequestParam(required = false, name = "rangestatus") String [] rangestatus
+            @RequestParam(required = false, name = "failed") Boolean[] failed,
+            @RequestParam(required = false, name = "lazy") boolean lazy
     )  {
 
-        JqueryMainSessionFilter fc = new JqueryMainSessionFilter(appNames, environments, users, start, end, names, launchModes, location, rangestatus);
+        JqueryMainSessionFilter fc = new JqueryMainSessionFilter(appNames, environments, users, start, end, names, launchModes, location, failed, lazy);
         return requestService.getMainSessionsForSearch(fc);
     }
 

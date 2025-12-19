@@ -1,10 +1,6 @@
 package org.usf.inspect.server.model.filter;
 
-import static org.usf.inspect.server.config.TraceApiColumn.ERR_MSG;
-import static org.usf.inspect.server.config.TraceApiColumn.ERR_TYPE;
-import static org.usf.inspect.server.config.TraceApiColumn.LOCATION;
-import static org.usf.inspect.server.config.TraceApiColumn.NAME;
-import static org.usf.inspect.server.config.TraceApiColumn.TYPE;
+import static org.usf.inspect.server.config.TraceApiColumn.*;
 import static org.usf.jquery.core.Utils.isEmpty;
 
 import java.time.Instant;
@@ -22,14 +18,16 @@ public class JqueryMainSessionFilter extends JquerySessionFilter {
     private final String[] names;
     private final String[] launchModes;
     private final String location;
-    private final String[] rangestatus;
+    private final Boolean[] failed;
+    private final boolean lazy;
 
-    public JqueryMainSessionFilter(String[] appNames, String[] environments, String[] users, Instant start, Instant end, String[] names, String[] launchModes, String location, String[] rangestatus) {
+    public JqueryMainSessionFilter(String[] appNames, String[] environments, String[] users, Instant start, Instant end, String[] names, String[] launchModes, String location, Boolean[] failed, boolean lazy) {
         super(appNames, environments, users, start, end );
         this.names = names;
         this.launchModes = launchModes;
         this.location = location;
-        this.rangestatus = rangestatus;
+        this.failed = failed;
+        this.lazy = lazy;
     }
 
     @Override
@@ -45,14 +43,21 @@ public class JqueryMainSessionFilter extends JquerySessionFilter {
             filters.add(table.column(LOCATION).contentLike(getLocation()));
         }
 
-        if(!isEmpty(getRangestatus()) && getRangestatus().length < 2){
-                DBFilter filter;
-                if(Boolean.parseBoolean(getRangestatus()[0])){
-                    filter = table.column(ERR_TYPE).coalesce("null").eq("null").and(table.column(ERR_MSG).coalesce("null").eq("null"));
-                }else {
+        if(!isEmpty(getFailed())){
+            DBFilter filter;
+            if(getFailed().length == 1) {
+                if(getFailed()[0] == false) {
                     filter = table.column(ERR_TYPE).coalesce("null").ne("null").and(table.column(ERR_MSG).coalesce("null").ne("null"));
+                } else {
+                    filter = table.column(ERR_TYPE).coalesce("null").eq("null").and(table.column(ERR_MSG).coalesce("null").eq("null"));
+                }
+                if(isLazy()) {
+                    filter.or(table.column(END).isNull());
                 }
                 filters.add(filter);
+            }
+        } else if(isLazy()) {
+            filters.add(table.column(END).isNull());
         }
         return filters;
     }
