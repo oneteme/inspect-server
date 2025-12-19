@@ -1,15 +1,6 @@
 package org.usf.inspect.server.model.filter;
 
-import static org.usf.inspect.server.config.TraceApiColumn.API_NAME;
-import static org.usf.inspect.server.config.TraceApiColumn.AUTH;
-import static org.usf.inspect.server.config.TraceApiColumn.HOST;
-import static org.usf.inspect.server.config.TraceApiColumn.MEDIA;
-import static org.usf.inspect.server.config.TraceApiColumn.METHOD;
-import static org.usf.inspect.server.config.TraceApiColumn.PATH;
-import static org.usf.inspect.server.config.TraceApiColumn.PORT;
-import static org.usf.inspect.server.config.TraceApiColumn.PROTOCOL;
-import static org.usf.inspect.server.config.TraceApiColumn.QUERY;
-import static org.usf.inspect.server.config.TraceApiColumn.STATUS;
+import static org.usf.inspect.server.config.TraceApiColumn.*;
 import static org.usf.jquery.core.Utils.isEmpty;
 
 import java.time.Instant;
@@ -36,8 +27,9 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
     private final String path;
     private final String query;
     private final String[] rangeStatus;
+    private final boolean lazy;
 
-    public JqueryRequestSessionFilter(String[] appNames, String[] environments, String[] users, Instant start, Instant end, String[] methods, String[] protocols, String[] hosts, String[] ports, String[] medias, String[] auths, Integer[] status, String[] apiNames, String path, String query,String[] rangestatus) {
+    public JqueryRequestSessionFilter(String[] appNames, String[] environments, String[] users, Instant start, Instant end, String[] methods, String[] protocols, String[] hosts, String[] ports, String[] medias, String[] auths, Integer[] status, String[] apiNames, String path, String query,String[] rangestatus, boolean lazy) {
         super(appNames, environments, users, start, end);
         this.methods = methods;
         this.protocols = protocols;
@@ -50,6 +42,7 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
         this.path = path;
         this.query = query;
         this.rangeStatus = rangestatus;
+        this.lazy = lazy;
     }
 
     @Override
@@ -91,7 +84,13 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
             for(int i = 1; i < getRangeStatus().length; i++) {
                 filter = filter.append(LogicalOperator.OR, table.column(STATUS).varchar().startsLike(getRangeStatus()[i].charAt(0)));
             }
+            if(isLazy()) {
+                filter.or(table.column(END).isNull());
+            }
             filters.add(filter);
+
+        } else if(isLazy()) {
+            filters.add(table.column(END).isNull());
         }
         return filters;
     }

@@ -92,6 +92,7 @@ public class TraceBatchResolver<T extends Initializer, U extends Callback>  {
         return new TraceBatchResolver<>(initClazz, callClazz, insertPartialBatchExecutor, updateBatchExecutor, insertCompleteBatchExecutor).resolve(c);
     }
 
+
     public static void resolve(Collection<EventTrace> c, InstanceTrace instanceTrace) {
         resolve(c, Initializer.class, Callback.class,
             sessions -> {

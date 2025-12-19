@@ -25,6 +25,7 @@ public class JqueryRequestFilter {
     private final Instant start;
     private final Instant end;
     private final Boolean[] failed;
+    private final boolean lazy;
 
     public Collection<DBFilter> filters(TraceApiTable table) {
         Collection<DBFilter> filters = new ArrayList<>();
@@ -41,8 +42,16 @@ public class JqueryRequestFilter {
             filters.add(table.column(START).lt(from(getEnd()))); // to be fixed
         }
         if(getFailed() != null) {
-            filters.add(table.column(FAILED).in(getFailed()));
+            var column = table.column(FAILED).in(getFailed());
+            if(isLazy()) {
+                column.or(table.column(END).isNull());
+            }
+            filters.add(column);
+        } else if(isLazy()) {
+            filters.add(table.column(END).isNull());
         }
+
+
         return filters;
     }
 }
