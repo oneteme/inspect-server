@@ -14,7 +14,9 @@ import org.usf.inspect.server.model.DatabaseRequest;
 import java.util.List;
 import java.util.Optional;
 
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static org.usf.inspect.core.DatabaseCommand.SQL;
 
 @Getter
 @Setter
@@ -33,7 +35,7 @@ public final class DatabaseRequestWrapper implements EventTrace, Wrapper<Databas
         for(DatabaseRequestStage stage : actions){
             DatabaseCommand c = enumOf(stage);
             if(nonNull(c)){
-                main = DatabaseCommand.mergeCommand(main, c);
+                main = mergeCommand(main, c);
             }
         }
         return Optional.ofNullable(main).map(DatabaseCommand::getType).map(CommandType::name).orElse(null);
@@ -51,4 +53,11 @@ public final class DatabaseRequestWrapper implements EventTrace, Wrapper<Databas
     public DatabaseRequest unwrap() {
         return request;
     }
+    
+	static DatabaseCommand mergeCommand(DatabaseCommand main, DatabaseCommand cmd) {
+		if(main == cmd || isNull(cmd)) {
+			return main;
+		}
+		return isNull(main) ? cmd : SQL;
+	}
 }
