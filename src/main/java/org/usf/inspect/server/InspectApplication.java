@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -21,12 +23,10 @@ import org.usf.inspect.server.model.InstanceTrace;
 import org.usf.inspect.server.model.wrapper.MainSessionWrapper;
 import org.usf.inspect.server.model.wrapper.RestSessionWrapper;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static org.springframework.http.converter.json.Jackson2ObjectMapperBuilder.json;
-import static org.usf.inspect.core.BasicDispatchState.DISABLE;
-import static org.usf.inspect.core.InspectContext.coreModule;
+import static org.usf.inspect.core.DispatchState.DISABLE;
+import static org.usf.inspect.core.InspectConfiguration.coreModule;
+import static org.usf.inspect.core.InspectContext.createContext;
 
 @SpringBootApplication
 @EnableTransactionManagement
@@ -55,25 +55,20 @@ public class InspectApplication {
 	}
 
 	@Bean
-	@Primary
 	@ConfigurationProperties(prefix = "inspect.server")
 	InspectServerConfiguration serverConfigurationProperties() {
 		return new InspectServerConfiguration();
 	}
 
 	@Bean
-	EventTraceScheduledDispatcher dispatcher(InspectServerConfiguration conf, DispatcherAgent agent, ObjectMapper mapper) {
-		var hooks = new ArrayList<DispatchHook>();
-		if(conf.getTracing().getDump().isEnabled()) {
-			hooks.add(new EventTraceDumper(conf.getTracing().getDump().getLocation(), mapper));
-		}
-		var dspt = new EventTraceScheduledDispatcher(conf.getTracing(), conf.getScheduling(), agent, hooks);
-		dspt.setState(DISABLE); //until ready state
-		return dspt;
+	InspectContext inspectServerContext(InspectServerConfiguration conf, DispatcherAgent agent, ObjectMapper mapper) {
+		var ctx = (InspectContext) createContext(conf, agent, mapper);
+		ctx.setState(DISABLE); //until ready state
+		return ctx;
 	}
 	
 	@Bean
-	ApplicationListener<ApplicationReadyEvent> enableDispatcherOnReady(EventTraceScheduledDispatcher dispatcher, InspectServerConfiguration conf){
-		return e-> dispatcher.setState(conf.getScheduling().getState()); //wait for server startup before activate dispatcher
+	ApplicationListener<ApplicationReadyEvent> enableDispatcherOnReady(@Qualifier("inspectServerContext") InspectContext ctx){
+		return e-> ctx.setState(ctx.getConfiguration().getScheduling().getState()); //wait for server startup before activate dispatcher
 	}
 }

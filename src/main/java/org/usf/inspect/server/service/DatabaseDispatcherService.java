@@ -4,7 +4,6 @@ import static java.util.Collections.emptyList;
 import static java.util.concurrent.CompletableFuture.allOf;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static java.util.concurrent.Executors.newFixedThreadPool;
-import static java.util.stream.Collectors.groupingBy;
 import static org.usf.inspect.core.ExecutorServiceWrapper.wrap;
 import static org.usf.inspect.server.service.TraceBatchResolver.*;
 
@@ -13,8 +12,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
@@ -46,15 +43,15 @@ public class DatabaseDispatcherService implements DispatcherAgent {
 
 	@TraceableStage
 	@Override
-	public List<EventTrace> dispatch(boolean complete, int attempts, int pending, List<EventTrace> traces) {
+	public List<EventTrace> dispatch(boolean complete, List<EventTrace> traces) {
 		return traces.isEmpty() ? emptyList() : addTraces(traces);
 	}
 
 	@Override
-	public void dispatch(int attempts, File dumpFile) {
+	public void dispatch(File dumpFile) {
 		try {
 			var traces = mapper.readValue(dumpFile, new TypeReference<List<EventTrace>>() {});
-			dispatch(false, attempts, 0, traces);
+			dispatch(false, traces);
 		} catch (IOException e) {
 			throw new DispatchException("cannot dispatch dumpFile " + dumpFile.getName(), e);
 		}

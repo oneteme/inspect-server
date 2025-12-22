@@ -4,6 +4,10 @@ server:
     enabled: true
     mime-types: application/json
     min-response-size: 1MB
+  tomcat:
+    threads:
+      max: 500
+      max-connections: 100
 spring:
   servlet:
     multipart:
@@ -31,16 +35,16 @@ spring:
 
 logging:
   level:
-    org.usf.jquery: DEBUG
+#    org.usf.jquery: DEBUG
     org.usf.inspect: trace
     org.springframework.jdbc.core: DEBUG
 
 inspect:
   collector: 
     enabled: false #default=false, enables the collector
-    debug-mode: true #default=false, enables collector debug mode
+    debug-mode: false #default=false, enables collector debug mode
     scheduling:
-      interval: 15s #default=60s, interval between trace dispatches
+      interval: 30s #default=60s, interval between trace dispatches
     monitoring:
       http-route:
         excludes:
@@ -50,25 +54,19 @@ inspect:
         max-stack-trace-rows: -1 #default=5, -1 no limit
         max-cause-depth: -1 #default=-1
         #class-name-pattern: fr.enedis.nova.*
+      resources:
+        enabled: true
     tracing:
-      queue-capacity: 5000 #default=10000, queue capacity for trace dispatching
-      delay-if-pending: 15 #default=30, delay in seconds before dispatch trace if processing is still pending
-      dump:
-        enabled: false
-        #location: c:/dev #default=/tmp
+      queue-capacity: 10000 #default=10000, queue capacity for trace dispatching
       remote:
         mode: REST #default=null, trace dispatch type (e.g., REST)
         host: http://localhost:9001 #default=localhost, target dispatch host
         retention-max-age: 10d #default=30d, maximum age of traces in days
   server:
     scheduling:
-      interval: 15s #default=60s, interval between trace dispatches
+      interval: 10s #default=60s, interval between trace dispatches
     tracing:
       queue-capacity: 500000 #default=10000, queue capacity for trace dispatching
-      delay-if-pending: 0
-      modifiable: false #defaut=true, dispatch a copy of traces
-      dump:
-        enabled: false
     partition:
       enabled: true
       schedule: "0 0 0 L * ?"
@@ -77,5 +75,3 @@ inspect:
       jdbc-request: DAY
     purge:
       enabled: false
-
-

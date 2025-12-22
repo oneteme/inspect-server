@@ -1,6 +1,5 @@
 package org.usf.inspect.server.model;
 
-import org.usf.inspect.core.CompletableMetric;
 import org.usf.inspect.server.model.wrapper.*;
 
 import java.util.List;
