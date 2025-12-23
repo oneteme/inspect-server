@@ -116,7 +116,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
 
     // New version
     @Transactional(rollbackFor = Throwable.class)
-    public void savePartialRestSessions(List<HttpSession2> sessions) {
+    public void savePartialRestSessions(List<HttpSessionSignal> sessions) {
         executeBatch("""
 insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,va_lnk,dh_str,va_err_typ,va_err_msg,va_stk,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_msk)
 values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
@@ -134,7 +134,7 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.ite
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveCompleteRestSessions(List<Pair<HttpSession2, HttpSessionCallback>> sessions) {
+    public void saveCompleteRestSessions(List<Pair<HttpSessionSignal, HttpSessionUpdate>> sessions) {
         executeBatch("""
 insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,dh_end,va_err_typ,va_err_msg,va_stk,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_cnt_typ,cd_stt,va_o_sze,va_o_cnt_enc,va_msk)
 values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
@@ -158,7 +158,7 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", se
         });
     }
 
-    static void restSessionSetter(PreparedStatement ps, HttpSession2 ses) throws SQLException {
+    static void restSessionSetter(PreparedStatement ps, HttpSessionSignal ses) throws SQLException {
         ps.setString(1, ses.getId());
         ps.setString(2, ses.getInstanceId());
         ps.setString(3, ses.getMethod());
@@ -176,7 +176,7 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", se
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void updateRestSessions(List<HttpSessionCallback> sessions) {
+    public void updateRestSessions(List<HttpSessionUpdate> sessions) {
         executeBatch("""
 update e_rst_ses set va_err_typ = coalesce(?, va_err_typ), va_err_msg = coalesce(?, va_err_msg), va_stk = coalesce(?, va_stk), va_nam = coalesce(?, va_nam), va_usr = coalesce(?, va_usr), va_usr_agt = coalesce(?, va_usr_agt), va_cch_ctr = coalesce(?, va_usr_agt), va_cnt_typ = ?, cd_stt = ?, va_o_sze = ?, va_o_cnt_enc = ?, dh_end = ?, va_msk = ?
 where id_ses = ?::uuid""", sessions.iterator(), (ps, ses) -> {
@@ -207,7 +207,7 @@ where id_ses = ?::uuid""", sessions.iterator(), (ps, ses) -> {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void savePartialMainSessions(List<MainSession2> sessions) {
+    public void savePartialMainSessions(List<MainSessionSignal> sessions) {
         executeBatch("""
 insert into e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str,va_msk)
 values(?::uuid,?::uuid,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
@@ -221,7 +221,7 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveCompleteMainSessions(List<Pair<MainSession2, MainSessionCallback>> sessions) {
+    public void saveCompleteMainSessions(List<Pair<MainSessionSignal, MainSessionUpdate>> sessions) {
         executeBatch("""
 insert into e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str,dh_end,va_err_typ,va_err_msg,va_stk,va_msk)
 values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
@@ -241,7 +241,7 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses)
         });
     }
 
-    static void mainSessionSetter(PreparedStatement ps, MainSession2 ses) throws SQLException {
+    static void mainSessionSetter(PreparedStatement ps, MainSessionSignal ses) throws SQLException {
         ps.setString(1, ses.getId());
         ps.setString(2, ses.getInstanceId());
         ps.setString(3, valueOfNullable(ses.getType()));
@@ -249,7 +249,7 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses)
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void updateMainSessions(List<MainSessionCallback> sessions) {
+    public void updateMainSessions(List<MainSessionUpdate> sessions) {
         executeBatch("""
 update e_main_ses set va_lct = coalesce(?, va_lct), va_nam = coalesce(?, va_nam), va_usr = coalesce(?, va_usr), dh_str = coalesce(?, dh_str), dh_end = ?, va_err_typ = ?, va_err_msg = ?, va_stk = ?, va_msk = ?
 where id_ses = ?::uuid""", sessions.iterator(), (ps, ses) -> {
@@ -276,14 +276,14 @@ where id_ses = ?::uuid""", sessions.iterator(), (ps, ses) -> {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void savePartialRestRequests(List<HttpRequest2> requests) {
+    public void savePartialRestRequests(List<HttpRequestSignal> requests) {
         executeBatch("""
 insert into e_rst_rqt(id_rst_rqt,cd_prn_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,dh_str)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), TraceDao::restRequestSetter);
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveCompleteRestRequests(List<Pair<HttpRequest2, HttpRequestCallback>> requests) {
+    public void saveCompleteRestRequests(List<Pair<HttpRequestSignal, HttpRequestUpdate>> requests) {
         executeBatch("""
 insert into e_rst_rqt(id_rst_rqt,cd_prn_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,dh_str,dh_end,va_cnt_typ,cd_stt,va_i_sze,va_i_cnt_enc,va_bdy_cnt,va_lnk)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, ses) -> {
@@ -300,7 +300,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests
         });
     }
 
-    static void restRequestSetter(PreparedStatement ps, HttpRequest2 req) throws SQLException {
+    static void restRequestSetter(PreparedStatement ps, HttpRequestSignal req) throws SQLException {
         ps.setString(1, req.getId());
         ps.setString(2, req.getSessionId());
         ps.setString(3, req.getInstanceId());
@@ -318,7 +318,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void updateRestRequests(List<HttpRequestCallback> requests) {
+    public void updateRestRequests(List<HttpRequestUpdate> requests) {
         executeBatch("""
 update e_rst_rqt set va_cnt_typ = ?, cd_stt = ?, va_i_sze = ?, va_i_cnt_enc = ?, dh_end = ?, va_bdy_cnt = ?, va_lnk = ?
 where id_rst_rqt = ?::uuid""", requests.iterator(), (ps, req) -> {
@@ -334,7 +334,7 @@ where id_rst_rqt = ?::uuid""", requests.iterator(), (ps, req) -> {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void savePartialLocalRequests(List<LocalRequest2> requests) {
+    public void savePartialLocalRequests(List<LocalRequestSignal> requests) {
         executeBatch("""
 insert into e_lcl_rqt(id_lcl_rqt,cd_prn_ses,cd_ins,va_typ,va_nam,va_lct,va_usr,va_thr,dh_str)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests.iterator(), (ps, req) -> {
@@ -344,7 +344,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests.iterator(), (ps, req) -
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveCompleteLocalRequests(List<Pair<LocalRequest2, LocalRequestCallback>> requests) {
+    public void saveCompleteLocalRequests(List<Pair<LocalRequestSignal, LocalRequestUpdate>> requests) {
         executeBatch("""
 insert into e_lcl_rqt(id_lcl_rqt,cd_prn_ses,cd_ins,va_typ,va_nam,va_lct,va_usr,va_thr,dh_str,dh_end,va_fail)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, pair) -> {
@@ -364,7 +364,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, pa
         }
     }
 
-    static void localRequestSetter(PreparedStatement ps, LocalRequest2 req) throws SQLException {
+    static void localRequestSetter(PreparedStatement ps, LocalRequestSignal req) throws SQLException {
         ps.setString(1, req.getId());
         ps.setString(2, req.getSessionId());
         ps.setString(3, req.getInstanceId()); //instance id
@@ -376,7 +376,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, pa
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void updateLocalRequests(List<LocalRequestCallback> requests) {
+    public void updateLocalRequests(List<LocalRequestUpdate> requests) {
         executeBatch("""
 update e_lcl_rqt set dh_str = coalesce(?, dh_str), dh_end = ?, va_fail = ?
 where id_lcl_rqt = ?::uuid""", requests.iterator(), (ps, req) -> {
@@ -394,14 +394,14 @@ where id_lcl_rqt = ?::uuid""", requests.iterator(), (ps, req) -> {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void savePartialMailRequests(List<MailRequest2> requests) {
+    public void savePartialMailRequests(List<MailRequestSignal> requests) {
         executeBatch("""
 insert into e_smtp_rqt(id_smtp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests.iterator(), TraceDao::mailRequestSetter);
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveCompleteMailRequests(List<Pair<MailRequest2, MailRequestCallback>> requests) {
+    public void saveCompleteMailRequests(List<Pair<MailRequestSignal, MailRequestUpdate>> requests) {
         executeBatch("""
 insert into e_smtp_rqt(id_smtp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str,dh_end,va_cmd,va_fail)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, pair) -> {
@@ -414,7 +414,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, 
         });
     }
 
-    static void mailRequestSetter(PreparedStatement ps, MailRequest2 req) throws SQLException {
+    static void mailRequestSetter(PreparedStatement ps, MailRequestSignal req) throws SQLException {
         ps.setString(1, req.getId());
         ps.setString(2, req.getSessionId());
         ps.setString(3, req.getInstanceId()); //instance id
@@ -428,7 +428,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, 
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void updateMailRequests(List<MailRequestCallback> requests) {
+    public void updateMailRequests(List<MailRequestUpdate> requests) {
         executeBatch("""
 update e_smtp_rqt set dh_end = ?, va_cmd = ?, va_fail = ?
 where id_smtp_rqt = ?::uuid""", requests.iterator(), (ps, req) -> {
@@ -440,14 +440,14 @@ where id_smtp_rqt = ?::uuid""", requests.iterator(), (ps, req) -> {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void savePartialFtpRequests(List<FtpRequest2> requests) {
+    public void savePartialFtpRequests(List<FtpRequestSignal> requests) {
         executeBatch("""
 insert into e_ftp_rqt(id_ftp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_srv_vrs,va_clt_vrs,va_usr,va_thr,dh_str)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests.iterator(), TraceDao::ftpRequestSetter);
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveCompleteFtpRequests(List<Pair<FtpRequest2, FtpRequestCallback>> requests) {
+    public void saveCompleteFtpRequests(List<Pair<FtpRequestSignal, FtpRequestUpdate>> requests) {
         executeBatch("""
 insert into e_ftp_rqt(id_ftp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_srv_vrs,va_clt_vrs,va_usr,va_thr,dh_str,dh_end,va_cmd,va_fail)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, pair) -> {
@@ -460,7 +460,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (
         });
     }
 
-    static void ftpRequestSetter(PreparedStatement ps, FtpRequest2 req) throws SQLException {
+    static void ftpRequestSetter(PreparedStatement ps, FtpRequestSignal req) throws SQLException {
         ps.setString(1, req.getId());
         ps.setString(2, req.getSessionId());
         ps.setString(3, req.getInstanceId());
@@ -475,7 +475,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void updateFtpRequests(List<FtpRequestCallback> requests) {
+    public void updateFtpRequests(List<FtpRequestUpdate> requests) {
         executeBatch("""
 update e_ftp_rqt set dh_end = ?, va_cmd = ?, va_fail = ?
 where id_ftp_rqt = ?::uuid""", requests.iterator(), (ps, req) -> {
@@ -487,14 +487,14 @@ where id_ftp_rqt = ?::uuid""", requests.iterator(), (ps, req) -> {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void savePartialLdapRequests(List<DirectoryRequest2> requests) {
+    public void savePartialLdapRequests(List<DirectoryRequestSignal> requests) {
         executeBatch("""
 insert into e_ldap_rqt(id_ldap_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests.iterator(), TraceDao::ldapRequestSetter);
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveCompleteLdapRequests(List<Pair<DirectoryRequest2, DirectoryRequestCallback>> requests) {
+    public void saveCompleteLdapRequests(List<Pair<DirectoryRequestSignal, DirectoryRequestUpdate>> requests) {
         executeBatch("""
 insert into e_ldap_rqt(id_ldap_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str,dh_end,va_cmd,va_fail)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, pair) -> {
@@ -507,7 +507,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, 
         });
     }
 
-    static void ldapRequestSetter(PreparedStatement ps, DirectoryRequest2 req) throws SQLException {
+    static void ldapRequestSetter(PreparedStatement ps, DirectoryRequestSignal req) throws SQLException {
         ps.setString(1, req.getId());
         ps.setString(2, req.getSessionId());
         ps.setString(3, req.getInstanceId());
@@ -520,7 +520,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, 
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void updateLdapRequests(List<DirectoryRequestCallback> requests) {
+    public void updateLdapRequests(List<DirectoryRequestUpdate> requests) {
         executeBatch("""
 update e_ldap_rqt set dh_end = ?, va_cmd = ?, va_fail = ?
 where id_ldap_rqt = ?::uuid""", requests.iterator(), (ps, req) -> {
@@ -532,14 +532,14 @@ where id_ldap_rqt = ?::uuid""", requests.iterator(), (ps, req) -> {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void savePartialDatabaseRequests(List<DatabaseRequest2> requests) {
+    public void savePartialDatabaseRequests(List<DatabaseRequestSignal> requests) {
         executeBatch("""
 insert into e_dtb_rqt(id_dtb_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_she,va_nam,va_sha,va_usr,va_thr,va_drv,va_prd_nam,va_prd_vrs,dh_str)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), TraceDao::databaseRequestSetter);
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveCompleteDatabaseRequests(List<Pair<DatabaseRequest2, DatabaseRequestCallback>> requests) {
+    public void saveCompleteDatabaseRequests(List<Pair<DatabaseRequestSignal, DatabaseRequestUpdate>> requests) {
         executeBatch("""
 insert into e_dtb_rqt(id_dtb_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_she,va_nam,va_sha,va_usr,va_thr,va_drv,va_prd_nam,va_prd_vrs,dh_str,dh_end,va_cmd,va_fail)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, pair) -> {
@@ -552,7 +552,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterato
         });
     }
 
-    static void databaseRequestSetter(PreparedStatement ps, DatabaseRequest2 req) throws SQLException {
+    static void databaseRequestSetter(PreparedStatement ps, DatabaseRequestSignal req) throws SQLException {
         ps.setString(1, req.getId());
         ps.setString(2, req.getSessionId());
         ps.setString(3, req.getInstanceId());
@@ -570,7 +570,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterato
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void updateDatabaseRequests(List<DatabaseRequestCallback> requests) {
+    public void updateDatabaseRequests(List<DatabaseRequestUpdate> requests) {
         executeBatch("""
 update e_dtb_rqt set dh_end = ?, va_cmd = ?, va_fail = ?
 where id_dtb_rqt = ?::uuid""", requests.iterator(), (ps, req) -> {
@@ -696,7 +696,7 @@ where id_dtb_rqt = ?::uuid""", requests.iterator(), (ps, req) -> {
         });
     }
 
-    private void saveLocalRequestExceptions(List<LocalRequestCallback> stages) {
+    private void saveLocalRequestExceptions(List<LocalRequestUpdate> stages) {
         executeBatch("insert into e_exc_inf(va_typ,va_err_typ,va_err_msg,va_stk,cd_ord,cd_rqt) values(?,?,?,?,?,?::uuid)", stages.iterator(), (ps, exp) -> {
             ps.setString(1, LOCAL.name());
             ps.setString(2, exp.getException().getType());

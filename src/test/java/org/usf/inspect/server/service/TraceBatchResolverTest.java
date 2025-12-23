@@ -7,9 +7,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.usf.inspect.core.Callback;
+import org.usf.inspect.core.TraceUpdate;
 import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.Initializer;
+import org.usf.inspect.core.TraceSignal;
 import org.usf.inspect.server.model.Pair;
 
 import java.time.Instant;
@@ -310,7 +310,7 @@ class TraceBatchResolverTest {
 
     // Classes de test internes
 
-    static class TestInitializer implements Initializer {
+    static class TestInitializer implements TraceSignal {
         private final String id;
         private final Instant start;
 
@@ -330,7 +330,7 @@ class TraceBatchResolverTest {
         }
     }
 
-    static class TestCallback implements Callback {
+    static class TestCallback implements TraceUpdate {
         private final String id;
         private final Instant end;
 
@@ -347,6 +347,12 @@ class TraceBatchResolverTest {
         @Override
         public Instant getEnd() {
             return end;
+        }
+        
+        @Override
+        public void setEnd(Instant end) {
+        	// TODO Auto-generated method stub
+        	
         }
     }
 

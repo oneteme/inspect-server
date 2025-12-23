@@ -27,7 +27,7 @@ public abstract class AbstractRequest implements EventTrace {
 	private String sessionId;
 	private String instanceId;
 
-    public abstract Initializer toRequest();
+    public abstract TraceSignal toRequest();
 
-    public abstract Callback toCallback();
+    public abstract TraceUpdate toCallback();
 }

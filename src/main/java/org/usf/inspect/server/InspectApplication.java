@@ -26,7 +26,7 @@ import org.usf.inspect.server.model.wrapper.RestSessionWrapper;
 import static org.springframework.http.converter.json.Jackson2ObjectMapperBuilder.json;
 import static org.usf.inspect.core.DispatchState.DISABLE;
 import static org.usf.inspect.core.InspectConfiguration.coreModule;
-import static org.usf.inspect.core.InspectContext.createContext;
+import static org.usf.inspect.core.TraceDispatcherHub.createHub;
 
 @SpringBootApplication
 @EnableTransactionManagement
@@ -61,14 +61,14 @@ public class InspectApplication {
 	}
 
 	@Bean
-	InspectContext inspectServerContext(InspectServerConfiguration conf, DispatcherAgent agent, ObjectMapper mapper) {
-		var ctx = (InspectContext) createContext(conf, agent, mapper);
+	TraceDispatcherHub inspectServerContext(InspectServerConfiguration conf, TraceExporter agent, ObjectMapper mapper) {
+		var ctx = (TraceDispatcherHub) createHub(conf, agent, mapper);
 		ctx.setState(DISABLE); //until ready state
 		return ctx;
 	}
 	
 	@Bean
-	ApplicationListener<ApplicationReadyEvent> enableDispatcherOnReady(@Qualifier("inspectServerContext") InspectContext ctx){
+	ApplicationListener<ApplicationReadyEvent> enableDispatcherOnReady(@Qualifier("inspectServerContext") TraceDispatcherHub ctx){
 		return e-> ctx.setState(ctx.getConfiguration().getScheduling().getState()); //wait for server startup before activate dispatcher
 	}
 }

@@ -6,8 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;
 import org.usf.inspect.core.ExceptionInfo;
-import org.usf.inspect.core.HttpSession2;
-import org.usf.inspect.core.HttpSessionCallback;
+import org.usf.inspect.core.HttpSessionSignal;
+import org.usf.inspect.core.HttpSessionUpdate;
 
 /**
  * 
@@ -30,8 +30,8 @@ public class RestSession extends AbstractSession {
 		this.rest = new RestRequest();
 	}
 
-    public HttpSession2 toSession() {
-        HttpSession2 ses = new HttpSession2(getId(), getStart(), getThreadName());
+    public HttpSessionSignal toSession() {
+        HttpSessionSignal ses = new HttpSessionSignal(getId(), getStart(), getThreadName());
         ses.setMethod(getMethod());
         ses.setProtocol(getProtocol());
         ses.setHost(getHost());
@@ -51,8 +51,8 @@ public class RestSession extends AbstractSession {
         return ses;
     }
 
-    public HttpSessionCallback toCallback() {
-        HttpSessionCallback cb = new HttpSessionCallback(getId());
+    public HttpSessionUpdate toCallback() {
+        HttpSessionUpdate cb = new HttpSessionUpdate(getId());
         cb.setEnd(getEnd());
         cb.setDataSize(getOutDataSize());
         cb.setContentEncoding(getOutContentEncoding());

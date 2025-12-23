@@ -18,7 +18,7 @@ import static org.usf.inspect.core.SessionContextManager.emitWarn;
 
 @Slf4j
 @RequiredArgsConstructor
-public class TraceBatchResolver<T extends Initializer, U extends Callback>  {
+public class TraceBatchResolver<T extends TraceSignal, U extends TraceUpdate>  {
 
     private final Class<T> initClazz;
     private final Class<U> callbackClazz;
@@ -29,8 +29,8 @@ public class TraceBatchResolver<T extends Initializer, U extends Callback>  {
 
     public List<EventTrace> resolve(Collection<EventTrace> traces){
         var map = traces.stream().filter(o-> initClazz.isInstance(o) || callbackClazz.isInstance(o))
-                .map(CompletableTrace.class::cast)
-                .collect(Collectors.groupingBy(CompletableTrace::getId));
+                .map(TracePart.class::cast)
+                .collect(Collectors.groupingBy(TracePart::getId));
 
         List<T> initializers = new ArrayList<>();
         List<U> callbacks = new ArrayList<>();
@@ -47,8 +47,8 @@ public class TraceBatchResolver<T extends Initializer, U extends Callback>  {
                 log.warn("Multiple {} found for the same identifier, unable to reduce the list.", callbackClazz.getSimpleName());
                 emitWarn("Multiple " + callbackClazz.getSimpleName() + " found for the same identifier, unable to reduce the list.");
             }
-            var init = inits.stream().min(Comparator.comparing(Initializer::getStart));
-            var call = calls.stream().max(Comparator.comparing(Callback::getEnd));
+            var init = inits.stream().min(Comparator.comparing(TraceSignal::getStart));
+            var call = calls.stream().max(Comparator.comparing(TraceUpdate::getEnd));
             if(init.isPresent() && call.isPresent()) {
                 completes.add(new Pair<>(init.get(), call.get()));
             } else if(call.isPresent()) {
@@ -88,13 +88,13 @@ public class TraceBatchResolver<T extends Initializer, U extends Callback>  {
         return res;
     }
 
-    public static <T extends Initializer, U extends Callback> List<EventTrace> resolve(Collection<EventTrace> c, Class<T> initClazz, Class<U> callClazz, Consumer<List<T>> insertPartialBatchExecutor, Consumer<List<U>> updateBatchExecutor, Consumer<List<Pair<T, U>>> insertCompleteBatchExecutor) {
+    public static <T extends TraceSignal, U extends TraceUpdate> List<EventTrace> resolve(Collection<EventTrace> c, Class<T> initClazz, Class<U> callClazz, Consumer<List<T>> insertPartialBatchExecutor, Consumer<List<U>> updateBatchExecutor, Consumer<List<Pair<T, U>>> insertCompleteBatchExecutor) {
         return new TraceBatchResolver<>(initClazz, callClazz, insertPartialBatchExecutor, updateBatchExecutor, insertCompleteBatchExecutor).resolve(c);
     }
 
 
     public static void resolve(Collection<EventTrace> c, InstanceTrace instanceTrace) {
-        resolve(c, Initializer.class, Callback.class,
+        resolve(c, TraceSignal.class, TraceUpdate.class,
             sessions -> {
                 instanceTrace.addPending(sessions.size());
                 instanceTrace.addTraceCount(sessions.size());

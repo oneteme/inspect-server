@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;
-import org.usf.inspect.core.MainSession2;
-import org.usf.inspect.core.MainSessionCallback;
+import org.usf.inspect.core.MainSessionSignal;
+import org.usf.inspect.core.MainSessionUpdate;
 
 /**
  * 
@@ -24,8 +24,8 @@ public class MainSession extends AbstractSession {
 		this.local = new LocalRequest();
 	}
 
-    public MainSession2 toSession() {
-        var session = new MainSession2(getId(), getStart(), getThreadName(), getType());
+    public MainSessionSignal toSession() {
+        var session = new MainSessionSignal(getId(), getStart(), getThreadName(), getType());
         session.setLocation(getLocation());
         session.setUser(getUser());
         session.setName(getName());
@@ -33,8 +33,8 @@ public class MainSession extends AbstractSession {
         return session;
     }
 
-    public MainSessionCallback toCallback() {
-        var callback = new MainSessionCallback(getId());
+    public MainSessionUpdate toCallback() {
+        var callback = new MainSessionUpdate(getId());
         callback.setStart(getStart());
         callback.setEnd(getEnd());
         callback.setLocation(getLocation());

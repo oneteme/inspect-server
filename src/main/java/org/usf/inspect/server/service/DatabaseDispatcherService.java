@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class DatabaseDispatcherService implements DispatcherAgent {
+public class DatabaseDispatcherService implements TraceExporter {
 	
 	private final TraceDao dao;
 	private final ObjectMapper mapper;
@@ -60,7 +60,7 @@ public class DatabaseDispatcherService implements DispatcherAgent {
 	public List<EventTrace> addTraces(List<EventTrace> traces) {
         var cf = new ArrayList<CompletableFuture<Collection<EventTrace>>>();
         cf.add(supplyAsync(()-> {
-            var unsaved = resolve(traces, MainSession2.class, MainSessionCallback.class, dao::savePartialMainSessions, dao::updateMainSessions, dao::saveCompleteMainSessions);
+            var unsaved = resolve(traces, MainSessionSignal.class, MainSessionUpdate.class, dao::savePartialMainSessions, dao::updateMainSessions, dao::saveCompleteMainSessions);
             if(unsaved.isEmpty()){
                 unsaved.addAll(filterAndApply(traces, (e, consumer) -> {
                     if(e instanceof SessionMaskUpdate smu && smu.isMain()) {
@@ -71,7 +71,7 @@ public class DatabaseDispatcherService implements DispatcherAgent {
             return unsaved;
         }, executor));
         cf.add(supplyAsync(()-> {
-            var unsaved = resolve(traces, HttpSession2.class, HttpSessionCallback.class, dao::savePartialRestSessions, dao::updateRestSessions, dao::saveCompleteRestSessions);
+            var unsaved = resolve(traces, HttpSessionSignal.class, HttpSessionUpdate.class, dao::savePartialRestSessions, dao::updateRestSessions, dao::saveCompleteRestSessions);
             if(unsaved.isEmpty()){
                 unsaved.addAll(filterAndApply(traces, (e, consumer) -> {
                     if(e instanceof SessionMaskUpdate smu && !smu.isMain()) {
@@ -81,12 +81,12 @@ public class DatabaseDispatcherService implements DispatcherAgent {
             }
             return unsaved;
         }, executor));
-        cf.add(supplyAsync(()-> resolve(traces, HttpRequest2.class, HttpRequestCallback.class, dao::savePartialRestRequests, dao::updateRestRequests, dao::saveCompleteRestRequests), executor));
-        cf.add(supplyAsync(()-> resolve(traces, LocalRequest2.class, LocalRequestCallback.class, dao::savePartialLocalRequests, dao::updateLocalRequests, dao::saveCompleteLocalRequests), executor));
-        cf.add(supplyAsync(()-> resolve(traces, MailRequest2.class, MailRequestCallback.class, dao::savePartialMailRequests, dao::updateMailRequests, dao::saveCompleteMailRequests), executor));
-        cf.add(supplyAsync(()-> resolve(traces, FtpRequest2.class, FtpRequestCallback.class, dao::savePartialFtpRequests, dao::updateFtpRequests, dao::saveCompleteFtpRequests), executor));
-        cf.add(supplyAsync(()-> resolve(traces, DirectoryRequest2.class, DirectoryRequestCallback.class, dao::savePartialLdapRequests, dao::updateLdapRequests, dao::saveCompleteLdapRequests), executor));
-        cf.add(supplyAsync(()-> resolve(traces, DatabaseRequest2.class, DatabaseRequestCallback.class, dao::savePartialDatabaseRequests, dao::updateDatabaseRequests, dao::saveCompleteDatabaseRequests), executor));
+        cf.add(supplyAsync(()-> resolve(traces, HttpRequestSignal.class, HttpRequestUpdate.class, dao::savePartialRestRequests, dao::updateRestRequests, dao::saveCompleteRestRequests), executor));
+        cf.add(supplyAsync(()-> resolve(traces, LocalRequestSignal.class, LocalRequestUpdate.class, dao::savePartialLocalRequests, dao::updateLocalRequests, dao::saveCompleteLocalRequests), executor));
+        cf.add(supplyAsync(()-> resolve(traces, MailRequestSignal.class, MailRequestUpdate.class, dao::savePartialMailRequests, dao::updateMailRequests, dao::saveCompleteMailRequests), executor));
+        cf.add(supplyAsync(()-> resolve(traces, FtpRequestSignal.class, FtpRequestUpdate.class, dao::savePartialFtpRequests, dao::updateFtpRequests, dao::saveCompleteFtpRequests), executor));
+        cf.add(supplyAsync(()-> resolve(traces, DirectoryRequestSignal.class, DirectoryRequestUpdate.class, dao::savePartialLdapRequests, dao::updateLdapRequests, dao::saveCompleteLdapRequests), executor));
+        cf.add(supplyAsync(()-> resolve(traces, DatabaseRequestSignal.class, DatabaseRequestUpdate.class, dao::savePartialDatabaseRequests, dao::updateDatabaseRequests, dao::saveCompleteDatabaseRequests), executor));
         cf.add(supplyAsync(()-> filterAndApply(traces, HttpRequestStage.class, dao::saveHttpRequestStages), executor));
         cf.add(supplyAsync(()-> filterAndApply(traces, HttpSessionStage.class, dao::saveHttpSessionStages), executor));
         cf.add(supplyAsync(()-> filterAndApply(traces, MailRequestStage.class, dao::saveMailRequestStages), executor));

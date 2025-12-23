@@ -3,8 +3,8 @@ package org.usf.inspect.server.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Getter;
 import lombok.Setter;
-import org.usf.inspect.core.HttpRequest2;
-import org.usf.inspect.core.HttpRequestCallback;
+import org.usf.inspect.core.HttpRequestSignal;
+import org.usf.inspect.core.HttpRequestUpdate;
 
 /**
  * 
@@ -33,8 +33,8 @@ public class RestRequest extends AbstractRequest { //APiRequest
 	
 	@JsonCreator public RestRequest() { }
 
-    public HttpRequest2 toRequest() {
-        HttpRequest2 req = new HttpRequest2(getId(), getSessionId(), getStart(), getThreadName());
+    public HttpRequestSignal toRequest() {
+        HttpRequestSignal req = new HttpRequestSignal(getId(), getSessionId(), getStart(), getThreadName());
         req.setProtocol(getProtocol());
         req.setHost(getHost());
         req.setPort(getPort());
@@ -49,8 +49,8 @@ public class RestRequest extends AbstractRequest { //APiRequest
         return req;
     }
 
-    public HttpRequestCallback toCallback() {
-        HttpRequestCallback cb = new HttpRequestCallback(getId());
+    public HttpRequestUpdate toCallback() {
+        HttpRequestUpdate cb = new HttpRequestUpdate(getId());
         cb.setStatus(getStatus());
         cb.setContentType(getContentType());
         cb.setDataSize(getInDataSize());

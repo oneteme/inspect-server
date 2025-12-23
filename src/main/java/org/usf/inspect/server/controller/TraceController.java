@@ -32,12 +32,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.usf.inspect.core.AbstractRequest2;
-import org.usf.inspect.core.AbstractSession2;
+import org.usf.inspect.core.AbstractRequestSignal;
+import org.usf.inspect.core.AbstractSessionSignal;
 import org.usf.inspect.core.AbstractStage;
 import org.usf.inspect.core.DispatchState;
 import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.InspectContext;
+import org.usf.inspect.core.TraceDispatcherHub;
 import org.usf.inspect.core.InstanceEnvironment;
 import org.usf.inspect.core.LogEntry;
 import org.usf.inspect.core.MachineResourceUsage;
@@ -54,9 +54,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping(value = "v4/trace", produces = APPLICATION_JSON_VALUE)
 public class TraceController {
 	
-    private final InspectContext dispatcher;
+    private final TraceDispatcherHub dispatcher;
     
-	public TraceController(@Qualifier("inspectServerContext") InspectContext dispatcher) {
+	public TraceController(@Qualifier("inspectServerContext") TraceDispatcherHub dispatcher) {
 		this.dispatcher = dispatcher;
 	}
 
@@ -103,10 +103,10 @@ public class TraceController {
     			traces.add(new InstanceEnvironmentUpdate(id, end));
     		}
     		for(var e : traces) {
-    			if(e instanceof AbstractRequest2 req) {
+    			if(e instanceof AbstractRequestSignal req) {
     				req.setInstanceId(id);
 					assertUUID(req.getId(), "req.id");
-    			} else if(e instanceof AbstractSession2 ses) {
+    			} else if(e instanceof AbstractSessionSignal ses) {
     				ses.setInstanceId(id);
 					assertUUID(ses.getId(), "ses.id");
     			} else if(e instanceof MachineResourceUsage usg) {

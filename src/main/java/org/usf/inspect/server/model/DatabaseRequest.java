@@ -3,8 +3,8 @@ package org.usf.inspect.server.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Getter;
 import lombok.Setter;
-import org.usf.inspect.core.DatabaseRequest2;
-import org.usf.inspect.core.DatabaseRequestCallback;
+import org.usf.inspect.core.DatabaseRequestSignal;
+import org.usf.inspect.core.DatabaseRequestUpdate;
 
 /**
  * 
@@ -27,8 +27,8 @@ public class DatabaseRequest extends AbstractRequest {
 
 	@JsonCreator public DatabaseRequest() { }
 
-    public DatabaseRequest2 toRequest(){
-        DatabaseRequest2 req = new DatabaseRequest2(getId(), getSessionId(), getStart(), getThreadName());
+    public DatabaseRequestSignal toRequest(){
+        DatabaseRequestSignal req = new DatabaseRequestSignal(getId(), getSessionId(), getStart(), getThreadName());
         req.setScheme(getScheme());
         req.setHost(getHost());
         req.setPort(getPort());
@@ -42,8 +42,8 @@ public class DatabaseRequest extends AbstractRequest {
         return req;
     }
 
-    public DatabaseRequestCallback toCallback(){
-        DatabaseRequestCallback cb = new DatabaseRequestCallback(getId());
+    public DatabaseRequestUpdate toCallback(){
+        DatabaseRequestUpdate cb = new DatabaseRequestUpdate(getId());
         cb.setFailed(isFailed());
         cb.setEnd(getEnd());
         cb.setCommand(getCommand());
