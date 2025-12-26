@@ -3,6 +3,7 @@ package org.usf.inspect.server.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import org.usf.inspect.core.InstanceType;
 import org.usf.inspect.server.service.PurgeService;
 
 import java.time.Instant;

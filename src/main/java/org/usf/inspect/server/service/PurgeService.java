@@ -37,7 +37,7 @@ public class PurgeService {
             var now = now().atStartOfDay().atZone(systemDefault()).toInstant();
             var instances = purgeDao.getInstances(null);
             for (InstanceEnvironment instance : instances) {
-                Instant dateLimit = now.minus(instance.getConfiguration() != null ? instance.getConfiguration().getTracing().getRemote().getRetentionMaxAge() : ofDays(60));
+                Instant dateLimit = now.minus(instance.getConfiguration().getTracing().getRemote().getRetentionMaxAge());
                 var deleted = purgeDao.purgeByInstance(dateLimit, instance.getEnv(), instance.getName());
                 log.info("------ Purge complete ------ [{}]:[{}] — [{}] rows deleted before [{}]", instance.getEnv(), instance.getName(), IntStream.of(deleted).sum(), dateLimit);
                 emitInfo("Purge completed for instance [" + instance.getEnv() + "]:[" + instance.getName() + "] — [" + IntStream.of(deleted).sum() + "] rows deleted before [" + dateLimit + "]");
@@ -71,8 +71,6 @@ public class PurgeService {
         try {
             log.info("------ Purge execute ------");
             strategy.execute();
-        } catch(Exception e) {
-            log.error("------ Purge error ------", e);
         } finally {
             var deleted = purgeDao.finalizePurge();
             log.info("------ Purge finally ------ [{}] rows deleted", IntStream.of(deleted).sum());

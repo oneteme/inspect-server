@@ -9,9 +9,12 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.InspectCollectorConfiguration;
 import org.usf.inspect.core.InstanceEnvironment;
+import org.usf.inspect.core.RestRemoteServerProperties;
+import org.usf.inspect.core.SessionContextManager;
 import org.usf.inspect.server.model.RequestCompletableType;
 import org.usf.jquery.core.*;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,9 +22,11 @@ import java.util.stream.Stream;
 
 import static java.lang.String.*;
 import static java.sql.Timestamp.*;
+import static java.time.Duration.ofDays;
 import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.*;
 import static org.usf.inspect.core.RequestMask.*;
+import static org.usf.inspect.core.SessionContextManager.*;
 import static org.usf.inspect.server.config.TraceApiColumn.*;
 import static org.usf.inspect.server.config.TraceApiDatabase.INSPECT;
 import static org.usf.inspect.server.config.TraceApiTable.*;
@@ -55,35 +60,46 @@ public class PurgeDao {
                         INSTANCE.column(CONFIGURATION))
                 .filters(rank().over(
                 		new DBColumn[]{INSTANCE.column(ENVIRONEMENT), INSTANCE.column(APP_NAME)},
-                        new DBOrder[] {INSTANCE.column(START).desc()}).eq(1))
+                        new DBOrder[] {INSTANCE.column(END).coalesce(Operator.ctimestamp().operation()).desc(), INSTANCE.column(START).desc()}).eq(1))
                 .subViewQuery(INSTANCE.view(), sq -> {
-                	sq.filters(INSTANCE.column(END).isNull());
                     if (nonNull(env)) {
                     	sq.filters(INSTANCE.column(ENVIRONEMENT).eq(env));
                     }}), rs -> {
             List<InstanceEnvironment> environments = new ArrayList<>();
             while (rs.next()) {
+                InspectCollectorConfiguration conf = null;
                 try {
-                    environments.add(new InstanceEnvironment(
-                            null,
-                            null,
-                            null,
-                            rs.getString(APP_NAME.reference()),
-                            null,
-                            rs.getString(ENVIRONEMENT.reference()),
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            rs.getString(CONFIGURATION.reference()) != null ? mapper.readValue(rs.getString(CONFIGURATION.reference()), InspectCollectorConfiguration.class) : null
-                    ));
+                    conf = rs.getString(CONFIGURATION.reference()) != null
+                            ? mapper.readValue(rs.getString(CONFIGURATION.reference()), InspectCollectorConfiguration.class)
+                            : null;
                 } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
+                    emitError("Error parsing configuration for instance [" + rs.getString(ENVIRONEMENT.reference()) + "]:[" + rs.getString(APP_NAME.reference()) + "]");
                 }
+                finally {
+                    if(conf == null) {
+                        conf = new InspectCollectorConfiguration();
+                        var rmt = new RestRemoteServerProperties();
+                        rmt.setRetentionMaxAge(ofDays(60));
+                        conf.getTracing().setRemote(rmt);
+                    }
+                }
+                environments.add(new InstanceEnvironment(
+                        null,
+                        null,
+                        null,
+                        rs.getString(APP_NAME.reference()),
+                        null,
+                        rs.getString(ENVIRONEMENT.reference()),
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        conf
+                ));
             }
             return environments;
         });
