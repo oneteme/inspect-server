@@ -118,18 +118,13 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     @Transactional(rollbackFor = Throwable.class)
     public void savePartialRestSessions(List<HttpSessionSignal> sessions) {
         executeBatch("""
-insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,va_lnk,dh_str,va_err_typ,va_err_msg,va_stk,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_msk)
+insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,va_lnk,dh_str,va_nam,va_usr,va_usr_agt,va_msk)
 values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
-            var exp = ses.getException();
             restSessionSetter(ps, ses);
-            ps.setString(15, nonNull(exp) ? exp.getType() : null);
-            ps.setString(16, nonNull(exp) ? exp.getMessage() : null);
-            ps.setObject(17, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
-            ps.setString(18, ses.getName());
-            ps.setString(19, ses.getUser());
-            ps.setString(20, userAgentExtract(ses.getUserAgent()));
-            ps.setString(21, ses.getCacheControl());
-            ps.setInt(22, 0);
+            ps.setString(15, ses.getName());
+            ps.setString(16, ses.getUser());
+            ps.setString(17, userAgentExtract(ses.getUserAgent()));
+            ps.setInt(18, 0);
         });
     }
 
@@ -140,7 +135,7 @@ insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va
 values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
             var session = ses.getV1();
             var callback = ses.getV2();
-            var exp = nonNull(callback.getException()) ? callback.getException() : session.getException();
+            var exp = callback.getException();
             restSessionSetter(ps, session);
             ps.setTimestamp(15, fromNullableInstant(callback.getEnd()));
             ps.setString(16, nonNull(exp) ? exp.getType() : null);
@@ -148,8 +143,8 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", se
             ps.setObject(18, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
             ps.setString(19, nonNull(callback.getName()) ? callback.getName() : session.getName());
             ps.setString(20, nonNull(callback.getUser()) ? callback.getUser() : session.getUser());
-            ps.setString(21, userAgentExtract(nonNull(callback.getUserAgent()) ? callback.getUserAgent() : session.getUserAgent()));
-            ps.setString(22, nonNull(callback.getCacheControl()) ? callback.getCacheControl() : session.getCacheControl());
+            ps.setString(21, userAgentExtract(session.getUserAgent()));
+            ps.setString(22, callback.getCacheControl());
             ps.setString(23, contentTypeExtract(callback.getContentType()));
             ps.setInt(24, callback.getStatus());
             ps.setLong(25, callback.getDataSize());
@@ -178,7 +173,7 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", se
     @Transactional(rollbackFor = Throwable.class)
     public void updateRestSessions(List<HttpSessionUpdate> sessions) {
         executeBatch("""
-update e_rst_ses set va_err_typ = coalesce(?, va_err_typ), va_err_msg = coalesce(?, va_err_msg), va_stk = coalesce(?, va_stk), va_nam = coalesce(?, va_nam), va_usr = coalesce(?, va_usr), va_usr_agt = coalesce(?, va_usr_agt), va_cch_ctr = coalesce(?, va_usr_agt), va_cnt_typ = ?, cd_stt = ?, va_o_sze = ?, va_o_cnt_enc = ?, dh_end = ?, va_msk = ?
+update e_rst_ses set va_err_typ = coalesce(?, va_err_typ), va_err_msg = coalesce(?, va_err_msg), va_stk = coalesce(?, va_stk), va_nam = coalesce(?, va_nam), va_usr = coalesce(?, va_usr), va_cch_ctr = coalesce(?, va_usr_agt), va_cnt_typ = ?, cd_stt = ?, va_o_sze = ?, va_o_cnt_enc = ?, dh_end = ?, va_msk = ?
 where id_ses = ?::uuid""", sessions.iterator(), (ps, ses) -> {
             var exp = ses.getException();
             ps.setString(1, nonNull(exp) ? exp.getType() : null);
@@ -186,15 +181,14 @@ where id_ses = ?::uuid""", sessions.iterator(), (ps, ses) -> {
             ps.setObject(3, nonNull(exp) && nonNull(exp.getStackTraceRows()) ? mapper.writeValueAsString(exp.getStackTraceRows()) : null, OTHER);
             ps.setString(4, ses.getName());
             ps.setString(5, ses.getUser());
-            ps.setString(6, userAgentExtract(ses.getUserAgent()));
-            ps.setString(7, ses.getCacheControl());
-            ps.setString(8, contentTypeExtract(ses.getContentType()));
-            ps.setInt(9, ses.getStatus());
-            ps.setLong(10, ses.getDataSize());
-            ps.setString(11, ses.getContentEncoding());
-            ps.setTimestamp(12, fromNullableInstant(ses.getEnd()));
-            ps.setInt(13, ses.getRequestMask().get());
-            ps.setString(14, ses.getId());
+            ps.setString(6, ses.getCacheControl());
+            ps.setString(7, contentTypeExtract(ses.getContentType()));
+            ps.setInt(8, ses.getStatus());
+            ps.setLong(9, ses.getDataSize());
+            ps.setString(10, ses.getContentEncoding());
+            ps.setTimestamp(11, fromNullableInstant(ses.getEnd()));
+            ps.setInt(12, ses.getRequestMask().get());
+            ps.setString(13, ses.getId());
         });
     }
 

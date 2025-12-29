@@ -46,8 +46,6 @@ public class RestSession extends AbstractSession {
         ses.setInstanceId(getInstanceId());
         ses.setLinked(isLinked());
         ses.setUserAgent(getUserAgent());
-        ses.setCacheControl(getCacheControl());
-        ses.setException(getException());
         return ses;
     }
 
@@ -58,7 +56,6 @@ public class RestSession extends AbstractSession {
         cb.setContentEncoding(getOutContentEncoding());
         cb.setName(getName());
         cb.setUser(getUser());
-        cb.setUserAgent(getUserAgent());
         cb.setCacheControl(getCacheControl());
         cb.setBodyContent(getBodyContent());
         cb.setStatus(getStatus());
