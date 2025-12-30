@@ -220,6 +220,7 @@ public final class InspectMappers {
                 out.setRequestsMask(rs.getInt(MASK.reference()));
                 out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
                 out.setCacheControl(rs.getString(CACHE_CONTROL.reference()));
+                out.setLinked(rs.getBoolean(LINKED.reference()));
                 return out;
             }
             return null;
