@@ -119,7 +119,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     public void savePartialRestSessions(List<HttpSessionSignal> sessions) {
         executeBatch("""
 insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,va_lnk,dh_str,va_nam,va_usr,va_usr_agt,va_msk)
-values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
+values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions.iterator(), (ps, ses) -> {
             restSessionSetter(ps, ses);
             ps.setString(15, ses.getName());
             ps.setString(16, ses.getUser());
