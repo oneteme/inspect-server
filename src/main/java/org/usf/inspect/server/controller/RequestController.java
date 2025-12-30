@@ -210,7 +210,7 @@ public class RequestController {
     @GetMapping("session/rest/{idSession}")
     public ResponseEntity<RestSession> getRestSession(
             @QueryRequestFilter(view = "rest_session",
-            column = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,err_type,err_msg,stacktrace,mask,user,user_agt,cache_control,instance_env") QueryComposer request,
+            column = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,err_type,err_msg,stacktrace,mask,user,user_agt,cache_control,linked,instance_env") QueryComposer request,
             @PathVariable String idSession) throws SQLException {
         return Optional.ofNullable(INSPECT.execute(request.filters(column("id_ses").eq(fromString(idSession))), InspectMappers.createBaseRestSession(mapper)))
                 .map(o -> ok().body(o))

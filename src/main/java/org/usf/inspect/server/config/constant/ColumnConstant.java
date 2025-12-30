@@ -55,6 +55,7 @@ public class ColumnConstant {
             case USER_AGT -> VA_USR_AGT;
             case CACHE_CONTROL -> VA_CCH_CTR;
             case MASK -> VA_MSK;
+            case LINKED -> VA_LNK;
             case INSTANCE_ENV -> CD_INS;
             default -> null;
         };
