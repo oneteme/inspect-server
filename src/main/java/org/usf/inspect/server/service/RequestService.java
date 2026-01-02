@@ -496,7 +496,7 @@ public class RequestService {
         }
         var v = new QueryComposer()
                 .columns(getColumns(
-                        REST_REQUEST, ID, PROTOCOL, BODY_CONTENT, HOST, PATH, QUERY, METHOD, STATUS, START, END, THREAD, LINKED, PARENT
+                        REST_REQUEST, ID, PROTOCOL, BODY_CONTENT, HOST, PATH, QUERY, METHOD, STATUS, START, END, THREAD, LINKED, USER, PARENT
                 ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(REST_REQUEST.join(EXCEPTION_JOIN))
@@ -519,6 +519,7 @@ public class RequestService {
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setLinked(rs.getBoolean(LINKED.reference()));
+                out.setUser(rs.getString(USER.reference()));
                 out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
                 out.setBodyContent(rs.getString(BODY_CONTENT.reference()));
                 outs.add(out);
@@ -544,7 +545,7 @@ public class RequestService {
         var v = new QueryComposer()
                 .columns(
                         getColumns(
-                                DATABASE_REQUEST, ID, HOST ,DB, START, END, THREAD, COMMAND, FAILED, SCHEMA, PARENT
+                                DATABASE_REQUEST, ID, HOST ,DB, START, END, THREAD, COMMAND, FAILED, SCHEMA, USER, PARENT
                         ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(DATABASE_REQUEST.join(EXCEPTION_JOIN))
@@ -564,6 +565,7 @@ public class RequestService {
                 out.setCommand(rs.getString(COMMAND.reference()));
                 out.setFailed(rs.getBoolean(FAILED.reference()));
                 out.setSchema(rs.getString(SCHEMA.reference()));
+                out.setUser(rs.getString(USER.reference()));
                 out.setSessionId(rs.getString(PARENT.reference()));
                 out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
                 outs.add(out);
@@ -624,7 +626,7 @@ public class RequestService {
         var v = new QueryComposer()
                 .columns(
                         getColumns(
-                                FTP_REQUEST, ID, HOST, START, END, COMMAND, THREAD, FAILED, PARENT
+                                FTP_REQUEST, ID, HOST, START, END, COMMAND, THREAD, FAILED, USER, PARENT
                         )
                 )
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
@@ -643,6 +645,7 @@ public class RequestService {
                 out.setCommand(rs.getString(COMMAND.reference()));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setFailed(rs.getBoolean(FAILED.reference()));
+                out.setUser(rs.getString(USER.reference()));
                 out.setSessionId(rs.getString(PARENT.reference()));
                 out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
                 outs.add(out);
@@ -700,7 +703,7 @@ public class RequestService {
         var v = new QueryComposer()
                 .columns(
                         getColumns(
-                                SMTP_REQUEST, ID, HOST, START, END, COMMAND, THREAD, FAILED, PARENT
+                                SMTP_REQUEST, ID, HOST, START, END, COMMAND, THREAD, FAILED, USER, PARENT
                         ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(SMTP_REQUEST.join(EXCEPTION_JOIN))
@@ -718,6 +721,7 @@ public class RequestService {
                 out.setCommand(rs.getString(COMMAND.reference()));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setFailed(rs.getBoolean(FAILED.reference()));
+                out.setUser(rs.getString(USER.reference()));
                 out.setSessionId(rs.getString(PARENT.reference()));
                 out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
                 outs.add(out);
@@ -772,7 +776,7 @@ public class RequestService {
         var v = new QueryComposer()
                 .columns(
                         getColumns(
-                                LDAP_REQUEST, ID, HOST, START, END, COMMAND, THREAD, FAILED, PARENT
+                                LDAP_REQUEST, ID, HOST, START, END, COMMAND, THREAD, FAILED, USER, PARENT
                         ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(LDAP_REQUEST.join(EXCEPTION_JOIN))
@@ -790,6 +794,7 @@ public class RequestService {
                 out.setCommand(rs.getString(COMMAND.reference()));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setFailed(rs.getBoolean(FAILED.reference()));
+                out.setUser(rs.getString(USER.reference()));
                 out.setSessionId(rs.getString(PARENT.reference()));
                 out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
                 outs.add(out);

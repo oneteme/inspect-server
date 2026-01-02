@@ -272,25 +272,25 @@ where id_ses = ?::uuid""", sessions.iterator(), (ps, ses) -> {
     @Transactional(rollbackFor = Throwable.class)
     public void savePartialRestRequests(List<HttpRequestSignal> requests) {
         executeBatch("""
-insert into e_rst_rqt(id_rst_rqt,cd_prn_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,dh_str)
+insert into e_rst_rqt(id_rst_rqt,cd_prn_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,va_usr,dh_str)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), TraceDao::restRequestSetter);
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteRestRequests(List<Pair<HttpRequestSignal, HttpRequestUpdate>> requests) {
         executeBatch("""
-insert into e_rst_rqt(id_rst_rqt,cd_prn_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,dh_str,dh_end,va_cnt_typ,cd_stt,va_i_sze,va_i_cnt_enc,va_bdy_cnt,va_lnk)
+insert into e_rst_rqt(id_rst_rqt,cd_prn_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,va_usr,dh_str,dh_end,va_cnt_typ,cd_stt,va_i_sze,va_i_cnt_enc,va_bdy_cnt,va_lnk)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests.iterator(), (ps, ses) -> {
             var request = ses.getV1();
             var callback = ses.getV2();
             restRequestSetter(ps, request);
-            ps.setTimestamp(15, fromNullableInstant(callback.getEnd()));
-            ps.setString(16, contentTypeExtract(callback.getContentType()));
-            ps.setInt(17, callback.getStatus());
-            ps.setLong(18, callback.getDataSize());
-            ps.setString(19, callback.getContentEncoding());
-            ps.setString(20, callback.getBodyContent());
-            ps.setBoolean(21, callback.isLinked());
+            ps.setTimestamp(16, fromNullableInstant(callback.getEnd()));
+            ps.setString(17, contentTypeExtract(callback.getContentType()));
+            ps.setInt(18, callback.getStatus());
+            ps.setLong(19, callback.getDataSize());
+            ps.setString(20, callback.getContentEncoding());
+            ps.setString(21, callback.getBodyContent());
+            ps.setBoolean(22, callback.isLinked());
         });
     }
 
@@ -308,7 +308,8 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests
         ps.setLong(11, req.getDataSize());
         ps.setString(12, req.getContentEncoding());
         ps.setString(13, req.getThreadName());
-        ps.setTimestamp(14, fromNullableInstant(req.getStart()));
+        ps.setString(14, req.getUser());
+        ps.setTimestamp(15, fromNullableInstant(req.getStart()));
     }
 
     @Transactional(rollbackFor = Throwable.class)
