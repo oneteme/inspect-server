@@ -300,7 +300,7 @@ public class RequestController {
     public ResponseEntity<List<RestRequestDto>>  getRestRequests(
             @QueryRequestFilter(
                 view = "rest_request",
-                column = "id,protocol,host,path,query,method,status,start,end,thread,body_content,linked,exception.err_type,exception.err_msg",
+                column = "id,protocol,host,path,query,method,status,start,end,thread,user,body_content,linked,exception.err_type,exception.err_msg",
                 join = "exception",
                 order = "start") QueryComposer request,
             @PathVariable String  idSession){
@@ -406,7 +406,7 @@ public class RequestController {
     public ResponseEntity<List<FtpRequestDto>> getFtpRequests(
             @QueryRequestFilter(
                     view = "ftp_request",
-                    column = "id,host,start,end,thread,command,failed,exception.err_type,exception.err_msg",
+                    column = "id,host,start,end,thread,user,command,failed,exception.err_type,exception.err_msg",
                     join = "exception",
                     order = "start") QueryComposer request,
             @PathVariable String idSession){
@@ -462,7 +462,7 @@ public class RequestController {
     public ResponseEntity<List<MailRequestDto>> getSmtpRequests(
             @QueryRequestFilter(
                     view = "smtp_request",
-                    column = "id,host,start,end,thread,command,failed,exception.err_type,exception.err_msg",
+                    column = "id,host,start,end,thread,user,command,failed,exception.err_type,exception.err_msg",
                     join = "exception",
                     order = "start") QueryComposer request,
             @PathVariable String idSession){
@@ -542,7 +542,7 @@ public class RequestController {
     public ResponseEntity<List<DirectoryRequestDto>> getLdapRequests(
             @QueryRequestFilter(
                     view = "ldap_request",
-                    column = "id,host,start,end,thread,command,failed,exception.err_type,exception.err_msg",
+                    column = "id,host,start,end,thread,user,command,failed,exception.err_type,exception.err_msg",
                     join = "exception",
                     order = "start") QueryComposer request,
             @PathVariable String idSession){

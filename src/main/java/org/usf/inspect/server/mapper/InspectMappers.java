@@ -124,6 +124,7 @@ public final class InspectMappers {
         out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
         out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
         out.setThreadName(rs.getString(THREAD.reference()));
+        out.setUser(rs.getString(USER.reference()));
         out.setBodyContent(rs.getString(BODY_CONTENT.reference()));
         return out;
     }
@@ -401,6 +402,7 @@ public final class InspectMappers {
         out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
         out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
         out.setThreadName(rs.getString(THREAD.reference()));
+        out.setUser(rs.getString(USER.reference()));
         out.setFailed(rs.getBoolean(FAILED.reference()));
         return out;
     }
@@ -413,7 +415,6 @@ public final class InspectMappers {
             out.setProtocol(rs.getString(PROTOCOL.reference()));
             out.setServerVersion(rs.getString(SERVER_VERSION.reference()));
             out.setClientVersion(rs.getString(CLIENT_VERSION.reference()));
-            out.setUser(rs.getString(USER.reference()));
             out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
             return out;
         }
@@ -454,6 +455,7 @@ public final class InspectMappers {
         out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
         out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
         out.setThreadName(rs.getString(THREAD.reference()));
+        out.setUser(rs.getString(USER.reference()));
         out.setFailed(rs.getBoolean(FAILED.reference()));
         return out;
     }
@@ -463,7 +465,6 @@ public final class InspectMappers {
             MailRequest out = createBaseMailRequest(rs);
             out.setSessionId(rs.getString(PARENT.reference()));
             out.setPort(rs.getInt(PORT.reference()));
-            out.setUser(rs.getString(USER.reference()));
             out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
             return out;
         }
@@ -516,6 +517,7 @@ public final class InspectMappers {
         out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
         out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
         out.setThreadName(rs.getString(THREAD.reference()));
+        out.setUser(rs.getString(USER.reference()));
         out.setFailed(rs.getBoolean(FAILED.reference()));
         return out;
     }
@@ -526,7 +528,6 @@ public final class InspectMappers {
             out.setSessionId(rs.getString(PARENT.reference()));
             out.setPort(rs.getInt(PORT.reference()));
             out.setProtocol(rs.getString(PROTOCOL.reference()));
-            out.setUser(rs.getString(USER.reference()));
             out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
             return out;
         }
