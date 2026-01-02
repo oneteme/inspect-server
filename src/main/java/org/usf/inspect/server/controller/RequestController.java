@@ -341,7 +341,7 @@ public class RequestController {
     @GetMapping("request/rest/{idRequest}")
     public ResponseEntity<RestRequest> getRestRequest (
             @QueryRequestFilter(view = "rest_request",
-                    column = "id,protocol,auth,host,port,path,query,method,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,body_content,instance_env,parent") QueryComposer request,
+                    column = "id,protocol,auth,host,port,path,query,method,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,user,body_content,instance_env,parent") QueryComposer request,
             @PathVariable String idRequest) {
         return  Optional.ofNullable(INSPECT.execute(request.filters(column("id_rst_rqt").eq(fromString(idRequest))), InspectMappers::restRequestMapperComplete))
                 .map(o -> {
