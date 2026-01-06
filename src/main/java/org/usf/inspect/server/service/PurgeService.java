@@ -4,22 +4,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.usf.inspect.core.InstanceEnvironment;
-import org.usf.inspect.core.SessionContextManager;
 import org.usf.inspect.server.dao.PurgeDao;
 
-import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.IntStream;
 
-import static java.time.Duration.*;
-import static java.time.LocalDate.*;
-import static java.time.ZoneId.*;
-import static java.util.Objects.*;
-import static org.usf.inspect.core.SessionContextManager.*;
+import static java.time.LocalDate.now;
+import static java.time.ZoneId.systemDefault;
+import static java.util.Objects.isNull;
+import static org.usf.inspect.core.SessionContextManager.emitInfo;
 
 @Slf4j
 @Service
