@@ -417,7 +417,7 @@ public class RequestController {
     public ResponseEntity<FtpRequest> getFtpRequest(
             @QueryRequestFilter(
                     view = "ftp_request",
-                    column = "id,host,port,protocol,server_version,client_version,start,end,user,thread,failed,instance_env,parent") QueryComposer request,
+                    column = "id,host,port,protocol,server_version,client_version,start,end,user,thread,command,failed,instance_env,parent") QueryComposer request,
             @PathVariable String idFtp){
         return Optional.ofNullable(INSPECT.execute(request.filters(column("id_ftp_rqt").eq(fromString(idFtp))), InspectMappers::ftpRequestComplete))
                 .map(o -> {
@@ -473,7 +473,7 @@ public class RequestController {
     public ResponseEntity<MailRequest> getSmtpRequest(
             @QueryRequestFilter(
                     view = "smtp_request",
-                    column = "id,host,port,start,end,user,thread,failed,instance_env,parent") QueryComposer request,
+                    column = "id,host,port,start,end,user,thread,command,failed,instance_env,parent") QueryComposer request,
             @PathVariable String idSmtp){
         return Optional.ofNullable(INSPECT.execute(request.filters(column("id_smtp_rqt").eq(fromString(idSmtp))), InspectMappers::mailRequestCompleteMapper))
                 .map(o -> {
@@ -553,7 +553,7 @@ public class RequestController {
     public ResponseEntity<DirectoryRequest> getLdapRequest(
             @QueryRequestFilter(
                     view = "ldap_request",
-                    column = "id,host,port,protocol,start,end,user,thread,failed,instance_env,parent") QueryComposer request,
+                    column = "id,host,port,protocol,start,end,user,command,thread,failed,instance_env,parent") QueryComposer request,
             @PathVariable String idLdap){
         return Optional.ofNullable(INSPECT.execute(request.filters(column("id_ldap_rqt").eq(fromString(idLdap))), InspectMappers::ldapRequestCompleteMapper))
                 .map(o -> {

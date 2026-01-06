@@ -389,7 +389,6 @@ public final class InspectMappers {
     public static RowMapper<FtpRequestDto> ftpRequestLazyMapper(){
         return rs -> {
             FtpRequestDto out = createBaseFtpRequest(rs);
-            out.setCommand(rs.getString(COMMAND.reference()));
             out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
             return out;
         };
@@ -404,6 +403,7 @@ public final class InspectMappers {
         out.setThreadName(rs.getString(THREAD.reference()));
         out.setUser(rs.getString(USER.reference()));
         out.setFailed(rs.getBoolean(FAILED.reference()));
+        out.setCommand(rs.getString(COMMAND.reference()));
         return out;
     }
 
@@ -442,7 +442,6 @@ public final class InspectMappers {
     public static RowMapper<MailRequestDto> smtpRequestLazyMapper(){
         return rs -> {
             MailRequestDto out = createBaseMailRequest(rs);
-            out.setCommand(rs.getString(COMMAND.reference()));
             out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
             return out;
         };
@@ -457,6 +456,7 @@ public final class InspectMappers {
         out.setThreadName(rs.getString(THREAD.reference()));
         out.setUser(rs.getString(USER.reference()));
         out.setFailed(rs.getBoolean(FAILED.reference()));
+        out.setCommand(rs.getString(COMMAND.reference()));
         return out;
     }
 
@@ -504,7 +504,6 @@ public final class InspectMappers {
     public static RowMapper<DirectoryRequestDto> ldapRequestLazyMapper(){
         return rs -> {
             DirectoryRequestDto out = createBaseLdapRequest(rs);
-            out.setCommand(rs.getString(COMMAND.reference()));
             out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
             return out;
         };
@@ -519,6 +518,7 @@ public final class InspectMappers {
         out.setThreadName(rs.getString(THREAD.reference()));
         out.setUser(rs.getString(USER.reference()));
         out.setFailed(rs.getBoolean(FAILED.reference()));
+        out.setCommand(rs.getString(COMMAND.reference()));
         return out;
     }
 
