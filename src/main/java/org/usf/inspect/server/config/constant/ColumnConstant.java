@@ -92,6 +92,7 @@ public class ColumnConstant {
             case START -> DH_STR;
             case END -> DH_END;
             case THREAD -> VA_THR;
+            case USER -> VA_USR;
             case LINKED -> VA_LNK;
             case PARENT -> CD_PRN_SES;
             case INSTANCE_ENV -> CD_INS;

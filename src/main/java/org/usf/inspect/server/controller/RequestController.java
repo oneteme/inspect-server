@@ -300,7 +300,7 @@ public class RequestController {
     public ResponseEntity<List<RestRequestDto>>  getRestRequests(
             @QueryRequestFilter(
                 view = "rest_request",
-                column = "id,protocol,host,path,query,method,status,start,end,thread,body_content,linked,exception.err_type,exception.err_msg",
+                column = "id,protocol,host,path,query,method,status,start,end,thread,user,body_content,linked,exception.err_type,exception.err_msg",
                 join = "exception",
                 order = "start") QueryComposer request,
             @PathVariable String  idSession){
@@ -341,7 +341,7 @@ public class RequestController {
     @GetMapping("request/rest/{idRequest}")
     public ResponseEntity<RestRequest> getRestRequest (
             @QueryRequestFilter(view = "rest_request",
-                    column = "id,protocol,auth,host,port,path,query,method,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,body_content,instance_env,parent") QueryComposer request,
+                    column = "id,protocol,auth,host,port,path,query,method,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,user,body_content,instance_env,parent") QueryComposer request,
             @PathVariable String idRequest) {
         return  Optional.ofNullable(INSPECT.execute(request.filters(column("id_rst_rqt").eq(fromString(idRequest))), InspectMappers::restRequestMapperComplete))
                 .map(o -> {
@@ -406,7 +406,7 @@ public class RequestController {
     public ResponseEntity<List<FtpRequestDto>> getFtpRequests(
             @QueryRequestFilter(
                     view = "ftp_request",
-                    column = "id,host,start,end,thread,command,failed,exception.err_type,exception.err_msg",
+                    column = "id,host,start,end,thread,user,command,failed,exception.err_type,exception.err_msg",
                     join = "exception",
                     order = "start") QueryComposer request,
             @PathVariable String idSession){
@@ -417,7 +417,7 @@ public class RequestController {
     public ResponseEntity<FtpRequest> getFtpRequest(
             @QueryRequestFilter(
                     view = "ftp_request",
-                    column = "id,host,port,protocol,server_version,client_version,start,end,user,thread,failed,instance_env,parent") QueryComposer request,
+                    column = "id,host,port,protocol,server_version,client_version,start,end,user,thread,command,failed,instance_env,parent") QueryComposer request,
             @PathVariable String idFtp){
         return Optional.ofNullable(INSPECT.execute(request.filters(column("id_ftp_rqt").eq(fromString(idFtp))), InspectMappers::ftpRequestComplete))
                 .map(o -> {
@@ -462,7 +462,7 @@ public class RequestController {
     public ResponseEntity<List<MailRequestDto>> getSmtpRequests(
             @QueryRequestFilter(
                     view = "smtp_request",
-                    column = "id,host,start,end,thread,command,failed,exception.err_type,exception.err_msg",
+                    column = "id,host,start,end,thread,user,command,failed,exception.err_type,exception.err_msg",
                     join = "exception",
                     order = "start") QueryComposer request,
             @PathVariable String idSession){
@@ -473,7 +473,7 @@ public class RequestController {
     public ResponseEntity<MailRequest> getSmtpRequest(
             @QueryRequestFilter(
                     view = "smtp_request",
-                    column = "id,host,port,start,end,user,thread,failed,instance_env,parent") QueryComposer request,
+                    column = "id,host,port,start,end,user,thread,command,failed,instance_env,parent") QueryComposer request,
             @PathVariable String idSmtp){
         return Optional.ofNullable(INSPECT.execute(request.filters(column("id_smtp_rqt").eq(fromString(idSmtp))), InspectMappers::mailRequestCompleteMapper))
                 .map(o -> {
@@ -542,7 +542,7 @@ public class RequestController {
     public ResponseEntity<List<DirectoryRequestDto>> getLdapRequests(
             @QueryRequestFilter(
                     view = "ldap_request",
-                    column = "id,host,start,end,thread,command,failed,exception.err_type,exception.err_msg",
+                    column = "id,host,start,end,thread,user,command,failed,exception.err_type,exception.err_msg",
                     join = "exception",
                     order = "start") QueryComposer request,
             @PathVariable String idSession){
@@ -553,7 +553,7 @@ public class RequestController {
     public ResponseEntity<DirectoryRequest> getLdapRequest(
             @QueryRequestFilter(
                     view = "ldap_request",
-                    column = "id,host,port,protocol,start,end,user,thread,failed,instance_env,parent") QueryComposer request,
+                    column = "id,host,port,protocol,start,end,user,command,thread,failed,instance_env,parent") QueryComposer request,
             @PathVariable String idLdap){
         return Optional.ofNullable(INSPECT.execute(request.filters(column("id_ldap_rqt").eq(fromString(idLdap))), InspectMappers::ldapRequestCompleteMapper))
                 .map(o -> {
