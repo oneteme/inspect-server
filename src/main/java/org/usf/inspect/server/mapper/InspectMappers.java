@@ -106,7 +106,6 @@ public final class InspectMappers {
     public static RowMapper<RestRequestDto> restRequestLazyMapper() {
         return rs -> {
             RestRequestDto out = createBaseRestRequest(rs);
-            out.setLinked(rs.getBoolean(LINKED.reference()));
             out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
             return out;
         };
@@ -126,6 +125,7 @@ public final class InspectMappers {
         out.setThreadName(rs.getString(THREAD.reference()));
         out.setUser(rs.getString(USER.reference()));
         out.setBodyContent(rs.getString(BODY_CONTENT.reference()));
+        out.setLinked(rs.getBoolean(LINKED.reference()));
         return out;
     }
 
