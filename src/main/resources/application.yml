@@ -59,7 +59,7 @@ inspect:
         retention-max-age: 10d #default=30d, maximum age of traces in days
   server:
     scheduling:
-    interval: 30s #default=60s, interval between trace dispatches
+      interval: 30s #default=60s, interval between trace dispatches
     tracing:
       queue-capacity: 500000 #default=10000, queue capacity for trace dispatching
     partition:
