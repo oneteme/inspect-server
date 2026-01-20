@@ -842,6 +842,19 @@ public class RequestService {
                 .filters(INSTANCE.column(ENVIRONEMENT).eq(environment));
         return INSPECT.execute(v1, toArray(rs -> rs.getString(HOST.reference()), String[]::new));
     }
+    public String[] getRequestSchema( String environment, Instant start, Instant end, String host){
+        var v1 = new QueryComposer()
+                .distinct(true)
+                .columns(DATABASE_REQUEST.column(SCHEMA))
+                .joins(DATABASE_REQUEST.join(INSTANCE_JOIN))
+                .filters(DATABASE_REQUEST.column(START).ge(from(start)))
+                .filters(DATABASE_REQUEST.column(START).lt(from(end)))
+                .filters(DATABASE_REQUEST.column(HOST).eq(host))
+                .filters(INSTANCE.column(ENVIRONEMENT).eq(environment));
+        return INSPECT.execute(v1, toArray(rs -> rs.getString(SCHEMA.reference()), String[]::new));
+    }
+
+
 
     private String getPropertyByFilters(TraceApiTable table, TraceApiColumn target, DBFilter filters) { // main / apissesion
         var v = new QueryComposer().columns(getColumns(table,target)).filters(filters);
