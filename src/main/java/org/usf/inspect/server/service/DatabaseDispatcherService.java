@@ -36,7 +36,7 @@ public class DatabaseDispatcherService implements TraceExporter {
 	private final ObjectMapper mapper;
 	private final ExecutorService executor = wrap(newFixedThreadPool(5));
 
-  @Override
+    @Override
 	public void dispatch(InstanceEnvironment instance) {
         dao.saveInstanceEnvironment(instance);
 	}
@@ -66,7 +66,7 @@ public class DatabaseDispatcherService implements TraceExporter {
                     if(e instanceof SessionMaskUpdate smu && smu.isMain()) {
                         consumer.accept(smu);
                     }
-                }, dao::updateMaskMainSessions, SessionMaskUpdate.class));
+                }, dao::updateMaskMainSessions));
             }
             return unsaved;
         }, executor));
@@ -77,7 +77,7 @@ public class DatabaseDispatcherService implements TraceExporter {
                     if(e instanceof SessionMaskUpdate smu && !smu.isMain()) {
                         consumer.accept(smu);
                     }
-                }, dao::updateMaskRestSessions, SessionMaskUpdate.class));
+                }, dao::updateMaskRestSessions));
             }
             return unsaved;
         }, executor));
@@ -104,25 +104,25 @@ public class DatabaseDispatcherService implements TraceExporter {
                 .toList()).join();
     }
 
-    public static <U extends EventTrace> List<EventTrace> filterAndApply(Collection<EventTrace> c, Class<U> clazz, Consumer<List<U>> saveFn) {
+    public static <U> List<EventTrace> filterAndApply(Collection<EventTrace> c, Class<U> clazz, Consumer<List<U>> saveFn) {
         return filterAndApply(c, (e, consumer) -> {
             if(clazz.isInstance(e)) {
                 consumer.accept(clazz.cast(e));
             }
-        }, saveFn, clazz);
+        }, saveFn);
     }
 
-    public static <U extends EventTrace> List<EventTrace> filterAndApply(Collection<EventTrace> c, BiConsumer<EventTrace, ? super Consumer<U>> mapper, Consumer<List<U>> saveFn, Class<U> clazz) {
+    public static <U> List<EventTrace> filterAndApply(Collection<EventTrace> c, BiConsumer<EventTrace, ? super Consumer<U>> mapper, Consumer<List<U>> saveFn) {
         var list = c.stream()
                 .mapMulti(mapper)
                 .toList();
         if(!list.isEmpty()) {
-            log.debug("saving {} {}..", list.size(), clazz.getSimpleName());
+            log.debug("saving {} {}..", list.size(), list.getFirst().getClass().getSimpleName());
             try {
                 saveFn.accept(list);
                 list = emptyList();
             } catch (Exception e) {
-                log.error("error while saving {} {}, because {}: {}", list.size(), clazz.getSimpleName(), e.getClass().getSimpleName(), e.getMessage());
+                log.error("error while saving {} {}, because {}: {}", list.size(), list.getFirst().getClass().getSimpleName(), e.getClass().getSimpleName(), e.getMessage());
             }
         }
         return (List<EventTrace>) list;
