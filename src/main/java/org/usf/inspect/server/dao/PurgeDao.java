@@ -10,11 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.InspectCollectorConfiguration;
 import org.usf.inspect.core.InstanceEnvironment;
 import org.usf.inspect.core.RestRemoteServerProperties;
-import org.usf.inspect.core.SessionContextManager;
-import org.usf.inspect.server.model.RequestCompletableType;
 import org.usf.jquery.core.*;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -170,7 +167,14 @@ public class PurgeDao {
     			"e_ins_trc",
     			"e_rsc_usg")
     	.map(v-> "VACUUM ANALYZE "+v+';')
-    	.forEach(template::execute);
+    	.forEach(q->{
+    		try {
+    			template.execute(q); //H2 does not support vacuum analyze
+    		}
+    		catch (Exception e) {
+    			log.error("Error during vacuum analyze on table {}: {}", q, e.getMessage());
+			}
+    	});
     }
 
     private List<String> selectInstanceIds(Instant dateLimit, String env, String app) {

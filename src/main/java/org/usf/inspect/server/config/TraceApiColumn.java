@@ -127,6 +127,7 @@ public enum TraceApiColumn implements ColumnDecorator {
     COUNT_REQUEST_ERROR("countRequestError", FilterConstant::countError),
     COUNT_REQUEST_SUCCESS("countRequestSuccess", FilterConstant::countSuccess),
     COUNT_EXCEPTION("countException", FilterConstant::countExceptions), //isNull
+    COUNT_EXCEPTION_REST("countExceptionRest", FilterConstant::countExceptionsRest), //isNull
     COUNT_NO_EXCEPTION("countNoException", FilterConstant::countNoExceptions), //isNull
     ERR("err", FilterConstant::err);
 

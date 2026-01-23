@@ -101,7 +101,15 @@ public class RequestController {
         }
         return requestService.getRequestHosts(requestTable, environment, start, end);
     }
+    @GetMapping("request/jdbc/schema")
+    public String[] getRequestSchema(
+            @RequestParam(name = "host") String host,
+            @RequestParam(name = "env") String environment,
+            @RequestParam(name = "start") Instant start,
+            @RequestParam(name = "end") Instant end)  {
 
+        return requestService.getRequestSchema( environment, start, end, host);
+    }
     @GetMapping("request/rest")
     public List<RestRequestDto> getRestRequests(@RequestParam(required = false, name = "env") String[] environments,
                                                 @RequestParam(required = false, name = "host") String[] hosts,
