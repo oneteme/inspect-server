@@ -1,11 +1,13 @@
 package org.usf.inspect.server.config.constant;
 
 import static org.usf.inspect.server.config.TraceApiColumn.*;
+import static org.usf.inspect.server.config.TraceApiTable.REST_REQUEST;
 import static org.usf.jquery.core.ComparisonExpression.eq;
 import static org.usf.jquery.core.ComparisonExpression.ge;
 import static org.usf.jquery.core.ComparisonExpression.isNotNull;
 import static org.usf.jquery.core.ComparisonExpression.isNull;
 import static org.usf.jquery.core.ComparisonExpression.lt;
+import static org.usf.jquery.core.Operator.sum;
 
 import org.usf.inspect.server.config.TraceApiColumn;
 import org.usf.jquery.core.ComparisonExpression;
@@ -29,6 +31,10 @@ public class FilterConstant {
 
     public static DBColumn countExceptions(ViewDecorator table, String... args){
         return table.column(ERR_MSG).toCase().when(isNotNull(),1).orElse(0).sum();
+    }
+
+    public static DBColumn countExceptionsRest(ViewDecorator table, String... args){
+        return table.column(ERR_MSG).toCase().when(isNotNull(),1).orElse(REST_REQUEST.column(BODY_CONTENT).toCase().when(isNotNull(), 1).orElse(0)).sum();
     }
 
     public static DBColumn countNoExceptions(ViewDecorator table, String... args){
