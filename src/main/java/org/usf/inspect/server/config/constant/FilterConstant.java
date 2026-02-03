@@ -1,6 +1,7 @@
 package org.usf.inspect.server.config.constant;
 
 import static org.usf.inspect.server.config.TraceApiColumn.*;
+import static org.usf.inspect.server.config.TraceApiTable.EXCEPTION;
 import static org.usf.inspect.server.config.TraceApiTable.REST_REQUEST;
 import static org.usf.jquery.core.ComparisonExpression.eq;
 import static org.usf.jquery.core.ComparisonExpression.ge;
@@ -109,6 +110,16 @@ public class FilterConstant {
             case "slowest" -> ge(10);
             default -> null;
         };
+    }
+
+    public static DBColumn errorTypeExpressions(ViewDecorator table, String... args) {
+        var status = table.column(STATUS);
+        return status.toCase()
+                .when(eq(0), EXCEPTION.column(ERR_TYPE))
+                .when(ge(200).and(lt(400)), null)
+                .when(ge(400).and(lt(500)), "ClientError")
+                .when(ge(500), "ServerError")
+                .end();
     }
 
     private static DBColumn elapsedTimeBySpeed(ComparisonExpression op, ViewDecorator table, String... args) {
