@@ -106,6 +106,8 @@ public enum TraceApiColumn implements ColumnDecorator {
     BODY_CONTENT("bodyContent"),
     //---
     ELAPSEDTIME("elapsedtime", FilterConstant::elapsedtime2, Builder.multiArgsCriteria(FilterConstant::elapsedTimeExpressions)),
+    //ERROR_TYPE("errorType", FilterConstant::errorTypeExpressions),
+    ERROR_TYPE("errorType", FilterConstant::errorTypeExpressions),
     COUNT_SLOWEST("elapsedTimeSlowest", FilterConstant::elapsedTimeVerySlow),
     COUNT_SLOW("elapsedTimeSlow", FilterConstant::elapsedTimeSlow),
     COUNT_MEDIUM("elapsedTimeMedium", FilterConstant::elapsedTimeMedium),
@@ -129,7 +131,9 @@ public enum TraceApiColumn implements ColumnDecorator {
     COUNT_EXCEPTION("countException", FilterConstant::countExceptions), //isNull
     COUNT_EXCEPTION_REST("countExceptionRest", FilterConstant::countExceptionsRest), //isNull
     COUNT_NO_EXCEPTION("countNoException", FilterConstant::countNoExceptions), //isNull
-    ERR("err", FilterConstant::err);
+    ERR("err", FilterConstant::err),
+    SIZE_IN_AVG("sizeInAvg", FilterConstant::sizeIn),
+    SIZE_OUT_AVG("sizeOutAvg", FilterConstant::sizeOut);
 
     private final String out; //nullable
     private final Builder<ViewDecorator, DBColumn> columnTemplate;

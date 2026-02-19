@@ -1,14 +1,13 @@
 package org.usf.inspect.server.config.constant;
 
 import static org.usf.inspect.server.config.TraceApiColumn.*;
+import static org.usf.inspect.server.config.TraceApiTable.EXCEPTION;
 import static org.usf.inspect.server.config.TraceApiTable.REST_REQUEST;
 import static org.usf.jquery.core.ComparisonExpression.eq;
 import static org.usf.jquery.core.ComparisonExpression.ge;
 import static org.usf.jquery.core.ComparisonExpression.isNotNull;
 import static org.usf.jquery.core.ComparisonExpression.isNull;
 import static org.usf.jquery.core.ComparisonExpression.lt;
-import static org.usf.jquery.core.Operator.sum;
-
 import org.usf.inspect.server.config.TraceApiColumn;
 import org.usf.jquery.core.ComparisonExpression;
 import org.usf.jquery.core.DBColumn;
@@ -30,15 +29,15 @@ public class FilterConstant {
     }
 
     public static DBColumn countExceptions(ViewDecorator table, String... args){
-        return table.column(ERR_MSG).toCase().when(isNotNull(),1).orElse(0).sum();
+        return table.column(ERR_TYPE).toCase().when(isNotNull(),1).orElse(0).sum();
     }
 
     public static DBColumn countExceptionsRest(ViewDecorator table, String... args){
-        return table.column(ERR_MSG).toCase().when(isNotNull(),1).orElse(REST_REQUEST.column(BODY_CONTENT).toCase().when(isNotNull(), 1).orElse(0)).sum();
+        return table.column(ERR_TYPE).toCase().when(isNotNull(),1).orElse(REST_REQUEST.column(BODY_CONTENT).toCase().when(isNotNull(), 1).orElse(0)).sum();
     }
 
     public static DBColumn countNoExceptions(ViewDecorator table, String... args){
-        return table.column(ERR_MSG).toCase().when(isNull(),1).orElse(0).sum();
+        return table.column(ERR_TYPE).toCase().when(isNull(),1).orElse(0).sum();
     }
 
     public static DBColumn err(ViewDecorator table, String... args){ // temporary solution to be changed
@@ -111,9 +110,34 @@ public class FilterConstant {
         };
     }
 
+    public static DBColumn errorTypeExpressions(ViewDecorator table, String... args) {
+        var status = table.column(STATUS);
+        return status.toCase()
+                .when(eq(0), EXCEPTION.column(ERR_TYPE))
+                .when(ge(200).and(lt(400)), null)
+                .when(ge(400).and(lt(500)), "ClientError")
+                .when(ge(500), "ServerError")
+                .end();
+    }
+
+    public static DBColumn size_In_args(ViewDecorator table, String ... args){ //(v1,v2) , (v1) , (null,v2)
+        var sizeIn = table.column(SIZE_IN);
+        return sizeIn.toCase().when(ge(args[0]).and(lt(args[1])), sizeIn).end();
+    }
+
     private static DBColumn elapsedTimeBySpeed(ComparisonExpression op, ViewDecorator table, String... args) {
         var elapsed = elapsedtime2(table, args);
         return elapsed.toCase().when(op, elapsed).end().count();
+    }
+
+    public static DBColumn sizeIn(ViewDecorator table, String... args) {
+        var sizeIn = table.column(SIZE_IN);
+        return sizeIn.toCase().when(eq(-1), 0).orElse(sizeIn).avg();
+    }
+
+    public static DBColumn sizeOut(ViewDecorator table, String... args) {
+        var sizeOut = table.column(SIZE_OUT);
+        return sizeOut.toCase().when(eq(-1), 0).orElse(sizeOut).avg();
     }
 
     public static DBColumn elapsedTimeVerySlow(ViewDecorator table, String... args) {

@@ -839,7 +839,8 @@ public class RequestService {
                 .joins(requestTable.join(INSTANCE_JOIN))
                 .filters(requestTable.column(START).ge(from(start)))
                 .filters(requestTable.column(START).lt(from(end)))
-                .filters(INSTANCE.column(ENVIRONEMENT).eq(environment));
+                .filters(INSTANCE.column(ENVIRONEMENT).eq(environment))
+                .orders(requestTable.column(HOST).order());
         return INSPECT.execute(v1, toArray(rs -> rs.getString(HOST.reference()), String[]::new));
     }
     public String[] getRequestSchema( String environment, Instant start, Instant end, String host){
