@@ -16,6 +16,8 @@ import org.usf.jquery.web.ViewDecorator;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+import java.util.Objects;
+
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FilterConstant {
 
@@ -120,9 +122,27 @@ public class FilterConstant {
                 .end();
     }
 
-    public static DBColumn size_In_args(ViewDecorator table, String ... args){ //(v1,v2) , (v1) , (null,v2)
-        var sizeIn = table.column(SIZE_IN);
-        return sizeIn.toCase().when(ge(args[0]).and(lt(args[1])), sizeIn).end();
+    public static DBColumn elapsedtime_by_args(ViewDecorator table, String ... args){ //(v1,v2) , (v1) , (null,v2)
+        var elapsed = elapsedtime2(table, args);
+
+        boolean hasMin = args.length > 0 && !Objects.equals(args[0], "null") && !args[0].isEmpty();
+        boolean hasMax = args.length > 1 && !Objects.equals(args[1], "null") && !args[1].isEmpty();
+        ComparisonExpression condition;
+        if (hasMin && hasMax) {
+            int minValue = Integer.parseInt(args[0]);
+            int maxValue = Integer.parseInt(args[1]);
+            condition = ge(minValue).and(lt(maxValue));
+        } else if (hasMin) {
+            int minValue = Integer.parseInt(args[0]);
+            condition = ge(minValue);
+        } else if (hasMax) {
+            int maxValue = Integer.parseInt(args[1]);
+            condition = lt(maxValue);
+        } else {
+            return elapsed;
+        }
+
+        return elapsed.toCase().when(condition, elapsed).end().count();
     }
 
     private static DBColumn elapsedTimeBySpeed(ComparisonExpression op, ViewDecorator table, String... args) {

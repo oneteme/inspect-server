@@ -133,7 +133,8 @@ public enum TraceApiColumn implements ColumnDecorator {
     COUNT_NO_EXCEPTION("countNoException", FilterConstant::countNoExceptions), //isNull
     ERR("err", FilterConstant::err),
     SIZE_IN_AVG("sizeInAvg", FilterConstant::sizeIn),
-    SIZE_OUT_AVG("sizeOutAvg", FilterConstant::sizeOut);
+    SIZE_OUT_AVG("sizeOutAvg", FilterConstant::sizeOut),
+    ELAPSED_TIME_ARG("elapsedTimeArg",FilterConstant::elapsedtime_by_args);
 
     private final String out; //nullable
     private final Builder<ViewDecorator, DBColumn> columnTemplate;
