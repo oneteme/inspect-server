@@ -18,17 +18,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class PurgeController {
     private final PurgeService purgeService;
 
-    @DeleteMapping("{env}")
-    public void purge(
-            @PathVariable(name = "env") String env,
-            @RequestParam(name = "apps", required = false) List<String> apps,
-            @RequestParam(name = "date_limit") Instant dateLimit
-    ){
-        purgeService.purge(env, apps, dateLimit);
-    }
-
     @DeleteMapping("batch")
     public void purge(){
-        purgeService.purge();
+        purgeService.launchPurge();
     }
 }

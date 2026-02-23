@@ -19,6 +19,6 @@ public class PurgeScheduler {
     @TraceableStage
     @Scheduled(cron= "${inspect.server.purge.schedule:0 0 1 * * ?}")
     public void purge() {
-        purgeService.purge();
+        purgeService.launchPurge();
     }
 }
