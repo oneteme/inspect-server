@@ -60,14 +60,14 @@ public class PurgeDao {
                     emitError("Error parsing configuration for instance [" + rs.getString(ENVIRONEMENT.reference()) + "]:[" + rs.getString(APP_NAME.reference()) + "]");
                 }
                 finally {
-                    if(conf == null) {
+                    if(conf == null) { //TODO use static default configuration
                         conf = new InspectCollectorConfiguration();
                         var rmt = new RestRemoteServerProperties();
                         rmt.setRetentionMaxAge(ofDays(60));
                         conf.getTracing().setRemote(rmt);
                     }
                 }
-                environments.add(new InstanceEnvironment(
+                environments.add(new InstanceEnvironment( //TODO use static method to hide constructor complexity
                         null,
                         null,
                         InstanceType.valueOf(rs.getString(TYPE.reference())),

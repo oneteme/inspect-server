@@ -27,7 +27,7 @@ import static org.usf.inspect.core.SessionContextManager.emitInfo;
 @RequiredArgsConstructor
 public class PurgeService {
 
-    private final ExecutorService technicalExecutor = wrap(newFixedThreadPool(5));
+    private final ExecutorService technicalExecutor = wrap(newFixedThreadPool(5)); //TODO use virtual thread 
     private final ExecutorService functionalExecutor = wrap(newFixedThreadPool(5));
 
     private final PurgeDao purgeDao;
@@ -63,7 +63,7 @@ public class PurgeService {
     }
 
     public CompletableFuture<Void> purge(String ids, Timestamp dateLimit, String env, String app) {
-        return allOf(
+        return allOf( 
                 runAsync(runnablePurge(() -> purgeDao.purgeRequest("ins_trc", ids, dateLimit, false), "InstanceTrace", app, env, dateLimit), technicalExecutor),
                 runAsync(runnablePurge(() -> purgeDao.purgeRequest("rsc_usg", ids, dateLimit, false), "ResourceUsage", app, env, dateLimit), technicalExecutor),
                 runAsync(runnablePurge(() -> purgeDao.purgeSessionStage("rst_ses", "rst_ses_stg", ids, dateLimit), "RestSession", app, env, dateLimit), technicalExecutor)
