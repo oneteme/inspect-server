@@ -14,7 +14,7 @@ import java.util.List;
 @Getter
 @Setter
 @Deprecated(since = "v1.1")
-public class RestSessionWrapper implements Wrapper<RestSession>, Session {
+public class RestSessionWrapper implements Session {
     private final RestSession restSession = new RestSession();
 
     private List<RestRequestWrapper> restRequests;
@@ -240,10 +240,5 @@ public class RestSessionWrapper implements Wrapper<RestSession>, Session {
     @Override
     public CompletableMetric copy() {
         throw new UnsupportedOperationException("Copying of RestSessionWrapper is not supported");
-    }
-
-    @Override
-    public RestSession unwrap() {
-        return restSession;
     }
 }
