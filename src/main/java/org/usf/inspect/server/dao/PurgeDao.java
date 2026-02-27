@@ -1,35 +1,48 @@
 package org.usf.inspect.server.dao;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
-import org.usf.inspect.core.*;
-import org.usf.jquery.core.DBColumn;
-import org.usf.jquery.core.DBOrder;
-import org.usf.jquery.core.Operator;
+import static java.time.Duration.ofDays;
+import static java.util.Arrays.stream;
+import static java.util.Objects.nonNull;
+import static java.util.Objects.requireNonNullElseGet;
+import static org.usf.inspect.core.RequestMask.FTP;
+import static org.usf.inspect.core.RequestMask.JDBC;
+import static org.usf.inspect.core.RequestMask.LDAP;
+import static org.usf.inspect.core.RequestMask.REST;
+import static org.usf.inspect.core.RequestMask.SMTP;
+import static org.usf.inspect.core.SessionContextManager.emitError;
+import static org.usf.inspect.server.config.TraceApiColumn.APP_NAME;
+import static org.usf.inspect.server.config.TraceApiColumn.CONFIGURATION;
+import static org.usf.inspect.server.config.TraceApiColumn.END;
+import static org.usf.inspect.server.config.TraceApiColumn.ENVIRONEMENT;
+import static org.usf.inspect.server.config.TraceApiColumn.START;
+import static org.usf.inspect.server.config.TraceApiColumn.TYPE;
+import static org.usf.inspect.server.config.TraceApiDatabase.INSPECT;
+import static org.usf.inspect.server.config.TraceApiTable.INSTANCE;
+import static org.usf.jquery.core.DBColumn.rank;
+import static org.usf.jquery.core.Operator.ctimestamp;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static java.lang.String.format;
-import static java.sql.Timestamp.from;
-import static java.time.Duration.ofDays;
-import static java.util.Arrays.stream;
-import static java.util.Objects.nonNull;
-import static java.util.stream.Collectors.joining;
-import static org.usf.inspect.core.RequestMask.*;
-import static org.usf.inspect.core.SessionContextManager.emitError;
-import static org.usf.inspect.server.config.TraceApiColumn.*;
-import static org.usf.inspect.server.config.TraceApiDatabase.INSPECT;
-import static org.usf.inspect.server.config.TraceApiTable.INSTANCE;
-import static org.usf.jquery.core.DBColumn.rank;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+import org.usf.inspect.core.InspectCollectorConfiguration;
+import org.usf.inspect.core.InstanceEnvironment;
+import org.usf.inspect.core.InstanceType;
+import org.usf.inspect.core.RestRemoteServerProperties;
+import org.usf.jquery.core.DBColumn;
+import org.usf.jquery.core.DBOrder;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Repository
@@ -39,7 +52,7 @@ public class PurgeDao {
     private final ObjectMapper mapper;
     private final JdbcTemplate template;
 
-    public List<InstanceEnvironment> getInstances() {
+    public List<InstanceEnvironment> selectInstances() {
         return INSPECT.execute(v ->
                 v.columns(
                         INSTANCE.column(TYPE),
@@ -48,61 +61,216 @@ public class PurgeDao {
                         INSTANCE.column(CONFIGURATION))
                 .filters(rank().over(
                 		new DBColumn[]{INSTANCE.column(ENVIRONEMENT), INSTANCE.column(APP_NAME), INSTANCE.column(TYPE)},
-                        new DBOrder[] {INSTANCE.column(END).coalesce(Operator.ctimestamp().operation()).desc(), INSTANCE.column(START).desc()}).eq(1)), rs -> {
-            List<InstanceEnvironment> environments = new ArrayList<>();
-            while (rs.next()) {
-                InspectCollectorConfiguration conf = null;
-                try {
-                    conf = rs.getString(CONFIGURATION.reference()) != null
-                            ? mapper.readValue(rs.getString(CONFIGURATION.reference()), InspectCollectorConfiguration.class)
-                            : null;
-                } catch (JsonProcessingException e) {
-                    emitError("Error parsing configuration for instance [" + rs.getString(ENVIRONEMENT.reference()) + "]:[" + rs.getString(APP_NAME.reference()) + "]");
-                }
-                finally {
-                    if(conf == null) {
-                        conf = new InspectCollectorConfiguration();
-                        var rmt = new RestRemoteServerProperties();
-                        rmt.setRetentionMaxAge(ofDays(60));
-                        conf.getTracing().setRemote(rmt);
-                    }
-                }
-                environments.add(new InstanceEnvironment(
-                        null,
-                        null,
-                        InstanceType.valueOf(rs.getString(TYPE.reference())),
-                        rs.getString(APP_NAME.reference()),
-                        null,
-                        rs.getString(ENVIRONEMENT.reference()),
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        conf
-                ));
-            }
-            return environments;
-        });
+                        new DBOrder[] {INSTANCE.column(END).coalesce(ctimestamp().operation()).desc(), INSTANCE.column(START).desc()}).eq(1)), this::mapInstances);
     }
 
-    public int purgeRequest(String tableSuffix, String ids, Timestamp dateLimit, boolean withEnd) {
+    public List<String> selectInstanceIds(Timestamp before, String env, String app, InstanceType type) {
+        var args = new ArrayList<>(3);
+        args.add(before);
+        args.add(type.name());
+        return template.queryForList("SELECT id_ins FROM e_env_ins WHERE dh_str<? AND dh_end IS NULL AND va_typ = ?" +
+                " AND va_env" + (nonNull(env) && args.add(env) ? "=?" : " IS NULL") +
+                " AND va_app" + (nonNull(app) && args.add(app) ? "=?" : " IS NULL"), String.class, args.toArray());
+    }
+
+    public int purgeInstance(String env, String app, Timestamp dateLimit) {
+        return template.update("DELETE FROM e_env_ins WHERE dh_end < '" + dateLimit + "' AND va_env = '" + env + "' AND va_app = '" + app + "';");
+    }
+
+    public int purgeInstanceTrace(String ids, Timestamp before){
+        return purgeRequest("ins_trc", ids, before, false);
+    }
+
+    public int purgeInstanceTrace(){
+        return purgeRequest("ins_trc");
+    }
+
+    public int purgeResourceUsage(String ids, Timestamp before){
+        return purgeRequest("rsc_usg", ids, before, false);
+    }
+
+    public int purgeResourceUsage(){
+        return purgeRequest("rsc_usg");
+    }
+
+    public int purgeMainSession(String ids, Timestamp before){
+        return purgeRequest("main_ses", ids, before, true);
+    }
+
+    public int purgeMainSession(){
+        return purgeRequest("main_ses");
+    }
+
+    public int purgeMainSessionStage(){
+        return purgeSessionStage("main_ses", "usr_acn");
+    }
+
+    public int purgeRestSession(String ids, Timestamp before){
+        return purgeRequest("rst_ses", ids, before, true);
+    }
+
+    public int purgeRestSession(){
+        return purgeRequest("rst_ses");
+    }
+
+    public int purgeRestSessionStage(String ids, Timestamp before) {
+        var subQuery = "SELECT ses.id_ses" +
+                " FROM e_rst_ses ses " +
+                " WHERE ses.cd_ins IN (" + ids + ") " +
+                " AND ses.dh_str < '" + before + "' " +
+                " AND ses.dh_end < '" + before + "'";
+
+        return template.update("DELETE FROM e_rst_ses_stg" +
+                " WHERE cd_prn_ses IN (" + subQuery + ") " +
+                " AND dh_str < '" + before + "' " +
+                " AND dh_end < '" + before + "'");
+    }
+
+    public int purgeRestSessionStage() {
+        return purgeSessionStage("rst_ses", "rst_ses_stg");
+    }
+
+    public int purgeRestRequest(String ids, Timestamp before){
+        return purgeRequest("rst_rqt", ids, before, true);
+    }
+
+    public int purgeRestRequest(){
+        return purgeRequest("rst_rqt");
+    }
+
+    @Transactional(rollbackFor = Throwable.class)
+    public int purgeRestRequestStage(String ids, Timestamp before){
+        return purgeRequestStage("rst_rqt", "rst_rqt_stg", REST.name(), ids, before);
+    }
+
+    @Transactional(rollbackFor = Throwable.class)
+    public int purgeRestRequestStage(){
+        return purgeRequestStage("rst_rqt", "rst_rqt_stg", REST.name());
+    }
+
+    public int purgeSmtpRequest(String ids, Timestamp before){
+        return purgeRequest("smtp_rqt", ids, before, true);
+    }
+
+    public int purgeSmtpRequest(){
+        return purgeRequest("smtp_rqt");
+    }
+
+    @Transactional(rollbackFor = Throwable.class)
+    public int purgeSmtpRequestStage(){
+        return purgeRequestStage("smtp_rqt", "smtp_stg", SMTP.name());
+    }
+
+    @Transactional(rollbackFor = Throwable.class)
+    public int purgeSmtpRequestStage(String ids, Timestamp before){
+        return purgeRequestStage("smtp_rqt", "smtp_stg", SMTP.name(), ids, before);
+    }
+
+    public int purgeFtpRequest(String ids, Timestamp before){
+        return purgeRequest("ftp_rqt", ids, before, true);
+    }
+
+    public int purgeFtpRequest(){
+        return purgeRequest("ftp_rqt");
+    }
+
+    @Transactional(rollbackFor = Throwable.class)
+    public int purgeFtpRequestStage(String ids, Timestamp before){
+        return purgeRequestStage("ftp_rqt", "ftp_stg", FTP.name(), ids, before);
+    }
+
+    @Transactional(rollbackFor = Throwable.class)
+    public int purgeFtpRequestStage(){
+        return purgeRequestStage("ftp_rqt", "ftp_stg", FTP.name());
+    }
+
+    public int purgeLdapRequest(String ids, Timestamp before){
+        return purgeRequest("ldap_rqt", ids, before, true);
+    }
+
+    public int purgeLdapRequest(){
+        return purgeRequest("ldap_rqt");
+    }
+
+    @Transactional(rollbackFor = Throwable.class)
+    public int purgeLdapRequestStage(String ids, Timestamp dateLimit){
+        return purgeRequestStage("ldap_rqt", "ldap_stg", LDAP.name(), ids, dateLimit);
+    }
+
+    @Transactional(rollbackFor = Throwable.class)
+    public int purgeLdapRequestStage(){
+        return purgeRequestStage("ldap_rqt", "ldap_stg", LDAP.name());
+    }
+
+    public int purgeDtbRequest(String ids, Timestamp dateLimit){
+        return purgeRequest("dtb_rqt", ids, dateLimit, true);
+    }
+
+    public int purgeDtbRequest(){
+        return purgeRequest("dtb_rqt");
+    }
+
+    @Transactional(rollbackFor = Throwable.class)
+    public int purgeDtbRequestStage(String ids, Timestamp before){
+        return purgeRequestStage("dtb_rqt", "dtb_stg", JDBC.name(), ids, before);
+    }
+
+    @Transactional(rollbackFor = Throwable.class)
+    public int purgeDtbRequestStage(){
+        return purgeRequestStage("dtb_rqt", "dtb_stg", JDBC.name());
+    }
+
+    public int purgeLocalRequest(String ids, Timestamp before){
+        return purgeRequest("lcl_rqt", ids, before, true);
+    }
+
+    public int purgeLocalRequest(){
+        return purgeRequest("lcl_rqt");
+    }
+
+    public int purgeLogEntry(String ids, Timestamp before){
+        return purgeRequest("log_ent", ids, before, false);
+    }
+
+    public int purgeLogEntry(){
+        return purgeRequest("log_ent");
+    }
+
+    public Stream<Runnable> vacuumTables(){
+    	return Stream.of(
+    		//instance !?
+			()-> vacuum("e_rst_ses"),
+			()-> vacuum("e_main_ses"),
+			()-> vacuum("e_rst_rqt"),
+			()-> vacuum("e_dtb_rqt"),
+			()-> vacuum("e_ftp_rqt"),
+			()-> vacuum("e_smtp_rqt"),
+			()-> vacuum("e_ldap_rqt"),
+			()-> vacuum("e_lcl_rqt"),
+			()-> vacuum("e_rst_ses_stg"),
+			()-> vacuum("e_rst_rqt_stg"),
+			()-> vacuum("e_smtp_stg"),
+			()-> vacuum("e_ftp_stg"),
+			()-> vacuum("e_ldap_stg"),
+			()-> vacuum("e_dtb_stg"),
+			()-> vacuum("e_ins_trc"),
+			()-> vacuum("e_rsc_usg"));
+    }
+    
+    private int purgeRequest(String tableSuffix, String ids, Timestamp before, boolean withEnd) {
         return template.update("DELETE FROM e_" + tableSuffix +
-                " WHERE dh_str < '" + dateLimit + "'" +
-                (withEnd ? " AND dh_end < '" + dateLimit + "'" : "") +
+                " WHERE dh_str < '" + before + "'" +
+                (withEnd ? " AND dh_end < '" + before + "'" : "") +
                 " AND cd_ins IN (" + ids + ");");
     }
 
-    public int purgeRequest(String tableSuffix) {
+    private int purgeRequest(String tableSuffix) {
         return template.update("DELETE FROM e_" + tableSuffix +
                 " WHERE NOT EXISTS (SELECT 1 FROM e_env_ins WHERE id_ins = cd_ins);");
     }
 
-    @Transactional(rollbackFor = Throwable.class)
-    public int purgeRequestStage(String stageTableSuffix, String tableSuffix, String type) {
+
+    private int purgeRequestStage(String tableSuffix, String stageTableSuffix, String type) {
         var queryStage = "DELETE FROM e_" + stageTableSuffix +
                 " WHERE NOT EXISTS (SELECT 1 FROM e_" + tableSuffix + " WHERE id_" + tableSuffix + " = cd_" + tableSuffix + ");";
         var queryException = "DELETE FROM e_exc_inf" +
@@ -111,23 +279,22 @@ public class PurgeDao {
         return stream(template.batchUpdate(queryStage, queryException)).sum();
     }
 
-    public int purgeSessionStage(String stageTableSuffix, String tableSuffix) {
+    private int purgeSessionStage(String tableSuffix, String stageTableSuffix) {
         return template.update("DELETE FROM e_" + stageTableSuffix +
                 " WHERE NOT EXISTS (SELECT 1 FROM e_" + tableSuffix + " WHERE id_ses = cd_prn_ses);");
     }
 
-    @Transactional(rollbackFor = Throwable.class)
-    public int purgeRequestStage(String tableSuffix, String stageTableSuffix, String type, String ids, Timestamp dateLimit) {
+    private int purgeRequestStage(String tableSuffix, String stageTableSuffix, String type, String ids, Timestamp before) {
         var subQuery = "SELECT rqt.id_" + tableSuffix +
                 " FROM e_" + tableSuffix + " rqt " +
                 " WHERE rqt.cd_ins IN (" + ids + ") " +
-                " AND rqt.dh_str < '" + dateLimit + "' " +
-                " AND rqt.dh_end < '" + dateLimit + "'";
+                " AND rqt.dh_str < '" + before + "' " +
+                " AND rqt.dh_end < '" + before + "'";
 
         var stageQuery = "DELETE FROM e_" + stageTableSuffix +
                  " WHERE cd_" + tableSuffix + " IN (" + subQuery + ") " +
-                 " AND dh_str < '" + dateLimit + "' " +
-                 " AND dh_end < '" + dateLimit + "'";
+                 " AND dh_str < '" + before + "' " +
+                 " AND dh_end < '" + before + "'";
 
         var exceptionQuery = "DELETE FROM e_exc_inf" +
                     " WHERE cd_rqt IN (" + subQuery + ") " +
@@ -136,57 +303,46 @@ public class PurgeDao {
         return stream(template.batchUpdate(stageQuery, exceptionQuery)).sum();
     }
 
-    public int purgeSessionStage(String tableSuffix, String stageTableSuffix, String ids, Timestamp dateLimit) {
-        var subQuery = "SELECT ses.id_ses" +
-                " FROM e_" + tableSuffix + " ses " +
-                " WHERE ses.cd_ins IN (" + ids + ") " +
-                " AND ses.dh_str < '" + dateLimit + "' " +
-                " AND ses.dh_end < '" + dateLimit + "'";
+    private void vacuum(String tableSuffix) {
+        try {
+            template.execute("VACUUM ANALYZE " + tableSuffix + ";");
+        }
+        catch (Exception e) {
+            log.error("Error during vacuum analyze on table {}: {}", tableSuffix, e.getMessage());
+        }
+    }
+    
+    List<InstanceEnvironment> mapInstances(ResultSet rs) throws SQLException{
+        var envs = new ArrayList<InstanceEnvironment>();
+        while (rs.next()) {
+            InspectCollectorConfiguration conf = null;
+            try {
+                conf = rs.getString(CONFIGURATION.reference()) != null
+                        ? mapper.readValue(rs.getString(CONFIGURATION.reference()), InspectCollectorConfiguration.class)
+                        : null;
+            } catch (JsonProcessingException e) {
+                emitError("Error parsing configuration for instance [" + rs.getString(ENVIRONEMENT.reference()) + "]:[" + rs.getString(APP_NAME.reference()) + "]");
+            }
+            finally {
+                envs.add(createInstanceEnvironment(
+                		rs.getString(TYPE.reference()),
+                        rs.getString(APP_NAME.reference()),
+                        rs.getString(ENVIRONEMENT.reference()),
+                        requireNonNullElseGet(conf, PurgeDao::defaultConfig)));
+            }
+        }
+        return envs;
+}
 
-        return template.update("DELETE FROM e_" + stageTableSuffix +
-                " WHERE cd_prn_ses IN (" + subQuery + ") " +
-                " AND dh_str < '" + dateLimit + "' " +
-                " AND dh_end < '" + dateLimit + "'");
+    private static InstanceEnvironment createInstanceEnvironment(String type, String env, String app, InspectCollectorConfiguration conf) {
+        return new InstanceEnvironment(null, null, InstanceType.valueOf(type), app, null, env, null, null, null, null, null, null, null, null, conf);
     }
 
-    public int purgeInstance(String env, String app, Timestamp dateLimit) {
-        return template.update(format("DELETE FROM e_env_ins WHERE dh_end < '%s' AND va_env = '%s' AND va_app = '%s';", dateLimit, env, app));
-    }
-
-    public void vacuumAnalyze() {
-    	Stream.of("e_rst_ses",
-    			"e_main_ses",
-    			"e_rst_rqt",
-    			"e_dtb_rqt",
-    			"e_ftp_rqt",
-    			"e_smtp_rqt",
-    			"e_ldap_rqt",
-    			"e_lcl_rqt",
-    			"e_rst_ses_stg",
-    			"e_rst_rqt_stg",
-    			"e_smtp_stg",
-    			"e_ftp_stg",
-    			"e_ldap_stg",
-    			"e_dtb_stg",
-    			"e_ins_trc",
-    			"e_rsc_usg")
-    	.map(v-> "VACUUM ANALYZE "+v+';')
-    	.forEach(q->{
-    		try {
-    			template.execute(q); //H2 does not support vacuum analyze
-    		}
-    		catch (Exception e) {
-    			log.error("Error during vacuum analyze on table {}: {}", q, e.getMessage());
-			}
-    	});
-    }
-
-    public List<String> selectInstanceIds(Timestamp dateLimit, String env, String app, InstanceType type) {
-        var args = new ArrayList<>(3);
-        args.add(dateLimit);
-        args.add(type.name());
-        return template.queryForList("SELECT id_ins FROM e_env_ins WHERE dh_str<? AND dh_end IS NULL AND va_typ = ?" +
-                " AND va_env" + (nonNull(env) && args.add(env) ? "=?" : " IS NULL") +
-                " AND va_app" + (nonNull(app) && args.add(app) ? "=?" : " IS NULL"), String.class, args.toArray());
+    private static InspectCollectorConfiguration defaultConfig() {
+        var conf = new InspectCollectorConfiguration();
+        var rmt = new RestRemoteServerProperties();
+        rmt.setRetentionMaxAge(ofDays(60));
+        conf.getTracing().setRemote(rmt);
+        return conf;
     }
 }

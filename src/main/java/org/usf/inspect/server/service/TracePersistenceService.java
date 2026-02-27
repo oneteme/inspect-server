@@ -1,36 +1,36 @@
 package org.usf.inspect.server.service;
 
-import static java.util.Collections.emptyList;
-import static java.util.concurrent.CompletableFuture.allOf;
-import static java.util.concurrent.CompletableFuture.supplyAsync;
-import static java.util.concurrent.Executors.newFixedThreadPool;
-import static org.usf.inspect.core.ExecutorServiceWrapper.wrap;
-import static org.usf.inspect.server.service.TraceBatchResolver.*;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.BiConsumer;
-import java.util.concurrent.ExecutorService;
-import java.util.function.Consumer;
-
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.usf.inspect.core.*;
 import org.usf.inspect.server.dao.TraceDao;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.InstanceTrace;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import static java.util.Collections.emptyList;
+import static java.util.concurrent.CompletableFuture.allOf;
+import static java.util.concurrent.CompletableFuture.supplyAsync;
+import static java.util.concurrent.Executors.newFixedThreadPool;
+import static org.usf.inspect.core.ExecutorServiceWrapper.wrap;
+import static org.usf.inspect.server.model.TraceBatchResolver.resolve;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class DatabaseDispatcherService implements TraceExporter {
+public class TracePersistenceService implements TraceExporter {
 	
 	private final TraceDao dao;
 	private final ObjectMapper mapper;
