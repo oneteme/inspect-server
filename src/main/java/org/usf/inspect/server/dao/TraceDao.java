@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
@@ -18,16 +19,18 @@ import org.usf.inspect.server.model.Pair;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static java.lang.Math.min;
 import static java.sql.Types.*;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static org.usf.inspect.core.RequestMask.*;
 import static org.usf.inspect.server.JsonUtils.*;
 import static org.usf.inspect.server.Utils.*;
+import static org.usf.jquery.core.Utils.isEmpty;
 
 
 /**
@@ -45,8 +48,6 @@ public class TraceDao {
     private final JdbcTemplate template;
     private final ObjectMapper mapper;
     private final ApplicationEventPublisher publisher;
-
-    private static final int BATCH_SIZE = 1_000;
 
     public void saveInstanceEnvironment(InstanceEnvironment instance) {
         template.update("""
@@ -703,35 +704,42 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
         });
     }
     
-    private <T extends EventTrace> void executeBatch(String sql, Collection<T> it, ParameterizedPreparedStatementSetter<T> pss) {
-    	executeBatch(sql, it, pss, t-> publisher.publishEvent(new UnsavedEventTraceEvent(this, t, false)));
+    private <T extends EventTrace> void executeBatch(String sql, List<T> records, ParameterizedPreparedStatementSetter<T> pss) {
+    	updateAll(sql, records, pss, t-> publisher.publishEvent(new UnsavedEventTraceEvent(this, t, false)));
     }
     
-    private <T extends EventTrace, V extends EventTrace> void executeBatchPair(String sql, Collection<Pair<T,V>> it, ParameterizedPreparedStatementSetter<Pair<T,V>> pss) {
-    	executeBatch(sql, it, pss, t-> {
+    private <T extends EventTrace, V extends EventTrace> void executeBatchPair(String sql, List<Pair<T,V>> it, ParameterizedPreparedStatementSetter<Pair<T,V>> pss) {
+    	updateAll(sql, it, pss, t-> {
     		publisher.publishEvent(new UnsavedEventTraceEvent(this, t.getV1(), false));
     		publisher.publishEvent(new UnsavedEventTraceEvent(this, t.getV2(), true));
     	});
     }
 
-    private <T> void executeBatch(String sql, Collection<T> it, ParameterizedPreparedStatementSetter<T> pss, Consumer<T> fallback) {
-        try {
-            template.batchUpdate(sql, it, BATCH_SIZE, pss);
-        } catch (DuplicateKeyException ex) {
-            log.warn("Batch insert failed due to duplicate key, retrying with single inserts", ex);
-            try {
-            	executeSingle(sql, it, pss, fallback);
-			} catch (Exception e) {
-				log.error("Failed to fallback traces", e);
+    private <T> int[][] updateAll(String sql, List<T> records, ParameterizedPreparedStatementSetter<T> pss, Consumer<T> fallback) {
+    	if(isEmpty(records)) {
+			return new int[0][];
+		}
+    	var bc = new BatchCursor<>(pss, records);
+    	var updates = new ArrayList<int[]>();
+    	do {
+			try {
+				updates.add(template.batchUpdate(sql, bc));
+			} catch (DuplicateKeyException e) { //SQLState 23505 
+				log.warn("Batch failed at index {}, falling back to single inserts", bc.offset);
+				updates.add(new int[] {retryAsSingles(sql, records, bc.offset, bc.offset+bc.limit, pss, fallback)});
 			}
-        }
+		} while(bc.next());
+    	return updates.toArray(new int[0][]);
     }
-
-    private <T> void executeSingle(String sql, Collection<T> it, ParameterizedPreparedStatementSetter<T> pss, Consumer<T> fallback) {
-        for(T t : it) {
+    
+    private <T> int retryAsSingles(String sql, List<T> records, int from, int to, ParameterizedPreparedStatementSetter<T> pss, Consumer<T> fallback) {
+        var rows = 0;
+        to = min(to, records.size());
+    	for(var i=from; i<to; i++) {
+    		var t = records.get(i);
             try {
-                template.update(sql, (PreparedStatement ps) -> pss.setValues(ps, t));
-            } catch (DuplicateKeyException e) {
+            	rows += template.update(sql, ps-> pss.setValues(ps, t));
+            } catch (DuplicateKeyException e) { //SQLState 23505 
             	 try {
             		 fallback.accept(t);
      			} catch (Exception ex) {
@@ -739,5 +747,41 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
      			}
             }
         }
+    	return rows;
+    }
+    
+   private class BatchCursor<T> implements BatchPreparedStatementSetter {
+
+	    private static final int BATCH_SIZE = 1_000;
+    	
+    	private final ParameterizedPreparedStatementSetter<T> pss;
+    	private final List<T> list;
+    	private int offset;
+    	private int limit;
+    	
+    	public BatchCursor(ParameterizedPreparedStatementSetter<T> pss, List<T> list) {
+			this.pss = pss;
+			this.list = list;
+			this.limit = min(BATCH_SIZE, list.size());
+		}
+    	
+    	@Override
+    	public int getBatchSize() {
+    		return limit;
+    	}
+    	
+    	@Override
+    	public void setValues(PreparedStatement ps, int i) throws SQLException {
+    		pss.setValues(ps, list.get(offset+i));
+    	}
+    	
+    	public boolean next() {
+    		offset += limit;
+			if(offset < list.size()) {
+				limit = min(BATCH_SIZE, list.size()-offset);
+				return true;
+			}
+			return false;
+		}
     }
 }
