@@ -741,7 +741,7 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
             	rows += template.update(sql, ps-> pss.setValues(ps, t));
             } catch (DuplicateKeyException e) { //SQLState 23505 
             	 try {
-            		 fallback.accept(t);
+            		fallback.accept(t);
      			} catch (Exception ex) {
      				log.error("Failed to save record even in fallback for index {}, skipping record", i, ex);
      			}
