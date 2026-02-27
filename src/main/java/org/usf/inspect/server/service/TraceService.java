@@ -31,7 +31,7 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
     private final TraceDispatcherHub dispatcher;
     private final ObjectMapper mapper;
 
-    public TraceService(@Qualifier("inspectServerContext") TraceDispatcherHub dispatcher, ObjectMapper mapper) {
+    TraceService(@Qualifier("inspectServerContext") TraceDispatcherHub dispatcher, ObjectMapper mapper) {
         this.dispatcher = dispatcher;
         this.mapper = mapper;
     }
@@ -102,8 +102,14 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
             	id = o.getInstanceId();
             }
             if(nonNull(id)) {
-                var report = new LogEntry(now(), REPORT, safeWriteValue(event.getTrace(), mapper), null);
-                report.setInstanceId(id);
+            	try {
+            		var report = new LogEntry(now(), REPORT, mapper.writeValueAsString(trace), null);
+                    report.setInstanceId(id);
+                	dispatcher.emitTrace(report);
+            	}
+            	catch(Exception e) {
+            		log.warn("cannot report unsaved trace of type {} because of serialization error: {}", trace.getClass().getSimpleName(), e.getMessage());
+            	}
 			}
             else {
             	log.warn("cannot report unsaved trace of type {} because instanceId is missing", trace.getClass().getSimpleName());
