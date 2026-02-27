@@ -725,7 +725,7 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
 			try {
 				updates.add(template.batchUpdate(sql, bc));
 			} catch (DuplicateKeyException e) { //SQLState 23505 
-				log.warn("Batch failed at index {}, falling back to single inserts", bc.offset);
+				log.warn("Batch update failed with DuplicateKeyException, retrying as single updates for batch starting at offset {}", bc.offset, e);
 				updates.add(new int[] {retryAsSingles(sql, records, bc.offset, bc.offset+bc.limit, pss, fallback)});
 			}
 		} while(bc.next());
@@ -743,7 +743,7 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
             	 try {
             		 fallback.accept(t);
      			} catch (Exception ex) {
-     				log.error("Failed to fallback traces", ex);
+     				log.error("Failed to save record even in fallback for index {}, skipping record", i, ex);
      			}
             }
         }
