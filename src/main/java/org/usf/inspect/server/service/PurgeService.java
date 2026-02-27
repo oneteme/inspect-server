@@ -112,24 +112,9 @@ public class PurgeService {
     }
 
     private CompletableFuture<Void> vacuum() {
-        return allOf(
-                runAsync(purgeDao::vacuumRestSession, technicalExecutor),
-                runAsync(purgeDao::vacuumRestRequest, technicalExecutor),
-                runAsync(purgeDao::vacuumSmtpRequest, technicalExecutor),
-                runAsync(purgeDao::vacuumFtpRequest, technicalExecutor),
-                runAsync(purgeDao::vacuumLdapRequest, technicalExecutor),
-                runAsync(purgeDao::vacuumDtbRequest, technicalExecutor),
-                runAsync(purgeDao::vacuumLocalRequest, technicalExecutor),
-                runAsync(purgeDao::vacuumMainSession, technicalExecutor),
-                runAsync(purgeDao::vacuumInstanceTrace, technicalExecutor),
-                runAsync(purgeDao::vacuumResourceUsage, technicalExecutor),
-                runAsync(purgeDao::vacuumRestSessionStage, technicalExecutor),
-                runAsync(purgeDao::vacuumRestRequestStage, technicalExecutor),
-                runAsync(purgeDao::vacuumSmtpStage, technicalExecutor),
-                runAsync(purgeDao::vacuumFtpStage, technicalExecutor),
-                runAsync(purgeDao::vacuumLdapStage, technicalExecutor),
-                runAsync(purgeDao::vacuumDtbStage, technicalExecutor)
-        );
+        return allOf(purgeDao.vacuumTables()
+        		.map(r-> runAsync(r, technicalExecutor))
+        		.toArray(CompletableFuture[]::new));
     }
 
     private Runnable runnablePurge(IntSupplier action, String label, String app, String env, Timestamp dateLimit) {

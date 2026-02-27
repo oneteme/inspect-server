@@ -240,9 +240,9 @@ public class PurgeDao {
 
     public Stream<Runnable> vacuumTables(){
     	return Stream.of(
-			()-> vacuum("e_env_ins"),
-			()-> vacuum("e_main_ses"),
+    		//instance !?
 			()-> vacuum("e_rst_ses"),
+			()-> vacuum("e_main_ses"),
 			()-> vacuum("e_rst_rqt"),
 			()-> vacuum("e_dtb_rqt"),
 			()-> vacuum("e_ftp_rqt"),
@@ -259,71 +259,6 @@ public class PurgeDao {
 			()-> vacuum("e_rsc_usg"));
     }
     
-    // Public helpers to vacuum each table individually
-    public void vacuumRestSession() {
-        vacuum("e_rst_ses");
-    }
-
-    public void vacuumMainSession() {
-        vacuum("e_main_ses");
-    }
-
-    public void vacuumRestRequest() {
-        vacuum("e_rst_rqt");
-    }
-
-    public void vacuumDtbRequest() {
-        vacuum("e_dtb_rqt");
-    }
-
-    public void vacuumFtpRequest() {
-        vacuum("e_ftp_rqt");
-    }
-
-    public void vacuumSmtpRequest() {
-        vacuum("e_smtp_rqt");
-    }
-
-    public void vacuumLdapRequest() {
-        vacuum("e_ldap_rqt");
-    }
-
-    public void vacuumLocalRequest() {
-        vacuum("e_lcl_rqt");
-    }
-
-    public void vacuumRestSessionStage() {
-        vacuum("e_rst_ses_stg");
-    }
-
-    public void vacuumRestRequestStage() {
-        vacuum("e_rst_rqt_stg");
-    }
-
-    public void vacuumSmtpStage() {
-        vacuum("e_smtp_stg");
-    }
-
-    public void vacuumFtpStage() {
-        vacuum("e_ftp_stg");
-    }
-
-    public void vacuumLdapStage() {
-        vacuum("e_ldap_stg");
-    }
-
-    public void vacuumDtbStage() {
-        vacuum("e_dtb_stg");
-    }
-
-    public void vacuumInstanceTrace() {
-        vacuum("e_ins_trc");
-    }
-
-    public void vacuumResourceUsage() {
-        vacuum("e_rsc_usg");
-    }
-
     private int purgeRequest(String tableSuffix, String ids, Timestamp dateLimit, boolean withEnd) {
         return template.update("DELETE FROM e_" + tableSuffix +
                 " WHERE dh_str < '" + dateLimit + "'" +
