@@ -7,6 +7,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.usf.inspect.core.*;
+import org.usf.inspect.server.JsonUtils;
 import org.usf.inspect.server.dto.*;
 import org.usf.inspect.server.model.*;
 import org.usf.jquery.core.ResultSetMapper;
@@ -19,22 +20,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static java.util.Optional.ofNullable;
+import static org.usf.inspect.server.JsonUtils.*;
 import static org.usf.inspect.server.Utils.fromNullableTimestamp;
 import static org.usf.inspect.server.config.TraceApiColumn.*;
 
 @Slf4j
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public final class InspectMappers {
-
-    public static <T> T safeReadValue(String json, ObjectMapper mapper, Class<T> valueType) {
-        T result = null;
-        try {
-            result = json != null ? mapper.readValue(json, valueType) : null;
-        } catch (JsonProcessingException e) {
-            log.warn("error while reading value " + valueType, e);
-        }
-        return result;
-    }
 
     public static ResultSetMapper<InstanceEnvironment> instanceEnvironmentMapper(ObjectMapper mapper) {
         return rs->{
