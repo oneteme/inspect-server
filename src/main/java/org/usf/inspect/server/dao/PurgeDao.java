@@ -25,7 +25,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -38,7 +37,6 @@ import org.usf.inspect.core.InstanceType;
 import org.usf.inspect.core.RestRemoteServerProperties;
 import org.usf.jquery.core.DBColumn;
 import org.usf.jquery.core.DBOrder;
-import org.usf.jquery.core.Operator;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

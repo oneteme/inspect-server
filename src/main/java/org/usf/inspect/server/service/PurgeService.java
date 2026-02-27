@@ -4,6 +4,8 @@ import static java.lang.Thread.ofVirtual;
 import static java.sql.Timestamp.from;
 import static java.time.LocalDate.now;
 import static java.time.ZoneId.systemDefault;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.allOf;
 import static java.util.concurrent.CompletableFuture.runAsync;
 import static java.util.concurrent.Executors.newFixedThreadPool;
@@ -38,6 +40,7 @@ public class PurgeService {
 
     public void launchPurge() {
         log.info("------ Purge start ------");
+        RuntimeException error = null;
         try {
             var now = now().atStartOfDay().atZone(systemDefault()).toInstant();
             var instances = purgeDao.selectInstances();
@@ -57,13 +60,30 @@ public class PurgeService {
             }
             allOf(tasks.toArray(new CompletableFuture[0])).join();
         }
+        catch (RuntimeException t) {
+			log.error("Error during purge", t);
+			error = t;
+		}
         finally {
-            log.info("------ Purge finally ------");
-            purge().join();
-            log.info("------ Purge vacuum ------");
-            vacuum().join();
+        	try {
+                log.info("------ Purge finally ------");
+                purge().join();
+        	}
+        	catch (RuntimeException e) {
+				log.error("Error during purge", e);
+				if(isNull(error)) {
+					error = e;
+				}
+			}
+        	finally {
+                log.info("------ Purge vacuum ------");
+                vacuum().join();
+        	}
+        	log.info("------ Purge end ------");
         }
-        log.info("------ Purge end ------");
+        if(nonNull(error)) {
+        	throw error;
+        }
     }
 
     private CompletableFuture<Void> purge(String ids, Timestamp dateLimit, String env, String app) {

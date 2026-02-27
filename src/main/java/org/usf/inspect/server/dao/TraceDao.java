@@ -1,6 +1,6 @@
 package org.usf.inspect.server.dao;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,8 +11,6 @@ import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.*;
-import org.usf.inspect.server.JsonUtils;
-import org.usf.inspect.server.Utils;
 import org.usf.inspect.server.event.UnsavedEventTraceEvent;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.InstanceTrace;
@@ -24,7 +22,6 @@ import java.util.Collection;
 import java.util.List;
 
 import static java.sql.Types.*;
-import static java.util.Arrays.stream;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static org.usf.inspect.core.RequestMask.*;
