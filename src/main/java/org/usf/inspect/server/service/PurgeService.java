@@ -1,26 +1,28 @@
 package org.usf.inspect.server.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.usf.inspect.core.InstanceEnvironment;
-import org.usf.inspect.server.dao.PurgeDao;
-
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.function.Supplier;
-
+import static java.lang.Thread.ofVirtual;
 import static java.sql.Timestamp.from;
 import static java.time.LocalDate.now;
 import static java.time.ZoneId.systemDefault;
 import static java.util.concurrent.CompletableFuture.allOf;
 import static java.util.concurrent.CompletableFuture.runAsync;
+import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.stream.Collectors.joining;
 import static org.usf.inspect.core.ExecutorServiceWrapper.wrap;
 import static org.usf.inspect.core.SessionContextManager.emitInfo;
-import static org.usf.inspect.server.ExecutorUtils.virtualThreadExecutor;
+
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.function.IntSupplier;
+
+import org.springframework.stereotype.Service;
+import org.usf.inspect.core.InstanceEnvironment;
+import org.usf.inspect.server.dao.PurgeDao;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -130,9 +132,9 @@ public class PurgeService {
         );
     }
 
-    private Runnable runnablePurge(Supplier<Integer> action, String label, String app, String env, Timestamp dateLimit) {
+    private Runnable runnablePurge(IntSupplier action, String label, String app, String env, Timestamp dateLimit) {
         return () -> {
-            var sum = action.get();
+            var sum = action.getAsInt();
             if (dateLimit != null) {
                 log.info("------ Purge ------ method=delete, label={}, rows={}, app={}, env={}, date={}", label, sum, app, env, dateLimit);
                 emitInfo("method=delete, label=" + label + ", rows=" + sum + ", app=" + app + ", env=" + env + ", date=" + dateLimit);
@@ -144,8 +146,12 @@ public class PurgeService {
         };
     }
 
-    private Runnable runnablePurge(Supplier<Integer> action, String label) {
+    private Runnable runnablePurge(IntSupplier action, String label) {
         return runnablePurge(action, label, null, null, null);
+    }
+    
+    public static ExecutorService virtualThreadExecutor(String name, int size) {
+        return newFixedThreadPool(size, ofVirtual().name(name + "-", 0).factory());
     }
 }
 

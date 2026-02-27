@@ -1,9 +1,34 @@
 package org.usf.inspect.server.dao;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import static java.time.Duration.ofDays;
+import static java.util.Arrays.stream;
+import static java.util.Objects.nonNull;
+import static java.util.Objects.requireNonNullElseGet;
+import static org.usf.inspect.core.RequestMask.FTP;
+import static org.usf.inspect.core.RequestMask.JDBC;
+import static org.usf.inspect.core.RequestMask.LDAP;
+import static org.usf.inspect.core.RequestMask.REST;
+import static org.usf.inspect.core.RequestMask.SMTP;
+import static org.usf.inspect.core.SessionContextManager.emitError;
+import static org.usf.inspect.server.config.TraceApiColumn.APP_NAME;
+import static org.usf.inspect.server.config.TraceApiColumn.CONFIGURATION;
+import static org.usf.inspect.server.config.TraceApiColumn.END;
+import static org.usf.inspect.server.config.TraceApiColumn.ENVIRONEMENT;
+import static org.usf.inspect.server.config.TraceApiColumn.START;
+import static org.usf.inspect.server.config.TraceApiColumn.TYPE;
+import static org.usf.inspect.server.config.TraceApiDatabase.INSPECT;
+import static org.usf.inspect.server.config.TraceApiTable.INSTANCE;
+import static org.usf.jquery.core.DBColumn.rank;
+import static org.usf.jquery.core.Operator.ctimestamp;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Stream;
+
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,20 +40,11 @@ import org.usf.jquery.core.DBColumn;
 import org.usf.jquery.core.DBOrder;
 import org.usf.jquery.core.Operator;
 
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Stream;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static java.time.Duration.ofDays;
-import static java.util.Arrays.stream;
-import static java.util.Objects.nonNull;
-import static org.usf.inspect.core.RequestMask.*;
-import static org.usf.inspect.core.SessionContextManager.emitError;
-import static org.usf.inspect.server.config.TraceApiColumn.*;
-import static org.usf.inspect.server.config.TraceApiDatabase.INSPECT;
-import static org.usf.inspect.server.config.TraceApiTable.INSTANCE;
-import static org.usf.jquery.core.DBColumn.rank;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Repository
@@ -37,20 +53,6 @@ public class PurgeDao {
 
     private final ObjectMapper mapper;
     private final JdbcTemplate template;
-
-    private static InspectCollectorConfiguration defaultConfig(InspectCollectorConfiguration conf) {
-        if(conf == null) {
-            conf = new InspectCollectorConfiguration();
-            var rmt = new RestRemoteServerProperties();
-            rmt.setRetentionMaxAge(ofDays(60));
-            conf.getTracing().setRemote(rmt);
-        }
-        return conf;
-    }
-
-    private static InstanceEnvironment setInstanceEnvironment(String type, String env, String app, InspectCollectorConfiguration conf) {
-        return new InstanceEnvironment(null, null, InstanceType.valueOf(type), app, null, env, null, null, null, null, null, null, null, null, conf);
-    }
 
     public List<InstanceEnvironment> selectInstances() {
         return INSPECT.execute(v ->
@@ -61,28 +63,7 @@ public class PurgeDao {
                         INSTANCE.column(CONFIGURATION))
                 .filters(rank().over(
                 		new DBColumn[]{INSTANCE.column(ENVIRONEMENT), INSTANCE.column(APP_NAME), INSTANCE.column(TYPE)},
-                        new DBOrder[] {INSTANCE.column(END).coalesce(Operator.ctimestamp().operation()).desc(), INSTANCE.column(START).desc()}).eq(1)), rs -> {
-            List<InstanceEnvironment> environments = new ArrayList<>();
-            while (rs.next()) {
-                InspectCollectorConfiguration conf = null;
-                try {
-                    conf = rs.getString(CONFIGURATION.reference()) != null
-                            ? mapper.readValue(rs.getString(CONFIGURATION.reference()), InspectCollectorConfiguration.class)
-                            : null;
-                } catch (JsonProcessingException e) {
-                    emitError("Error parsing configuration for instance [" + rs.getString(ENVIRONEMENT.reference()) + "]:[" + rs.getString(APP_NAME.reference()) + "]");
-                }
-                finally {
-                    conf = defaultConfig(conf);
-                }
-                environments.add(setInstanceEnvironment(
-                        rs.getString(TYPE.reference()),
-                        rs.getString(APP_NAME.reference()),
-                        rs.getString(ENVIRONEMENT.reference()),
-                        conf));
-            }
-            return environments;
-        });
+                        new DBOrder[] {INSTANCE.column(END).coalesce(ctimestamp().operation()).desc(), INSTANCE.column(START).desc()}).eq(1)), this::mapInstances);
     }
 
     public List<String> selectInstanceIds(Timestamp dateLimit, String env, String app, InstanceType type) {
@@ -257,6 +238,27 @@ public class PurgeDao {
         return purgeRequest("log_ent");
     }
 
+    public Stream<Runnable> vacuumTables(){
+    	return Stream.of(
+			()-> vacuum("e_env_ins"),
+			()-> vacuum("e_main_ses"),
+			()-> vacuum("e_rst_ses"),
+			()-> vacuum("e_rst_rqt"),
+			()-> vacuum("e_dtb_rqt"),
+			()-> vacuum("e_ftp_rqt"),
+			()-> vacuum("e_smtp_rqt"),
+			()-> vacuum("e_ldap_rqt"),
+			()-> vacuum("e_lcl_rqt"),
+			()-> vacuum("e_rst_ses_stg"),
+			()-> vacuum("e_rst_rqt_stg"),
+			()-> vacuum("e_smtp_stg"),
+			()-> vacuum("e_ftp_stg"),
+			()-> vacuum("e_ldap_stg"),
+			()-> vacuum("e_dtb_stg"),
+			()-> vacuum("e_ins_trc"),
+			()-> vacuum("e_rsc_usg"));
+    }
+    
     // Public helpers to vacuum each table individually
     public void vacuumRestSession() {
         vacuum("e_rst_ses");
@@ -375,5 +377,39 @@ public class PurgeDao {
         catch (Exception e) {
             log.error("Error during vacuum analyze on table {}: {}", tableSuffix, e.getMessage());
         }
+    }
+    
+    List<InstanceEnvironment> mapInstances(ResultSet rs) throws SQLException{
+        var envs = new ArrayList<InstanceEnvironment>();
+        while (rs.next()) {
+            InspectCollectorConfiguration conf = null;
+            try {
+                conf = rs.getString(CONFIGURATION.reference()) != null
+                        ? mapper.readValue(rs.getString(CONFIGURATION.reference()), InspectCollectorConfiguration.class)
+                        : null;
+            } catch (JsonProcessingException e) {
+                emitError("Error parsing configuration for instance [" + rs.getString(ENVIRONEMENT.reference()) + "]:[" + rs.getString(APP_NAME.reference()) + "]");
+            }
+            finally {
+                envs.add(createInstanceEnvironment(
+                		rs.getString(TYPE.reference()),
+                        rs.getString(APP_NAME.reference()),
+                        rs.getString(ENVIRONEMENT.reference()),
+                        requireNonNullElseGet(conf, PurgeDao::defaultConfig)));
+            }
+        }
+        return envs;
+}
+
+    private static InstanceEnvironment createInstanceEnvironment(String type, String env, String app, InspectCollectorConfiguration conf) {
+        return new InstanceEnvironment(null, null, InstanceType.valueOf(type), app, null, env, null, null, null, null, null, null, null, null, conf);
+    }
+
+    private static InspectCollectorConfiguration defaultConfig() {
+        var conf = new InspectCollectorConfiguration();
+        var rmt = new RestRemoteServerProperties();
+        rmt.setRetentionMaxAge(ofDays(60));
+        conf.getTracing().setRemote(rmt);
+        return conf;
     }
 }
