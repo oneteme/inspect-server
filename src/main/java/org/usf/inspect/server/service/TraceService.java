@@ -27,6 +27,7 @@ import static org.usf.inspect.server.service.TracePersistenceService.filterAndAp
 @Slf4j
 @Service
 public class TraceService implements ApplicationListener<UnsavedEventTraceEvent> {
+	
     private final TraceDispatcherHub dispatcher;
     private final ObjectMapper mapper;
 
@@ -88,9 +89,25 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
 
     @Override
     public void onApplicationEvent(UnsavedEventTraceEvent event) {
-        var logEntry = new LogEntry(now(), REPORT, safeWriteValue(event.getObject(), mapper), null);
-        if(event.getObject() instanceof AbstractSessionSignal o) logEntry.setInstanceId(o.getInstanceId());
-        if(event.getObject() instanceof AbstractRequestSignal o) logEntry.setInstanceId(o.getInstanceId());
-        dispatcher.emitTrace(logEntry);
+    	var trace = event.getTrace();
+    	if(event.isRetry()) {
+        	dispatcher.emitTrace(trace);
+    	}
+	 	else {
+            String id = null;
+            if(trace instanceof AbstractSessionSignal o) {
+            	id = o.getInstanceId();
+            }
+            else if(trace instanceof AbstractRequestSignal o) {
+            	id = o.getInstanceId();
+            }
+            if(nonNull(id)) {
+                var report = new LogEntry(now(), REPORT, safeWriteValue(event.getTrace(), mapper), null);
+                report.setInstanceId(id);
+			}
+            else {
+            	log.warn("cannot report unsaved trace of type {} because instanceId is missing", trace.getClass().getSimpleName());
+            }
+    	}
     }
 }
