@@ -19,7 +19,6 @@ import static java.time.Instant.now;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static org.usf.inspect.core.LogEntry.Level.REPORT;
-import static org.usf.inspect.server.JsonUtils.safeWriteValue;
 import static org.usf.inspect.server.Utils.assertUUID;
 import static org.usf.inspect.server.model.TraceBatchResolver.resolve;
 import static org.usf.inspect.server.service.TracePersistenceService.filterAndApply;
@@ -95,11 +94,11 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
     	}
 	 	else {
             String id = null;
-            if(trace instanceof AbstractSessionSignal o) {
-            	id = o.getInstanceId();
+            if(trace instanceof AbstractSessionSignal s) {
+            	id = s.getInstanceId();
             }
-            else if(trace instanceof AbstractRequestSignal o) {
-            	id = o.getInstanceId();
+            else if(trace instanceof AbstractRequestSignal r) {
+            	id = r.getInstanceId();
             }
             if(nonNull(id)) {
             	try {
