@@ -56,6 +56,7 @@ public final class Utils {
 				: null;
 	}
 
+	//TODO declare regex pattern as static final and reuse it
 	public static String userAgentExtract(String userAgent) {
 		if (userAgent == null) return null;
 		try {

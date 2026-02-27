@@ -64,9 +64,9 @@ public class PurgeDao {
                         new DBOrder[] {INSTANCE.column(END).coalesce(ctimestamp().operation()).desc(), INSTANCE.column(START).desc()}).eq(1)), this::mapInstances);
     }
 
-    public List<String> selectInstanceIds(Timestamp dateLimit, String env, String app, InstanceType type) {
+    public List<String> selectInstanceIds(Timestamp before, String env, String app, InstanceType type) {
         var args = new ArrayList<>(3);
-        args.add(dateLimit);
+        args.add(before);
         args.add(type.name());
         return template.queryForList("SELECT id_ins FROM e_env_ins WHERE dh_str<? AND dh_end IS NULL AND va_typ = ?" +
                 " AND va_env" + (nonNull(env) && args.add(env) ? "=?" : " IS NULL") +
@@ -77,24 +77,24 @@ public class PurgeDao {
         return template.update("DELETE FROM e_env_ins WHERE dh_end < '" + dateLimit + "' AND va_env = '" + env + "' AND va_app = '" + app + "';");
     }
 
-    public int purgeInstanceTrace(String ids, Timestamp dateLimit){
-        return purgeRequest("ins_trc", ids, dateLimit, false);
+    public int purgeInstanceTrace(String ids, Timestamp before){
+        return purgeRequest("ins_trc", ids, before, false);
     }
 
     public int purgeInstanceTrace(){
         return purgeRequest("ins_trc");
     }
 
-    public int purgeResourceUsage(String ids, Timestamp dateLimit){
-        return purgeRequest("rsc_usg", ids, dateLimit, false);
+    public int purgeResourceUsage(String ids, Timestamp before){
+        return purgeRequest("rsc_usg", ids, before, false);
     }
 
     public int purgeResourceUsage(){
         return purgeRequest("rsc_usg");
     }
 
-    public int purgeMainSession(String ids, Timestamp dateLimit){
-        return purgeRequest("main_ses", ids, dateLimit, true);
+    public int purgeMainSession(String ids, Timestamp before){
+        return purgeRequest("main_ses", ids, before, true);
     }
 
     public int purgeMainSession(){
@@ -105,33 +105,33 @@ public class PurgeDao {
         return purgeSessionStage("main_ses", "usr_acn");
     }
 
-    public int purgeRestSession(String ids, Timestamp dateLimit){
-        return purgeRequest("rst_ses", ids, dateLimit, true);
+    public int purgeRestSession(String ids, Timestamp before){
+        return purgeRequest("rst_ses", ids, before, true);
     }
 
     public int purgeRestSession(){
         return purgeRequest("rst_ses");
     }
 
-    public int purgeRestSessionStage(String ids, Timestamp dateLimit) {
+    public int purgeRestSessionStage(String ids, Timestamp before) {
         var subQuery = "SELECT ses.id_ses" +
                 " FROM e_rst_ses ses " +
                 " WHERE ses.cd_ins IN (" + ids + ") " +
-                " AND ses.dh_str < '" + dateLimit + "' " +
-                " AND ses.dh_end < '" + dateLimit + "'";
+                " AND ses.dh_str < '" + before + "' " +
+                " AND ses.dh_end < '" + before + "'";
 
         return template.update("DELETE FROM e_rst_ses_stg" +
                 " WHERE cd_prn_ses IN (" + subQuery + ") " +
-                " AND dh_str < '" + dateLimit + "' " +
-                " AND dh_end < '" + dateLimit + "'");
+                " AND dh_str < '" + before + "' " +
+                " AND dh_end < '" + before + "'");
     }
 
     public int purgeRestSessionStage() {
         return purgeSessionStage("rst_ses", "rst_ses_stg");
     }
 
-    public int purgeRestRequest(String ids, Timestamp dateLimit){
-        return purgeRequest("rst_rqt", ids, dateLimit, true);
+    public int purgeRestRequest(String ids, Timestamp before){
+        return purgeRequest("rst_rqt", ids, before, true);
     }
 
     public int purgeRestRequest(){
@@ -139,8 +139,8 @@ public class PurgeDao {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public int purgeRestRequestStage(String ids, Timestamp dateLimit){
-        return purgeRequestStage("rst_rqt", "rst_rqt_stg", REST.name(), ids, dateLimit);
+    public int purgeRestRequestStage(String ids, Timestamp before){
+        return purgeRequestStage("rst_rqt", "rst_rqt_stg", REST.name(), ids, before);
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -148,8 +148,8 @@ public class PurgeDao {
         return purgeRequestStage("rst_rqt", "rst_rqt_stg", REST.name());
     }
 
-    public int purgeSmtpRequest(String ids, Timestamp dateLimit){
-        return purgeRequest("smtp_rqt", ids, dateLimit, true);
+    public int purgeSmtpRequest(String ids, Timestamp before){
+        return purgeRequest("smtp_rqt", ids, before, true);
     }
 
     public int purgeSmtpRequest(){
@@ -162,12 +162,12 @@ public class PurgeDao {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public int purgeSmtpRequestStage(String ids, Timestamp dateLimit){
-        return purgeRequestStage("smtp_rqt", "smtp_stg", SMTP.name(), ids, dateLimit);
+    public int purgeSmtpRequestStage(String ids, Timestamp before){
+        return purgeRequestStage("smtp_rqt", "smtp_stg", SMTP.name(), ids, before);
     }
 
-    public int purgeFtpRequest(String ids, Timestamp dateLimit){
-        return purgeRequest("ftp_rqt", ids, dateLimit, true);
+    public int purgeFtpRequest(String ids, Timestamp before){
+        return purgeRequest("ftp_rqt", ids, before, true);
     }
 
     public int purgeFtpRequest(){
@@ -175,8 +175,8 @@ public class PurgeDao {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public int purgeFtpRequestStage(String ids, Timestamp dateLimit){
-        return purgeRequestStage("ftp_rqt", "ftp_stg", FTP.name(), ids, dateLimit);
+    public int purgeFtpRequestStage(String ids, Timestamp before){
+        return purgeRequestStage("ftp_rqt", "ftp_stg", FTP.name(), ids, before);
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -184,8 +184,8 @@ public class PurgeDao {
         return purgeRequestStage("ftp_rqt", "ftp_stg", FTP.name());
     }
 
-    public int purgeLdapRequest(String ids, Timestamp dateLimit){
-        return purgeRequest("ldap_rqt", ids, dateLimit, true);
+    public int purgeLdapRequest(String ids, Timestamp before){
+        return purgeRequest("ldap_rqt", ids, before, true);
     }
 
     public int purgeLdapRequest(){
@@ -211,8 +211,8 @@ public class PurgeDao {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public int purgeDtbRequestStage(String ids, Timestamp dateLimit){
-        return purgeRequestStage("dtb_rqt", "dtb_stg", JDBC.name(), ids, dateLimit);
+    public int purgeDtbRequestStage(String ids, Timestamp before){
+        return purgeRequestStage("dtb_rqt", "dtb_stg", JDBC.name(), ids, before);
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -220,16 +220,16 @@ public class PurgeDao {
         return purgeRequestStage("dtb_rqt", "dtb_stg", JDBC.name());
     }
 
-    public int purgeLocalRequest(String ids, Timestamp dateLimit){
-        return purgeRequest("lcl_rqt", ids, dateLimit, true);
+    public int purgeLocalRequest(String ids, Timestamp before){
+        return purgeRequest("lcl_rqt", ids, before, true);
     }
 
     public int purgeLocalRequest(){
         return purgeRequest("lcl_rqt");
     }
 
-    public int purgeLogEntry(String ids, Timestamp dateLimit){
-        return purgeRequest("log_ent", ids, dateLimit, false);
+    public int purgeLogEntry(String ids, Timestamp before){
+        return purgeRequest("log_ent", ids, before, false);
     }
 
     public int purgeLogEntry(){
@@ -257,10 +257,10 @@ public class PurgeDao {
 			()-> vacuum("e_rsc_usg"));
     }
     
-    private int purgeRequest(String tableSuffix, String ids, Timestamp dateLimit, boolean withEnd) {
+    private int purgeRequest(String tableSuffix, String ids, Timestamp before, boolean withEnd) {
         return template.update("DELETE FROM e_" + tableSuffix +
-                " WHERE dh_str < '" + dateLimit + "'" +
-                (withEnd ? " AND dh_end < '" + dateLimit + "'" : "") +
+                " WHERE dh_str < '" + before + "'" +
+                (withEnd ? " AND dh_end < '" + before + "'" : "") +
                 " AND cd_ins IN (" + ids + ");");
     }
 
@@ -284,17 +284,17 @@ public class PurgeDao {
                 " WHERE NOT EXISTS (SELECT 1 FROM e_" + tableSuffix + " WHERE id_ses = cd_prn_ses);");
     }
 
-    private int purgeRequestStage(String tableSuffix, String stageTableSuffix, String type, String ids, Timestamp dateLimit) {
+    private int purgeRequestStage(String tableSuffix, String stageTableSuffix, String type, String ids, Timestamp before) {
         var subQuery = "SELECT rqt.id_" + tableSuffix +
                 " FROM e_" + tableSuffix + " rqt " +
                 " WHERE rqt.cd_ins IN (" + ids + ") " +
-                " AND rqt.dh_str < '" + dateLimit + "' " +
-                " AND rqt.dh_end < '" + dateLimit + "'";
+                " AND rqt.dh_str < '" + before + "' " +
+                " AND rqt.dh_end < '" + before + "'";
 
         var stageQuery = "DELETE FROM e_" + stageTableSuffix +
                  " WHERE cd_" + tableSuffix + " IN (" + subQuery + ") " +
-                 " AND dh_str < '" + dateLimit + "' " +
-                 " AND dh_end < '" + dateLimit + "'";
+                 " AND dh_str < '" + before + "' " +
+                 " AND dh_end < '" + before + "'";
 
         var exceptionQuery = "DELETE FROM e_exc_inf" +
                     " WHERE cd_rqt IN (" + subQuery + ") " +

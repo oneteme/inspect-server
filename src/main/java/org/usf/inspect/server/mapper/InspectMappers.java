@@ -7,7 +7,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.usf.inspect.core.*;
-import org.usf.inspect.server.JsonUtils;
 import org.usf.inspect.server.dto.*;
 import org.usf.inspect.server.model.*;
 import org.usf.jquery.core.ResultSetMapper;

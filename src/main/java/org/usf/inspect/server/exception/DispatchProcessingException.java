@@ -3,6 +3,7 @@ package org.usf.inspect.server.exception;
 import lombok.Getter;
 
 @Getter
+@SuppressWarnings("serial")
 public class DispatchProcessingException extends Exception {
     private final boolean retryable;
 

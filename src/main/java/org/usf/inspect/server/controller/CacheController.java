@@ -68,7 +68,7 @@ public class CacheController {
         }
 
         if(file.isEmpty()) {
-            throw new IllegalArgumentException("Le fichier ne peut pas être vide"); //fr_en !?
+            throw new IllegalArgumentException("Le fichier ne peut pas être vide"); //TODO i18n
         }
 
         try {
@@ -82,8 +82,8 @@ public class CacheController {
             }
             return 0;
         } catch (IOException e) {
-            log.error("Erreur lors de la lecture du fichier", e);
-            throw new RuntimeException("Erreur lors de la lecture du fichier: " + e.getMessage(), e);
+            log.error("Erreur lors de la lecture du fichier", e); //TODO i18n
+            throw new RuntimeException("Erreur lors de la lecture du fichier: " + e.getMessage(), e); //TODO i18n
         }
     }
 }

@@ -47,15 +47,15 @@ public class PurgeService {
             log.info("------ Purge ------ method=selected, label=Instance, rows={}", instances.size());
             emitInfo("method=select, label=Instance, rows=" + instances.size());
             var tasks = new ArrayList<CompletableFuture<Void>>(instances.size());
-            for (InstanceEnvironment instance : instances) {
-                Timestamp dateLimit = from(now.minus(instance.getConfiguration().getTracing().getRemote().getRetentionMaxAge()));
-                var ids = purgeDao.selectInstanceIds(dateLimit, instance.getEnv(), instance.getName(), instance.getType());
-                log.info("------ Purge ------ method=selected, label=InstanceId, rows={}, app={}, env={}, date={}", ids.size(), instance.getName(), instance.getEnv(), dateLimit);
-                emitInfo("method=select, label=InstanceId, rows=" + ids.size() + ", app=" + instance.getName() + ", env=" + instance.getEnv() + ", date=" + dateLimit);
-                tasks.add(runAsync(runnablePurge(() -> purgeDao.purgeInstance(instance.getEnv(), instance.getName(), dateLimit), "Instance", instance.getEnv(), instance.getName(), dateLimit),  functionalExecutor));
+            for (var instance : instances) {
+                var before = from(now.minus(instance.getConfiguration().getTracing().getRemote().getRetentionMaxAge()));
+                var ids = purgeDao.selectInstanceIds(before, instance.getEnv(), instance.getName(), instance.getType());
+                log.info("------ Purge ------ method=selected, label=InstanceId, rows={}, app={}, env={}, date={}", ids.size(), instance.getName(), instance.getEnv(), before);
+                emitInfo("method=select, label=InstanceId, rows=" + ids.size() + ", app=" + instance.getName() + ", env=" + instance.getEnv() + ", date=" + before);
+                tasks.add(runAsync(runnablePurge(() -> purgeDao.purgeInstance(instance.getEnv(), instance.getName(), before), "Instance", instance.getEnv(), instance.getName(), before),  functionalExecutor));
                 if(!ids.isEmpty()) {
-                    String stringIds = ids.stream().collect(joining("','", "'", "'"));
-                    tasks.add(purge(stringIds, dateLimit, instance.getEnv(), instance.getName()));
+                    var stringIds = ids.stream().collect(joining("','", "'", "'"));
+                    tasks.add(purge(stringIds, before, instance.getEnv(), instance.getName()));
                 }
             }
             allOf(tasks.toArray(new CompletableFuture[0])).join();
