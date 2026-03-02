@@ -782,6 +782,9 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
 					}
 					retryAsSingles(sql, records, pss, fallback);
 				}
+				else {
+					throw e;
+				}
 			}
     	}
     }
