@@ -6,6 +6,7 @@ import static java.sql.Types.OTHER;
 import static java.sql.Types.VARCHAR;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
+import static org.springframework.jdbc.datasource.DataSourceUtils.doGetConnection;
 import static org.usf.inspect.core.RequestMask.FTP;
 import static org.usf.inspect.core.RequestMask.JDBC;
 import static org.usf.inspect.core.RequestMask.LDAP;
@@ -28,10 +29,13 @@ import java.sql.Savepoint;
 import java.util.List;
 import java.util.function.Consumer;
 
+import javax.xml.crypto.Data;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.AbstractStage;
@@ -764,18 +768,23 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
     		Connection cnx = null;
     		Savepoint sp = null;
     		try {
-    			cnx = template.getDataSource().getConnection(); //current transaction connection
+    			cnx = doGetConnection(template.getDataSource()); //current transaction connection
     			sp = cnx.setSavepoint("before_batch");
-    			if(nonNull(cnx) && nonNull(sp)) {
-    				cnx.releaseSavepoint(sp);
-    			}
     		}
     		catch (Exception e) {
     			log.warn("Failed to set savepoint for batch update, retrying as single updates for batch", e);
 			}
     		try {
 				template.batchUpdate(sql, records, BATCH_SIZE, pss);
-			} catch (DuplicateKeyException e) { //SQLState 23505
+				if(nonNull(cnx) && nonNull(sp)) {
+					try {
+						cnx.releaseSavepoint(sp);
+					}
+					catch (SQLException e) {
+						throw new RuntimeException("Failed to release savepoint after batch update", e);
+					}
+    			}
+    		} catch (DuplicateKeyException e) { //SQLState 23505
 				if(nonNull(cnx) && nonNull(sp)) {
 					log.warn("Batch update failed with DuplicateKeyException, retrying as single updates for batch", e);
 					try {
