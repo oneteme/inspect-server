@@ -1,42 +1,78 @@
 package org.usf.inspect.server.dao;
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.dao.DuplicateKeyException;
-import org.springframework.jdbc.CannotGetJdbcConnectionException;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
-import org.springframework.jdbc.datasource.DataSourceUtils;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.reactive.TransactionSynchronizationManager;
-import org.usf.inspect.core.*;
-import org.usf.inspect.server.event.UnsavedEventTraceEvent;
-import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
-import org.usf.inspect.server.model.InstanceTrace;
-import org.usf.inspect.server.model.Pair;
+import static java.sql.Types.INTEGER;
+import static java.sql.Types.OTHER;
+import static java.sql.Types.VARCHAR;
+import static java.util.Objects.nonNull;
+import static java.util.Optional.ofNullable;
+import static org.usf.inspect.core.RequestMask.FTP;
+import static org.usf.inspect.core.RequestMask.JDBC;
+import static org.usf.inspect.core.RequestMask.LDAP;
+import static org.usf.inspect.core.RequestMask.LOCAL;
+import static org.usf.inspect.core.RequestMask.REST;
+import static org.usf.inspect.core.RequestMask.SMTP;
+import static org.usf.inspect.server.JsonUtils.safeWriteValue;
+import static org.usf.inspect.server.Utils.contentTypeExtract;
+import static org.usf.inspect.server.Utils.fromNullableInstant;
+import static org.usf.inspect.server.Utils.joinValuesOrNull;
+import static org.usf.inspect.server.Utils.userAgentExtract;
+import static org.usf.inspect.server.Utils.valueOfNullable;
+import static org.usf.inspect.server.Utils.valueOfNullableArray;
+import static org.usf.jquery.core.Utils.isEmpty;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Savepoint;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static java.lang.Math.min;
-import static java.sql.Types.*;
-import static java.util.Objects.nonNull;
-import static java.util.Optional.ofNullable;
-import static org.springframework.jdbc.datasource.DataSourceUtils.getConnection;
-import static org.usf.inspect.core.RequestMask.*;
-import static org.usf.inspect.server.JsonUtils.*;
-import static org.usf.inspect.server.Utils.*;
-import static org.usf.jquery.core.Utils.isEmpty;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+import org.usf.inspect.core.AbstractStage;
+import org.usf.inspect.core.DatabaseRequestSignal;
+import org.usf.inspect.core.DatabaseRequestStage;
+import org.usf.inspect.core.DatabaseRequestUpdate;
+import org.usf.inspect.core.DirectoryRequestSignal;
+import org.usf.inspect.core.DirectoryRequestStage;
+import org.usf.inspect.core.DirectoryRequestUpdate;
+import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.core.FtpRequestSignal;
+import org.usf.inspect.core.FtpRequestStage;
+import org.usf.inspect.core.FtpRequestUpdate;
+import org.usf.inspect.core.HttpRequestSignal;
+import org.usf.inspect.core.HttpRequestStage;
+import org.usf.inspect.core.HttpRequestUpdate;
+import org.usf.inspect.core.HttpSessionSignal;
+import org.usf.inspect.core.HttpSessionStage;
+import org.usf.inspect.core.HttpSessionUpdate;
+import org.usf.inspect.core.InstanceEnvironment;
+import org.usf.inspect.core.InstanceType;
+import org.usf.inspect.core.LocalRequestSignal;
+import org.usf.inspect.core.LocalRequestUpdate;
+import org.usf.inspect.core.LogEntry;
+import org.usf.inspect.core.MachineResourceUsage;
+import org.usf.inspect.core.MailRequestSignal;
+import org.usf.inspect.core.MailRequestStage;
+import org.usf.inspect.core.MailRequestUpdate;
+import org.usf.inspect.core.MainSessionSignal;
+import org.usf.inspect.core.MainSessionUpdate;
+import org.usf.inspect.core.RequestMask;
+import org.usf.inspect.core.SessionMaskUpdate;
+import org.usf.inspect.server.event.UnsavedEventTraceEvent;
+import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
+import org.usf.inspect.server.model.InstanceTrace;
+import org.usf.inspect.server.model.Pair;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 
 /**
@@ -728,12 +764,9 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
     		Connection cnx = null;
     		Savepoint sp = null;
     		try {
-    			cnx = getConnection(template.getDataSource());
+    			cnx = template.getDataSource().getConnection(); //current transaction connection
     			sp = cnx.setSavepoint("before_batch");
     		}
-    		catch (CannotGetJdbcConnectionException e) {
-    			log.warn("Failed to get connection for batch update, retrying as single updates for batch", e);
-			}
     		catch (Exception e) {
     			log.warn("Failed to set savepoint for batch update, retrying as single updates for batch", e);
 			}
