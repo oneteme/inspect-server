@@ -804,7 +804,7 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
             }
         }
     	if(rows > 0) {
-			log.warn("duplicate key exception occurred for {} records, but all records have been saved successfully in retry", rows);
+			log.warn("Duplicate key exception occurred for {} records, but all records have been saved successfully in retry", rows);
 		}
     	return records.size() - rows;
     }
