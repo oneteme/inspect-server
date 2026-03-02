@@ -6,17 +6,21 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.reactive.TransactionSynchronizationManager;
 import org.usf.inspect.core.*;
 import org.usf.inspect.server.event.UnsavedEventTraceEvent;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.InstanceTrace;
 import org.usf.inspect.server.model.Pair;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -705,27 +709,38 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
     }
     
     private <T extends EventTrace> void executeBatch(String sql, List<T> records, ParameterizedPreparedStatementSetter<T> pss) {
-    	updateAll(sql, records, pss, t-> publisher.publishEvent(new UnsavedEventTraceEvent(this, t, false)));
+    	try {
+			updateAll(sql, records, pss, t-> publisher.publishEvent(new UnsavedEventTraceEvent(this, t, false)));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
     }
     
     private <T extends EventTrace, V extends EventTrace> void executeBatchPair(String sql, List<Pair<T,V>> it, ParameterizedPreparedStatementSetter<Pair<T,V>> pss) {
-    	updateAll(sql, it, pss, t-> {
-    		publisher.publishEvent(new UnsavedEventTraceEvent(this, t.getV1(), false));
-    		publisher.publishEvent(new UnsavedEventTraceEvent(this, t.getV2(), true));
-    	});
+    	try {
+			updateAll(sql, it, pss, t-> {
+				publisher.publishEvent(new UnsavedEventTraceEvent(this, t.getV1(), false));
+				publisher.publishEvent(new UnsavedEventTraceEvent(this, t.getV2(), true));
+			});
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
     }
 
-    private <T> int[][] updateAll(String sql, List<T> records, ParameterizedPreparedStatementSetter<T> pss, Consumer<T> fallback) {
+    private <T> int[][] updateAll(String sql, List<T> records, ParameterizedPreparedStatementSetter<T> pss, Consumer<T> fallback) throws Exception {
     	if(isEmpty(records)) {
 			return new int[0][];
 		}
     	var bc = new BatchCursor<>(pss, records);
     	var updates = new ArrayList<int[]>();
     	do {
+    		var cnx = DataSourceUtils.getConnection(template.getDataSource());
+    		var sp = cnx.setSavepoint("before_batch");
 			try {
 				updates.add(template.batchUpdate(sql, bc));
 			} catch (DuplicateKeyException e) { //SQLState 23505 
 				log.warn("Batch update failed with DuplicateKeyException, retrying as single updates for batch starting at offset {}", bc.offset, e);
+				cnx.rollback(sp);
 				updates.add(new int[] {retryAsSingles(sql, records, bc.offset, bc.offset+bc.limit, pss, fallback)});
 			}
 		} while(bc.next());
