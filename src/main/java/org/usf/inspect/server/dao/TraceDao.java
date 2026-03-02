@@ -795,6 +795,7 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
 					retryAsSingles(sql, records, pss, fallback);
 				}
 				else {
+					log.warn("Batch update failed with DuplicateKeyException, but no savepoint available", e);
 					throw e;
 				}
 			}
