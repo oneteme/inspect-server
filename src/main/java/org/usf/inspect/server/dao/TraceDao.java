@@ -23,6 +23,7 @@ import org.usf.inspect.server.model.Pair;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Savepoint;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -31,6 +32,7 @@ import static java.lang.Math.min;
 import static java.sql.Types.*;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
+import static org.springframework.jdbc.datasource.DataSourceUtils.getConnection;
 import static org.usf.inspect.core.RequestMask.*;
 import static org.usf.inspect.server.JsonUtils.*;
 import static org.usf.inspect.server.Utils.*;
@@ -48,6 +50,8 @@ import static org.usf.jquery.core.Utils.isEmpty;
 @Repository
 @RequiredArgsConstructor
 public class TraceDao {
+
+    private static final int BATCH_SIZE = 1_000;
 	
     private final JdbcTemplate template;
     private final ObjectMapper mapper;
@@ -709,94 +713,64 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
     }
     
     private <T extends EventTrace> void executeBatch(String sql, List<T> records, ParameterizedPreparedStatementSetter<T> pss) {
-    	try {
-			updateAll(sql, records, pss, t-> publisher.publishEvent(new UnsavedEventTraceEvent(this, t, false)));
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		updateAll(sql, records, pss, t-> publisher.publishEvent(new UnsavedEventTraceEvent(this, t, false)));
     }
     
     private <T extends EventTrace, V extends EventTrace> void executeBatchPair(String sql, List<Pair<T,V>> it, ParameterizedPreparedStatementSetter<Pair<T,V>> pss) {
-    	try {
-			updateAll(sql, it, pss, t-> {
-				publisher.publishEvent(new UnsavedEventTraceEvent(this, t.getV1(), false));
-				publisher.publishEvent(new UnsavedEventTraceEvent(this, t.getV2(), true));
-			});
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		updateAll(sql, it, pss, t-> {
+			publisher.publishEvent(new UnsavedEventTraceEvent(this, t.getV1(), false));
+			publisher.publishEvent(new UnsavedEventTraceEvent(this, t.getV2(), true));
+		});
     }
 
-    private <T> int[][] updateAll(String sql, List<T> records, ParameterizedPreparedStatementSetter<T> pss, Consumer<T> fallback) throws Exception {
-    	if(isEmpty(records)) {
-			return new int[0][];
-		}
-    	var bc = new BatchCursor<>(pss, records);
-    	var updates = new ArrayList<int[]>();
-    	do {
-    		var cnx = DataSourceUtils.getConnection(template.getDataSource());
-    		var sp = cnx.setSavepoint("before_batch");
-			try {
-				updates.add(template.batchUpdate(sql, bc));
-			} catch (DuplicateKeyException e) { //SQLState 23505 
-				log.warn("Batch update failed with DuplicateKeyException, retrying as single updates for batch starting at offset {}", bc.offset, e);
-				cnx.rollback(sp);
-				updates.add(new int[] {retryAsSingles(sql, records, bc.offset, bc.offset+bc.limit, pss, fallback)});
+    private <T> void updateAll(String sql, List<T> records, ParameterizedPreparedStatementSetter<T> pss, Consumer<T> fallback) {
+    	if(!isEmpty(records)) {
+    		Connection cnx = null;
+    		Savepoint sp = null;
+    		try {
+    			cnx = getConnection(template.getDataSource());
+    			sp = cnx.setSavepoint("before_batch");
+    		}
+    		catch (CannotGetJdbcConnectionException e) {
+    			log.warn("Failed to get connection for batch update, retrying as single updates for batch", e);
 			}
-		} while(bc.next());
-    	return updates.toArray(new int[0][]);
+    		catch (Exception e) {
+    			log.warn("Failed to set savepoint for batch update, retrying as single updates for batch", e);
+			}
+    		try {
+				template.batchUpdate(sql, records, BATCH_SIZE, pss);
+			} catch (DuplicateKeyException e) { //SQLState 23505
+				if(nonNull(cnx) && nonNull(sp)) {
+					log.warn("Batch update failed with DuplicateKeyException, retrying as single updates for batch", e);
+					try {
+						cnx.rollback(sp);
+					} catch (SQLException e1) {
+						throw new RuntimeException("Failed to rollback after batch update failure", e1);
+					}
+					retryAsSingles(sql, records, pss, fallback);
+				}
+			}
+    	}
     }
     
-    private <T> int retryAsSingles(String sql, List<T> records, int from, int to, ParameterizedPreparedStatementSetter<T> pss, Consumer<T> fallback) {
+    private <T> int retryAsSingles(String sql, List<T> records, ParameterizedPreparedStatementSetter<T> pss, Consumer<T> fallback) {
         var rows = 0;
-        to = min(to, records.size());
-    	for(var i=from; i<to; i++) {
-    		var t = records.get(i);
+    	for(var r : records) {
             try {
-            	rows += template.update(sql, ps-> pss.setValues(ps, t));
+            	rows += template.update(sql, ps-> pss.setValues(ps, r));
             } catch (DuplicateKeyException e) { //SQLState 23505 
-            	 try {
-            		fallback.accept(t);
+            	++rows; 
+            	try {
+            		fallback.accept(r);
      			} catch (Exception ex) {
-     				log.error("Failed to save record even in fallback for index {}, skipping record", i, ex);
+     				log.error("Failed to save record even in fallback for {}, skipping record", r, ex);
      			}
             }
         }
-    	return rows;
+    	if(rows > 0) {
+			log.warn("duplicate key exception occurred for {} records, but all records have been saved successfully in retry", rows);
+		}
+    	return records.size() - rows;
     }
     
-   private class BatchCursor<T> implements BatchPreparedStatementSetter {
-
-	    private static final int BATCH_SIZE = 1_000;
-    	
-    	private final ParameterizedPreparedStatementSetter<T> pss;
-    	private final List<T> list;
-    	private int offset;
-    	private int limit;
-    	
-    	public BatchCursor(ParameterizedPreparedStatementSetter<T> pss, List<T> list) {
-			this.pss = pss;
-			this.list = list;
-			this.limit = min(BATCH_SIZE, list.size());
-		}
-    	
-    	@Override
-    	public int getBatchSize() {
-    		return limit;
-    	}
-    	
-    	@Override
-    	public void setValues(PreparedStatement ps, int i) throws SQLException {
-    		pss.setValues(ps, list.get(offset+i));
-    	}
-    	
-    	public boolean next() {
-    		offset += limit;
-			if(offset < list.size()) {
-				limit = min(BATCH_SIZE, list.size()-offset);
-				return true;
-			}
-			return false;
-		}
-    }
 }
