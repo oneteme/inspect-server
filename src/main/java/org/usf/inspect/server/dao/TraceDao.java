@@ -766,6 +766,9 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
     		try {
     			cnx = template.getDataSource().getConnection(); //current transaction connection
     			sp = cnx.setSavepoint("before_batch");
+    			if(nonNull(cnx) && nonNull(sp)) {
+    				cnx.releaseSavepoint(sp);
+    			}
     		}
     		catch (Exception e) {
     			log.warn("Failed to set savepoint for batch update, retrying as single updates for batch", e);
