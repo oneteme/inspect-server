@@ -28,7 +28,6 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static java.sql.Timestamp.from;
-import static java.util.Objects.nonNull;
 import static java.util.UUID.*;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.HOURS;
@@ -205,14 +204,26 @@ public class RequestController {
         return requestService.getRestSessionsForSearch(jsf);
     }
 
-    @GetMapping("session/rest/{appName}/dump")
-    public List<RestSession> getRestSessionsForDump(
-            @PathVariable String appName,
-            @RequestParam(name = "env") String env,
-            @RequestParam(name = "start") Instant start,
-            @RequestParam(name = "end") Instant end
+    @GetMapping("instance/{id}/session/rest")
+    public ResponseEntity<List<RestSession>> getRestSessionsByInstance(
+            @QueryRequestFilter(
+                    view = "rest_session",
+                    column = "id,api_name,method,host,path,status,start,end,thread,user",
+                    order = "start,end") QueryComposer request,
+            @PathVariable String id
     )  {
-        return requestService.getRestSessionsForDump(env, appName, start, end);
+        return ok().body(INSPECT.execute(request.filters(column("cd_ins").eq(fromString(id))), InspectMappers.restSessionPulseRowMapper()));
+    }
+
+    @GetMapping("instance/{id}/session/main")
+    public ResponseEntity<List<MainSession>> getMainSessionsByInstance(
+            @QueryRequestFilter(
+                    view = "main_session",
+                    column = "id,name,start,end,thread,type,location",
+                    order = "start,end") QueryComposer request,
+            @PathVariable String id
+    )  {
+        return ok().body(INSPECT.execute(request.filters(column("cd_ins").eq(fromString(id))), InspectMappers.mainSessionPulseRowMapper()));
     }
 
     @GetMapping("session/rest/{idSession}")
@@ -220,7 +231,7 @@ public class RequestController {
             @QueryRequestFilter(view = "rest_session",
             column = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,err_type,err_msg,stacktrace,mask,user,user_agt,cache_control,linked,instance_env") QueryComposer request,
             @PathVariable String idSession) throws SQLException {
-        return Optional.ofNullable(INSPECT.execute(request.filters(column("id_ses").eq(fromString(idSession))), InspectMappers.createBaseRestSession(mapper)))
+        return Optional.ofNullable(INSPECT.execute(request.filters(column("id_ses").eq(fromString(idSession))), InspectMappers.restSessionResultSetMapper(mapper)))
                 .map(o -> ok().body(o))
                 .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null));
     }
@@ -281,16 +292,6 @@ public class RequestController {
 
         JqueryMainSessionFilter fc = new JqueryMainSessionFilter(appNames, environments, users, start, end, names, launchModes, location, failed, lazy);
         return requestService.getMainSessionsForSearch(fc);
-    }
-
-    @GetMapping("session/main/{appName}/dump") // can't optimise, done
-    public List<MainSession> getMainSessionsForDump(
-            @PathVariable String appName,
-            @RequestParam(name = "env") String env,
-            @RequestParam(name = "start") Instant start,
-            @RequestParam(name = "end") Instant end
-    )  {
-        return requestService.getMainSessionsForDump(env, appName, start, end);
     }
 
     @GetMapping("session/main/{idSession}")

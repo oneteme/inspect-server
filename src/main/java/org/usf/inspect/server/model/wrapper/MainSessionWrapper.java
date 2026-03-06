@@ -15,7 +15,7 @@ import java.util.List;
 @Getter
 @Setter
 @Deprecated(since = "v1.1")
-public class MainSessionWrapper implements Wrapper<MainSession>, Session {
+public class MainSessionWrapper implements Session {
     private final MainSession mainSession = new MainSession();
 
     private List<RestRequestWrapper> restRequests;
@@ -136,10 +136,5 @@ public class MainSessionWrapper implements Wrapper<MainSession>, Session {
 
     public String getInstanceId() {
         return mainSession.getInstanceId();
-    }
-
-    @Override
-    public MainSession unwrap() {
-        return mainSession;
     }
 }

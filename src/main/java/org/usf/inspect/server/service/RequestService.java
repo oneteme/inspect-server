@@ -24,7 +24,6 @@ import java.util.stream.Stream;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
-import org.usf.inspect.core.*;
 import org.usf.inspect.core.RequestMask;
 import org.usf.inspect.server.config.TraceApiColumn;
 import org.usf.inspect.server.config.TraceApiTable;
@@ -221,28 +220,6 @@ public class RequestService {
         });
     }
 
-    public List<RestSession> getRestSessionsForDump(String env, String appName, Instant start, Instant end) {
-        var cte = new QueryComposer()
-                .columns(getColumns(INSTANCE, ID, START))
-                .filters(INSTANCE.column(START).le(from(end)))
-                .filters(INSTANCE.column(ENVIRONEMENT).eq(env))
-                .filters(INSTANCE.column(APP_NAME).eq(appName)).compose();
-        var v = new QueryComposer()
-                .ctes(cte)
-                .columns(
-                    getColumns(
-                        REST_SESSION, ID, API_NAME, METHOD,
-                        PROTOCOL, PATH, QUERY, STATUS, SIZE_IN, SIZE_OUT,
-                        START, END, USER, THREAD, HOST, ERR_MSG, ERR_TYPE
-                    )
-                )
-                .filters(REST_SESSION.column(START).le(from(end)).and(REST_SESSION.column(END).isNull().or(REST_SESSION.column(END).ge(from(start)))))
-                .filters(REST_SESSION.column(INSTANCE_ENV).in(new QueryComposer().columns(new ViewColumn("id", cte, JDBCType.VARCHAR, null)).compose().asColumn()))
-                .orders(REST_SESSION.column(START).order());
-        return INSPECT.execute(v, restSessionDumpMapper());
-    }
-
-
     public List<Session> getRestSessions(List<String> ids)  { // remove if possible after optimizing tree
         var v = new QueryComposer()
                 .columns(
@@ -319,26 +296,6 @@ public class RequestService {
             getLdapRequestsComplete(session.getId()).forEach(r -> session.getLdapRequests().add(r));
         }
         return session;
-    }
-
-    public List<MainSession> getMainSessionsForDump(String env, String appName, Instant start, Instant end) {
-
-        var cte = new QueryComposer()
-                .columns(getColumns(INSTANCE, ID, START))
-                .filters(INSTANCE.column(START).le(from(end)))
-                .filters(INSTANCE.column(ENVIRONEMENT).eq(env))
-                .filters(INSTANCE.column(APP_NAME).eq(appName)).compose();
-        var v = new QueryComposer()
-                .ctes(cte)
-                .columns(
-                        getColumns(
-                                MAIN_SESSION, ID, NAME, START, END, TYPE, LOCATION, THREAD, ERR_TYPE, ERR_MSG
-                        )
-                )
-                .filters(MAIN_SESSION.column(START).le(from(end)).and(MAIN_SESSION.column(END).isNull().or(MAIN_SESSION.column(END).ge(from(start)))))
-                .filters(MAIN_SESSION.column(INSTANCE_ENV).in(new QueryComposer().columns(new ViewColumn("id", cte, JDBCType.VARCHAR, null)).compose().asColumn()))
-                .orders(MAIN_SESSION.column(START).order());
-        return INSPECT.execute(v, mainSessionDumpMapper());
     }
 
     /**
