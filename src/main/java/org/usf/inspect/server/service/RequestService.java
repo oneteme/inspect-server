@@ -24,7 +24,6 @@ import java.util.stream.Stream;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
-import org.usf.inspect.core.*;
 import org.usf.inspect.core.RequestMask;
 import org.usf.inspect.server.config.TraceApiColumn;
 import org.usf.inspect.server.config.TraceApiTable;
@@ -239,9 +238,8 @@ public class RequestService {
                 .filters(REST_SESSION.column(START).le(from(end)).and(REST_SESSION.column(END).isNull().or(REST_SESSION.column(END).ge(from(start)))))
                 .filters(REST_SESSION.column(INSTANCE_ENV).in(new QueryComposer().columns(new ViewColumn("id", cte, JDBCType.VARCHAR, null)).compose().asColumn()))
                 .orders(REST_SESSION.column(START).order());
-        return INSPECT.execute(v, restSessionDumpMapper());
+        return INSPECT.execute(v, restSessionPulseRowMapper());
     }
-
 
     public List<Session> getRestSessions(List<String> ids)  { // remove if possible after optimizing tree
         var v = new QueryComposer()
@@ -338,7 +336,7 @@ public class RequestService {
                 .filters(MAIN_SESSION.column(START).le(from(end)).and(MAIN_SESSION.column(END).isNull().or(MAIN_SESSION.column(END).ge(from(start)))))
                 .filters(MAIN_SESSION.column(INSTANCE_ENV).in(new QueryComposer().columns(new ViewColumn("id", cte, JDBCType.VARCHAR, null)).compose().asColumn()))
                 .orders(MAIN_SESSION.column(START).order());
-        return INSPECT.execute(v, mainSessionDumpMapper());
+        return INSPECT.execute(v, mainSessionPulseRowMapper());
     }
 
     /**
