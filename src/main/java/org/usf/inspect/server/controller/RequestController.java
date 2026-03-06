@@ -204,16 +204,6 @@ public class RequestController {
         return requestService.getRestSessionsForSearch(jsf);
     }
 
-    @GetMapping("session/rest/{appName}/dump")
-    public List<RestSession> getRestSessionsForDump(
-            @PathVariable String appName,
-            @RequestParam(name = "env") String env,
-            @RequestParam(name = "start") Instant start,
-            @RequestParam(name = "end") Instant end
-    )  {
-        return requestService.getRestSessionsForDump(env, appName, start, end);
-    }
-
     @GetMapping("instance/{id}/session/rest")
     public ResponseEntity<List<RestSession>> getRestSessionsByInstance(
             @QueryRequestFilter(
@@ -302,16 +292,6 @@ public class RequestController {
 
         JqueryMainSessionFilter fc = new JqueryMainSessionFilter(appNames, environments, users, start, end, names, launchModes, location, failed, lazy);
         return requestService.getMainSessionsForSearch(fc);
-    }
-
-    @GetMapping("session/main/{appName}/dump") // can't optimise, done
-    public List<MainSession> getMainSessionsForDump(
-            @PathVariable String appName,
-            @RequestParam(name = "env") String env,
-            @RequestParam(name = "start") Instant start,
-            @RequestParam(name = "end") Instant end
-    )  {
-        return requestService.getMainSessionsForDump(env, appName, start, end);
     }
 
     @GetMapping("session/main/{idSession}")
