@@ -15,9 +15,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.env.Environment;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.usf.inspect.core.*;
+import org.usf.inspect.server.config.ApplicationInspectPropertiesProvider;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.InstanceTrace;
 import org.usf.inspect.server.model.wrapper.MainSessionWrapper;
@@ -27,6 +30,9 @@ import static org.springframework.http.converter.json.Jackson2ObjectMapperBuilde
 import static org.usf.inspect.core.DispatchState.DISABLE;
 import static org.usf.inspect.core.InspectConfiguration.coreModule;
 import static org.usf.inspect.core.TraceDispatcherHub.createHub;
+
+import java.io.IOException;
+import java.util.Properties;
 
 @SpringBootApplication
 @EnableTransactionManagement
@@ -71,4 +77,15 @@ public class InspectApplication {
 	ApplicationListener<ApplicationReadyEvent> enableDispatcherOnReady(@Qualifier("inspectServerContext") TraceDispatcherHub ctx){
 		return e-> ctx.setState(ctx.getConfiguration().getScheduling().getState()); //wait for server startup before activate dispatcher
 	}
+	
+
+    @Bean //used by inspect-core to get application properties and git info
+    public static ApplicationPropertiesProvider applicationPropertiesProvider(Environment env) throws IOException {
+        var props = new Properties();
+        var resource = new ClassPathResource("git.properties");
+        if(resource.exists()){
+            props.load(resource.getInputStream());
+        }
+        return new ApplicationInspectPropertiesProvider(env, props);
+    }
 }

@@ -15,15 +15,10 @@ import java.util.List;
 @Setter
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = FtpRequestWrapper.class)
 @Deprecated(since = "v1.1")
-public class FtpRequestWrapper implements EventTrace, Wrapper<FtpRequest> {
+public class FtpRequestWrapper implements EventTrace {
     @Delegate
     @JsonIgnore
     private final FtpRequest request = new FtpRequest();
 
     private List<FtpRequestStage> actions;
-
-    @Override
-    public FtpRequest unwrap() {
-        return request;
-    }
 }

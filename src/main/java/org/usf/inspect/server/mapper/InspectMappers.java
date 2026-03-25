@@ -19,22 +19,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static java.util.Optional.ofNullable;
+import static org.usf.inspect.server.JsonUtils.*;
 import static org.usf.inspect.server.Utils.fromNullableTimestamp;
 import static org.usf.inspect.server.config.TraceApiColumn.*;
 
 @Slf4j
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public final class InspectMappers {
-
-    public static <T> T safeReadValue(String json, ObjectMapper mapper, Class<T> valueType) {
-        T result = null;
-        try {
-            result = json != null ? mapper.readValue(json, valueType) : null;
-        } catch (JsonProcessingException e) {
-            log.warn("error while reading value " + valueType, e);
-        }
-        return result;
-    }
 
     public static ResultSetMapper<InstanceEnvironment> instanceEnvironmentMapper(ObjectMapper mapper) {
         return rs->{
@@ -147,67 +138,57 @@ public final class InspectMappers {
     
     public static RowMapper<RestSessionDto> restSessionShallowMapper() {
         return rs -> {
-            RestSessionDto out = new RestSessionDto();
-            out.setId(rs.getString(ID.reference()));
-            out.setMethod(rs.getString(METHOD.reference()));
-            out.setProtocol(rs.getString(PROTOCOL.reference()));
-            out.setPath(rs.getString(PATH.reference()));
-            out.setQuery(rs.getString(QUERY.reference()));
-            out.setStatus(rs.getInt(STATUS.reference()));
-            out.setInDataSize(rs.getLong(SIZE_IN.reference()));
-            out.setOutDataSize(rs.getLong(SIZE_OUT.reference()));
-            out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
-            out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
-            out.setName(rs.getString(API_NAME.reference()));
-            out.setUser(rs.getString(USER.reference()));
+            RestSessionDto out = defaultRestSessionMapper(rs);
             out.setAppName(rs.getString(APP_NAME.reference()));
             out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
             return out;
         };
     }
 
-    public static RowMapper<RestSession> restSessionDumpMapper() {
+    public static RowMapper<RestSession> restSessionPulseRowMapper() {
         return rs -> {
             RestSession out = new RestSession();
             out.setId(rs.getString(ID.reference()));
             out.setMethod(rs.getString(METHOD.reference()));
-            out.setProtocol(rs.getString(PROTOCOL.reference()));
             out.setPath(rs.getString(PATH.reference()));
-            out.setQuery(rs.getString(QUERY.reference()));
             out.setStatus(rs.getInt(STATUS.reference()));
-            out.setInDataSize(rs.getLong(SIZE_IN.reference()));
-            out.setOutDataSize(rs.getLong(SIZE_OUT.reference()));
             out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
             out.setName(rs.getString(API_NAME.reference()));
             out.setUser(rs.getString(USER.reference()));
             out.setHost(rs.getString(HOST.reference()));
             out.setThreadName(rs.getString(THREAD.reference()));
-            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
             return out;
         };
     }
 
-    public static ResultSetMapper<RestSession> createBaseRestSession(ObjectMapper mapper) throws SQLException {
+    public static RestSessionDto defaultRestSessionMapper(ResultSet rs) throws SQLException {
+        var restSession = new RestSessionDto();
+        restSession.setId(rs.getString(ID.reference()));
+        restSession.setMethod(rs.getString(METHOD.reference()));
+        restSession.setProtocol(rs.getString(PROTOCOL.reference()));
+        restSession.setPath(rs.getString(PATH.reference()));
+        restSession.setQuery(rs.getString(QUERY.reference()));
+        restSession.setStatus(rs.getInt(STATUS.reference()));
+        restSession.setInDataSize(rs.getLong(SIZE_IN.reference()));
+        restSession.setOutDataSize(rs.getLong(SIZE_OUT.reference()));
+        restSession.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
+        restSession.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+        restSession.setName(rs.getString(API_NAME.reference()));
+        restSession.setUser(rs.getString(USER.reference()));
+        return restSession;
+    }
+
+    public static ResultSetMapper<RestSession> restSessionResultSetMapper(ObjectMapper mapper) throws SQLException {
         return rs->{
             if (rs.next()) {
-                RestSession out = new RestSession();
-                out.setId(rs.getString(ID.reference()));
-                out.setMethod(rs.getString(METHOD.reference()));
-                out.setProtocol(rs.getString(PROTOCOL.reference()));
+                RestSession out = defaultRestSessionMapper(rs);
                 out.setHost(rs.getString(HOST.reference()));
                 out.setPort(rs.getInt(PORT.reference()));
-                out.setPath(rs.getString(PATH.reference()));
-                out.setQuery(rs.getString(QUERY.reference()));
                 out.setContentType(rs.getString(MEDIA.reference()));
                 out.setAuthScheme(rs.getString(AUTH.reference()));
-                out.setStatus(rs.getInt(STATUS.reference()));
-                out.setInDataSize(rs.getLong(SIZE_IN.reference()));
-                out.setOutDataSize(rs.getLong(SIZE_OUT.reference()));
                 out.setInContentEncoding(rs.getString(CONTENT_ENCODING_IN.reference()));
                 out.setOutContentEncoding(rs.getString(CONTENT_ENCODING_OUT.reference()));
-                out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
-                out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 try {
                     out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), rs.getString(STACKTRACE.reference()) != null ? mapper.readValue(rs.getString(STACKTRACE.reference()), new TypeReference<StackTraceRow[]>() {
@@ -215,9 +196,7 @@ public final class InspectMappers {
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
                 }
-                out.setName(rs.getString(API_NAME.reference()));
                 out.setUserAgent(rs.getString(USER_AGT.reference()));
-                out.setUser(rs.getString(USER.reference()));
                 out.setRequestsMask(rs.getInt(MASK.reference()));
                 out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
                 out.setCacheControl(rs.getString(CACHE_CONTROL.reference()));
@@ -254,7 +233,7 @@ public final class InspectMappers {
         };
     }
     
-    public static RowMapper<MainSession> mainSessionDumpMapper(){
+    public static RowMapper<MainSession> mainSessionPulseRowMapper(){
         return rs -> {
             MainSession out = new MainSession();
             out.setId(rs.getString(ID.reference())); // add value of nullable
@@ -264,7 +243,6 @@ public final class InspectMappers {
             out.setType(rs.getString(TYPE.reference()));
             out.setLocation(rs.getString(LOCATION.reference()));
             out.setThreadName(rs.getString(THREAD.reference()));
-            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
             return out;
         };
     }
