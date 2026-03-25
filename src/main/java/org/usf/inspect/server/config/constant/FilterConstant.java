@@ -11,10 +11,14 @@ import static org.usf.jquery.core.ComparisonExpression.lt;
 import org.usf.inspect.server.config.TraceApiColumn;
 import org.usf.jquery.core.ComparisonExpression;
 import org.usf.jquery.core.DBColumn;
+import org.usf.jquery.core.QueryBuilder;
+import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.web.ViewDecorator;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+
+import java.util.Objects;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FilterConstant {
@@ -120,9 +124,139 @@ public class FilterConstant {
                 .end();
     }
 
-    public static DBColumn size_In_args(ViewDecorator table, String ... args){ //(v1,v2) , (v1) , (null,v2)
-        var sizeIn = table.column(SIZE_IN);
-        return sizeIn.toCase().when(ge(args[0]).and(lt(args[1])), sizeIn).end();
+    public static DBColumn performanceTranche(ViewDecorator table, String... args) {
+       /* var elapsed = elapsedtime2(table, args);
+        var v = table.view();
+        return elapsed.toCase()
+                .when(lt(1), "0-1s")
+                .when(ge(1).and(lt(3)), "1-3s")
+                .when(ge(3).and(lt(5)), "3-5s")
+                .when(ge(5).and(lt(10)), "5-10s")
+                .when(ge(10), "10s+")
+                .end();*/
+        var v = table.view();
+        return new ViewColumn(null, null, null, null){
+            @Override
+            public void build(QueryBuilder query) {
+                query.append("case")
+                        .append(" when (")
+                        .append(" EXTRACT(EPOCH FROM (")
+                        .appendViewAlias(v, ".dh_end-")
+                        .appendViewAlias(v, ".dh_str))<1) then '0-1s'")
+                        .append(" when (")
+                        .append(" EXTRACT(EPOCH FROM (")
+                        .appendViewAlias(v, ".dh_end-")
+                        .appendViewAlias(v, ".dh_str))>1 ")
+                        .append(" and ")
+                        .append(" EXTRACT(EPOCH FROM (")
+                        .appendViewAlias(v, ".dh_end-")
+                        .appendViewAlias(v, ".dh_str))<=3) then '1-3s' ")
+                        .append(" when (")
+                        .append(" EXTRACT(EPOCH FROM (")
+                        .appendViewAlias(v, ".dh_end-")
+                        .appendViewAlias(v, ".dh_str))>3 ")
+                        .append(" and ")
+                        .append(" EXTRACT(EPOCH FROM (")
+                        .appendViewAlias(v, ".dh_end-")
+                        .appendViewAlias(v, ".dh_str))<=5) then '3-5s' ")
+                        .append(" when (")
+                        .append(" EXTRACT(EPOCH FROM (")
+                        .appendViewAlias(v, ".dh_end-")
+                        .appendViewAlias(v, ".dh_str))>5 ")
+                        .append(" and ")
+                        .append(" EXTRACT(EPOCH FROM (")
+                        .appendViewAlias(v, ".dh_end-")
+                        .appendViewAlias(v, ".dh_str))<=10) then '5-10s' ")
+                        .append(" end");
+            }
+        };
+    }
+
+    public static DBColumn statusTranche(ViewDecorator table, String... args) {
+        var v = table.view();
+        return new ViewColumn(null, null, null, null){
+            @Override
+            public void build(QueryBuilder query) {
+                query.append("case")
+                        .append(" when (")
+                        .appendViewAlias(v, ".cd_stt=0) then '0xx'")
+                        .append(" when(")
+                        .appendViewAlias(v, ".cd_stt<200) then '1xx'")
+                        .append(" when(")
+                        .appendViewAlias(v, ".cd_stt<300) then '2xx'")
+                        .append(" when(")
+                        .appendViewAlias(v, ".cd_stt<400) then '3xx'")
+                        .append(" when(")
+                        .appendViewAlias(v, ".cd_stt<500) then '4xx'")
+                        .append(" when(")
+                        .appendViewAlias(v, ".cd_stt>=500) then '5xx'")
+                        .append(" end");
+
+            }
+        };
+    }
+
+    public static DBColumn statusOkClientServerError(ViewDecorator table, String... args) {
+        var v = table.view();
+        return new ViewColumn(null, null, null, null){
+            @Override
+            public void build(QueryBuilder query) {
+                query.append("case")
+                        .append(" when(")
+                        .appendViewAlias(v, ".cd_stt<300) then 'OK'")
+                        .append(" when(")
+                        .appendViewAlias(v, ".cd_stt<500) then 'ClientError'")
+                        .append(" when(")
+                        .appendViewAlias(v, ".cd_stt>=500) then 'ServerError'")
+                        .append(" end");
+
+            }
+        };
+    }
+
+    public static DBColumn elapsedtime_by_args(ViewDecorator table, String ... args){ //(v1,v2) , (v1) , (null,v2)
+        var elapsed = elapsedtime2(table, args);
+
+        boolean hasMin = args.length > 0 && !Objects.equals(args[0], "null") && !args[0].isEmpty();
+        boolean hasMax = args.length > 1 && !Objects.equals(args[1], "null") && !args[1].isEmpty();
+        ComparisonExpression condition;
+        if (hasMin && hasMax) {
+            int minValue = Integer.parseInt(args[0]);
+            int maxValue = Integer.parseInt(args[1]);
+            condition = ge(minValue).and(lt(maxValue));
+        } else if (hasMin) {
+            int minValue = Integer.parseInt(args[0]);
+            condition = ge(minValue);
+        } else if (hasMax) {
+            int maxValue = Integer.parseInt(args[1]);
+            condition = lt(maxValue);
+        } else {
+            return elapsed;
+        }
+
+        return elapsed.toCase().when(condition, elapsed).end().count();
+    }
+
+    public static DBColumn StatusByType(ViewDecorator table, String... args) {
+        var status = table.column(STATUS);
+        boolean hasMin = args.length > 0 && !Objects.equals(args[0], "null") && !args[0].isEmpty();
+        boolean hasMax = args.length > 1 && !Objects.equals(args[1], "null") && !args[1].isEmpty();
+        ComparisonExpression condition;
+        if (hasMin && hasMax) {
+            int minValue = Integer.parseInt(args[0]);
+            int maxValue = Integer.parseInt(args[1]);
+            condition = ge(minValue).and(lt(maxValue));
+        } else if (hasMin) {
+            int minValue = Integer.parseInt(args[0]);
+            condition = ge(minValue);
+        } else if (hasMax) {
+            int maxValue = Integer.parseInt(args[1]);
+            condition = lt(maxValue);
+        } else {
+            return status;
+        }
+        return status.toCase()
+                .when(condition, status).end();
     }
 
     private static DBColumn elapsedTimeBySpeed(ComparisonExpression op, ViewDecorator table, String... args) {
