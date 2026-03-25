@@ -266,12 +266,12 @@ public class FilterConstant {
 
     public static DBColumn sizeIn(ViewDecorator table, String... args) {
         var sizeIn = table.column(SIZE_IN);
-        return sizeIn.toCase().when(eq(-1), 0).orElse(sizeIn).avg();
+        return sizeIn.toCase().when(eq(-1), 0).orElse(sizeIn);
     }
 
     public static DBColumn sizeOut(ViewDecorator table, String... args) {
         var sizeOut = table.column(SIZE_OUT);
-        return sizeOut.toCase().when(eq(-1), 0).orElse(sizeOut).avg();
+        return sizeOut.toCase().when(eq(-1), 0).orElse(sizeOut);
     }
 
     public static DBColumn elapsedTimeVerySlow(ViewDecorator table, String... args) {

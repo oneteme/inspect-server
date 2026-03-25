@@ -132,8 +132,8 @@ public enum TraceApiColumn implements ColumnDecorator {
     COUNT_EXCEPTION_REST("countExceptionRest", FilterConstant::countExceptionsRest), //isNull
     COUNT_NO_EXCEPTION("countNoException", FilterConstant::countNoExceptions), //isNull
     ERR("err", FilterConstant::err),
-    SIZE_IN_AVG("sizeInAvg", FilterConstant::sizeIn),
-    SIZE_OUT_AVG("sizeOutAvg", FilterConstant::sizeOut),
+    SIZE_IN_NOTNULL("sizeIn", FilterConstant::sizeIn),
+    SIZE_OUT_NOTNULL("sizeOut", FilterConstant::sizeOut),
     ELAPSED_TIME_ARG("elapsedTimeArg",FilterConstant::elapsedtime_by_args),
     STATUS_TYPE("statusType", FilterConstant::StatusByType),
     STATUS_TRANCHE("statusTranche", FilterConstant::statusTranche),
