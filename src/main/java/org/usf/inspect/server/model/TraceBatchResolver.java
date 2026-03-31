@@ -1,10 +1,11 @@
-package org.usf.inspect.server.service;
+package org.usf.inspect.server.model;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.usf.inspect.core.*;
-import org.usf.inspect.server.model.InstanceTrace;
-import org.usf.inspect.server.model.Pair;
+import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.core.TracePart;
+import org.usf.inspect.core.TraceSignal;
+import org.usf.inspect.core.TraceUpdate;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,7 +14,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static org.usf.inspect.core.SessionContextManager.*;
 import static org.usf.inspect.core.SessionContextManager.emitWarn;
 
 @Slf4j
@@ -104,6 +104,8 @@ public class TraceBatchResolver<T extends TraceSignal, U extends TraceUpdate>  {
         );
     }
 }
+
+
 
 
 
