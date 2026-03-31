@@ -1,5 +1,6 @@
 package org.usf.inspect.server.service;
 
+import static org.usf.inspect.core.DispatchState.COLLECT;
 import static org.usf.inspect.core.DispatchState.DISABLE;
 import static org.usf.inspect.server.model.Partition.buildPartitionScript;
 
@@ -31,7 +32,7 @@ public class ScriptService {
         log.info("\t- Tables: " + map.toString());
 
         DispatchState previousState = traceService.getState();
-        traceService.updateState(DISABLE);
+        traceService.updateState(COLLECT);
         try {
             var partitions = buildPartitionScript(start, end, map);
             template.batchUpdate(partitions.toArray(String[]::new));
