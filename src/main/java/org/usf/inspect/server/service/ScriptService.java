@@ -1,7 +1,6 @@
 package org.usf.inspect.server.service;
 
 import static org.usf.inspect.core.DispatchState.COLLECT;
-import static org.usf.inspect.core.DispatchState.DISABLE;
 import static org.usf.inspect.server.model.Partition.buildPartitionScript;
 
 import java.time.YearMonth;
