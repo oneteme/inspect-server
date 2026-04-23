@@ -8,4 +8,5 @@ import org.usf.inspect.server.model.MainSession;
 @Setter
 public class MainSessionDto extends MainSession {
     private String appName;
+    private String address;
 }
