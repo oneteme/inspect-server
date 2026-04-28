@@ -663,6 +663,6 @@ public class RequestController {
             @RequestParam(required = false, name = "end") Instant end,
             @RequestParam(required = false, name = "env") String[] environments
     )  {
-        return ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.createArchitecture(start, end, environments));
+        return ok().body(requestService.createArchitecture(start, end, environments));
     }
 }
