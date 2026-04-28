@@ -418,7 +418,7 @@ public class RequestService {
                                 MAIN_SESSION, ID, NAME, START, END, LOCATION, TYPE,
                                 USER, ERR_TYPE, ERR_MSG
                         ))
-                .columns(getColumns(INSTANCE, APP_NAME))
+                .columns(getColumns(INSTANCE, APP_NAME, ADDRESS))
                 .filters(MAIN_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)));
         if(jsf != null) {
             v.filters(jsf.filters(MAIN_SESSION).toArray(DBFilter[]::new));
@@ -919,6 +919,7 @@ public class RequestService {
                 .orders(requestTable.column(HOST).order());
         return INSPECT.execute(v1, toArray(rs -> rs.getString(HOST.reference()), String[]::new));
     }
+
     public String[] getRequestSchema( String environment, Instant start, Instant end, String host){
         var v1 = new QueryComposer()
                 .distinct(true)
