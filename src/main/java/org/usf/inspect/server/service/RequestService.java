@@ -1,8 +1,6 @@
 package org.usf.inspect.server.service;
 
 import static java.sql.Timestamp.from;
-import static java.sql.Types.TIMESTAMP;
-import static java.sql.Types.VARCHAR;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static java.util.UUID.fromString;
@@ -143,7 +141,7 @@ public class RequestService {
                 .columns(DBColumn.constant(null).as("schema"))
                 .columns(DBColumn.constant("SMTP").as("type"))
                 .distinct(true)
-                .joins(REST_SESSION.join("request"))
+                .joins(REST_SESSION.join(SMTP_REQUEST_JOIN))
                 .joins(REST_SESSION.join(INSTANCE_JOIN))
                 .filters(SMTP_REQUEST.column(HOST).notNull())
                 .filters(REST_SESSION.column(START).ge(from(start)))
@@ -162,9 +160,7 @@ public class RequestService {
                 .filters(REST_SESSION.column(END).lt(from(end)))
                 .filters(INSTANCE.column(ENVIRONEMENT).in(env));
         var v5 = v.toString() + " UNION " + v2.toString() + " UNION " + v3.toString() + " UNION " + v4.toString();
-        Object[] args = new Object[]{from(start), from(end), String.join(",", env), from(start), from(end), String.join(",", env), from(start), from(end), String.join(",", env), from(start), from(end), String.join(",", env)};
-        int[] argTypes = new int[]{TIMESTAMP, TIMESTAMP, VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR, TIMESTAMP, TIMESTAMP, VARCHAR};
-        return template.query(v5, args, argTypes, rs -> {
+        return template.query(v5, rs -> {
             Map<String, List<Architecture>> map = new HashMap<>();
             while(rs.next()) {
                 var key = rs.getString(APP_NAME.reference());
