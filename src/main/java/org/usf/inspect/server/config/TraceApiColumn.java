@@ -138,7 +138,10 @@ public enum TraceApiColumn implements ColumnDecorator {
     STATUS_TYPE("statusType", FilterConstant::StatusByType),
     STATUS_TRANCHE("statusTranche", FilterConstant::statusTranche),
     STATUS_OK_CLIENT_SERVER_ERROR("statusOkClientServerError", FilterConstant::statusOkClientServerError),
-    PERFORMANCE_TRANCHE("performanceTranche", FilterConstant::performanceTranche);
+    PERFORMANCE_TRANCHE("performanceTranche", FilterConstant::performanceTranche),
+    PERFORMANCE_TRANCHE2("performanceTranche2", FilterConstant::performanceTranche2),
+    SIZE_TRANCHE("sizeTranche", FilterConstant::sizeTranche);
+
     private final String out; //nullable
     private final Builder<ViewDecorator, DBColumn> columnTemplate;
     private final Builder<ViewDecorator, ComparisonExpression> expressionFn;

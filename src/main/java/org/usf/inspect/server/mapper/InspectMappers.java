@@ -259,6 +259,7 @@ public final class InspectMappers {
             out.setUser(rs.getString(USER.reference()));
             out.setType(rs.getString(TYPE.reference()));
             out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
+            out.setAddress(rs.getString(ADDRESS.reference()));
             return out;
         };
     }
