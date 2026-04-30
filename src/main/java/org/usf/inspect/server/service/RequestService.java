@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -122,6 +123,7 @@ public class RequestService {
                 .filters(DATABASE_REQUEST.column(DB).notNull().or(DATABASE_REQUEST.column(SCHEMA).notNull()))
                 .filters(REST_SESSION.column(START).ge(from(start)))
                 .filters(REST_SESSION.column(END).lt(from(end)))
+                .filters(DATABASE_REQUEST.column(START).ge(from(start)))
                 .filters(INSTANCE.column(ENVIRONEMENT).in(env));
         var v2 = new QueryComposer()
                 .columns(getColumns(INSTANCE, APP_NAME))
@@ -134,6 +136,7 @@ public class RequestService {
                 .filters(FTP_REQUEST.column(HOST).notNull())
                 .filters(REST_SESSION.column(START).ge(from(start)))
                 .filters(REST_SESSION.column(END).lt(from(end)))
+                .filters(FTP_REQUEST.column(START).ge(from(start)))
                 .filters(INSTANCE.column(ENVIRONEMENT).in(env));
         var v3 = new QueryComposer()
                 .columns(getColumns(INSTANCE, APP_NAME))
@@ -146,6 +149,7 @@ public class RequestService {
                 .filters(SMTP_REQUEST.column(HOST).notNull())
                 .filters(REST_SESSION.column(START).ge(from(start)))
                 .filters(REST_SESSION.column(END).lt(from(end)))
+                .filters(SMTP_REQUEST.column(START).ge(from(start)))
                 .filters(INSTANCE.column(ENVIRONEMENT).in(env));
         var v4 = new QueryComposer()
                 .columns(getColumns(INSTANCE, APP_NAME))
@@ -158,9 +162,41 @@ public class RequestService {
                 .filters(LDAP_REQUEST.column(HOST).notNull())
                 .filters(REST_SESSION.column(START).ge(from(start)))
                 .filters(REST_SESSION.column(END).lt(from(end)))
+                .filters(LDAP_REQUEST.column(START).ge(from(start)))
                 .filters(INSTANCE.column(ENVIRONEMENT).in(env));
-        var v5 = v.toString() + " UNION " + v2.toString() + " UNION " + v3.toString() + " UNION " + v4.toString();
-        return template.query(v5, rs -> {
+        // Raw SQL needed: REST_SESSION and INSTANCE must be joined twice (caller + remote)
+        // QueryComposer can't handle same table twice with different aliases
+        var envList = Arrays.stream(env).map(e -> "'" + e + "'").collect(Collectors.joining(","));
+        var v5sql = "SELECT DISTINCT" +
+                " ins_caller.va_app AS \"" + APP_NAME.reference() + "\"," +
+                " ins_remote.va_app AS \"name\"," +
+                " null AS \"schema\"," +
+                " 'REST' AS \"type\"" +
+                " FROM e_rst_ses caller_ses" +
+                " INNER JOIN e_rst_rqt rqt ON caller_ses.id_ses=rqt.cd_prn_ses" +
+                " INNER JOIN e_env_ins ins_caller ON caller_ses.cd_ins=ins_caller.id_ins" +
+                " INNER JOIN e_rst_ses remote_ses ON rqt.id_rst_rqt=remote_ses.id_ses" +
+                " INNER JOIN e_env_ins ins_remote ON remote_ses.cd_ins=ins_remote.id_ins" +
+                " WHERE caller_ses.dh_str>='" + from(start) + "'" +
+                " AND caller_ses.dh_end<'" + from(end) + "'" +
+                " AND rqt.dh_str>='" + from(start) + "'" +
+                " AND ins_caller.va_env IN(" + envList + ")";
+        var v6sql = "SELECT DISTINCT" +
+                " ins_caller.va_app AS \"" + APP_NAME.reference() + "\"," +
+                " ins_remote.va_app AS \"name\"," +
+                " null AS \"schema\"," +
+                " 'MAIN' AS \"type\"" +
+                " FROM e_main_ses caller_ses" +
+                " INNER JOIN e_rst_rqt rqt ON caller_ses.id_ses=rqt.cd_prn_ses" +
+                " INNER JOIN e_env_ins ins_caller ON caller_ses.cd_ins=ins_caller.id_ins" +
+                " INNER JOIN e_rst_ses remote_ses ON rqt.id_rst_rqt=remote_ses.id_ses" +
+                " INNER JOIN e_env_ins ins_remote ON remote_ses.cd_ins=ins_remote.id_ins" +
+                " WHERE caller_ses.dh_str>='" + from(start) + "'" +
+                " AND caller_ses.dh_end<'" + from(end) + "'" +
+                " AND rqt.dh_str>='" + from(start) + "'" +
+                " AND ins_caller.va_env IN(" + envList + ")";
+        var v7 = v.toString() + " UNION " + v2.toString() + " UNION " + v3.toString() + " UNION " + v4.toString() + " UNION " + v5sql + " UNION " + v6sql;
+        return template.query(v7, rs -> {
             Map<String, List<Architecture>> map = new HashMap<>();
             while(rs.next()) {
                 var key = rs.getString(APP_NAME.reference());
