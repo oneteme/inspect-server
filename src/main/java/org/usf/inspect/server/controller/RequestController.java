@@ -663,6 +663,10 @@ public class RequestController {
             @RequestParam(required = false, name = "end") Instant end,
             @RequestParam(required = false, name = "env") String[] environments
     )  {
-        return ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(requestService.createArchitecture(start, end, environments));
+        var result = requestService.createArchitecture(start, end, environments);
+        if (end != null && end.isBefore(Instant.now().truncatedTo(java.time.temporal.ChronoUnit.DAYS))) {
+            return ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(result);
+        }
+        return ok().body(result);
     }
 }

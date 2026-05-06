@@ -117,6 +117,7 @@ public class RequestService {
                 .columns(getColumns(INSTANCE, APP_NAME))
                 .columns(DATABASE_REQUEST.column(DB).as("name"), DATABASE_REQUEST.column(SCHEMA).as("schema"))
                 .columns(DBColumn.constant("JDBC").as("type"))
+                .columns(DBColumn.constant("REST").as("source"))
                 .distinct(true)
                 .joins(REST_SESSION.join(DATABASE_REQUEST_JOIN))
                 .joins(REST_SESSION.join(INSTANCE_JOIN))
@@ -130,6 +131,7 @@ public class RequestService {
                 .columns(FTP_REQUEST.column(HOST).as("name"))
                 .columns(DBColumn.constant(null).as("schema"))
                 .columns(DBColumn.constant("FTP").as("type"))
+                .columns(DBColumn.constant("REST").as("source"))
                 .distinct(true)
                 .joins(REST_SESSION.join(FTP_REQUEST_JOIN))
                 .joins(REST_SESSION.join(INSTANCE_JOIN))
@@ -143,6 +145,7 @@ public class RequestService {
                 .columns(SMTP_REQUEST.column(HOST).as("name"))
                 .columns(DBColumn.constant(null).as("schema"))
                 .columns(DBColumn.constant("SMTP").as("type"))
+                .columns(DBColumn.constant("REST").as("source"))
                 .distinct(true)
                 .joins(REST_SESSION.join(SMTP_REQUEST_JOIN))
                 .joins(REST_SESSION.join(INSTANCE_JOIN))
@@ -156,6 +159,7 @@ public class RequestService {
                 .columns(LDAP_REQUEST.column(HOST).as("name"))
                 .columns(DBColumn.constant(null).as("schema"))
                 .columns(DBColumn.constant("LDAP").as("type"))
+                .columns(DBColumn.constant("REST").as("source"))
                 .distinct(true)
                 .joins(REST_SESSION.join(LDAP_REQUEST_JOIN))
                 .joins(REST_SESSION.join(INSTANCE_JOIN))
@@ -164,13 +168,12 @@ public class RequestService {
                 .filters(REST_SESSION.column(END).lt(from(end)))
                 .filters(LDAP_REQUEST.column(START).ge(from(start)))
                 .filters(INSTANCE.column(ENVIRONEMENT).in(env));
-        // Raw SQL needed: REST_SESSION and INSTANCE must be joined twice (caller + remote)
-        // QueryComposer can't handle same table twice with different aliases
         var envList = Arrays.stream(env).map(e -> "'" + e + "'").collect(Collectors.joining(","));
         var v5sql = "SELECT DISTINCT" +
                 " ins_caller.va_app AS \"" + APP_NAME.reference() + "\"," +
                 " ins_remote.va_app AS \"name\"," +
                 " null AS \"schema\"," +
+                " 'REST' AS \"source\"," +
                 " 'REST' AS \"type\"" +
                 " FROM e_rst_ses caller_ses" +
                 " INNER JOIN e_rst_rqt rqt ON caller_ses.id_ses=rqt.cd_prn_ses" +
@@ -185,7 +188,8 @@ public class RequestService {
                 " ins_caller.va_app AS \"" + APP_NAME.reference() + "\"," +
                 " ins_remote.va_app AS \"name\"," +
                 " null AS \"schema\"," +
-                " 'MAIN' AS \"type\"" +
+                " 'VIEW' AS \"type\"," +
+                " caller_ses.va_typ AS \"source\"" +
                 " FROM e_main_ses caller_ses" +
                 " INNER JOIN e_rst_rqt rqt ON caller_ses.id_ses=rqt.cd_prn_ses" +
                 " INNER JOIN e_env_ins ins_caller ON caller_ses.cd_ins=ins_caller.id_ins" +
@@ -193,19 +197,24 @@ public class RequestService {
                 " INNER JOIN e_env_ins ins_remote ON remote_ses.cd_ins=ins_remote.id_ins" +
                 " WHERE caller_ses.dh_str>='" + from(start) + "'" +
                 " AND caller_ses.dh_end<'" + from(end) + "'" +
+                " AND caller_ses.va_typ='VIEW'" +
                 " AND rqt.dh_str>='" + from(start) + "'" +
                 " AND ins_caller.va_env IN(" + envList + ")";
         var v7 = v.toString() + " UNION " + v2.toString() + " UNION " + v3.toString() + " UNION " + v4.toString() + " UNION " + v5sql + " UNION " + v6sql;
         return template.query(v7, rs -> {
             Map<String, List<Architecture>> map = new HashMap<>();
-            while(rs.next()) {
-                var key = rs.getString(APP_NAME.reference());
-                if(!map.containsKey(key)) {
-                    map.put(key, new ArrayList<>());
-                }
-                map.get(key).add(new Architecture(rs.getString("name"), rs.getString("schema"), rs.getString("type"), null));
-            }
-            return map.entrySet().stream().map(entry -> new Architecture(entry.getKey(), null, "REST", entry.getValue())).toList();
+            Map<String, String> sourceMap = new HashMap<>();
+             while(rs.next()) {
+                 var key = rs.getString(APP_NAME.reference());
+                 var type = rs.getString("type");
+                 var source = rs.getString("source");
+                 if(!map.containsKey(key)) {
+                     map.put(key, new ArrayList<>());
+                     sourceMap.put(key, source);
+                 }
+                 map.get(key).add(new Architecture(rs.getString("name"), rs.getString("schema"), type, null));
+             }
+            return map.entrySet().stream().map(entry -> new Architecture(entry.getKey(), null, sourceMap.get(entry.getKey()), entry.getValue())).toList();
         });
     }
 
