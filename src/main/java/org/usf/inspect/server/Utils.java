@@ -1,14 +1,17 @@
 package org.usf.inspect.server;
 
+import static java.lang.Thread.ofVirtual;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
+import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.regex.Pattern.compile;
 import static java.util.stream.Collectors.joining;
 
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Predicate;
 import java.util.stream.LongStream;
 
@@ -54,6 +57,10 @@ public final class Utils {
 		return nonNull(array)
 				? LongStream.of(array).mapToObj(Long::toString).collect(joining(","))
 				: null;
+	}
+
+	public static ExecutorService virtualThreadExecutor(String name, int size) {
+		return newFixedThreadPool(size, ofVirtual().name(name + "-", 0).factory());
 	}
 
 	//TODO declare regex pattern as static final and reuse it

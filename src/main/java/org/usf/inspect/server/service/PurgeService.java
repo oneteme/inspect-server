@@ -12,6 +12,7 @@ import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.stream.Collectors.joining;
 import static org.usf.inspect.core.ExecutorServiceWrapper.wrap;
 import static org.usf.inspect.core.SessionContextManager.emitInfo;
+import static org.usf.inspect.server.Utils.*;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ import java.util.function.IntSupplier;
 
 import org.springframework.stereotype.Service;
 import org.usf.inspect.core.InstanceEnvironment;
+import org.usf.inspect.server.Utils;
 import org.usf.inspect.server.dao.PurgeDao;
 
 import lombok.RequiredArgsConstructor;
@@ -153,10 +155,6 @@ public class PurgeService {
 
     private Runnable runnablePurge(IntSupplier action, String label) {
         return runnablePurge(action, label, null, null, null);
-    }
-    
-    public static ExecutorService virtualThreadExecutor(String name, int size) {
-        return newFixedThreadPool(size, ofVirtual().name(name + "-", 0).factory());
     }
 }
 

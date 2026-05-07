@@ -6,8 +6,8 @@ import static java.util.Optional.ofNullable;
 import static java.util.UUID.fromString;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
-import static org.usf.inspect.server.Utils.fromNullableTimestamp;
-import static org.usf.inspect.server.Utils.requireSingle;
+import static org.usf.inspect.core.ExecutorServiceWrapper.wrap;
+import static org.usf.inspect.server.Utils.*;
 import static org.usf.inspect.server.config.TraceApiColumn.*;
 import static org.usf.inspect.server.config.TraceApiDatabase.INSPECT;
 import static org.usf.inspect.server.config.TraceApiTable.*;
@@ -18,6 +18,7 @@ import static org.usf.jquery.core.Mappers.toArray;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -53,6 +54,7 @@ public class RequestService {
     private final JdbcTemplate template;
     private final RequestDao dao;
     private final int requestLimit = 300000;
+    private final ExecutorService executorService = wrap(virtualThreadExecutor("inspect-tree", 5));
 
     public Session getMainTree(String id)  {
         var t0 = System.currentTimeMillis();
@@ -1004,8 +1006,8 @@ public class RequestService {
         });
     }
 
-    private static <T> void addFuture(List<CompletableFuture<?>> futures, Supplier<List<T>> supplier, Consumer<List<T>> consumer) {
-        futures.add(CompletableFuture.supplyAsync(supplier).thenAccept(consumer));
+    private <T> void addFuture(List<CompletableFuture<?>> futures, Supplier<List<T>> supplier, Consumer<List<T>> consumer) {
+        futures.add(CompletableFuture.supplyAsync(supplier, executorService).thenAccept(consumer));
     }
 
     private static NamedColumn[] getColumns(ViewDecorator table, ColumnDecorator... columns) {
