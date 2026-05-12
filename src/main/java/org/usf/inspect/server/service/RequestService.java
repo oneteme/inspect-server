@@ -768,7 +768,7 @@ public class RequestService {
         var v = new QueryComposer()
                 .columns(
                     getColumns(
-                            FTP_REQUEST, ID, HOST, PORT, PROTOCOL, SERVER_VERSION, CLIENT_VERSION, START, END, USER, THREAD, FAILED, PARENT
+                            FTP_REQUEST, ID, HOST, PORT, PROTOCOL, SERVER_VERSION, CLIENT_VERSION, START, END, COMMAND, USER, THREAD, FAILED, PARENT
                     )
                 )
                 .filters(filter);
@@ -789,6 +789,7 @@ public class RequestService {
                 out.setClientVersion(rs.getString(CLIENT_VERSION.reference()));
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                out.setCommand(rs.getString(COMMAND.reference()));
                 out.setUser(rs.getString(USER.reference()));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setActions(new ArrayList<>());
@@ -847,7 +848,7 @@ public class RequestService {
         var v = new QueryComposer()
                 .columns(
                     getColumns(
-                            SMTP_REQUEST, ID, HOST, PORT, START, END, USER, THREAD, FAILED, PARENT
+                            SMTP_REQUEST, ID, HOST, PORT, START, END, COMMAND, USER, THREAD, FAILED, PARENT
                     ))
                 .filters(filter);
         if (start != null) {
@@ -864,6 +865,7 @@ public class RequestService {
                 out.setPort(rs.getInt(PORT.reference()));
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                out.setCommand(rs.getString(COMMAND.reference()));
                 out.setUser(rs.getString(USER.reference()));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setActions(new ArrayList<>());
@@ -923,7 +925,7 @@ public class RequestService {
         var v = new QueryComposer()
                 .columns(
                     getColumns(
-                            LDAP_REQUEST, ID, HOST, PORT, PROTOCOL, START, END, USER, THREAD, FAILED, PARENT
+                            LDAP_REQUEST, ID, HOST, PORT, PROTOCOL, START, END, COMMAND, USER, THREAD, FAILED, PARENT
                     ))
                 .filters(filter);
         if (start != null) {
@@ -941,6 +943,7 @@ public class RequestService {
                 out.setProtocol(rs.getString(PROTOCOL.reference()));
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                out.setCommand(rs.getString(COMMAND.reference()));
                 out.setUser(rs.getString(USER.reference()));
                 out.setThreadName(rs.getString(THREAD.reference()));
                 out.setActions(new ArrayList<>());
