@@ -57,44 +57,20 @@ public class RequestService {
     private final ExecutorService executorService = wrap(virtualThreadExecutor("inspect-tree", 5));
 
     public Session getMainTree(String id)  {
-        var t0 = System.currentTimeMillis();
         List<String> prntIds = dao.selectChildsById(id);
-        log.info("getMainTree - selectChildsById: {}ms", System.currentTimeMillis() - t0);
-
-        var t1 = System.currentTimeMillis();
         List<Session> prntIncList = getRestSessionsForTree(prntIds, id);
-        log.info("getMainTree - getRestSessionsForTree: {}ms", System.currentTimeMillis() - t1);
-
-        var t2 = System.currentTimeMillis();
         Session session = getMainSessionForTree(id);
-        log.info("getMainTree - getMainSessionForTree: {}ms", System.currentTimeMillis() - t2);
-
         if(session != null){
             prntIncList.add(session);
         }
-
-        var t3 = System.currentTimeMillis();
         createTree(prntIncList);
-        log.info("getMainTree - createTree: {}ms", System.currentTimeMillis() - t3);
-
-        log.info("getMainTree - total: {}ms", System.currentTimeMillis() - t0);
         return prntIncList.stream().filter(r ->  r.getId().equals(id)).findFirst().orElseThrow();
     }
 
     public Session getRestTree(String id)  {
-        var t0 = System.currentTimeMillis();
         List<String> prntIds = dao.selectChildsById(id);
-        log.info("getRestTree - selectChildsById: {}ms", System.currentTimeMillis() - t0);
-
-        var t1 = System.currentTimeMillis();
         List<Session> prntIncList = getRestSessionsForTree(prntIds, id);
-        log.info("getRestTree - getRestSessionsForTree: {}ms", System.currentTimeMillis() - t1);
-
-        var t2 = System.currentTimeMillis();
         createTree(prntIncList);
-        log.info("getRestTree - createTree: {}ms", System.currentTimeMillis() - t2);
-
-        log.info("getRestTree - total: {}ms", System.currentTimeMillis() - t0);
         return prntIncList.stream().filter(r ->  r.getId().equals(id)).findFirst().orElseThrow();
     }
 
@@ -241,10 +217,8 @@ public class RequestService {
         if (ids.isEmpty()) {
             return new ArrayList<>();
         }
-        var t0 = System.currentTimeMillis();
         var start = getSessionStartByIds(parent);
         List<Session> sessions = getRestSessions(ids, start);
-        log.info("getRestSessionsForTree - getRestSessions: {}ms", System.currentTimeMillis() - t0);
         if (!sessions.isEmpty()) {
             var reqMap = sessions.stream().collect(toMap(Session::getId, identity(), (a, b) -> a, () -> new HashMap<>(sessions.size())));
 
@@ -257,7 +231,6 @@ public class RequestService {
                 }
             }
 
-            var t1 = System.currentTimeMillis();
             var futures = new ArrayList<CompletableFuture<?>>();
             var parentIds = reqMap.keySet().stream().toList();
             boolean loadAll = RequestMask.ASYNC.is(combinedMask);
@@ -283,9 +256,7 @@ public class RequestService {
                         list -> list.forEach(q -> reqMap.get(q.getSessionId()).getLdapRequests().add(q)));
             }
             CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
-            log.info("getRestSessionsForTree - parallel requests loading ({} types): {}ms", futures.size(), System.currentTimeMillis() - t1);
         }
-        log.info("getRestSessionsForTree - total: {}ms", System.currentTimeMillis() - t0);
         return sessions;
     }
 
@@ -400,9 +371,7 @@ public class RequestService {
     }
 
     public Session getMainSessionForTree(String id)  {
-        var t0 = System.currentTimeMillis();
         Session session = requireSingle(getMainSessions(Collections.singletonList(id)));
-        log.info("getMainSessionForTree - getMainSessions: {}ms", System.currentTimeMillis() - t0);
         if (session != null) {
             var sid = session.getId();
 
@@ -413,7 +382,6 @@ public class RequestService {
             boolean loadAll = mask < 0 || RequestMask.ASYNC.is(mask);
 
             var sessionStart = session.getStart();
-            var t1 = System.currentTimeMillis();
             var futures = new ArrayList<CompletableFuture<?>>();
 
             if (loadAll || RequestMask.REST.is(mask)) {
@@ -438,9 +406,7 @@ public class RequestService {
             }
 
             CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
-            log.info("getMainSessionForTree - parallel requests loading ({} types): {}ms", futures.size(), System.currentTimeMillis() - t1);
         }
-        log.info("getMainSessionForTree - total: {}ms", System.currentTimeMillis() - t0);
         return session;
     }
 
@@ -548,7 +514,7 @@ public class RequestService {
         var v = new QueryComposer()
                 .columns(getColumns(
                         REST_REQUEST, ID, PROTOCOL, AUTH, HOST, PORT, PATH, QUERY, METHOD, STATUS, SIZE_IN,
-                        SIZE_OUT, CONTENT_ENCODING_IN, CONTENT_ENCODING_OUT, START, END, THREAD, PARENT
+                        SIZE_OUT, CONTENT_ENCODING_IN, CONTENT_ENCODING_OUT, START, END, THREAD, LINKED, PARENT
                 ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                     .joins(REST_REQUEST.join(EXCEPTION_JOIN))
@@ -574,6 +540,7 @@ public class RequestService {
                 out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));
                 out.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
                 out.setThreadName(rs.getString(THREAD.reference()));
+                out.setLinked(rs.getBoolean(LINKED.reference()));
                 out.setAuthScheme(rs.getString(AUTH.reference()));
                 out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
                 outs.add(out);
