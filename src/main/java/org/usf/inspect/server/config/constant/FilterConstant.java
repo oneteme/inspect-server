@@ -1,6 +1,14 @@
 package org.usf.inspect.server.config.constant;
 
-import static org.usf.inspect.server.config.TraceApiColumn.*;
+import static org.usf.inspect.server.config.TraceApiColumn.BODY_CONTENT;
+import static org.usf.inspect.server.config.TraceApiColumn.END;
+import static org.usf.inspect.server.config.TraceApiColumn.ERR_MSG;
+import static org.usf.inspect.server.config.TraceApiColumn.ERR_TYPE;
+import static org.usf.inspect.server.config.TraceApiColumn.FAILED;
+import static org.usf.inspect.server.config.TraceApiColumn.SIZE_IN;
+import static org.usf.inspect.server.config.TraceApiColumn.SIZE_OUT;
+import static org.usf.inspect.server.config.TraceApiColumn.START;
+import static org.usf.inspect.server.config.TraceApiColumn.STATUS;
 import static org.usf.inspect.server.config.TraceApiTable.EXCEPTION;
 import static org.usf.inspect.server.config.TraceApiTable.REST_REQUEST;
 import static org.usf.jquery.core.ComparisonExpression.eq;
@@ -8,20 +16,43 @@ import static org.usf.jquery.core.ComparisonExpression.ge;
 import static org.usf.jquery.core.ComparisonExpression.isNotNull;
 import static org.usf.jquery.core.ComparisonExpression.isNull;
 import static org.usf.jquery.core.ComparisonExpression.lt;
+
+import java.util.Objects;
+import java.util.function.Consumer;
+
 import org.usf.inspect.server.config.TraceApiColumn;
+import org.usf.jquery.core.AggregateFunction;
 import org.usf.jquery.core.ComparisonExpression;
 import org.usf.jquery.core.DBColumn;
 import org.usf.jquery.core.QueryBuilder;
+import org.usf.jquery.core.QueryComposer;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.web.ViewDecorator;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
-import java.util.Objects;
-
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FilterConstant {
+
+	public static DBColumn percentileElapsed(ViewDecorator table, String... args) {
+        return new ViewColumn(null, table.view(), null, null) {
+        	
+        	@Override
+        	public int compose(QueryComposer query, Consumer<DBColumn> groupKeys) {
+        		super.compose(query, c-> {}); //declare view only
+        		return 1;
+        	}
+        	
+            @Override
+            public void build(QueryBuilder query) {
+                query.append("PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY ")
+                		.append("EXTRACT(EPOCH FROM (")
+                		.appendViewAlias(getView(), ".dh_end-")
+                		.appendViewAlias(getView(), ".dh_str)))");
+            }
+        };
+	}
 
     public static DBColumn elapsedtime2(ViewDecorator table, String... args) {
         return table.column(END).minus(table.column(START)).epoch();

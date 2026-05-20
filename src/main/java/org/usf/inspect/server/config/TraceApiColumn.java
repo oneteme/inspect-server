@@ -106,6 +106,7 @@ public enum TraceApiColumn implements ColumnDecorator {
     BODY_CONTENT("bodyContent"),
     //---
     ELAPSEDTIME("elapsedtime", FilterConstant::elapsedtime2, Builder.multiArgsCriteria(FilterConstant::elapsedTimeExpressions)),
+    ELAPSED_PERCENTILE("elapsed_percentile",FilterConstant::percentileElapsed),
     //ERROR_TYPE("errorType", FilterConstant::errorTypeExpressions),
     ERROR_TYPE("errorType", FilterConstant::errorTypeExpressions),
     COUNT_SLOWEST("elapsedTimeSlowest", FilterConstant::elapsedTimeVerySlow),
