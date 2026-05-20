@@ -116,7 +116,7 @@ public class FilterConstant {
     }
 
     public static DBColumn countErrorStatus(ViewDecorator table, String... args) {
-        return countStatusByType(table, STATUS, ge(400));
+        return countStatusByType(table, STATUS, eq(0).or(ge(400)));
     }
 
     public static DBColumn countClientErrorStatus(ViewDecorator table, String... args) {
@@ -173,8 +173,12 @@ public class FilterConstant {
        return performanceTrancheBuild(table, 5, 10);
     }
 
-    public static DBColumn sizeTranche(ViewDecorator table, String... args) {
-        return sizeTrancheBuild(table, 100, 200, 300);
+    public static DBColumn sizeInTranche(ViewDecorator table, String... args) {
+        return sizeTrancheBuild(table, "va_i_sze", 100, 200, 300);
+    }
+
+    public static DBColumn sizeOutTranche(ViewDecorator table, String... args) {
+        return sizeTrancheBuild(table, "va_o_sze", 100, 200, 300);
     }
 
     // Méthode utilitaire factorisée : construit un CASE SQL sur la durée
@@ -242,7 +246,7 @@ public class FilterConstant {
         };
     }
 
-    private static DBColumn sizeTrancheBuild(ViewDecorator table, int... bounds) {
+    private static DBColumn sizeTrancheBuild(ViewDecorator table, String columnName, int... bounds) {
         var v = table.view();
         return new ViewColumn(null, null, null, null) {
             @Override
@@ -256,10 +260,7 @@ public class FilterConstant {
                 int first = bounds[0];
                 String firstLabel = "1";
                 query.append(" when (")
-                        .appendViewAlias(v, ".va_i_sze<")
-                        .append(String.valueOf(first))
-                        .append(" or ")
-                        .appendViewAlias(v, ".va_o_sze<")
+                        .appendViewAlias(v, "." + columnName + "<")
                         .append(String.valueOf(first))
                         .append(") then '")
                         .append(firstLabel)
@@ -270,19 +271,14 @@ public class FilterConstant {
                     int prev = bounds[i - 1];
                     int cur = bounds[i];
                     String label = "" + (i + 1);
-                    query.append(" when ((")
-                            .appendViewAlias(v, ".va_i_sze>=")
+                    query.append(" when (")
+                            .appendViewAlias(v, "." + columnName + ">=")
                             .append(String.valueOf(prev))
                             .append(" and ")
-                            .appendViewAlias(v, ".va_i_sze<")
+                            .appendViewAlias(v, "." + columnName + "<")
                             .append(String.valueOf(cur))
-                            .append(") or (")
-                            .appendViewAlias(v, ".va_o_sze>=")
-                            .append(String.valueOf(prev))
-                            .append(" and ")
-                            .appendViewAlias(v, ".va_o_sze<")
-                            .append(String.valueOf(cur))
-                            .append(")) then '")
+                            .append(")")
+                            .append(" then '")
                             .append(label)
                             .append("'");
                 }
@@ -291,10 +287,7 @@ public class FilterConstant {
                 int last = bounds[bounds.length - 1];
                 String lastLabel = "" + (bounds.length + 1);
                 query.append(" when (")
-                        .appendViewAlias(v, ".va_i_sze>=")
-                        .append(String.valueOf(last))
-                        .append(" or ")
-                        .appendViewAlias(v, ".va_o_sze>=")
+                        .appendViewAlias(v, "." + columnName + ">=")
                         .append(String.valueOf(last))
                         .append(") then '")
                         .append(lastLabel)
@@ -323,6 +316,20 @@ public class FilterConstant {
                         .appendViewAlias(v, ".cd_stt<500) then '5'")
                         .append(" when(")
                         .appendViewAlias(v, ".cd_stt>=500) then '6'")
+                        .append(" end");
+
+            }
+        };
+    }
+
+    public static DBColumn statusMainTranche(ViewDecorator table, String... args) {
+        var v = table.view();
+        return new ViewColumn(null, null, null, null){
+            @Override
+            public void build(QueryBuilder query) {
+                query.append("case")
+                        .append(" when ")
+                        .appendViewAlias(v, ".va_err_typ is null then 'false' else 'true'")
                         .append(" end");
 
             }
