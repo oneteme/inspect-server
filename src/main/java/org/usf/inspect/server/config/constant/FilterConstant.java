@@ -54,6 +54,25 @@ public class FilterConstant {
         };
 	}
 
+    public static DBColumn medianElapsed(ViewDecorator table, String... args) {
+        return new ViewColumn(null, table.view(), null, null) {
+
+            @Override
+            public int compose(QueryComposer query, Consumer<DBColumn> groupKeys) {
+                super.compose(query, c-> {}); //declare view only
+                return 1;
+            }
+
+            @Override
+            public void build(QueryBuilder query) {
+                query.append("PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY ")
+                        .append("EXTRACT(EPOCH FROM (")
+                        .appendViewAlias(getView(), ".dh_end-")
+                        .appendViewAlias(getView(), ".dh_str)))");
+            }
+        };
+    }
+
     public static DBColumn elapsedtime2(ViewDecorator table, String... args) {
         return table.column(END).minus(table.column(START)).epoch();
     }
