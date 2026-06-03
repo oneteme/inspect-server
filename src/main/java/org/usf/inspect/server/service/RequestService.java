@@ -7,16 +7,86 @@ import static java.util.UUID.fromString;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static org.usf.inspect.core.ExecutorServiceWrapper.wrap;
-import static org.usf.inspect.server.Utils.*;
-import static org.usf.inspect.server.config.TraceApiColumn.*;
+import static org.usf.inspect.server.Utils.fromNullableTimestamp;
+import static org.usf.inspect.server.Utils.requireSingle;
+import static org.usf.inspect.server.Utils.virtualThreadExecutor;
+import static org.usf.inspect.server.config.TraceApiColumn.ADDRESS;
+import static org.usf.inspect.server.config.TraceApiColumn.API_NAME;
+import static org.usf.inspect.server.config.TraceApiColumn.APP_NAME;
+import static org.usf.inspect.server.config.TraceApiColumn.AUTH;
+import static org.usf.inspect.server.config.TraceApiColumn.BODY_CONTENT;
+import static org.usf.inspect.server.config.TraceApiColumn.CACHE_CONTROL;
+import static org.usf.inspect.server.config.TraceApiColumn.CLIENT_VERSION;
+import static org.usf.inspect.server.config.TraceApiColumn.COMMAND;
+import static org.usf.inspect.server.config.TraceApiColumn.CONTENT_ENCODING_IN;
+import static org.usf.inspect.server.config.TraceApiColumn.CONTENT_ENCODING_OUT;
+import static org.usf.inspect.server.config.TraceApiColumn.DB;
+import static org.usf.inspect.server.config.TraceApiColumn.DB_NAME;
+import static org.usf.inspect.server.config.TraceApiColumn.DB_VERSION;
+import static org.usf.inspect.server.config.TraceApiColumn.DRIVER;
+import static org.usf.inspect.server.config.TraceApiColumn.END;
+import static org.usf.inspect.server.config.TraceApiColumn.ENVIRONEMENT;
+import static org.usf.inspect.server.config.TraceApiColumn.ERR_MSG;
+import static org.usf.inspect.server.config.TraceApiColumn.ERR_TYPE;
+import static org.usf.inspect.server.config.TraceApiColumn.FAILED;
+import static org.usf.inspect.server.config.TraceApiColumn.HOST;
+import static org.usf.inspect.server.config.TraceApiColumn.ID;
+import static org.usf.inspect.server.config.TraceApiColumn.INSTANCE_ENV;
+import static org.usf.inspect.server.config.TraceApiColumn.LINKED;
+import static org.usf.inspect.server.config.TraceApiColumn.LOCATION;
+import static org.usf.inspect.server.config.TraceApiColumn.MASK;
+import static org.usf.inspect.server.config.TraceApiColumn.MEDIA;
+import static org.usf.inspect.server.config.TraceApiColumn.METHOD;
+import static org.usf.inspect.server.config.TraceApiColumn.NAME;
+import static org.usf.inspect.server.config.TraceApiColumn.OS;
+import static org.usf.inspect.server.config.TraceApiColumn.PARENT;
+import static org.usf.inspect.server.config.TraceApiColumn.PATH;
+import static org.usf.inspect.server.config.TraceApiColumn.PORT;
+import static org.usf.inspect.server.config.TraceApiColumn.PROTOCOL;
+import static org.usf.inspect.server.config.TraceApiColumn.QUERY;
+import static org.usf.inspect.server.config.TraceApiColumn.RE;
+import static org.usf.inspect.server.config.TraceApiColumn.SCHEMA;
+import static org.usf.inspect.server.config.TraceApiColumn.SERVER_VERSION;
+import static org.usf.inspect.server.config.TraceApiColumn.SIZE_IN;
+import static org.usf.inspect.server.config.TraceApiColumn.SIZE_OUT;
+import static org.usf.inspect.server.config.TraceApiColumn.START;
+import static org.usf.inspect.server.config.TraceApiColumn.STATUS;
+import static org.usf.inspect.server.config.TraceApiColumn.THREAD;
+import static org.usf.inspect.server.config.TraceApiColumn.TYPE;
+import static org.usf.inspect.server.config.TraceApiColumn.USER;
+import static org.usf.inspect.server.config.TraceApiColumn.USER_AGT;
 import static org.usf.inspect.server.config.TraceApiDatabase.INSPECT;
-import static org.usf.inspect.server.config.TraceApiTable.*;
-import static org.usf.inspect.server.config.constant.JoinConstant.*;
-import static org.usf.inspect.server.mapper.InspectMappers.*;
+import static org.usf.inspect.server.config.TraceApiTable.DATABASE_REQUEST;
+import static org.usf.inspect.server.config.TraceApiTable.EXCEPTION;
+import static org.usf.inspect.server.config.TraceApiTable.FTP_REQUEST;
+import static org.usf.inspect.server.config.TraceApiTable.INSTANCE;
+import static org.usf.inspect.server.config.TraceApiTable.LDAP_REQUEST;
+import static org.usf.inspect.server.config.TraceApiTable.MAIN_SESSION;
+import static org.usf.inspect.server.config.TraceApiTable.REST_REQUEST;
+import static org.usf.inspect.server.config.TraceApiTable.REST_SESSION;
+import static org.usf.inspect.server.config.TraceApiTable.SMTP_REQUEST;
+import static org.usf.inspect.server.config.constant.JoinConstant.DATABASE_REQUEST_JOIN;
+import static org.usf.inspect.server.config.constant.JoinConstant.EXCEPTION_JOIN;
+import static org.usf.inspect.server.config.constant.JoinConstant.FTP_REQUEST_JOIN;
+import static org.usf.inspect.server.config.constant.JoinConstant.INSTANCE_JOIN;
+import static org.usf.inspect.server.config.constant.JoinConstant.LDAP_REQUEST_JOIN;
+import static org.usf.inspect.server.config.constant.JoinConstant.SMTP_REQUEST_JOIN;
+import static org.usf.inspect.server.mapper.InspectMappers.getExceptionInfoIfNotNull;
+import static org.usf.inspect.server.mapper.InspectMappers.mainSessionForSearchMapper;
+import static org.usf.inspect.server.mapper.InspectMappers.restSessionShallowMapper;
 import static org.usf.jquery.core.DBColumn.column;
 import static org.usf.jquery.core.Mappers.toArray;
+
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
@@ -26,20 +96,35 @@ import java.util.stream.Stream;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-
 import org.usf.inspect.core.RequestMask;
 import org.usf.inspect.server.config.TraceApiColumn;
 import org.usf.inspect.server.config.TraceApiTable;
 import org.usf.inspect.server.dao.RequestDao;
-import org.usf.inspect.server.dto.*;
+import org.usf.inspect.server.dto.DatabaseRequestDto;
+import org.usf.inspect.server.dto.DirectoryRequestDto;
+import org.usf.inspect.server.dto.FtpRequestDto;
+import org.usf.inspect.server.dto.MailRequestDto;
+import org.usf.inspect.server.dto.MainSessionDto;
+import org.usf.inspect.server.dto.RestRequestDto;
+import org.usf.inspect.server.dto.RestSessionDto;
 import org.usf.inspect.server.exception.PayloadTooLargeException;
-import org.usf.inspect.server.model.*;
+import org.usf.inspect.server.model.Architecture;
+import org.usf.inspect.server.model.RequestType;
 import org.usf.inspect.server.model.Session;
 import org.usf.inspect.server.model.filter.JqueryMainSessionFilter;
 import org.usf.inspect.server.model.filter.JqueryRequestFilter;
 import org.usf.inspect.server.model.filter.JqueryRequestSessionFilter;
-import org.usf.inspect.server.model.wrapper.*;
-import org.usf.jquery.core.*;
+import org.usf.inspect.server.model.wrapper.DatabaseRequestWrapper;
+import org.usf.inspect.server.model.wrapper.DirectoryRequestWrapper;
+import org.usf.inspect.server.model.wrapper.FtpRequestWrapper;
+import org.usf.inspect.server.model.wrapper.MailRequestWrapper;
+import org.usf.inspect.server.model.wrapper.MainSessionWrapper;
+import org.usf.inspect.server.model.wrapper.RestRequestWrapper;
+import org.usf.inspect.server.model.wrapper.RestSessionWrapper;
+import org.usf.jquery.core.DBColumn;
+import org.usf.jquery.core.DBFilter;
+import org.usf.jquery.core.NamedColumn;
+import org.usf.jquery.core.QueryComposer;
 import org.usf.jquery.web.ColumnDecorator;
 import org.usf.jquery.web.ViewDecorator;
 
@@ -619,7 +704,7 @@ public class RequestService {
         var v = new QueryComposer()
                 .columns(
                         getColumns(
-                                DATABASE_REQUEST, ID, HOST ,DB, START, END, THREAD, COMMAND, FAILED, SCHEMA, USER, PARENT
+                                DATABASE_REQUEST, ID, HOST ,DB, START, END, THREAD, COMMAND, FAILED, SCHEMA, USER, PARENT,DB_NAME
                         ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .joins(DATABASE_REQUEST.join(EXCEPTION_JOIN))
@@ -641,6 +726,7 @@ public class RequestService {
                 out.setSchema(rs.getString(SCHEMA.reference()));
                 out.setUser(rs.getString(USER.reference()));
                 out.setSessionId(rs.getString(PARENT.reference()));
+                out.setProductName(rs.getString(DB_NAME.reference()));
                 out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
                 outs.add(out);
             }
