@@ -9,8 +9,7 @@ import static org.usf.inspect.server.config.TraceApiColumn.SIZE_IN;
 import static org.usf.inspect.server.config.TraceApiColumn.SIZE_OUT;
 import static org.usf.inspect.server.config.TraceApiColumn.START;
 import static org.usf.inspect.server.config.TraceApiColumn.STATUS;
-import static org.usf.inspect.server.config.TraceApiTable.EXCEPTION;
-import static org.usf.inspect.server.config.TraceApiTable.REST_REQUEST;
+import static org.usf.inspect.server.config.TraceApiTable.*;
 import static org.usf.jquery.core.ComparisonExpression.eq;
 import static org.usf.jquery.core.ComparisonExpression.ge;
 import static org.usf.jquery.core.ComparisonExpression.isNotNull;
@@ -171,6 +170,15 @@ public class FilterConstant {
                 .when(ge(200).and(lt(400)), null)
                 .when(ge(400).and(lt(500)), "ClientError")
                 .when(ge(500), "ServerError")
+                .end();
+    }
+
+    public static DBColumn errorTypeExpressionsSession(ViewDecorator table, String... args) {
+        var status = table.column(STATUS);
+        return status.toCase()
+                .when(ge(200).and(lt(400)), null)
+                .when(ge(400).and(lt(500)), "ClientError")
+                .when(ge(500), REST_SESSION.column(ERR_TYPE))
                 .end();
     }
 
