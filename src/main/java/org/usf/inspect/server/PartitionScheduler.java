@@ -1,7 +1,6 @@
 package org.usf.inspect.server;
 
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -18,7 +17,6 @@ import static java.util.Optional.ofNullable;
 import static org.usf.inspect.server.model.PartitionedTable.*;
 
 @Service
-@Slf4j
 @Setter
 @ConditionalOnProperty(prefix = "inspect.server.partition", name="enabled", havingValue = "true")
 public class PartitionScheduler {
@@ -31,10 +29,10 @@ public class PartitionScheduler {
         this.properties = conf.getPartition();
     }
 
-    @Scheduled(cron= "${inspect.server.partition.schedule:0 0 0 L * ?}")
     @TraceableStage
+    @Scheduled(cron= "${inspect.server.partition.schedule:0 0 0 L * ?}")
     public void createPartition(){
-        YearMonth now = YearMonth.now().plusMonths(1);
+        var now = YearMonth.now().plusMonths(1);
         scriptService.createPartitions(now, now, toConfigMap());
     }
 

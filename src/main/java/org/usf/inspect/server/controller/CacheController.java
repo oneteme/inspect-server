@@ -1,11 +1,7 @@
 package org.usf.inspect.server.controller;
 
-import static java.util.Arrays.asList;
-import static java.util.Objects.nonNull;
-import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-import static org.usf.inspect.core.DispatchState.DISABLE;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -13,13 +9,15 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.server.service.DatabaseDispatcherService;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.extern.slf4j.Slf4j;
+import org.usf.inspect.server.service.TracePersistenceService;
 
 import java.io.IOException;
+
+import static java.util.Arrays.asList;
+import static java.util.Objects.nonNull;
+import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.usf.inspect.core.DispatchState.DISABLE;
 
 @Slf4j
 @CrossOrigin
@@ -27,7 +25,7 @@ import java.io.IOException;
 @RequestMapping(value = "cache", produces = APPLICATION_JSON_VALUE)
 public class CacheController {
 
-    private final DatabaseDispatcherService service;
+    private final TracePersistenceService service;
     private final RestTemplate template;
     private final ObjectMapper mapper;
 
@@ -37,7 +35,7 @@ public class CacheController {
     @Value("${inspect.server.cache.import.host:}")
 	private String host;
 
-	public CacheController(ObjectMapper mapper, DatabaseDispatcherService service, RestTemplateBuilder builder) {
+	public CacheController(ObjectMapper mapper, TracePersistenceService service, RestTemplateBuilder builder) {
 		this.service = service;
 		this.mapper = mapper;
 		this.template = builder //load interceptors
@@ -70,7 +68,7 @@ public class CacheController {
         }
 
         if(file.isEmpty()) {
-            throw new IllegalArgumentException("Le fichier ne peut pas être vide"); //fr_en !?
+            throw new IllegalArgumentException("Le fichier ne peut pas être vide"); //TODO i18n
         }
 
         try {
@@ -84,8 +82,8 @@ public class CacheController {
             }
             return 0;
         } catch (IOException e) {
-            log.error("Erreur lors de la lecture du fichier", e);
-            throw new RuntimeException("Erreur lors de la lecture du fichier: " + e.getMessage(), e);
+            log.error("Erreur lors de la lecture du fichier", e); //TODO i18n
+            throw new RuntimeException("Erreur lors de la lecture du fichier: " + e.getMessage(), e); //TODO i18n
         }
     }
 }
