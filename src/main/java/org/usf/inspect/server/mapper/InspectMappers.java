@@ -292,7 +292,6 @@ public final class InspectMappers {
         if (rs.next()) {
             DatabaseRequest out = createBaseDatabaseRequest(rs);
             out.setDriverVersion(rs.getString(DRIVER.reference()));
-            out.setProductName(rs.getString(DB_NAME.reference()));
             out.setProductVersion(rs.getString(DB_VERSION.reference()));
             out.setPort(rs.getInt(PORT.reference()));
             out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
@@ -315,6 +314,7 @@ public final class InspectMappers {
         out.setThreadName(rs.getString(THREAD.reference()));
         out.setCommand(rs.getString(COMMAND.reference()));
         out.setSchema(rs.getString(SCHEMA.reference()));
+        out.setProductName(rs.getString(DB_NAME.reference()));
         out.setFailed(rs.getBoolean(FAILED.reference()));
         return out;
     }

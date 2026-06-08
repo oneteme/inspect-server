@@ -340,7 +340,7 @@ public class RequestController {
     public ResponseEntity<List<DatabaseRequestDto>> getDatabaseRequests(
             @QueryRequestFilter(
                     view = "database_request",
-                    column = "id,host,db,start,end,user,thread,command,schema,failed,exception.err_type,exception.err_msg",
+                    column = "id,host,db,db_name,start,end,user,thread,command,schema,failed,exception.err_type,exception.err_msg",
                     join = "exception",
                     order = "start") QueryComposer request, @PathVariable String idSession) {
         return ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.databaseRequestLazyMapper()));
