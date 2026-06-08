@@ -70,6 +70,8 @@ public enum TraceApiColumn implements ColumnDecorator {
     DB_VERSION("dbVersion"),
     COMMAND("command"),
     ACTION_COUNT("actionCount"),
+    ERROR_TYPE_SESSION("errorTypeSession", FilterConstant::errorTypeExpressionsSession),
+
     ARG("arg"),
     PARENT("parent"){
         @Override
