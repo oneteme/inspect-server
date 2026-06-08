@@ -6,11 +6,11 @@ server:
     min-response-size: 1MB
 spring:
   security:
-    enabled: true
+    enabled: false
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: https://dev-qn7fyjzc1fz15687.eu.auth0.com/
+          issuer-uri: ''
   servlet:
     multipart:
       max-file-size: 50MB
