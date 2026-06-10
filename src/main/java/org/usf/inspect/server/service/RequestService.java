@@ -131,26 +131,26 @@ public class RequestService {
     private final JdbcTemplate template;
     private final RequestDao dao;
     private final int requestLimit = 300000;
-    private final ExecutorService executorService = wrap(virtualThreadExecutor("inspect-tree", 5));
+    private final ExecutorService executorService = wrap(virtualThreadExecutor("inspect-tree", 10));
 
     public Session getMainTree(String id)  {
         var prntIds = CompletableFuture.supplyAsync(()-> dao.selectChildsById(id));
         var session = requireSingle(getMainSessions(Collections.singletonList(id)));
         if(session != null) {
-            getRestSessionsForTree(prntIds.join(), session);
+            updateSessionsForTree(prntIds.join(), session);
             return session;
         }
-        throw new NoSuchElementException();
+        throw new NoSuchElementException("no main session found");
     }
 
     public Session getRestTree(String id)  {
         var prntIds = CompletableFuture.supplyAsync(()-> dao.selectChildsById(id));
         var session = requireSingle(getRestSessions(Collections.singletonList(id),null));
         if(session != null) {
-            getRestSessionsForTree(prntIds.join(), session);
+            updateSessionsForTree(prntIds.join(), session);
             return session;
         }
-        throw new NoSuchElementException();
+        throw new NoSuchElementException("no rest session found");
     }
 
     public List<Architecture> createArchitecture(Instant start, Instant end, String[] env){
@@ -276,12 +276,9 @@ public class RequestService {
     }
 
 
-    public List<Session> getRestSessionsForTree(Collection<String> ids, Session parent)  {
-        if (ids.isEmpty()) {
-            return new ArrayList<>();
-        }
+    public void updateSessionsForTree(Collection<String> ids, Session parent)  {
         var start = parent.getStart();
-        List<Session> sessions = getRestSessions(ids, start);
+        var sessions = getRestSessions(ids, start);
         if (!sessions.isEmpty()) {
             sessions.add(parent);
             var reqMap = sessions.stream().collect(toMap(Session::getId, identity()));
@@ -294,16 +291,12 @@ public class RequestService {
                         combinedMask |= mask;
                 }
             }
-
             var futures = new ArrayList<CompletableFuture<?>>();
             if (RequestMask.REST.is(combinedMask)) {
                 futures.add(CompletableFuture.runAsync(() -> getRestRequestsCompleteForParent(reqMap.keySet(), start).forEach(r -> {
                     reqMap.get(r.getSessionId()).getRestRequests().add(r);
                     r.setRemoteTrace((RestSessionWrapper) reqMap.get(r.getId()));
                 }), executorService));
-            }
-            if (RequestMask.JDBC.is(combinedMask)) {
-                futures.add(CompletableFuture.runAsync(() -> getDatabaseRequestsComplete(reqMap.keySet(), start).forEach(q -> reqMap.get(q.getSessionId()).getDatabaseRequests().add(q)), executorService));
             }
             if (RequestMask.FTP.is(combinedMask)) {
                 futures.add(CompletableFuture.runAsync(() -> getFtpRequestsComplete(reqMap.keySet(), start).forEach(q -> reqMap.get(q.getSessionId()).getFtpRequests().add(q)), executorService));
@@ -314,9 +307,11 @@ public class RequestService {
             if (RequestMask.LDAP.is(combinedMask)) {
                 futures.add(CompletableFuture.runAsync(() -> getLdapRequestsComplete(reqMap.keySet(), start).forEach(q -> reqMap.get(q.getSessionId()).getLdapRequests().add(q)), executorService));
             }
+            if (RequestMask.JDBC.is(combinedMask)) {
+                getDatabaseRequestsComplete(reqMap.keySet(), start).forEach(q -> reqMap.get(q.getSessionId()).getDatabaseRequests().add(q));
+            }
             CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
         }
-        return sessions;
     }
 
     /**
