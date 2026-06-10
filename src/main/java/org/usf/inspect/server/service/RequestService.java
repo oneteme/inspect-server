@@ -134,7 +134,7 @@ public class RequestService {
     private final ExecutorService executorService = wrap(virtualThreadExecutor("inspect-tree", 10));
 
     public Session getMainTree(String id)  {
-        var prntIds = CompletableFuture.supplyAsync(()-> dao.selectChildsById(id));
+        var prntIds = CompletableFuture.supplyAsync(()-> dao.selectChildsById(id), executorService);
         var session = requireSingle(getMainSessions(Collections.singletonList(id)));
         if(session != null) {
             updateSessionsForTree(prntIds.join(), session);
@@ -144,7 +144,7 @@ public class RequestService {
     }
 
     public Session getRestTree(String id)  {
-        var prntIds = CompletableFuture.supplyAsync(()-> dao.selectChildsById(id));
+        var prntIds = CompletableFuture.supplyAsync(()-> dao.selectChildsById(id), executorService);
         var session = requireSingle(getRestSessions(Collections.singletonList(id),null));
         if(session != null) {
             updateSessionsForTree(prntIds.join(), session);
