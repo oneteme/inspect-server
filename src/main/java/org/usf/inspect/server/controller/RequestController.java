@@ -264,16 +264,22 @@ public class RequestController {
 
     @GetMapping("session/main/{id}/tree")
     public ResponseEntity<Session> getMainTree(@PathVariable String id)  {
-        return Optional.ofNullable(requestService.getMainTree(id))
-                .map(o -> o.wasCompleted() ? ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o) : ok().body(o))
-                .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
+        try {
+            var result = requestService.getMainTree(id);
+            return result.wasCompleted() ? ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(result) : ok().body(result);
+        } catch (NoSuchElementException e) {
+            return status(HttpStatus.NOT_FOUND).body(null);
+        }
     }
 
     @GetMapping("session/rest/{id}/tree")
     public ResponseEntity<Session> getRestTree(@PathVariable String id)  {
-        return Optional.ofNullable(requestService.getRestTree(id))
-                .map(o -> o.wasCompleted() ? ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o) : ok().body(o))
-                .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
+        try {
+            var result = requestService.getRestTree(id);
+            return result.wasCompleted() ? ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(result) : ok().body(result);
+        } catch (NoSuchElementException e) {
+            return status(HttpStatus.NOT_FOUND).body(null);
+        }
     }
 
     @GetMapping("session/main") // can't optimise, done

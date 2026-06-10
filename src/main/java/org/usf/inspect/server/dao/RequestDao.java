@@ -4,8 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Repository
@@ -14,7 +15,7 @@ public class RequestDao {
 
 	private final JdbcTemplate template;
 
-    public List<String> selectChildsById(String id) {
+    public Set<String> selectChildsById(String id) {
         var query = "with recursive recusive(prnt,chld) as (" +
                 " select null::uuid as prnt, ?::uuid as chld " +
                 " union all " +
@@ -22,9 +23,11 @@ public class RequestDao {
                 " from E_RST_RQT, recusive " +
                 " where recusive.chld = E_RST_RQT.CD_PRN_SES " +
                 ") select distinct(chld) from recusive";
-        return template.query(query, (rs, row) -> rs.getString("chld"), id).stream()
+        var set = template.query(query, (rs, row) -> rs.getString("chld"), id).stream()
         		.filter(Objects::nonNull)
-        		.toList();
+        		.collect(Collectors.toSet());
+        set.remove(id);
+        return set;
     }
 }
 

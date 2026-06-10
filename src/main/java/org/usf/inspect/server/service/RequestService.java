@@ -78,15 +78,7 @@ import static org.usf.jquery.core.DBColumn.column;
 import static org.usf.jquery.core.Mappers.toArray;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
@@ -142,37 +134,23 @@ public class RequestService {
     private final ExecutorService executorService = wrap(virtualThreadExecutor("inspect-tree", 5));
 
     public Session getMainTree(String id)  {
-        List<String> prntIds = dao.selectChildsById(id);
-        List<Session> prntIncList = getRestSessionsForTree(prntIds, id);
-        Session session = getMainSessionForTree(id);
-        if(session != null){
-            prntIncList.add(session);
+        var prntIds = CompletableFuture.supplyAsync(()-> dao.selectChildsById(id));
+        var session = requireSingle(getMainSessions(Collections.singletonList(id)));
+        if(session != null) {
+            getRestSessionsForTree(prntIds.join(), session);
+            return session;
         }
-        createTree(prntIncList);
-        return prntIncList.stream().filter(r ->  r.getId().equals(id)).findFirst().orElseThrow();
+        throw new NoSuchElementException();
     }
 
     public Session getRestTree(String id)  {
-        List<String> prntIds = dao.selectChildsById(id);
-        List<Session> prntIncList = getRestSessionsForTree(prntIds, id);
-        createTree(prntIncList);
-        return prntIncList.stream().filter(r ->  r.getId().equals(id)).findFirst().orElseThrow();
-    }
-
-    private void createTree(List<Session> sessions) {
-        sessions.forEach(prntA ->
-                sessions.forEach(prntB -> {
-                    if (!Objects.equals(prntA.getId(), prntB.getId())){
-                        Optional<RestRequestWrapper> opt = prntB.getRestRequests() != null ? prntB.getRestRequests().stream()
-                                .filter(k -> prntA.getId().equals(k.getId()))
-                                .findFirst() : Optional.empty();
-                        if (opt.isPresent()) {
-                            var ex = opt.get();
-                            ex.setRemoteTrace((RestSessionWrapper) prntA);
-                        }
-                    }
-                })
-        );
+        var prntIds = CompletableFuture.supplyAsync(()-> dao.selectChildsById(id));
+        var session = requireSingle(getRestSessions(Collections.singletonList(id),null));
+        if(session != null) {
+            getRestSessionsForTree(prntIds.join(), session);
+            return session;
+        }
+        throw new NoSuchElementException();
     }
 
     public List<Architecture> createArchitecture(Instant start, Instant end, String[] env){
@@ -298,47 +276,43 @@ public class RequestService {
     }
 
 
-    public List<Session> getRestSessionsForTree(List<String> ids, String parent)  {
+    public List<Session> getRestSessionsForTree(Collection<String> ids, Session parent)  {
         if (ids.isEmpty()) {
             return new ArrayList<>();
         }
-        var start = getSessionStartByIds(parent);
+        var start = parent.getStart();
         List<Session> sessions = getRestSessions(ids, start);
         if (!sessions.isEmpty()) {
-            var reqMap = sessions.stream().collect(toMap(Session::getId, identity(), (a, b) -> a, () -> new HashMap<>(sessions.size())));
+            sessions.add(parent);
+            var reqMap = sessions.stream().collect(toMap(Session::getId, identity()));
 
             // Déterminer les types de requêtes présents via le mask combiné
             int combinedMask = 0;
-            for (var session : sessions) {
-                if (session instanceof RestSessionWrapper rsw) {
+            for (var s : sessions) {
+                if (s instanceof RestSessionWrapper rsw) {
                     var mask = rsw.getRequestsMask();
                         combinedMask |= mask;
                 }
             }
 
             var futures = new ArrayList<CompletableFuture<?>>();
-            var parentIds = reqMap.keySet().stream().toList();
-            boolean loadAll = RequestMask.ASYNC.is(combinedMask);
-
-            if (loadAll || RequestMask.REST.is(combinedMask)) {
-                addFuture(futures, () -> getRestRequestsCompleteForParent(parentIds, start),
-                        list -> list.forEach(r -> reqMap.get(r.getSessionId()).getRestRequests().add(r)));
+            if (RequestMask.REST.is(combinedMask)) {
+                futures.add(CompletableFuture.runAsync(() -> getRestRequestsCompleteForParent(reqMap.keySet(), start).forEach(r -> {
+                    reqMap.get(r.getSessionId()).getRestRequests().add(r);
+                    r.setRemoteTrace((RestSessionWrapper) reqMap.get(r.getId()));
+                }), executorService));
             }
-            if (loadAll || RequestMask.JDBC.is(combinedMask)) {
-                addFuture(futures, () -> getDatabaseRequestsComplete(parentIds, start),
-                        list -> list.forEach(q -> reqMap.get(q.getSessionId()).getDatabaseRequests().add(q)));
+            if (RequestMask.JDBC.is(combinedMask)) {
+                futures.add(CompletableFuture.runAsync(() -> getDatabaseRequestsComplete(reqMap.keySet(), start).forEach(q -> reqMap.get(q.getSessionId()).getDatabaseRequests().add(q)), executorService));
             }
-            if (loadAll || RequestMask.FTP.is(combinedMask)) {
-                addFuture(futures, () -> getFtpRequestsComplete(parentIds, start),
-                        list -> list.forEach(q -> reqMap.get(q.getSessionId()).getFtpRequests().add(q)));
+            if (RequestMask.FTP.is(combinedMask)) {
+                futures.add(CompletableFuture.runAsync(() -> getFtpRequestsComplete(reqMap.keySet(), start).forEach(q -> reqMap.get(q.getSessionId()).getFtpRequests().add(q)), executorService));
             }
-            if (loadAll || RequestMask.SMTP.is(combinedMask)) {
-                addFuture(futures, () -> getSmtpRequestsComplete(parentIds, start),
-                        list -> list.forEach(q -> reqMap.get(q.getSessionId()).getMailRequests().add(q)));
+            if (RequestMask.SMTP.is(combinedMask)) {
+                futures.add(CompletableFuture.runAsync(() -> getSmtpRequestsComplete(reqMap.keySet(), start).forEach(q -> reqMap.get(q.getSessionId()).getMailRequests().add(q)), executorService));
             }
-            if (loadAll || RequestMask.LDAP.is(combinedMask)) {
-                addFuture(futures, () -> getLdapRequestsComplete(parentIds, start),
-                        list -> list.forEach(q -> reqMap.get(q.getSessionId()).getLdapRequests().add(q)));
+            if (RequestMask.LDAP.is(combinedMask)) {
+                futures.add(CompletableFuture.runAsync(() -> getLdapRequestsComplete(reqMap.keySet(), start).forEach(q -> reqMap.get(q.getSessionId()).getLdapRequests().add(q)), executorService));
             }
             CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
         }
@@ -386,7 +360,7 @@ public class RequestService {
         });
     }
 
-    public List<Session> getRestSessions(List<String> ids, Instant start)  { // remove if possible after optimizing tree
+    public List<Session> getRestSessions(Collection<String> ids, Instant start)  { // remove if possible after optimizing tree
         var v = new QueryComposer()
                 .columns(
                     getColumns(
@@ -454,47 +428,6 @@ public class RequestService {
             return sessions;
         });
     }
-
-    public Session getMainSessionForTree(String id)  {
-        Session session = requireSingle(getMainSessions(Collections.singletonList(id)));
-        if (session != null) {
-            var sid = session.getId();
-
-            int mask = 0;
-            if (session instanceof MainSessionWrapper msw) {
-                mask = msw.getRequestsMask();
-            }
-            boolean loadAll = mask < 0 || RequestMask.ASYNC.is(mask);
-
-            var sessionStart = session.getStart();
-            var futures = new ArrayList<CompletableFuture<?>>();
-
-            if (loadAll || RequestMask.REST.is(mask)) {
-                addFuture(futures, () -> getRestRequestsCompleteForParent(Collections.singletonList(sid), sessionStart),
-                        list -> list.forEach(r -> session.getRestRequests().add(r)));
-            }
-            if (loadAll || RequestMask.JDBC.is(mask)) {
-                addFuture(futures, () -> getDatabaseRequestsComplete(sid, sessionStart),
-                        list -> list.forEach(r -> session.getDatabaseRequests().add(r)));
-            }
-            if (loadAll || RequestMask.FTP.is(mask)) {
-                addFuture(futures, () -> getFtpRequestsComplete(sid, sessionStart),
-                        list -> list.forEach(r -> session.getFtpRequests().add(r)));
-            }
-            if (loadAll || RequestMask.SMTP.is(mask)) {
-                addFuture(futures, () -> getSmtpRequestsComplete(sid, sessionStart),
-                        list -> list.forEach(r -> session.getMailRequests().add(r)));
-            }
-            if (loadAll || RequestMask.LDAP.is(mask)) {
-                addFuture(futures, () -> getLdapRequestsComplete(sid, sessionStart),
-                        list -> list.forEach(r -> session.getLdapRequests().add(r)));
-            }
-
-            CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
-        }
-        return session;
-    }
-
     /**
      * @deprecated
      */
@@ -587,7 +520,7 @@ public class RequestService {
         });
     }
 
-    public List<RestRequestWrapper> getRestRequestsCompleteForParent(List<String> cdSession, Instant start)  {
+    public List<RestRequestWrapper> getRestRequestsCompleteForParent(Collection<String> cdSession, Instant start)  {
         var idFilter = column("cd_prn_ses").in(cdSession.stream().map(UUID::fromString).toArray());
         if (start != null) {
             return getRestRequestsCompleteByFilters(new DBFilter[]{idFilter, REST_REQUEST.column(START).ge(from(start))});
@@ -687,7 +620,7 @@ public class RequestService {
         });
     }
 
-    public List<DatabaseRequestWrapper> getDatabaseRequestsComplete(List<String> cdSession, Instant start)  {
+    public List<DatabaseRequestWrapper> getDatabaseRequestsComplete(Collection<String> cdSession, Instant start)  {
         return getDatabaseRequestsComplete(column("cd_prn_ses").in(cdSession.stream().map(UUID::fromString).toArray()), start);
     }
 
@@ -772,7 +705,7 @@ public class RequestService {
         });
     }
 
-    public List<FtpRequestWrapper> getFtpRequestsComplete(List<String> cdSession, Instant start)  {
+    public List<FtpRequestWrapper> getFtpRequestsComplete(Collection<String> cdSession, Instant start)  {
         return getFtpRequestsComplete(column("cd_prn_ses").in(cdSession.stream().map(UUID::fromString).toArray()), start);
     }
 
@@ -853,7 +786,7 @@ public class RequestService {
         });
     }
 
-    public List<MailRequestWrapper> getSmtpRequestsComplete(List<String> cdSession, Instant start) {
+    public List<MailRequestWrapper> getSmtpRequestsComplete(Collection<String> cdSession, Instant start) {
         return getSmtpRequestsComplete(column("cd_prn_ses").in(cdSession.stream().map(UUID::fromString).toArray()), start);
     }
 
@@ -929,7 +862,7 @@ public class RequestService {
         });
     }
 
-    public List<DirectoryRequestWrapper> getLdapRequestsComplete(List<String> cdSession, Instant start)  {
+    public List<DirectoryRequestWrapper> getLdapRequestsComplete(Collection<String> cdSession, Instant start)  {
         return getLdapRequestsComplete(column("cd_prn_ses").in(cdSession.stream().map(UUID::fromString).toArray()), start);
     }
 
@@ -1036,9 +969,6 @@ public class RequestService {
     public Instant getSessionStartByIds(String parent) {
         var filter = column("id_ses").eq(fromString(parent));
         Instant start = getSessionStartByFilter(REST_SESSION, filter);
-        if (start == null) {
-            start = getSessionStartByFilter(MAIN_SESSION, filter);
-        }
         return start;
     }
 
