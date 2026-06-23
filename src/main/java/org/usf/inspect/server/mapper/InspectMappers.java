@@ -179,7 +179,7 @@ public final class InspectMappers {
         return restSession;
     }
 
-    public static ResultSetMapper<RestSession> restSessionResultSetMapper(ObjectMapper mapper) throws SQLException {
+    public static ResultSetMapper<RestSession> restSessionResultSetMapper(ObjectMapper mapper) {
         return rs->{
             if (rs.next()) {
                 RestSession out = defaultRestSessionMapper(rs);
@@ -207,7 +207,7 @@ public final class InspectMappers {
         };
     }
 
-    public static ResultSetMapper<MainSession> createBaseMainSession(ObjectMapper mapper) throws SQLException {
+    public static ResultSetMapper<MainSession> createBaseMainSession(ObjectMapper mapper) {
         return rs-> {
             if (rs.next()) {
                 MainSession out = new MainSession();

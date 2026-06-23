@@ -20,7 +20,9 @@ public class MailRequest extends AbstractRequest {
 	private int port;
 	private boolean failed;
 
-	@JsonCreator public MailRequest() { }
+	@JsonCreator public MailRequest() {
+        // empty
+    }
 
 	public MailRequestSignal toRequest() {
         MailRequestSignal req = new MailRequestSignal(getId(), getSessionId(), getStart(), getThreadName());
