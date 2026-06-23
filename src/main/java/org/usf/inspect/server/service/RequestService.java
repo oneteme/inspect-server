@@ -356,6 +356,9 @@ public class RequestService {
     }
 
     public List<Session> getRestSessions(Collection<String> ids, Instant start)  { // remove if possible after optimizing tree
+        if (ids.isEmpty()) {
+            return new ArrayList<>();
+        }
         var v = new QueryComposer()
                 .columns(
                     getColumns(
