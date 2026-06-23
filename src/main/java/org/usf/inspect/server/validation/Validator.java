@@ -9,6 +9,6 @@ public class Validator implements ConstraintValidator<validate, Object> {
     }
     @Override
     public boolean isValid(Object value, ConstraintValidatorContext context) {
-        return value == null || condition.test(value.toString());
+        return value == null || condition.test(value);
     }
 }
