@@ -1,0 +1,106 @@
+package org.usf.inspect.server.controller;
+
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.usf.inspect.server.config.TraceApiDatabase.INSPECT;
+
+import java.util.List;
+
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.usf.jquery.core.DynamicModel;
+import org.usf.jquery.core.QueryComposer;
+//import org.usf.jquery.web.QueryRequest;
+import org.usf.jquery.web.proxy.MvcRequest;
+import org.usf.jquery.web.proxy.QueryRequest;
+import org.usf.jquery.web.proxy.ViewRegistry;
+
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+
+@CrossOrigin
+@RestController
+@RequestMapping(value = "test/jquery", produces = APPLICATION_JSON_VALUE)
+@RequiredArgsConstructor
+public class testV5 {
+
+    @GetMapping("session/main")
+    @QueryRequest(dataset = "main_session", fields = "count") 
+    public Object fetchMainSession(MvcRequest mvc, HttpServletResponse res) {
+        return mvc.execute(res);
+    }
+
+//    @GetMapping("session/rest")
+//    public List<DynamicModel> getRestSession(
+//    		@QueryRequest(view = "rest_session", defaultColumns = "count") QueryComposer query) {
+//        return INSPECT.execute(query);
+//    }
+    
+//    @GetMapping("request/rest")
+//    public List<DynamicModel> getRestRequest(
+//    		@QueryRequest(view = "rest_request", defaultColumns = "count") QueryComposer query) {
+//        return INSPECT.execute(query);
+//    }
+//
+//    @GetMapping("request/database")
+//    public List<DynamicModel> getDatabaseRequest(
+//            @QueryRequest(view = "database_request", defaultColumns = "count") QueryComposer query) {
+//        return INSPECT.execute(query);
+//    }
+//
+//    @GetMapping("request/ftp")
+//    public List<DynamicModel> getFtpRequest(
+//            @QueryRequest(view = "ftp_request", defaultColumns = "count") QueryComposer query) {
+//        return INSPECT.execute(query);
+//    }
+//
+//    @GetMapping("request/smtp")
+//    public List<DynamicModel> getSmtpRequest(
+//            @QueryRequest(view= "smtp_request", defaultColumns = "count") QueryComposer query) {
+//        return INSPECT.execute(query);
+//    }
+//
+//    @GetMapping("request/ldap")
+//    public List<DynamicModel> getLdapRequest(
+//            @QueryRequest(view = "ldap_request", defaultColumns = "count") QueryComposer query){
+//        return INSPECT.execute(query);
+//    }
+//
+//    @GetMapping("exception")
+//    public List<DynamicModel> getException(
+//            @QueryRequest(view = "exception", defaultColumns = "count") QueryComposer query) {
+//        return INSPECT.execute(query);
+//    }
+
+    @GetMapping("user/action")
+    public List<DynamicModel> getUserAction(
+            @QueryRequest(view = "user_action", defaultColumns = "count") QueryComposer query) {
+        return INSPECT.execute(query);
+    }
+
+    @GetMapping("instance")
+    public List<DynamicModel> getInstance(
+            @QueryRequest(view = "instance") QueryComposer query) {
+        return INSPECT.execute(query);
+    }
+
+    @GetMapping("instance/trace")
+    public List<DynamicModel> getInstanceTrace(
+            @QueryRequest(view = "instance_trace") QueryComposer query) {
+        return INSPECT.execute(query);
+    }
+
+    @GetMapping("resource/machine")
+    public List<DynamicModel> getResourceMachine(
+            @QueryRequest(view = "resource_usage") QueryComposer query) {
+        return INSPECT.execute(query);
+    }
+
+    @GetMapping("log/entry")
+    public List<DynamicModel> getLogEntry(
+            @QueryRequest(view = "log_entry") QueryComposer query) {
+        return INSPECT.execute(query);
+    }
+}

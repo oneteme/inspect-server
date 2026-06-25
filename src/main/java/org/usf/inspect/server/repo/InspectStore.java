@@ -1,6 +1,7 @@
 package org.usf.inspect.server.repo;
 
 import org.usf.jquery.web.proxy.Bind;
+import org.usf.jquery.web.proxy.Expose;
 import org.usf.jquery.web.proxy.StoreResource;
 
 public interface InspectStore extends StoreResource {
@@ -12,12 +13,14 @@ public interface InspectStore extends StoreResource {
 	RestRequestStage restRequestStage();
 	
 	@Bind("e_rst_ses")
+	@Expose(identity = "rest_session")
 	RestSession restSession();
 	
 	@Bind("e_rst_ses_stg")
 	RestSessionStage restSessionStage();
 	
 	@Bind("e_main_ses")
+	@Expose(identity = "main_session")
 	MainSession mainSession();
 	
 	@Bind("e_dtb_rqt")
@@ -67,4 +70,5 @@ public interface InspectStore extends StoreResource {
 	
 	@Bind("e_rsc_usg")
 	ResourceUsage resourceUsage();
+	
 }
