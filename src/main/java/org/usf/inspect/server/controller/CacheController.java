@@ -44,7 +44,7 @@ public class CacheController {
                 .build();
 	}
 
-    @PostMapping("{env}/import")
+    @PostMapping(value = "{env}/import", produces = APPLICATION_JSON_VALUE)
     public int importTraceable(@PathVariable String env) {
     	if(activeProfile.equals(env) && host != null) {
 	    	template.postForLocation(host + "/v4/trace/state/"+ DISABLE, null); //stop adding session first on remote server
@@ -61,7 +61,7 @@ public class CacheController {
     	throw new IllegalArgumentException(String.format("mismatch env (actual : %s, expected : %s)", activeProfile, env));
     }
 
-    @PostMapping("{env}/import/file")
+    @PostMapping(value = "{env}/import/file", produces = APPLICATION_JSON_VALUE)
     public int importTraceableFromFile(@PathVariable String env, @RequestParam("file") MultipartFile file) {
         if(!activeProfile.equals(env)) {
             throw new IllegalArgumentException(String.format("mismatch env (actual : %s, expected : %s)", activeProfile, env));

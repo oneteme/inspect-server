@@ -134,20 +134,18 @@ public class RequestService {
     private final ExecutorService executorService = wrap(virtualThreadExecutor("inspect-tree", 10));
 
     public Session getMainTree(String id)  {
-        var prntIds = CompletableFuture.supplyAsync(()-> dao.selectChildsById(id), executorService);
         var session = requireSingle(getMainSessions(Collections.singletonList(id)));
         if(session != null) {
-            updateSessionsForTree(prntIds.join(), session);
+            updateSessionsForTree(dao.selectChildsById(id, session.getStart()), session);
             return session;
         }
         throw new NoSuchElementException("no main session found");
     }
 
     public Session getRestTree(String id)  {
-        var prntIds = CompletableFuture.supplyAsync(()-> dao.selectChildsById(id), executorService);
         var session = requireSingle(getRestSessions(Collections.singletonList(id),null));
         if(session != null) {
-            updateSessionsForTree(prntIds.join(), session);
+            updateSessionsForTree(dao.selectChildsById(id, session.getStart()), session);
             return session;
         }
         throw new NoSuchElementException("no rest session found");
