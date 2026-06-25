@@ -1,7 +1,24 @@
 package org.usf.inspect.server.repo;
 
-import static org.usf.inspect.server.config.constant.FieldConstant.*;
+import static org.usf.inspect.server.config.constant.FieldConstant.DH_END;
+import static org.usf.inspect.server.config.constant.FieldConstant.DH_STR;
+import static org.usf.inspect.server.config.constant.FieldConstant.ID_INS;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_ADD_PRP;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_ADR;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_APP;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_BRCH;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_CLR;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_CNF;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_ENV;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_HSH;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_OS;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_RE;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_RSR;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_TYP;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_USR;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_VRS;
 
+import org.usf.jquery.core.Column;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.web.proxy.Bind;
 import org.usf.jquery.web.proxy.DatasetResource;
@@ -58,4 +75,8 @@ public interface Instance extends DatasetResource {
 	
 	@Bind(VA_ADD_PRP)
 	ViewColumn additionalProperties();
+	
+	default Column elapsedTime() {
+		return end().minus(start()).epoch();
+	}
 }

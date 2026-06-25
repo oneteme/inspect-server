@@ -80,6 +80,6 @@ public interface MainSession extends DatasetResource {
 	
 	@Expose(identity = "count_exception")
 	default Column countExceptions() {
-		return errType().toCase().when(isNotNull(), 1).orElse(0);
+		return errType().toCase().when(isNotNull(), 1).orElse(0).sum();
 	}
 }
