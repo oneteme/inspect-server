@@ -11,6 +11,7 @@ import org.usf.inspect.core.TraceUpdate;
 import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.core.TraceSignal;
 import org.usf.inspect.server.model.Pair;
+import org.usf.inspect.server.model.TraceBatchResolver;
 
 import java.time.Instant;
 import java.util.ArrayList;

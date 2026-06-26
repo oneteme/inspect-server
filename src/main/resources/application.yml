@@ -5,6 +5,12 @@ server:
     mime-types: application/json
     min-response-size: 1MB
 spring:
+  security:
+    enabled: false
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ''
   servlet:
     multipart:
       max-file-size: 50MB
@@ -34,6 +40,8 @@ logging:
     org.usf.jquery: DEBUG
     org.usf.inspect: DEBUG
     org.springframework.jdbc.core: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
 
 inspect:
   collector: 

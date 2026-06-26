@@ -1,13 +1,18 @@
 package org.usf.inspect.server;
 
+import static java.lang.Thread.ofVirtual;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
+import static java.util.concurrent.Executors.newFixedThreadPool;
+import static java.util.regex.Pattern.compile;
 import static java.util.stream.Collectors.joining;
 
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.concurrent.ExecutorService;
+import java.util.function.Predicate;
 import java.util.stream.LongStream;
 
 import lombok.AccessLevel;
@@ -15,7 +20,9 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class Utils {
-	
+
+    private static final Predicate<String> isUUID = compile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$").asPredicate();
+
     public static <T> T requireSingle(Collection<T> c){
     	if(isEmpty(c)) {
     		return null;
@@ -24,6 +31,10 @@ public final class Utils {
     		throw new IllegalArgumentException("too many results"); //custom exception
     	}
     	return c.iterator().next();
+    }
+
+    public static String joinValuesOrNull(String... args) {
+        return nonNull(args) ? String.join(", ", args) : null;
     }
 
     public static boolean isEmpty(Collection<?> c) {
@@ -48,6 +59,11 @@ public final class Utils {
 				: null;
 	}
 
+	public static ExecutorService virtualThreadExecutor(String name, int size) {
+		return newFixedThreadPool(size, ofVirtual().name(name + "-", 0).factory());
+	}
+
+	//TODO declare regex pattern as static final and reuse it
 	public static String userAgentExtract(String userAgent) {
 		if (userAgent == null) return null;
 		try {
@@ -115,4 +131,15 @@ public final class Utils {
 		}
 		return contentType;
 	}
+
+    public static String assertUUID(String uuid, String name) {
+        if (isUUID(uuid)) {
+            return uuid;
+        }
+        throw new IllegalArgumentException(name + " is not a valid UUID: " + uuid);
+    }
+
+    public static boolean isUUID(String uuid) {
+        return nonNull(uuid) && isUUID.test(uuid);
+    }
 }

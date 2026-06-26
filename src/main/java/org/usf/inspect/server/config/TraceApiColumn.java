@@ -70,6 +70,8 @@ public enum TraceApiColumn implements ColumnDecorator {
     DB_VERSION("dbVersion"),
     COMMAND("command"),
     ACTION_COUNT("actionCount"),
+    ERROR_TYPE_SESSION("errorTypeSession", FilterConstant::errorTypeExpressionsSession),
+
     ARG("arg"),
     PARENT("parent"){
         @Override
@@ -106,6 +108,9 @@ public enum TraceApiColumn implements ColumnDecorator {
     BODY_CONTENT("bodyContent"),
     //---
     ELAPSEDTIME("elapsedtime", FilterConstant::elapsedtime2, Builder.multiArgsCriteria(FilterConstant::elapsedTimeExpressions)),
+    ELAPSED_PERCENTILE("elapsedPercentile",FilterConstant::percentileElapsed),
+    ELAPSED_MEDIAN("elapsedMedian",FilterConstant::medianElapsed),
+
     //ERROR_TYPE("errorType", FilterConstant::errorTypeExpressions),
     ERROR_TYPE("errorType", FilterConstant::errorTypeExpressions),
     COUNT_SLOWEST("elapsedTimeSlowest", FilterConstant::elapsedTimeVerySlow),
@@ -131,7 +136,18 @@ public enum TraceApiColumn implements ColumnDecorator {
     COUNT_EXCEPTION("countException", FilterConstant::countExceptions), //isNull
     COUNT_EXCEPTION_REST("countExceptionRest", FilterConstant::countExceptionsRest), //isNull
     COUNT_NO_EXCEPTION("countNoException", FilterConstant::countNoExceptions), //isNull
-    ERR("err", FilterConstant::err);
+    ERR("err", FilterConstant::err),
+    SIZE_IN_NOTNULL("sizeIn", FilterConstant::sizeIn),
+    SIZE_OUT_NOTNULL("sizeOut", FilterConstant::sizeOut),
+    ELAPSED_TIME_ARG("elapsedTimeArg",FilterConstant::elapsedtime_by_args),
+    STATUS_TYPE("statusType", FilterConstant::StatusByType),
+    STATUS_TRANCHE("statusTranche", FilterConstant::statusTranche),
+    STATUS_MAIN_TRANCHE("statusMainTranche", FilterConstant::statusMainTranche),
+    STATUS_OK_CLIENT_SERVER_ERROR("statusOkClientServerError", FilterConstant::statusOkClientServerError),
+    PERFORMANCE_TRANCHE("performanceTranche", FilterConstant::performanceTranche),
+    PERFORMANCE_TRANCHE2("performanceTranche2", FilterConstant::performanceTranche2),
+    SIZE_IN_TRANCHE("sizeInTranche", FilterConstant::sizeInTranche),
+    SIZE_OUT_TRANCHE("sizeOutTranche", FilterConstant::sizeOutTranche);
 
     private final String out; //nullable
     private final Builder<ViewDecorator, DBColumn> columnTemplate;

@@ -11,15 +11,10 @@ import org.usf.inspect.server.model.LocalRequest;
 @Setter
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = LocalRequestWrapper.class)
 @Deprecated(since = "v1.1")
-public class LocalRequestWrapper implements Wrapper<LocalRequest> {
+public class LocalRequestWrapper {
     @Delegate
     @JsonIgnore
     private final LocalRequest request = new LocalRequest();
 
     private boolean failed;
-
-    @Override
-    public LocalRequest unwrap() {
-        return request;
-    }
 }

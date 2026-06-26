@@ -13,7 +13,7 @@ import org.usf.inspect.server.model.RestRequest;
 @Setter
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = RestRequestWrapper.class)
 @Deprecated(since = "v1.1")
-public class RestRequestWrapper implements EventTrace, Wrapper<RestRequest> {
+public class RestRequestWrapper implements EventTrace {
 
     @Delegate
     @JsonIgnore
@@ -23,9 +23,4 @@ public class RestRequestWrapper implements EventTrace, Wrapper<RestRequest> {
     private ExceptionInfo exception;
 
     private RestSessionWrapper remoteTrace;
-
-    @Override
-    public RestRequest unwrap() {
-        return request;
-    }
 }

@@ -21,79 +21,79 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class JQueryController {
 
-    @GetMapping("session/main")
+    @GetMapping(value = "session/main", produces = APPLICATION_JSON_VALUE)
     public List<DynamicModel> getMainSession(
             @QueryRequest(view = "main_session", defaultColumns = "count") QueryComposer query) {
         return INSPECT.execute(query);
     }
 
-    @GetMapping("session/rest")
+    @GetMapping(value = "session/rest", produces = APPLICATION_JSON_VALUE)
     public List<DynamicModel> getRestSession(
     		@QueryRequest(view = "rest_session", defaultColumns = "count") QueryComposer query) {
         return INSPECT.execute(query);
     }
 
-    @GetMapping("request/rest")
+    @GetMapping(value = "request/rest", produces = APPLICATION_JSON_VALUE)
     public List<DynamicModel> getRestRequest(
     		@QueryRequest(view = "rest_request",defaultColumns = "count") QueryComposer query) {
         return INSPECT.execute(query);
     }
 
-    @GetMapping("request/database")
+    @GetMapping(value = "request/database", produces = APPLICATION_JSON_VALUE)
     public List<DynamicModel> getDatabaseRequest(
             @QueryRequest(view = "database_request", defaultColumns = "count") QueryComposer query) {
         return INSPECT.execute(query);
     }
 
-    @GetMapping("request/ftp")
+    @GetMapping(value = "request/ftp", produces = APPLICATION_JSON_VALUE)
     public List<DynamicModel> getFtpRequest(
             @QueryRequest(view = "ftp_request", defaultColumns = "count") QueryComposer query) {
         return INSPECT.execute(query);
     }
 
-    @GetMapping("request/smtp")
+    @GetMapping(value = "request/smtp", produces = APPLICATION_JSON_VALUE)
     public List<DynamicModel> getSmtpRequest(
             @QueryRequest(view= "smtp_request", defaultColumns = "count") QueryComposer query) {
         return INSPECT.execute(query);
     }
 
-    @GetMapping("request/ldap")
+    @GetMapping(value = "request/ldap", produces = APPLICATION_JSON_VALUE)
     public List<DynamicModel> getLdapRequest(
             @QueryRequest(view = "ldap_request", defaultColumns = "count") QueryComposer query){
         return INSPECT.execute(query);
     }
 
-    @GetMapping("exception")
+    @GetMapping(value = "exception", produces = APPLICATION_JSON_VALUE)
     public List<DynamicModel> getException(
             @QueryRequest(view = "exception", defaultColumns = "count") QueryComposer query) {
         return INSPECT.execute(query);
     }
 
-    @GetMapping("user/action")
+    @GetMapping(value = "user/action", produces = APPLICATION_JSON_VALUE)
     public List<DynamicModel> getUserAction(
             @QueryRequest(view = "user_action", defaultColumns = "count") QueryComposer query) {
         return INSPECT.execute(query);
     }
 
-    @GetMapping("instance")
+    @GetMapping(value = "instance", produces = APPLICATION_JSON_VALUE)
     public List<DynamicModel> getInstance(
             @QueryRequest(view = "instance") QueryComposer query) {
         return INSPECT.execute(query);
     }
 
-    @GetMapping("instance/trace")
+    @GetMapping(value = "instance/trace", produces = APPLICATION_JSON_VALUE)
     public List<DynamicModel> getInstanceTrace(
             @QueryRequest(view = "instance_trace") QueryComposer query) {
         return INSPECT.execute(query);
     }
 
-    @GetMapping("resource/machine")
+    @GetMapping(value = "resource/machine", produces = APPLICATION_JSON_VALUE)
     public List<DynamicModel> getResourceMachine(
             @QueryRequest(view = "resource_usage") QueryComposer query) {
         return INSPECT.execute(query);
     }
 
-    @GetMapping("log/entry")
+    @GetMapping(value = "log/entry", produces = APPLICATION_JSON_VALUE)
     public List<DynamicModel> getLogEntry(
             @QueryRequest(view = "log_entry") QueryComposer query) {
         return INSPECT.execute(query);

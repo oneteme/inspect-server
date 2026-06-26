@@ -25,6 +25,7 @@ public class JoinConstant {
     public static final String SMTP_REQUEST_JOIN = "smtp_request";
     public static final String LDAP_REQUEST_JOIN = "ldap_request";
     public static final String USER_ACTION_JOIN ="user_action";
+    public static final String REST_SESSION_INNER_JOIN = "rest_session_inner";
 
     public static Builder<ViewDecorator, ViewJoin[]> mainSessionJoins(String name) {
         return switch (name) {
@@ -50,6 +51,8 @@ public class JoinConstant {
                     (view, args) -> new ViewJoin[]{innerJoin(SMTP_REQUEST.view(), view.column(ID).eq(SMTP_REQUEST.column(PARENT)))};
             case LDAP_REQUEST_JOIN ->
                     (view, args) -> new ViewJoin[]{innerJoin(LDAP_REQUEST.view(), view.column(ID).eq(LDAP_REQUEST.column(PARENT)))};
+            case REST_REQUEST_JOIN ->
+                    (view, args) -> new ViewJoin[]{innerJoin(REST_REQUEST.view(), view.column(ID).eq(REST_REQUEST.column(PARENT)))};
             case INSTANCE_JOIN ->
                     (view, args) -> new ViewJoin[]{innerJoin(INSTANCE.view(), REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID)))};
             default -> null;
@@ -66,6 +69,8 @@ public class JoinConstant {
                     (view, args) -> new ViewJoin[]{leftJoin(MAIN_SESSION.view(), REST_REQUEST.column(PARENT).eq(MAIN_SESSION.column(ID)))};
             case INSTANCE_JOIN ->
                     (view, args) -> new ViewJoin[]{innerJoin(INSTANCE.view(), REST_REQUEST.column(INSTANCE_ENV).eq(INSTANCE.column(ID)))};
+            case REST_SESSION_INNER_JOIN ->
+                    (view, args) -> new ViewJoin[]{innerJoin(REST_SESSION.view(), view.column(ID).eq(REST_SESSION.column(ID)))};
             default -> null;
         };
     }

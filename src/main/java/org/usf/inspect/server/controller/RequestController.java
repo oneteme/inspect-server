@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.usf.inspect.core.*;
 import org.usf.inspect.server.config.TraceApiTable;
@@ -17,6 +18,8 @@ import org.usf.inspect.server.model.filter.JqueryMainSessionFilter;
 import org.usf.inspect.server.model.filter.JqueryRequestFilter;
 import org.usf.inspect.server.model.filter.JqueryRequestSessionFilter;
 import org.usf.inspect.server.service.RequestService;
+import org.usf.inspect.server.validation.Condition;
+import org.usf.inspect.server.validation.validate;
 import org.usf.jquery.core.QueryComposer;
 import org.usf.jquery.web.Keyword;
 import org.usf.jquery.web.QueryRequestFilter;
@@ -28,7 +31,6 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static java.sql.Timestamp.from;
-import static java.util.Objects.nonNull;
 import static java.util.UUID.*;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.HOURS;
@@ -44,6 +46,7 @@ import static org.usf.jquery.core.DBColumn.*;
 
 @Slf4j
 @CrossOrigin
+@Validated
 @RestController
 @RequestMapping(value = "v3/query", produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
@@ -52,7 +55,7 @@ public class RequestController {
     private final RequestService requestService;
     private final ObjectMapper mapper;
 
-    @GetMapping("instance/{idInstance}")
+    @GetMapping(value = "instance/{idInstance}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<InstanceEnvironment> getInstance(
        @QueryRequestFilter(view = "instance",
                            column = "app_name,version,address,environement,os,re,user,type,start,collector,branch,hash,end,resource,configuration,id") QueryComposer request,
@@ -63,7 +66,7 @@ public class RequestController {
     }
 
     // New
-    @GetMapping("instance/{idInstance}/trace")
+    @GetMapping(value = "instance/{idInstance}/trace", produces = APPLICATION_JSON_VALUE)
     public List<InstanceTrace> getInstanceTraces(
             @QueryRequestFilter(view = "instance_trace",
                     column = "pending,attempts,size_session,filename,start,instance_env") QueryComposer request,
@@ -71,7 +74,7 @@ public class RequestController {
         return INSPECT.execute(request.filters(column("cd_ins").eq(fromString(idInstance))), InspectMappers.instanceTraceMapper());
     }
 
-    @GetMapping("instance/{idInstance}/resource/usage")
+    @GetMapping(value = "instance/{idInstance}/resource/usage", produces = APPLICATION_JSON_VALUE)
     public List<MachineResourceUsage> getInstanceResourceUsages(
             @QueryRequestFilter(view = "resource_usage",
                     column = "low_heap,high_heap,start") QueryComposer request,
@@ -79,7 +82,7 @@ public class RequestController {
         return INSPECT.execute(request.filters(column("cd_ins").eq(fromString(idInstance))), InspectMappers.instanceResourceUsageMapper());
     }
 
-    @GetMapping("instance/{idInstance}/log/entry")
+    @GetMapping(value = "instance/{idInstance}/log/entry", produces = APPLICATION_JSON_VALUE)
     public List<LogEntry> getLogEntries(
             @QueryRequestFilter(view = "log_entry",
                     column = "start,log_level,log_message,stacktrace", order = "start.desc") QueryComposer request,
@@ -87,12 +90,12 @@ public class RequestController {
         return INSPECT.execute(request.filters(column("cd_ins").eq(fromString(idInstance))), InspectMappers.instanceLogEntryMapper(mapper));
     }
 
-    @GetMapping("request/{type}/hosts")
+    @GetMapping(value = "request/{type}/hosts", produces = APPLICATION_JSON_VALUE)
     public String[] getRequestHosts(
             @PathVariable String type,
             @RequestParam(name = "env") String environment,
-            @RequestParam(name = "start") Instant start,
-            @RequestParam(name = "end") Instant end)  {
+            @RequestParam(name = "start") @validate(Condition.INSTANT) Instant start,
+            @RequestParam(name = "end") @validate(Condition.INSTANT) Instant end)  {
         TraceApiTable requestTable;
         try {
             requestTable = RequestType.valueOf(type).getTable();
@@ -101,20 +104,20 @@ public class RequestController {
         }
         return requestService.getRequestHosts(requestTable, environment, start, end);
     }
-    @GetMapping("request/jdbc/schema")
+    @GetMapping(value = "request/jdbc/schema", produces = APPLICATION_JSON_VALUE)
     public String[] getRequestSchema(
             @RequestParam(name = "host") String host,
             @RequestParam(name = "env") String environment,
-            @RequestParam(name = "start") Instant start,
-            @RequestParam(name = "end") Instant end)  {
+            @RequestParam(name = "start") @validate(Condition.INSTANT) Instant start,
+            @RequestParam(name = "end") @validate(Condition.INSTANT) Instant end)  {
 
         return requestService.getRequestSchema( environment, start, end, host);
     }
-    @GetMapping("request/rest")
-    public List<RestRequestDto> getRestRequests(@RequestParam(required = false, name = "env") String[] environments,
+    @GetMapping(value = "request/rest", produces = APPLICATION_JSON_VALUE)
+    public List<RestRequestDto> getRestRequests(@RequestParam(required = false, name = "env") @validate(Condition.NOT_EMPTY) String[] environments,
                                                 @RequestParam(required = false, name = "host") String[] hosts,
-                                                @RequestParam(required = false, name = "start") Instant start,
-                                                @RequestParam(required = false, name = "end") Instant end,
+                                                @RequestParam(required = false, name = "start") @validate(Condition.INSTANT) Instant start,
+                                                @RequestParam(required = false, name = "end") @validate(Condition.INSTANT) Instant end,
                                                 @RequestParam(required = false, name = "rangestatus") String[] rangestatus,
                                                 @RequestParam(required = false, name = "lazy") boolean lazy)  {
 
@@ -122,11 +125,11 @@ public class RequestController {
         return requestService.getRestRequests(jsf);
     }
 
-    @GetMapping("request/database")
-    public List<DatabaseRequestDto> getDatabaseRequestForSearch(@RequestParam(required = false, name = "env") String[] environments,
+    @GetMapping(value = "request/database", produces = APPLICATION_JSON_VALUE)
+    public List<DatabaseRequestDto> getDatabaseRequestForSearch(@RequestParam(required = false, name = "env") @validate(Condition.NOT_EMPTY) String[] environments,
                                                                 @RequestParam(required = false, name = "host") String[] hosts,
-                                                                @RequestParam(required = false, name = "start") Instant start,
-                                                                @RequestParam(required = false, name = "end") Instant end,
+                                                                @RequestParam(required = false, name = "start") @validate(Condition.INSTANT) Instant start,
+                                                                @RequestParam(required = false, name = "end") @validate(Condition.INSTANT) Instant end,
                                                                 @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus,
                                                                 @RequestParam(required = false, name = "lazy") boolean lazy
     )  {
@@ -134,11 +137,11 @@ public class RequestController {
         return requestService.getDatabaseRequests(jsf);
     }
 
-    @GetMapping("request/ftp")
-    public List<FtpRequestDto> getFtpRequestForSearch(@RequestParam(required = false, name = "env") String[] environments,
+    @GetMapping(value = "request/ftp", produces = APPLICATION_JSON_VALUE)
+    public List<FtpRequestDto> getFtpRequestForSearch(@RequestParam(required = false, name = "env") @validate(Condition.NOT_EMPTY) String[] environments,
                                                       @RequestParam(required = false, name = "host") String[] hosts,
-                                                      @RequestParam(required = false, name = "start") Instant start,
-                                                      @RequestParam(required = false, name = "end") Instant end,
+                                                      @RequestParam(required = false, name = "start") @validate(Condition.INSTANT) Instant start,
+                                                      @RequestParam(required = false, name = "end") @validate(Condition.INSTANT) Instant end,
                                                       @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus,
                                                       @RequestParam(required = false, name = "lazy") boolean lazy
     )  {
@@ -146,11 +149,11 @@ public class RequestController {
         return requestService.getFtpRequests(jsf);
     }
 
-    @GetMapping("request/smtp")
-    public List<MailRequestDto> getSmtpRequestForSearch(@RequestParam(required = false, name = "env") String[] environments,
+    @GetMapping(value = "request/smtp", produces = APPLICATION_JSON_VALUE)
+    public List<MailRequestDto> getSmtpRequestForSearch(@RequestParam(required = false, name = "env") @validate(Condition.NOT_EMPTY) String[] environments,
                                                         @RequestParam(required = false, name = "host") String[] hosts,
-                                                        @RequestParam(required = false, name = "start") Instant start,
-                                                        @RequestParam(required = false, name = "end") Instant end,
+                                                        @RequestParam(required = false, name = "start") @validate(Condition.INSTANT) Instant start,
+                                                        @RequestParam(required = false, name = "end") @validate(Condition.INSTANT) Instant end,
                                                         @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus,
                                                         @RequestParam(required = false, name = "lazy") boolean lazy
     )  {
@@ -158,11 +161,11 @@ public class RequestController {
         return requestService.getSmtpRequestsByFilter(jsf);
     }
 
-    @GetMapping("request/ldap")
-    public List<DirectoryRequestDto> getLdapRequestForSearch(@RequestParam(required = false, name = "env") String[] environments,
+    @GetMapping(value = "request/ldap", produces = APPLICATION_JSON_VALUE)
+    public List<DirectoryRequestDto> getLdapRequestForSearch(@RequestParam(required = false, name = "env") @validate(Condition.NOT_EMPTY) String[] environments,
                                                              @RequestParam(required = false, name = "host") String[] hosts,
-                                                             @RequestParam(required = false, name = "start") Instant start,
-                                                             @RequestParam(required = false, name = "end") Instant end,
+                                                             @RequestParam(required = false, name = "start") @validate(Condition.INSTANT) Instant start,
+                                                             @RequestParam(required = false, name = "end") @validate(Condition.INSTANT) Instant end,
                                                              @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus,
                                                              @RequestParam(required = false, name = "lazy") boolean lazy
     )  {
@@ -170,7 +173,7 @@ public class RequestController {
         return requestService.getLdapRequestsByFilter(jsf);
     }
 
-    @GetMapping("session/{sessionId}/log/entry")
+    @GetMapping(value = "session/{sessionId}/log/entry", produces = APPLICATION_JSON_VALUE)
     public List<LogEntry> getLogEntriesBySessionId(
             @QueryRequestFilter(view = "log_entry",
                     column = "start,log_level,log_message,stacktrace", order = "start.desc") QueryComposer request,
@@ -180,7 +183,7 @@ public class RequestController {
 
 
 
-    @GetMapping("session/rest")
+    @GetMapping(value = "session/rest", produces = APPLICATION_JSON_VALUE)
     public List<RestSessionDto> getRestSessions(
             @RequestParam(required = false, name = "method") String[] methods,
             @RequestParam(required = false, name = "protocol") String[] protocols,
@@ -191,12 +194,12 @@ public class RequestController {
             @RequestParam(required = false, name = "media") String[] medias,
             @RequestParam(required = false, name = "auth") String[] auths,
             @RequestParam(required = false, name = "status") Integer[] status,
-            @RequestParam(required = false, name = "start") Instant start,
-            @RequestParam(required = false, name = "end") Instant end,
+            @RequestParam(required = false, name = "start") @validate(Condition.INSTANT) Instant start,
+            @RequestParam(required = false, name = "end") @validate(Condition.INSTANT) Instant end,
             @RequestParam(required = false, name = "apiname") String[] apiNames,
             @RequestParam(required = false, name = "user") String[] users,
             @RequestParam(required = false, name = "appname") String[] appNames,
-            @RequestParam(required = false, name = "env") String[] environments,
+            @RequestParam(required = false, name = "env") @validate(Condition.NOT_EMPTY) String[] environments,
             @RequestParam(required = false, name = "rangestatus") String[] rangestatus,
             @RequestParam(required = false, name = "lazy") boolean lazy
     )  {
@@ -205,27 +208,39 @@ public class RequestController {
         return requestService.getRestSessionsForSearch(jsf);
     }
 
-    @GetMapping("session/rest/{appName}/dump")
-    public List<RestSession> getRestSessionsForDump(
-            @PathVariable String appName,
-            @RequestParam(name = "env") String env,
-            @RequestParam(name = "start") Instant start,
-            @RequestParam(name = "end") Instant end
+    @GetMapping(value = "instance/{id}/session/rest", produces = APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<RestSession>> getRestSessionsByInstance(
+            @QueryRequestFilter(
+                    view = "rest_session",
+                    column = "id,api_name,method,host,path,status,start,end,thread,user",
+                    order = "start,end") QueryComposer request,
+            @PathVariable String id
     )  {
-        return requestService.getRestSessionsForDump(env, appName, start, end);
+        return ok().body(INSPECT.execute(request.filters(column("cd_ins").eq(fromString(id))), InspectMappers.restSessionPulseRowMapper()));
     }
 
-    @GetMapping("session/rest/{idSession}")
+    @GetMapping(value = "instance/{id}/session/main", produces = APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<MainSession>> getMainSessionsByInstance(
+            @QueryRequestFilter(
+                    view = "main_session",
+                    column = "id,name,start,end,thread,type,location",
+                    order = "start,end") QueryComposer request,
+            @PathVariable String id
+    )  {
+        return ok().body(INSPECT.execute(request.filters(column("cd_ins").eq(fromString(id))), InspectMappers.mainSessionPulseRowMapper()));
+    }
+
+    @GetMapping(value = "session/rest/{idSession}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<RestSession> getRestSession(
             @QueryRequestFilter(view = "rest_session",
             column = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,err_type,err_msg,stacktrace,mask,user,user_agt,cache_control,linked,instance_env") QueryComposer request,
             @PathVariable String idSession) throws SQLException {
-        return Optional.ofNullable(INSPECT.execute(request.filters(column("id_ses").eq(fromString(idSession))), InspectMappers.createBaseRestSession(mapper)))
+        return Optional.ofNullable(INSPECT.execute(request.filters(column("id_ses").eq(fromString(idSession))), InspectMappers.restSessionResultSetMapper(mapper)))
                 .map(o -> ok().body(o))
                 .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping("session/rest/{idSession}/stage")
+    @GetMapping(value = "session/rest/{idSession}/stage", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<HttpSessionStage>> getRestSessionStages (
             @QueryRequestFilter(view = "rest_session_stage",
                     column = "name,order,start,end",
@@ -234,7 +249,7 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.restSessionStageMapper()));
     }
 
-    @GetMapping("{type}/{id}/parent")
+    @GetMapping(value = "{type}/{id}/parent", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, String>> getSessionParent(
             @PathVariable String type,
             @PathVariable String id
@@ -251,28 +266,34 @@ public class RequestController {
                 .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping("session/main/{id}/tree")
-    public ResponseEntity<Session> getMainTree(@PathVariable String id)  {
-        return Optional.ofNullable(requestService.getMainTree(id))
-                .map(o -> o.wasCompleted() ? ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o) : ok().body(o))
-                .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
+    @GetMapping(value = "session/main/{id}/tree", produces = APPLICATION_JSON_VALUE)
+    public ResponseEntity<Session> getMainTree(@PathVariable @validate(Condition.UUID) String id)  {
+        try {
+            var result = requestService.getMainTree(id);
+            return result.wasCompleted() ? ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(result) : ok().body(result);
+        } catch (NoSuchElementException e) {
+            return status(HttpStatus.NOT_FOUND).body(null);
+        }
     }
 
-    @GetMapping("session/rest/{id}/tree")
-    public ResponseEntity<Session> getRestTree(@PathVariable String id)  {
-        return Optional.ofNullable(requestService.getRestTree(id))
-                .map(o -> o.wasCompleted() ? ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o) : ok().body(o))
-                .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
+    @GetMapping(value = "session/rest/{id}/tree", produces = APPLICATION_JSON_VALUE)
+    public ResponseEntity<Session> getRestTree(@PathVariable @validate(Condition.UUID) String id)  {
+        try {
+            var result = requestService.getRestTree(id);
+            return result.wasCompleted() ? ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(result) : ok().body(result);
+        } catch (NoSuchElementException e) {
+            return status(HttpStatus.NOT_FOUND).body(null);
+        }
     }
 
-    @GetMapping("session/main") // can't optimise, done
+    @GetMapping(value = "session/main", produces = APPLICATION_JSON_VALUE) // can't optimise, done
     public List<MainSessionDto> getMainSessions(
-            @RequestParam(required = false, name = "env") String[] environments,
+            @RequestParam(required = false, name = "env") @validate(Condition.NOT_EMPTY) String[] environments,
             @RequestParam(required = false, name = "name") String[] names,
             @RequestParam(required = false, name = "launchmode") String[] launchModes,
             @RequestParam(required = false, name = "location") String location,
-            @RequestParam(required = false, name = "start") Instant start,
-            @RequestParam(required = false, name = "end") Instant end,
+            @RequestParam(required = false, name = "start") @validate(Condition.INSTANT) Instant start,
+            @RequestParam(required = false, name = "end") @validate(Condition.INSTANT) Instant end,
             @RequestParam(required = false, name = "user") String[] users,
             @RequestParam(required = false, name = "appname") String[] appNames,
             @RequestParam(required = false, name = "failed") Boolean[] failed,
@@ -283,17 +304,7 @@ public class RequestController {
         return requestService.getMainSessionsForSearch(fc);
     }
 
-    @GetMapping("session/main/{appName}/dump") // can't optimise, done
-    public List<MainSession> getMainSessionsForDump(
-            @PathVariable String appName,
-            @RequestParam(name = "env") String env,
-            @RequestParam(name = "start") Instant start,
-            @RequestParam(name = "end") Instant end
-    )  {
-        return requestService.getMainSessionsForDump(env, appName, start, end);
-    }
-
-    @GetMapping("session/main/{idSession}")
+    @GetMapping(value = "session/main/{idSession}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<MainSession> getMainSession(
             @QueryRequestFilter(
                 view = "main_session",
@@ -304,7 +315,7 @@ public class RequestController {
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping("session/{idSession}/request/rest")
+    @GetMapping(value = "session/{idSession}/request/rest", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<RestRequestDto>>  getRestRequests(
             @QueryRequestFilter(
                 view = "rest_request",
@@ -315,7 +326,7 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.restRequestLazyMapper()));
     }
 
-    @GetMapping("session/request/exception") // need to add exception type to front call
+    @GetMapping(value = "session/request/exception", produces = APPLICATION_JSON_VALUE) // need to add exception type to front call
     public ResponseEntity<Map<Long, ExceptionInfo>> getRequestExceptions(
             @QueryRequestFilter(
                     view = "exception",
@@ -325,7 +336,7 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_rqt").in(Arrays.stream(idRequestList).map(UUID::fromString).toArray())), InspectMappers::exceptionInfoMapper));
     }
 
-    @GetMapping("session/{idSession}/request/local")
+    @GetMapping(value = "session/{idSession}/request/local", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<LocalRequest>> getLocalRequests(
             @QueryRequestFilter(
                     view = "local_request",
@@ -335,18 +346,18 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.localRequestMapper()));
     }
 
-    @GetMapping("session/{idSession}/request/database")
+    @GetMapping(value = "session/{idSession}/request/database", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<DatabaseRequestDto>> getDatabaseRequests(
             @QueryRequestFilter(
                     view = "database_request",
-                    column = "id,host,db,start,end,user,thread,command,schema,failed,exception.err_type,exception.err_msg",
+                    column = "id,host,db,db_name,start,end,user,thread,command,schema,failed,exception.err_type,exception.err_msg",
                     join = "exception",
                     order = "start") QueryComposer request, @PathVariable String idSession) {
         return ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.databaseRequestLazyMapper()));
     }
 
 
-    @GetMapping("request/rest/{idRequest}")
+    @GetMapping(value = "request/rest/{idRequest}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<RestRequest> getRestRequest (
             @QueryRequestFilter(view = "rest_request",
                     column = "id,protocol,auth,host,port,path,query,method,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,user,body_content,linked,instance_env,parent") QueryComposer request,
@@ -360,7 +371,7 @@ public class RequestController {
                 .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping("request/rest/{idRequest}/stage")
+    @GetMapping(value = "request/rest/{idRequest}/stage", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<HttpRequestStage>> getRestRequestStages (
             @QueryRequestFilter(view = "rest_request_stage",
                     column = "name,order,start,end,exception.err_type,exception.err_msg,exception.stacktrace",
@@ -370,7 +381,7 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_rst_rqt").eq(fromString(idRequest))), InspectMappers.restRequestStageMapper(mapper)));
     }
 
-    @GetMapping("request/database/{idDatabase}")
+    @GetMapping(value = "request/database/{idDatabase}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<DatabaseRequest> getDatabaseRequest(
             @QueryRequestFilter(
                     view = "database_request",
@@ -384,7 +395,7 @@ public class RequestController {
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping("request/database/{idDatabase}/stage")
+    @GetMapping(value = "request/database/{idDatabase}/stage", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<DatabaseRequestStage>> getDatabaseRequestStages(
             @QueryRequestFilter(
                     view = "database_stage",
@@ -394,7 +405,7 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_dtb_rqt").eq(fromString(idDatabase))), InspectMappers.databaseRequestStageMapper(mapper)));
     }
 
-    @GetMapping("session/request/database/stages/count")
+    @GetMapping(value = "session/request/database/stages/count", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, Integer>> getDatabaseRequestStagesCount(
             @QueryRequestFilter(
                     view = "database_stage",
@@ -410,7 +421,7 @@ public class RequestController {
         }));
     }
 
-    @GetMapping("session/{idSession}/request/ftp")
+    @GetMapping(value = "session/{idSession}/request/ftp", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<FtpRequestDto>> getFtpRequests(
             @QueryRequestFilter(
                     view = "ftp_request",
@@ -421,7 +432,7 @@ public class RequestController {
         return  ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.ftpRequestLazyMapper()));
     }
 
-    @GetMapping("request/ftp/{idFtp}")
+    @GetMapping(value = "request/ftp/{idFtp}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<FtpRequest> getFtpRequest(
             @QueryRequestFilter(
                     view = "ftp_request",
@@ -436,7 +447,7 @@ public class RequestController {
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping("request/ftp/{idFtp}/stage")
+    @GetMapping(value = "request/ftp/{idFtp}/stage", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<FtpRequestStage>> getFtpRequestStages(
             @QueryRequestFilter(
                     view = "ftp_stage",
@@ -446,7 +457,7 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_ftp_rqt").eq(fromString(idFtp))), InspectMappers.ftpRequestStageMapper(mapper)));
     }
 
-    @GetMapping ("session/request/ftp/stages")
+    @GetMapping(value = "session/request/ftp/stages", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String,List<String>>> getFtpRequestStages(
             @QueryRequestFilter(
                     view = "ftp_stage",
@@ -466,7 +477,7 @@ public class RequestController {
         }));
     }
 
-    @GetMapping("session/{idSession}/request/smtp")
+    @GetMapping(value = "session/{idSession}/request/smtp", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<MailRequestDto>> getSmtpRequests(
             @QueryRequestFilter(
                     view = "smtp_request",
@@ -477,7 +488,7 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.smtpRequestLazyMapper()));
     }
 
-    @GetMapping("request/smtp/{idSmtp}")
+    @GetMapping(value = "request/smtp/{idSmtp}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<MailRequest> getSmtpRequest(
             @QueryRequestFilter(
                     view = "smtp_request",
@@ -492,7 +503,7 @@ public class RequestController {
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping("request/smtp/{idSmtp}/stage")
+    @GetMapping(value = "request/smtp/{idSmtp}/stage", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<MailRequestStage>> getSmtpRequestStages(
             @QueryRequestFilter(
                     view = "smtp_stage",
@@ -502,7 +513,7 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_smtp_rqt").eq(fromString(idSmtp))), InspectMappers.mailRequestStageMapper(mapper)));
     }
 
-    @GetMapping("request/smtp/{idSmtp}/mail")
+    @GetMapping(value = "request/smtp/{idSmtp}/mail", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<Mail>> getSmtpRequestMails(
             @QueryRequestFilter(
                     view = "smtp_mail",
@@ -510,7 +521,7 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_smtp_rqt").eq(fromString(idSmtp))), InspectMappers.mailMapper()));
     }
 
-    @GetMapping("session/request/smtp/stages")
+    @GetMapping(value = "session/request/smtp/stages", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, List<String>>> getSmtpRequestStages(
             @QueryRequestFilter(
                     view = "smtp_stage",
@@ -529,7 +540,7 @@ public class RequestController {
         }));
     }
 
-    @GetMapping("session/request/smtp/stages/count")
+    @GetMapping(value = "session/request/smtp/stages/count", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, Integer>> getSmtpRequestStagesRowCount(
             @QueryRequestFilter(
                     view = "smtp_mail",
@@ -546,7 +557,7 @@ public class RequestController {
     }
 
 
-    @GetMapping("session/{idSession}/request/ldap")
+    @GetMapping(value = "session/{idSession}/request/ldap", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<DirectoryRequestDto>> getLdapRequests(
             @QueryRequestFilter(
                     view = "ldap_request",
@@ -557,7 +568,7 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.ldapRequestLazyMapper()));
     }
 
-    @GetMapping("request/ldap/{idLdap}")
+    @GetMapping(value = "request/ldap/{idLdap}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<DirectoryRequest> getLdapRequest(
             @QueryRequestFilter(
                     view = "ldap_request",
@@ -573,7 +584,7 @@ public class RequestController {
     }
 
 
-    @GetMapping("request/ldap/{idLdap}/stage")
+    @GetMapping(value = "request/ldap/{idLdap}/stage", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<DirectoryRequestStage>> getLdapRequestStages(
             @QueryRequestFilter(
                     view = "ldap_stage",
@@ -583,7 +594,7 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_ldap_rqt").eq(fromString(idLdap))), InspectMappers.ldapRequestStageMapper(mapper)));
     }
 
-    @GetMapping ("session/request/ldap/stages")
+    @GetMapping(value = "session/request/ldap/stages", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, List<String>>> getLdapRequestStages(
             @QueryRequestFilter(
                     view = "ldap_stage",
@@ -602,7 +613,7 @@ public class RequestController {
         }));
     }
 
-    @GetMapping ("session/{idSession}/user/action")
+    @GetMapping(value = "session/{idSession}/user/action", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<UserAction>> getUserActions(
             @QueryRequestFilter(
                     view = "user_action",
@@ -612,7 +623,7 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.userActionMapper()));
     }
 
-    @GetMapping ("session/user/{user}/action")
+    @GetMapping(value = "session/user/{user}/action", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<AnalyticDto>> getUserActions(
             @QueryRequestFilter(
                     view = "main_session",
@@ -622,7 +633,7 @@ public class RequestController {
                     ignoreParameters = "date",
                     mergeParameters = {Keyword.LIMIT,Keyword.OFFSET}) QueryComposer request,
             @PathVariable(name = "user") String user,
-            @RequestParam(name = "date") Instant date
+            @RequestParam(name = "date") @validate(Condition.INSTANT) Instant date
             ) {
         return ok().body(INSPECT.execute(request.filters(MAIN_SESSION.column(USER).eq(user).and(MAIN_SESSION.column(START).ge(from(date)))), rs -> {
             List<AnalyticDto> sessions = new ArrayList<>();
@@ -656,12 +667,16 @@ public class RequestController {
         }));
     }
 
-    @GetMapping("architecture")
+    @GetMapping(value = "architecture", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<Architecture>> getArchitecture(
-            @RequestParam(required = false, name = "start") Instant start,
-            @RequestParam(required = false, name = "end") Instant end,
-            @RequestParam(required = false, name = "env") String[] environments
+            @RequestParam(required = false, name = "start") @validate(Condition.INSTANT) Instant start,
+            @RequestParam(required = false, name = "end") @validate(Condition.INSTANT) Instant end,
+            @RequestParam(required = false, name = "env") @validate(Condition.NOT_EMPTY) String[] environments
     )  {
-        return ok().body(requestService.createArchitecture(start, end, environments));
+        var result = requestService.createArchitecture(start, end, environments);
+        if (end != null && end.isBefore(Instant.now().truncatedTo(java.time.temporal.ChronoUnit.DAYS))) {
+            return ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(result);
+        }
+        return ok().body(result);
     }
 }
