@@ -71,7 +71,7 @@ public interface DBRequest extends DatasetResource {
 	ViewColumn parent();
 	
 	@Bind(CD_INS)
-	@Expose(identity = "instance")
+	@Expose(identity = "instance_env")
 	ViewColumn instanceEnv();
 	
 	default Column elapsedTime() {

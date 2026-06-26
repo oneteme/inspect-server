@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 
 @CrossOrigin
 @RestController
-@RequestMapping(value = "jquery", produces = APPLICATION_JSON_VALUE)
+@RequestMapping(value = "test/jquery", produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 public class JQueryController {
 

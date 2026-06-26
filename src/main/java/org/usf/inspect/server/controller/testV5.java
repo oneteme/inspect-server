@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 
 @CrossOrigin
 @RestController
-@RequestMapping(value = "test/jquery", produces = APPLICATION_JSON_VALUE)
+@RequestMapping(value = "jquery", produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 public class testV5 {
 
@@ -31,76 +31,76 @@ public class testV5 {
     public Object fetchMainSession(MvcRequest mvc, HttpServletResponse res) {
         return mvc.execute(res);
     }
-
-//    @GetMapping("session/rest")
-//    public List<DynamicModel> getRestSession(
-//    		@QueryRequest(view = "rest_session", defaultColumns = "count") QueryComposer query) {
-//        return INSPECT.execute(query);
-//    }
     
-//    @GetMapping("request/rest")
-//    public List<DynamicModel> getRestRequest(
-//    		@QueryRequest(view = "rest_request", defaultColumns = "count") QueryComposer query) {
-//        return INSPECT.execute(query);
-//    }
-//
-//    @GetMapping("request/database")
-//    public List<DynamicModel> getDatabaseRequest(
-//            @QueryRequest(view = "database_request", defaultColumns = "count") QueryComposer query) {
-//        return INSPECT.execute(query);
-//    }
-//
-//    @GetMapping("request/ftp")
-//    public List<DynamicModel> getFtpRequest(
-//            @QueryRequest(view = "ftp_request", defaultColumns = "count") QueryComposer query) {
-//        return INSPECT.execute(query);
-//    }
-//
-//    @GetMapping("request/smtp")
-//    public List<DynamicModel> getSmtpRequest(
-//            @QueryRequest(view= "smtp_request", defaultColumns = "count") QueryComposer query) {
-//        return INSPECT.execute(query);
-//    }
-//
-//    @GetMapping("request/ldap")
-//    public List<DynamicModel> getLdapRequest(
-//            @QueryRequest(view = "ldap_request", defaultColumns = "count") QueryComposer query){
-//        return INSPECT.execute(query);
-//    }
-//
-//    @GetMapping("exception")
-//    public List<DynamicModel> getException(
-//            @QueryRequest(view = "exception", defaultColumns = "count") QueryComposer query) {
-//        return INSPECT.execute(query);
-//    }
-
+    @GetMapping("session/rest")
+    @QueryRequest(dataset = "rest_session", fields = "count") 
+    public Object fetchRestSession(MvcRequest mvc, HttpServletResponse res) {
+    	return mvc.execute(res);
+    }
+    
+    @GetMapping("request/rest")
+    @QueryRequest(dataset = "rest_request", fields = "count") 
+    public Object fetchRestRequest(MvcRequest mvc, HttpServletResponse res) {
+    	return mvc.execute(res);
+    }
+    
+    @GetMapping("request/database")
+    @QueryRequest(dataset = "database_request", fields = "count") 
+    public Object getDatabaseRequest(MvcRequest mvc, HttpServletResponse res) {
+    	return mvc.execute(res);
+    }
+    
+    @GetMapping("request/ftp")
+    @QueryRequest(dataset = "ftp_request", fields = "count") 
+    public Object getFtpRequest(MvcRequest mvc, HttpServletResponse res) {
+    	return mvc.execute(res);
+    }
+    
+    @GetMapping("request/smtp")
+    @QueryRequest(dataset = "smtp_request", fields = "count") 
+    public Object getSmtpRequest(MvcRequest mvc, HttpServletResponse res) {
+    	return mvc.execute(res);
+    }
+    
+    @GetMapping("request/ldap")
+    @QueryRequest(dataset = "ldap_request", fields = "count") 
+    public Object getLdapRequest(MvcRequest mvc, HttpServletResponse res) {
+    	return mvc.execute(res);
+    }
+    
+    @GetMapping("exception")
+    @QueryRequest(dataset = "exception", fields = "count") 
+    public Object getException(MvcRequest mvc, HttpServletResponse res) {
+    	return mvc.execute(res);
+    }
+    
     @GetMapping("user/action")
-    public List<DynamicModel> getUserAction(
-            @QueryRequest(view = "user_action", defaultColumns = "count") QueryComposer query) {
-        return INSPECT.execute(query);
+    @QueryRequest(dataset = "user_action", fields = "count") 
+    public Object getUserAction(MvcRequest mvc, HttpServletResponse res) {
+    	return mvc.execute(res);
     }
-
+    
     @GetMapping("instance")
-    public List<DynamicModel> getInstance(
-            @QueryRequest(view = "instance") QueryComposer query) {
-        return INSPECT.execute(query);
+    @QueryRequest(dataset = "instance", fields = "count") 
+    public Object getInstance(MvcRequest mvc, HttpServletResponse res) {
+    	return mvc.execute(res);
     }
-
+    
     @GetMapping("instance/trace")
-    public List<DynamicModel> getInstanceTrace(
-            @QueryRequest(view = "instance_trace") QueryComposer query) {
-        return INSPECT.execute(query);
+    @QueryRequest(dataset = "instance_trace", fields = "count") 
+    public Object getInstanceTrace(MvcRequest mvc, HttpServletResponse res) {
+    	return mvc.execute(res);
     }
-
+    
     @GetMapping("resource/machine")
-    public List<DynamicModel> getResourceMachine(
-            @QueryRequest(view = "resource_usage") QueryComposer query) {
-        return INSPECT.execute(query);
+    @QueryRequest(dataset = "resource_usage", fields = "count") 
+    public Object getResourceMachine(MvcRequest mvc, HttpServletResponse res) {
+    	return mvc.execute(res);
     }
-
+    
     @GetMapping("log/entry")
-    public List<DynamicModel> getLogEntry(
-            @QueryRequest(view = "log_entry") QueryComposer query) {
-        return INSPECT.execute(query);
+    @QueryRequest(dataset = "log_entry", fields = "count") 
+    public Object getLogEntry(MvcRequest mvc, HttpServletResponse res) {
+    	return mvc.execute(res);
     }
 }

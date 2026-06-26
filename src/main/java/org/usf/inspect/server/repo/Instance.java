@@ -22,6 +22,7 @@ import org.usf.jquery.core.Column;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.web.proxy.Bind;
 import org.usf.jquery.web.proxy.DatasetResource;
+import org.usf.jquery.web.proxy.Expose;
 
 public interface Instance extends DatasetResource {
 
@@ -38,6 +39,7 @@ public interface Instance extends DatasetResource {
 	ViewColumn end();
 	
 	@Bind(VA_APP)
+	@Expose(identity = "app_name")
 	ViewColumn appName();
 	
 	@Bind(VA_VRS)

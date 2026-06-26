@@ -30,6 +30,6 @@ public interface LogEntry extends DatasetResource {
 	ViewColumn parent();
 	
 	@Bind(CD_INS)
-	@Expose(identity = "instance")
+	@Expose(identity = "instance_env")
 	ViewColumn instanceEnv();
 }

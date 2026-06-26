@@ -7,6 +7,7 @@ import org.usf.jquery.web.proxy.StoreResource;
 public interface InspectStore extends StoreResource {
 
 	@Bind("e_rst_rqt")
+	@Expose(identity = "rest_request")
 	RestRequest restRequest();
 	
 	@Bind("e_rst_rqt_stg")
@@ -24,18 +25,21 @@ public interface InspectStore extends StoreResource {
 	MainSession mainSession();
 	
 	@Bind("e_dtb_rqt")
+	@Expose(identity = "database_request")
 	DBRequest dbRequest();
 	
 	@Bind("e_dtb_stg")
 	DBStage dbStage();
 	
 	@Bind("e_ftp_rqt")
+	@Expose(identity = "ftp_request")
 	FTPRequest ftpRequest();
 	
 	@Bind("e_ftp_stg")
 	FTPStage ftpStage();
 	
 	@Bind("e_smtp_rqt")
+	@Expose(identity = "smtp_request")
 	SMTPRequest smtpRequest();
 	
 	@Bind("e_smtp_stg")
@@ -45,6 +49,7 @@ public interface InspectStore extends StoreResource {
 	SMTPMail smtpMail();
 	
 	@Bind("e_ldap_rqt")
+	@Expose(identity = "ldap_request")
 	LDAPRequest ldapRequest();
 	
 	@Bind("e_ldap_stg")
@@ -60,15 +65,19 @@ public interface InspectStore extends StoreResource {
 	Instance instance();
 	
 	@Bind("e_usr_acn")
+	@Expose(identity = "user_action")
 	UserAction userAction();
 	
 	@Bind("e_ins_trc")
+	@Expose(identity = "instance_trace")
 	InstanceTrace instanceTrace();
 	
 	@Bind("e_log_ent")
+	@Expose(identity = "log_entry")
 	LogEntry logEntry();
 	
 	@Bind("e_rsc_usg")
+	@Expose(identity = "resource_usage")
 	ResourceUsage resourceUsage();
 	
 }

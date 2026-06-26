@@ -1,5 +1,13 @@
 package org.usf.inspect.server.repo;
 
+import static org.usf.jquery.core.Join.innerJoin;
+import static org.usf.jquery.core.JoinGroup.joins;
+import static org.usf.jquery.core.Predicate.ge;
+import static org.usf.jquery.core.Predicate.lt;
+import static org.usf.jquery.web.proxy.StoreManager.getInstance;
+
+import org.usf.jquery.core.Column;
+import org.usf.jquery.core.JoinGroup;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.web.proxy.Bind;
 import org.usf.jquery.web.proxy.DatasetResource;
@@ -98,4 +106,17 @@ public interface RestSession extends DatasetResource {
 	@Bind(CD_INS)
 	@Expose(identity = "instance_env")
 	ViewColumn instanceEnv();
+	
+	default JoinGroup instance() {
+		var instance = getInstance().getStore(InspectStore.class).instance();
+		return joins(innerJoin(instance.getView(), instanceEnv().eq(instance.id())));
+	}
+	
+	@Expose(identity = "error_type_session")
+    default Column errorTypeExpressionsSession() {
+        return status().toCase()
+                .when(ge(200).and(lt(400)), null)
+                .when(ge(400).and(lt(500)), "ClientError")
+                .orElse(errType());
+    }
 }

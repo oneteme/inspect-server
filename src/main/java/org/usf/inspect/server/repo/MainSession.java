@@ -53,6 +53,7 @@ public interface MainSession extends DatasetResource {
 	ViewColumn thread();
 
 	@Bind(VA_ERR_TYP)
+	@Expose(identity = "err_type")
 	ViewColumn errType();
 
 	@Bind(VA_ERR_MSG)
@@ -66,10 +67,10 @@ public interface MainSession extends DatasetResource {
 	ViewColumn mask();
 
 	@Bind(CD_INS)
-	@Expose(identity = "instance")
+	@Expose(identity = "instance_env")
 	ViewColumn instanceEnv();
 
-	default JoinGroup instanceJoin() {
+	default JoinGroup instance() {
 		var instance = getInstance().getStore(InspectStore.class).instance();
 		return joins(innerJoin(instance.getView(), instanceEnv().eq(instance.id())));
 	}
