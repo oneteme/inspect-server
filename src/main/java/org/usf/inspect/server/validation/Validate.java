@@ -10,7 +10,7 @@ import jakarta.validation.Constraint;
 @Target({PARAMETER, FIELD})
 @Retention(RUNTIME)
 @Constraint(validatedBy = Validator.class)
-public @interface validate {
+public @interface Validate {
     Condition value();
     String message() default "invalid value";
     Class<?>[] groups() default {};
