@@ -14,6 +14,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
@@ -80,6 +81,7 @@ public class InspectApplication {
 	
 
     @Bean //used by inspect-core to get application properties and git info
+    @Lazy //only if inspect-core is used
     public static ApplicationPropertiesProvider applicationPropertiesProvider(Environment env) throws IOException {
         var props = new Properties();
         var resource = new ClassPathResource("git.properties");
