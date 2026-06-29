@@ -16,11 +16,11 @@ import static org.usf.inspect.server.config.constant.FieldConstant.VA_USR;
 import static org.usf.jquery.core.Join.innerJoin;
 import static org.usf.jquery.core.JoinGroup.joins;
 import static org.usf.jquery.core.Predicate.isNotNull;
-import static org.usf.jquery.core.Predicate.isNull;
 import static org.usf.jquery.mvc.StoreManager.getInstance;
 
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.JoinGroup;
+import org.usf.jquery.core.Predicate;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetResource;
@@ -85,17 +85,8 @@ public interface MainSession extends DatasetResource {
 		return errType().toCase().when(isNotNull(), 1).orElse(0).sum();
 	}
 	
+	@Expose(identity = "status_main_tranche")
     default Column statusMainTranche() {
-        return errType().toCase().when(isNull(), "true").orElse("false");
-//        return new ViewColumn(null, null, null, null){
-//            @Override
-//            public void build(QueryBuilder query) {
-//                query.append("case")
-//                        .append(" when ")
-//                        .appendViewAlias(v, ".va_err_typ is null then 'false' else 'true'")
-//                        .append(" end");
-//
-//            }
-//        };
+        return errType().toCase().when(Predicate.isNull(), "false").orElse("true");
     }
 }
