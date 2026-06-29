@@ -19,7 +19,7 @@ import org.usf.inspect.server.model.filter.JqueryRequestFilter;
 import org.usf.inspect.server.model.filter.JqueryRequestSessionFilter;
 import org.usf.inspect.server.service.RequestService;
 import org.usf.inspect.server.validation.Condition;
-import org.usf.inspect.server.validation.validate;
+import org.usf.inspect.server.validation.Validate;
 import org.usf.jquery.core.QueryComposer;
 import org.usf.jquery.web.Keyword;
 import org.usf.jquery.web.QueryRequestFilter;
@@ -94,8 +94,8 @@ public class RequestController {
     public String[] getRequestHosts(
             @PathVariable String type,
             @RequestParam(name = "env") String environment,
-            @RequestParam(name = "start") @validate(Condition.INSTANT) Instant start,
-            @RequestParam(name = "end") @validate(Condition.INSTANT) Instant end)  {
+            @RequestParam(name = "start") @Validate(Condition.INSTANT) Instant start,
+            @RequestParam(name = "end") @Validate(Condition.INSTANT) Instant end)  {
         TraceApiTable requestTable;
         try {
             requestTable = RequestType.valueOf(type).getTable();
@@ -108,16 +108,16 @@ public class RequestController {
     public String[] getRequestSchema(
             @RequestParam(name = "host") String host,
             @RequestParam(name = "env") String environment,
-            @RequestParam(name = "start") @validate(Condition.INSTANT) Instant start,
-            @RequestParam(name = "end") @validate(Condition.INSTANT) Instant end)  {
+            @RequestParam(name = "start") @Validate(Condition.INSTANT) Instant start,
+            @RequestParam(name = "end") @Validate(Condition.INSTANT) Instant end)  {
 
         return requestService.getRequestSchema( environment, start, end, host);
     }
     @GetMapping(value = "request/rest", produces = APPLICATION_JSON_VALUE)
-    public List<RestRequestDto> getRestRequests(@RequestParam(required = false, name = "env") @validate(Condition.NOT_EMPTY) String[] environments,
+    public List<RestRequestDto> getRestRequests(@RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments,
                                                 @RequestParam(required = false, name = "host") String[] hosts,
-                                                @RequestParam(required = false, name = "start") @validate(Condition.INSTANT) Instant start,
-                                                @RequestParam(required = false, name = "end") @validate(Condition.INSTANT) Instant end,
+                                                @RequestParam(required = false, name = "start") @Validate(Condition.INSTANT) Instant start,
+                                                @RequestParam(required = false, name = "end") @Validate(Condition.INSTANT) Instant end,
                                                 @RequestParam(required = false, name = "rangestatus") String[] rangestatus,
                                                 @RequestParam(required = false, name = "lazy") boolean lazy)  {
 
@@ -126,10 +126,10 @@ public class RequestController {
     }
 
     @GetMapping(value = "request/database", produces = APPLICATION_JSON_VALUE)
-    public List<DatabaseRequestDto> getDatabaseRequestForSearch(@RequestParam(required = false, name = "env") @validate(Condition.NOT_EMPTY) String[] environments,
+    public List<DatabaseRequestDto> getDatabaseRequestForSearch(@RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments,
                                                                 @RequestParam(required = false, name = "host") String[] hosts,
-                                                                @RequestParam(required = false, name = "start") @validate(Condition.INSTANT) Instant start,
-                                                                @RequestParam(required = false, name = "end") @validate(Condition.INSTANT) Instant end,
+                                                                @RequestParam(required = false, name = "start") @Validate(Condition.INSTANT) Instant start,
+                                                                @RequestParam(required = false, name = "end") @Validate(Condition.INSTANT) Instant end,
                                                                 @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus,
                                                                 @RequestParam(required = false, name = "lazy") boolean lazy
     )  {
@@ -138,10 +138,10 @@ public class RequestController {
     }
 
     @GetMapping(value = "request/ftp", produces = APPLICATION_JSON_VALUE)
-    public List<FtpRequestDto> getFtpRequestForSearch(@RequestParam(required = false, name = "env") @validate(Condition.NOT_EMPTY) String[] environments,
+    public List<FtpRequestDto> getFtpRequestForSearch(@RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments,
                                                       @RequestParam(required = false, name = "host") String[] hosts,
-                                                      @RequestParam(required = false, name = "start") @validate(Condition.INSTANT) Instant start,
-                                                      @RequestParam(required = false, name = "end") @validate(Condition.INSTANT) Instant end,
+                                                      @RequestParam(required = false, name = "start") @Validate(Condition.INSTANT) Instant start,
+                                                      @RequestParam(required = false, name = "end") @Validate(Condition.INSTANT) Instant end,
                                                       @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus,
                                                       @RequestParam(required = false, name = "lazy") boolean lazy
     )  {
@@ -150,10 +150,10 @@ public class RequestController {
     }
 
     @GetMapping(value = "request/smtp", produces = APPLICATION_JSON_VALUE)
-    public List<MailRequestDto> getSmtpRequestForSearch(@RequestParam(required = false, name = "env") @validate(Condition.NOT_EMPTY) String[] environments,
+    public List<MailRequestDto> getSmtpRequestForSearch(@RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments,
                                                         @RequestParam(required = false, name = "host") String[] hosts,
-                                                        @RequestParam(required = false, name = "start") @validate(Condition.INSTANT) Instant start,
-                                                        @RequestParam(required = false, name = "end") @validate(Condition.INSTANT) Instant end,
+                                                        @RequestParam(required = false, name = "start") @Validate(Condition.INSTANT) Instant start,
+                                                        @RequestParam(required = false, name = "end") @Validate(Condition.INSTANT) Instant end,
                                                         @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus,
                                                         @RequestParam(required = false, name = "lazy") boolean lazy
     )  {
@@ -162,10 +162,10 @@ public class RequestController {
     }
 
     @GetMapping(value = "request/ldap", produces = APPLICATION_JSON_VALUE)
-    public List<DirectoryRequestDto> getLdapRequestForSearch(@RequestParam(required = false, name = "env") @validate(Condition.NOT_EMPTY) String[] environments,
+    public List<DirectoryRequestDto> getLdapRequestForSearch(@RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments,
                                                              @RequestParam(required = false, name = "host") String[] hosts,
-                                                             @RequestParam(required = false, name = "start") @validate(Condition.INSTANT) Instant start,
-                                                             @RequestParam(required = false, name = "end") @validate(Condition.INSTANT) Instant end,
+                                                             @RequestParam(required = false, name = "start") @Validate(Condition.INSTANT) Instant start,
+                                                             @RequestParam(required = false, name = "end") @Validate(Condition.INSTANT) Instant end,
                                                              @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus,
                                                              @RequestParam(required = false, name = "lazy") boolean lazy
     )  {
@@ -194,12 +194,12 @@ public class RequestController {
             @RequestParam(required = false, name = "media") String[] medias,
             @RequestParam(required = false, name = "auth") String[] auths,
             @RequestParam(required = false, name = "status") Integer[] status,
-            @RequestParam(required = false, name = "start") @validate(Condition.INSTANT) Instant start,
-            @RequestParam(required = false, name = "end") @validate(Condition.INSTANT) Instant end,
+            @RequestParam(required = false, name = "start") @Validate(Condition.INSTANT) Instant start,
+            @RequestParam(required = false, name = "end") @Validate(Condition.INSTANT) Instant end,
             @RequestParam(required = false, name = "apiname") String[] apiNames,
             @RequestParam(required = false, name = "user") String[] users,
             @RequestParam(required = false, name = "appname") String[] appNames,
-            @RequestParam(required = false, name = "env") @validate(Condition.NOT_EMPTY) String[] environments,
+            @RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments,
             @RequestParam(required = false, name = "rangestatus") String[] rangestatus,
             @RequestParam(required = false, name = "lazy") boolean lazy
     )  {
@@ -267,7 +267,7 @@ public class RequestController {
     }
 
     @GetMapping(value = "session/main/{id}/tree", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<Session> getMainTree(@PathVariable @validate(Condition.UUID) String id)  {
+    public ResponseEntity<Session> getMainTree(@PathVariable @Validate(Condition.UUID) String id)  {
         try {
             var result = requestService.getMainTree(id);
             return result.wasCompleted() ? ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(result) : ok().body(result);
@@ -277,7 +277,7 @@ public class RequestController {
     }
 
     @GetMapping(value = "session/rest/{id}/tree", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<Session> getRestTree(@PathVariable @validate(Condition.UUID) String id)  {
+    public ResponseEntity<Session> getRestTree(@PathVariable @Validate(Condition.UUID) String id)  {
         try {
             var result = requestService.getRestTree(id);
             return result.wasCompleted() ? ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(result) : ok().body(result);
@@ -288,12 +288,12 @@ public class RequestController {
 
     @GetMapping(value = "session/main", produces = APPLICATION_JSON_VALUE) // can't optimise, done
     public List<MainSessionDto> getMainSessions(
-            @RequestParam(required = false, name = "env") @validate(Condition.NOT_EMPTY) String[] environments,
+            @RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments,
             @RequestParam(required = false, name = "name") String[] names,
             @RequestParam(required = false, name = "launchmode") String[] launchModes,
             @RequestParam(required = false, name = "location") String location,
-            @RequestParam(required = false, name = "start") @validate(Condition.INSTANT) Instant start,
-            @RequestParam(required = false, name = "end") @validate(Condition.INSTANT) Instant end,
+            @RequestParam(required = false, name = "start") @Validate(Condition.INSTANT) Instant start,
+            @RequestParam(required = false, name = "end") @Validate(Condition.INSTANT) Instant end,
             @RequestParam(required = false, name = "user") String[] users,
             @RequestParam(required = false, name = "appname") String[] appNames,
             @RequestParam(required = false, name = "failed") Boolean[] failed,
@@ -633,7 +633,7 @@ public class RequestController {
                     ignoreParameters = "date",
                     mergeParameters = {Keyword.LIMIT,Keyword.OFFSET}) QueryComposer request,
             @PathVariable(name = "user") String user,
-            @RequestParam(name = "date") @validate(Condition.INSTANT) Instant date
+            @RequestParam(name = "date") @Validate(Condition.INSTANT) Instant date
             ) {
         return ok().body(INSPECT.execute(request.filters(MAIN_SESSION.column(USER).eq(user).and(MAIN_SESSION.column(START).ge(from(date)))), rs -> {
             List<AnalyticDto> sessions = new ArrayList<>();
@@ -669,9 +669,9 @@ public class RequestController {
 
     @GetMapping(value = "architecture", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<Architecture>> getArchitecture(
-            @RequestParam(required = false, name = "start") @validate(Condition.INSTANT) Instant start,
-            @RequestParam(required = false, name = "end") @validate(Condition.INSTANT) Instant end,
-            @RequestParam(required = false, name = "env") @validate(Condition.NOT_EMPTY) String[] environments
+            @RequestParam(required = false, name = "start") @Validate(Condition.INSTANT) Instant start,
+            @RequestParam(required = false, name = "end") @Validate(Condition.INSTANT) Instant end,
+            @RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments
     )  {
         var result = requestService.createArchitecture(start, end, environments);
         if (end != null && end.isBefore(Instant.now().truncatedTo(java.time.temporal.ChronoUnit.DAYS))) {
