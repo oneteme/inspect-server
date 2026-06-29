@@ -1,21 +1,29 @@
 package org.usf.inspect.server.repo;
 
-import static org.usf.inspect.server.config.TraceApiColumn.ERR_TYPE;
-import static org.usf.inspect.server.config.TraceApiColumn.STATUS;
-import static org.usf.inspect.server.config.TraceApiTable.REST_SESSION;
-import static org.usf.inspect.server.config.constant.FieldConstant.*;
+import static org.usf.inspect.server.config.constant.FieldConstant.CD_INS;
+import static org.usf.inspect.server.config.constant.FieldConstant.CD_ORD;
+import static org.usf.inspect.server.config.constant.FieldConstant.CD_PRT;
+import static org.usf.inspect.server.config.constant.FieldConstant.CD_STT;
+import static org.usf.inspect.server.config.constant.FieldConstant.DH_END;
+import static org.usf.inspect.server.config.constant.FieldConstant.DH_STR;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_CMD;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_ERR_TYP;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_FAIL;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_HST;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_NAM;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_THR;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_TYP;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_USR;
 import static org.usf.jquery.core.Predicate.ge;
 import static org.usf.jquery.core.Predicate.isNotNull;
 import static org.usf.jquery.core.Predicate.lt;
-import static org.usf.jquery.web.proxy.StoreManager.getInstance;
+import static org.usf.jquery.mvc.StoreManager.getInstance;
 
-import org.usf.inspect.server.config.constant.DBColumn;
 import org.usf.jquery.core.Column;
-import org.usf.jquery.core.Predicate;
 import org.usf.jquery.core.ViewColumn;
-import org.usf.jquery.web.ViewDecorator;
-import org.usf.jquery.web.proxy.Bind;
-import org.usf.jquery.web.proxy.Expose;
+import org.usf.jquery.mvc.Bind;
+import org.usf.jquery.mvc.Expose;
+
 
 public interface CommunColumns {
 

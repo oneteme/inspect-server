@@ -1,10 +1,17 @@
 package org.usf.inspect.server.repo;
 
+import static org.usf.inspect.server.config.constant.FieldConstant.CD_LDAP_RQT;
+import static org.usf.inspect.server.config.constant.FieldConstant.CD_ORD;
+import static org.usf.inspect.server.config.constant.FieldConstant.DH_END;
+import static org.usf.inspect.server.config.constant.FieldConstant.DH_STR;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_ARG;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_CMD;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_NAM;
+
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.ViewColumn;
-import org.usf.jquery.web.proxy.Bind;
-import org.usf.jquery.web.proxy.DatasetResource;
-import static org.usf.inspect.server.config.constant.FieldConstant.*;
+import org.usf.jquery.mvc.Bind;
+import org.usf.jquery.mvc.DatasetResource;
 
 public interface LDAPStage extends DatasetResource {
 	

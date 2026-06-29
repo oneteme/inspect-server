@@ -1,6 +1,7 @@
 package org.usf.inspect.server.config;
 
-import static org.usf.jquery.web.proxy.StoreManager.getInstance;
+
+import static org.usf.jquery.mvc.StoreManager.getInstance;
 
 import java.util.List;
 
@@ -23,6 +24,6 @@ public class WebmvcConfig implements WebMvcConfigurer {
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
     	getInstance().register(InspectStore.class, ds);
         resolvers.add(new CommonRequestQueryResolver());
-        resolvers.add(new CommonRequestQueryFilterResolver());
+//        resolvers.add(new CommonRequestQueryFilterResolver());
     }
 }

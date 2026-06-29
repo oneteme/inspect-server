@@ -16,7 +16,7 @@ import org.usf.jquery.web.QueryRequest;
 import lombok.RequiredArgsConstructor;
 
 @CrossOrigin
-@RestController
+//@RestController
 @RequestMapping(value = "test/jquery", produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 public class JQueryController {

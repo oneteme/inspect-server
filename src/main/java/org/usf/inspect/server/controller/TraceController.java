@@ -24,7 +24,7 @@ import static org.usf.jquery.core.Utils.isBlank;
 
 @Slf4j
 @CrossOrigin
-@RestController
+//@RestController
 @RequiredArgsConstructor
 @RequestMapping(value = "v4/trace", produces = APPLICATION_JSON_VALUE)
 public class TraceController {

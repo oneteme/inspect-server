@@ -7,8 +7,8 @@ import static org.usf.inspect.server.config.constant.FieldConstant.VA_NDE_NAM;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_TYP;
 
 import org.usf.jquery.core.ViewColumn;
-import org.usf.jquery.web.proxy.Bind;
-import org.usf.jquery.web.proxy.DatasetResource;
+import org.usf.jquery.mvc.Bind;
+import org.usf.jquery.mvc.DatasetResource;
 
 public interface UserAction extends DatasetResource {
 	

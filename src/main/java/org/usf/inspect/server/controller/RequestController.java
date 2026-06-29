@@ -46,8 +46,8 @@ import static org.usf.jquery.core.DBColumn.*;
 @RestController
 @RequestMapping(value = "v3/query", produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
-public class RequestController {
-
+//public class RequestController {
+//
 //    private final RequestService requestService;
 //    private final ObjectMapper mapper;
 //

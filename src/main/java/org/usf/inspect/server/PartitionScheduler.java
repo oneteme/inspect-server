@@ -16,7 +16,7 @@ import java.util.Map;
 import static java.util.Optional.ofNullable;
 import static org.usf.inspect.server.model.PartitionedTable.*;
 
-@Service
+//@Service
 @Setter
 @ConditionalOnProperty(prefix = "inspect.server.partition", name="enabled", havingValue = "true")
 public class PartitionScheduler {

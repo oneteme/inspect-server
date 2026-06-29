@@ -29,7 +29,7 @@
 //import lombok.extern.slf4j.Slf4j;
 //
 //@Slf4j
-//@Service
+////@Service
 //@RequiredArgsConstructor
 //public class PurgeService {
 //

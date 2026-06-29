@@ -1,8 +1,8 @@
 package org.usf.inspect.server.repo;
 
-import org.usf.jquery.web.proxy.Bind;
-import org.usf.jquery.web.proxy.Expose;
-import org.usf.jquery.web.proxy.StoreResource;
+import org.usf.jquery.mvc.Bind;
+import org.usf.jquery.mvc.Expose;
+import org.usf.jquery.mvc.StoreResource;
 
 public interface InspectStore extends StoreResource {
 

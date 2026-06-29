@@ -1,19 +1,44 @@
 package org.usf.inspect.server.repo;
 
+import static org.usf.inspect.server.config.constant.FieldConstant.CD_INS;
+import static org.usf.inspect.server.config.constant.FieldConstant.CD_PRT;
+import static org.usf.inspect.server.config.constant.FieldConstant.CD_STT;
+import static org.usf.inspect.server.config.constant.FieldConstant.DH_END;
+import static org.usf.inspect.server.config.constant.FieldConstant.DH_STR;
+import static org.usf.inspect.server.config.constant.FieldConstant.ID_SES;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_ATH_SCH;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_CCH_CTR;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_CNT_TYP;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_ERR_MSG;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_ERR_TYP;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_HST;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_I_CNT_ENC;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_I_SZE;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_LNK;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_MSK;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_MTH;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_NAM;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_O_CNT_ENC;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_O_SZE;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_PCL;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_PTH;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_QRY;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_STK;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_THR;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_USR;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_USR_AGT;
 import static org.usf.jquery.core.Join.innerJoin;
 import static org.usf.jquery.core.JoinGroup.joins;
 import static org.usf.jquery.core.Predicate.ge;
 import static org.usf.jquery.core.Predicate.lt;
-import static org.usf.jquery.web.proxy.StoreManager.getInstance;
+import static org.usf.jquery.mvc.StoreManager.getInstance;
 
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.JoinGroup;
 import org.usf.jquery.core.ViewColumn;
-import org.usf.jquery.web.proxy.Bind;
-import org.usf.jquery.web.proxy.DatasetResource;
-import org.usf.jquery.web.proxy.Expose;
-
-import static org.usf.inspect.server.config.constant.FieldConstant.*;
+import org.usf.jquery.mvc.Bind;
+import org.usf.jquery.mvc.DatasetResource;
+import org.usf.jquery.mvc.Expose;
 
 public interface RestSession extends DatasetResource {
 

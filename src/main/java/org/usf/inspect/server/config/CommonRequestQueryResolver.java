@@ -5,11 +5,11 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.stream.Stream.concat;
 import static org.usf.jquery.core.Utils.isEmpty;
-import static org.usf.jquery.web.Parameters.CRITERIA_OPR;
-import static org.usf.jquery.web.Parameters.SELECT_PARAM;
-import static org.usf.jquery.web.Parameters.VIEW_PARAM;
-import static org.usf.jquery.web.proxy.RestrictedStore.restrict;
-import static org.usf.jquery.web.proxy.StoreManager.getInstance;
+import static org.usf.jquery.mvc.Parameters.CRITERIA_OPR;
+import static org.usf.jquery.mvc.Parameters.SELECT_PARAM;
+import static org.usf.jquery.mvc.Parameters.VIEW_PARAM;
+import static org.usf.jquery.mvc.RestrictedStore.restrict;
+import static org.usf.jquery.mvc.StoreManager.getInstance;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -21,26 +21,21 @@ import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
-import org.usf.jquery.web.proxy.MvcRequest;
-import org.usf.jquery.web.proxy.QueryInterpreter;
-import org.usf.jquery.web.proxy.QueryRequest;
-import org.usf.jquery.web.proxy.Restriction;
-import org.usf.jquery.web.proxy.StoreResource;
+import org.usf.jquery.mvc.MvcRequest;
+import org.usf.jquery.mvc.QueryInterpreter;
+import org.usf.jquery.mvc.RequestQuery;
+import org.usf.jquery.mvc.Restriction;
+import org.usf.jquery.mvc.StoreResource;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class CommonRequestQueryResolver implements HandlerMethodArgumentResolver, QueryInterpreter {
 
-	private static final String[] DEFAULT_VIEWER = new String[]{"json"};
-
 	@Override
 	public boolean supportsParameter(MethodParameter parameter) {
-		if(parameter.hasMethodAnnotation(QueryRequest.class)) {
-			return parameter.getNestedParameterType() == MvcRequest.class 
-					//            		|| DatasetResource.class.isAssignableFrom(parameter.getNestedParameterType())
-					//            		|| ResultSetMapper.class.isAssignableFrom(parameter.getNestedParameterType())
-					;
+		if(parameter.hasMethodAnnotation(RequestQuery.class)) {
+			return parameter.getNestedParameterType() == MvcRequest.class;
 		}
 		return false;
 	}
@@ -48,17 +43,18 @@ public class CommonRequestQueryResolver implements HandlerMethodArgumentResolver
 	@Override
 	public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
 			NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
-		var ann = parameter.getMethodAnnotation(QueryRequest.class);
+		var ann = parameter.getMethodAnnotation(RequestQuery.class);
 		if(nonNull(ann)) {
 			if(parameter.getNestedParameterType() == MvcRequest.class) {
-				return cacheAttribute(webRequest, MvcRequest.class, ()-> resolveQueryComposer(ann, parameter, webRequest));
+				return cacheAttribute(webRequest, MvcRequest.class, 
+						()-> resolveQueryComposer(ann, parameter, webRequest));
 			}
 			throw new IllegalStateException("unsupported parameter type: " + parameter.getNestedParameterType());
 		}
 		throw new IllegalStateException("missing @QueryRequest annotation");
 	}
 
-	MvcRequest resolveQueryComposer(QueryRequest ann, MethodParameter parameter, NativeWebRequest webRequest) {
+	MvcRequest resolveQueryComposer(RequestQuery ann, MethodParameter parameter, NativeWebRequest webRequest) {
 		var str = resolveStore(ann, parameter);
 		var map = new LinkedHashMap<>(webRequest.getParameterMap()); //modifiable map + preserve order
 		if(!isEmpty(ann.ignore())) {
@@ -75,7 +71,7 @@ public class CommonRequestQueryResolver implements HandlerMethodArgumentResolver
 		return parseQuery(str, ann.dataset(), map);
 	}
 
-	StoreResource resolveStore(QueryRequest ann, MethodParameter parameter) {
+	StoreResource resolveStore(RequestQuery ann, MethodParameter parameter) {
 		var store = ann.store() == StoreResource.class 
 				? getInstance().getDefaultStore() 
 				: getInstance().getStore(ann.store());
