@@ -55,7 +55,7 @@ import lombok.RequiredArgsConstructor;
 public class MetadataController {
 
     private static final String COUNT= "count";
-    @GetMapping("aggregate")
+    @GetMapping(value = "aggregate", produces = APPLICATION_JSON_VALUE)
     List<FieldMetadata> fetch() {
         return asList(
                 new SimpleFieldMetadata(REST_REQUEST, ELAPSEDTIME, ELAPSEDTIME.reference(), "temps de réponse (s)", "s"),
@@ -77,7 +77,7 @@ public class MetadataController {
         );
     }
 
-    @GetMapping("filter")
+    @GetMapping(value = "filter", produces = APPLICATION_JSON_VALUE)
     List<SimpleFieldMetadata> fetchFilters() {
         return asList(
                 new SimpleFieldMetadata(REST_REQUEST, METHOD, METHOD.reference(), "Methode", COUNT),

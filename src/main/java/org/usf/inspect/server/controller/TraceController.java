@@ -50,7 +50,7 @@ public class TraceController {
 		}
     }
 
-    @PutMapping("instance/{id}/session")
+    @PutMapping(value = "instance/{id}/session", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> addSessions(
     		@PathVariable String id,
             @RequestParam(required = false) Integer attempts,
@@ -70,7 +70,7 @@ public class TraceController {
         }
     }
     
-    @GetMapping("queue")
+    @GetMapping(value = "queue", produces = APPLICATION_JSON_VALUE)
     public List<EventTrace> peekQueue(){
 		return service.peekQueue();
     }

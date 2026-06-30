@@ -22,4 +22,6 @@ public interface Session extends CompletableMetric {
 
     void setInstanceId(String instanceId);
     String getInstanceId();
+
+    int getRequestsMask();
 }
