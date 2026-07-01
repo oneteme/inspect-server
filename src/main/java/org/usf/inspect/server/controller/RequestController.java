@@ -47,8 +47,8 @@ import static org.usf.jquery.core.DBColumn.*;
 @Slf4j
 @CrossOrigin
 @Validated
-@RestController
-@RequestMapping(value = "v3/query", produces = APPLICATION_JSON_VALUE)
+//@RestController
+//@RequestMapping(value = "v3/query", produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 public class RequestController {
 

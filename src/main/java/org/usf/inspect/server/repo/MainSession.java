@@ -16,6 +16,7 @@ import static org.usf.inspect.server.config.constant.FieldConstant.VA_USR;
 import static org.usf.jquery.core.Join.innerJoin;
 import static org.usf.jquery.core.JoinGroup.joins;
 import static org.usf.jquery.core.Predicate.isNotNull;
+import static org.usf.jquery.core.Predicate.isNull;
 import static org.usf.jquery.mvc.StoreManager.getInstance;
 
 import org.usf.jquery.core.Column;
@@ -87,6 +88,6 @@ public interface MainSession extends DatasetResource {
 	
 	@Expose(identity = "status_main_tranche")
     default Column statusMainTranche() {
-        return errType().toCase().when(Predicate.isNull(), "false").orElse("true");
+        return errType().toCase().when(isNull(), "false").orElse("true");
     }
 }
