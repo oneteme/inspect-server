@@ -1,5 +1,6 @@
 package org.usf.inspect.server.repo;
 
+import static org.usf.inspect.core.RequestMask.FTP;
 import static org.usf.inspect.server.config.constant.FieldConstant.CD_INS;
 import static org.usf.inspect.server.config.constant.FieldConstant.CD_PRN_SES;
 import static org.usf.inspect.server.config.constant.FieldConstant.CD_PRT;
@@ -14,8 +15,13 @@ import static org.usf.inspect.server.config.constant.FieldConstant.VA_PCL;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_SRV_VRS;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_THR;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_USR;
+import static org.usf.jquery.core.Join.innerJoin;
+import static org.usf.jquery.core.Join.leftJoin;
+import static org.usf.jquery.core.JoinGroup.joins;
+import static org.usf.jquery.mvc.StoreManager.getInstance;
 
 import org.usf.jquery.core.Column;
+import org.usf.jquery.core.JoinGroup;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetResource;
@@ -68,5 +74,15 @@ public interface FTPRequest extends DatasetResource {
 	
 	default Column elapsedTime() {
 		return end().minus(start()).epoch();
+	}
+	
+	default JoinGroup exception() {
+		var exception = getInstance().getStore(InspectStore.class).exception();
+		return joins(leftJoin(exception.getView(), exception.parent().eq(id()), exception.type().eq(FTP.name())));
+	}
+	
+	default JoinGroup instance() {
+		var instance = getInstance().getStore(InspectStore.class).instance();
+		return joins(innerJoin(instance.getView(), instanceEnv().eq(instance.id())));
 	}
 }

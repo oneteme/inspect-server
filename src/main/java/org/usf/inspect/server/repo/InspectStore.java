@@ -1,5 +1,13 @@
 package org.usf.inspect.server.repo;
 
+import static org.usf.jquery.core.JDBCType.VARCHAR;
+import static org.usf.jquery.core.Operators.function;
+import static org.usf.jquery.core.Parameter.required;
+import static org.usf.jquery.core.Parameter.varargs;
+import static org.usf.jquery.core.TypeResolver.firstArgType;
+
+import org.usf.jquery.core.OperatorDefinition;
+import org.usf.jquery.core.Operators;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.Expose;
 import org.usf.jquery.mvc.StoreResource;
@@ -79,5 +87,9 @@ public interface InspectStore extends StoreResource {
 	@Bind("e_rsc_usg")
 	@Expose(identity = "resource_usage")
 	ResourceUsage resourceUsage();
+	
+	default OperatorDefinition coalesce() {
+		return function(firstArgType(), "COALESCE", required(), varargs(VARCHAR));
+	}
 	
 }
