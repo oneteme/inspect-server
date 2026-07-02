@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.usf.jquery.mvc.MvcRequest;
-import org.usf.jquery.mvc.RequestQuery;
+import org.usf.jquery.mvc.QueryTemplate;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -19,79 +19,79 @@ import lombok.RequiredArgsConstructor;
 public class testV5 {
 
     @GetMapping("session/main")
-    @RequestQuery(dataset = "main_session", fields = "count") 
+    @QueryTemplate(dataset = "main_session", select= "count") 
     public Object fetchMainSession(MvcRequest mvc, HttpServletResponse res) {
         return mvc.execute(res);
     }
     
     @GetMapping("session/rest")
-    @RequestQuery(dataset = "rest_session", fields = "count") 
+    @QueryTemplate(dataset = "rest_session", select= "count") 
     public Object fetchRestSession(MvcRequest mvc, HttpServletResponse res) {
     	return mvc.execute(res);
     }
     
     @GetMapping("request/rest")
-    @RequestQuery(dataset = "rest_request", fields = "count") 
+    @QueryTemplate(dataset = "rest_request", select= "count") 
     public Object fetchRestRequest(MvcRequest mvc, HttpServletResponse res) {
     	return mvc.execute(res);
     }
     
     @GetMapping("request/database")
-    @RequestQuery(dataset = "database_request", fields = "count") 
+    @QueryTemplate(dataset = "database_request", select= "count") 
     public Object getDatabaseRequest(MvcRequest mvc, HttpServletResponse res) {
     	return mvc.execute(res);
     }
     
     @GetMapping("request/ftp")
-    @RequestQuery(dataset = "ftp_request", fields = "count") 
+    @QueryTemplate(dataset = "ftp_request", select= "count") 
     public Object getFtpRequest(MvcRequest mvc, HttpServletResponse res) {
     	return mvc.execute(res);
     }
     
     @GetMapping("request/smtp")
-    @RequestQuery(dataset = "smtp_request", fields = "count") 
+    @QueryTemplate(dataset = "smtp_request", select= "count") 
     public Object getSmtpRequest(MvcRequest mvc, HttpServletResponse res) {
     	return mvc.execute(res);
     }
     
     @GetMapping("request/ldap")
-    @RequestQuery(dataset = "ldap_request", fields = "count") 
+    @QueryTemplate(dataset = "ldap_request", select= "count") 
     public Object getLdapRequest(MvcRequest mvc, HttpServletResponse res) {
     	return mvc.execute(res);
     }
     
     @GetMapping("exception")
-    @RequestQuery(dataset = "exception", fields = "count") 
+    @QueryTemplate(dataset = "exception", select= "count") 
     public Object getException(MvcRequest mvc, HttpServletResponse res) {
     	return mvc.execute(res);
     }
     
     @GetMapping("user/action")
-    @RequestQuery(dataset = "user_action", fields = "count") 
+    @QueryTemplate(dataset = "user_action", select= "count") 
     public Object getUserAction(MvcRequest mvc, HttpServletResponse res) {
     	return mvc.execute(res);
     }
     
     @GetMapping("instance")
-    @RequestQuery(dataset = "instance", fields = "count") 
+    @QueryTemplate(dataset = "instance", select= "count") 
     public Object getInstance(MvcRequest mvc, HttpServletResponse res) {
     	return mvc.execute(res);
     }
     
     @GetMapping("instance/trace")
-    @RequestQuery(dataset = "instance_trace", fields = "count") 
+    @QueryTemplate(dataset = "instance_trace", select= "count") 
     public Object getInstanceTrace(MvcRequest mvc, HttpServletResponse res) {
     	return mvc.execute(res);
     }
     
     @GetMapping("resource/machine")
-    @RequestQuery(dataset = "resource_usage", fields = "count") 
+    @QueryTemplate(dataset = "resource_usage", select= "count") 
     public Object getResourceMachine(MvcRequest mvc, HttpServletResponse res) {
     	return mvc.execute(res);
     }
     
     @GetMapping("log/entry")
-    @RequestQuery(dataset = "log_entry", fields = "count") 
+    @QueryTemplate(dataset = "log_entry", select= "count") 
     public Object getLogEntry(MvcRequest mvc, HttpServletResponse res) {
     	return mvc.execute(res);
     }
