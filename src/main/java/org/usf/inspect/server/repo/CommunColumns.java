@@ -19,7 +19,12 @@ import static org.usf.jquery.core.Predicate.isNotNull;
 import static org.usf.jquery.core.Predicate.lt;
 import static org.usf.jquery.mvc.StoreManager.getInstance;
 
+import org.usf.inspect.server.config.TraceApiColumn;
+import org.usf.inspect.server.config.constant.ComparisonExpression;
+import org.usf.inspect.server.config.constant.DBColumn;
+import org.usf.inspect.server.config.constant.ViewDecorator;
 import org.usf.jquery.core.Column;
+import org.usf.jquery.core.Predicate;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.Expose;
@@ -85,6 +90,10 @@ public interface CommunColumns {
                 .when(ge(200).and(lt(400)), null)
                 .when(ge(400).and(lt(500)), "ClientError")
                 .orElse(restSession.errType());
+    }
+	
+    private static Column countStatusByType(ViewColumn status, Predicate op) {
+        return status.toCase().when(op, status).end().count();
     }
 
 }
