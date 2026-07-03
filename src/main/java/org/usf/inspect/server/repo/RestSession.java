@@ -35,12 +35,13 @@ import static org.usf.jquery.mvc.StoreManager.getInstance;
 
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.JoinGroup;
+import org.usf.jquery.core.Predicate;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetResource;
 import org.usf.jquery.mvc.Expose;
 
-public interface RestSession extends DatasetResource {
+public interface RestSession extends DatasetResource,CommunColumns {
 
 	@Bind(ID_SES)
 	ViewColumn id();
@@ -69,8 +70,8 @@ public interface RestSession extends DatasetResource {
 	@Bind(VA_ATH_SCH)
 	ViewColumn auth();
 	
-	@Bind(CD_STT)
-	ViewColumn status();
+//	@Bind(CD_STT)
+//	ViewColumn status();
 	
 	@Bind(VA_I_SZE)
 	@Expose(identity = "size_in")
@@ -143,5 +144,19 @@ public interface RestSession extends DatasetResource {
                 .when(ge(200).and(lt(400)), null)
                 .when(ge(400).and(lt(500)), "ClientError")
                 .orElse(errType());
+    }
+	
+    default Column countStatusByType(ViewColumn status, Predicate op) {
+        return status.toCase().when(op, status).orElse(null).count();
+    }
+    
+    @Expose(identity = "count_error_server")
+    default Column countErrorServerStatus() {
+    	return countStatusByType(status(), ge(500));
+    }
+    
+    @Expose(identity = "count_error_client")
+    default Column countClientErrorStatus() {
+    	return countStatusByType(status(), ge(400).and(lt(500)));
     }
 }

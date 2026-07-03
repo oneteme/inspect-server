@@ -1,19 +1,28 @@
 package org.usf.inspect.server.repo;
 
+import static org.usf.inspect.server.mapper.InspectMappers.instanceEnvironmentMapper;
 import static org.usf.jquery.core.JDBCType.VARCHAR;
 import static org.usf.jquery.core.Operators.function;
 import static org.usf.jquery.core.Parameter.required;
 import static org.usf.jquery.core.Parameter.varargs;
+import static org.usf.jquery.core.QueryExecutor.defaultExecutor;
 import static org.usf.jquery.core.TypeResolver.firstArgType;
 
 import org.usf.jquery.core.OperatorDefinition;
-import org.usf.jquery.core.Operators;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.Expose;
 import org.usf.jquery.mvc.StoreResource;
+import org.usf.jquery.mvc.ViewRegistry;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public interface InspectStore extends StoreResource {
 
+	
+	static ViewRegistry registry = new ViewRegistry()
+			.register("instanceMapper", rsp-> defaultExecutor(instanceEnvironmentMapper(new ObjectMapper())));
+	
+	
 	@Bind("e_rst_rqt")
 	@Expose(identity = "rest_request")
 	RestRequest restRequest();
@@ -90,6 +99,11 @@ public interface InspectStore extends StoreResource {
 	
 	default OperatorDefinition coalesce() {
 		return function(firstArgType(), "COALESCE", required(), varargs(VARCHAR));
+	}
+	
+	@Override
+	default ViewRegistry viewRegistry() {
+		return registry;
 	}
 	
 }

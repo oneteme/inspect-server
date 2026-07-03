@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping(value = "jquery", produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
-public class testV5 {
+public class JQueryControllerV5 {
 
     @GetMapping("session/main")
     @QueryTemplate(dataset = "main_session", select= "count") 

@@ -26,6 +26,7 @@ import org.usf.jquery.mvc.Expose;
 
 public interface Instance extends DatasetResource {
 
+	//TODO typed
 	@Bind(ID_INS)
 	ViewColumn id();
 	
