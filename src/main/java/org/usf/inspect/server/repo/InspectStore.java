@@ -3,7 +3,9 @@ package org.usf.inspect.server.repo;
 import static org.usf.inspect.server.InspectApplication.defaultMapper;
 import static org.usf.inspect.server.repo.Mappers.createBaseMainSession;
 import static org.usf.inspect.server.repo.Mappers.instanceEnvironmentMapper;
+import static org.usf.inspect.server.repo.Mappers.instanceLogEntryMapper;
 import static org.usf.jquery.core.JDBCType.VARCHAR;
+import static org.usf.jquery.core.Mappers.toListMapper;
 import static org.usf.jquery.core.Operators.function;
 import static org.usf.jquery.core.Parameter.required;
 import static org.usf.jquery.core.Parameter.varargs;
@@ -22,7 +24,7 @@ public interface InspectStore extends StoreCatalogue {
 	static ViewRegistry registry = new ViewRegistry()
 			.register("instanceMapper", rsp-> defaultExecutor(instanceEnvironmentMapper(defaultMapper)))
 			.register("mainSessionMapper", rsp-> defaultExecutor(createBaseMainSession(defaultMapper)))
-			.register("instanceLogEntryMapper", rsp-> defaultExecutor(createBaseMainSession(defaultMapper)))
+			.register("instanceLogEntryMapper", rsp-> defaultExecutor(toListMapper(instanceLogEntryMapper(defaultMapper)) ))
 			;
 	
 	

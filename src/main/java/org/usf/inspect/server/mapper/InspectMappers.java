@@ -158,7 +158,7 @@ public final class InspectMappers {
 //    }
 //
     public static RowMapper<LogEntry> instanceLogEntryMapper(ObjectMapper mapper) {
-        return rs -> {
+        return (rs,row) -> {
             try {
                 return new LogEntry(
                         fromNullableTimestamp(rs.getTimestamp(START.reference())),
