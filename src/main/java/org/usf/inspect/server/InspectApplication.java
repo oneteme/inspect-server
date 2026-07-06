@@ -39,6 +39,8 @@ import java.util.Properties;
 @EnableTransactionManagement
 @EnableScheduling
 public class InspectApplication {
+	
+	public static final ObjectMapper defaultMapper;
 
 	public static void main(String[] args) {
 		SpringApplication.run(InspectApplication.class, args);
@@ -47,18 +49,7 @@ public class InspectApplication {
 	@Bean
 	@Primary
 	ObjectMapper mapper(){
-		var mapper = json()
-				.modules(new JavaTimeModule(), new ParameterNamesModule(), coreModule().registerSubtypes(
-						new NamedType(InstanceTrace.class, "inst-trc"), 
-						new NamedType(InstanceEnvironmentUpdate.class, "inst-updt")))
-				.build()
-			    .setSerializationInclusion(JsonInclude.Include.NON_EMPTY); // !null & !empty
-		mapper.configure(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL, true);
-		// Deprecated(since = "v1.1", forRemoval = true)
-		mapper.registerSubtypes(
-				new NamedType(MainSessionWrapper.class, "main"), 
-				new NamedType(RestSessionWrapper.class, "rest"));
-		return mapper;
+		return defaultMapper;
 	}
 
 	@Bean
@@ -90,4 +81,20 @@ public class InspectApplication {
         }
         return new ApplicationInspectPropertiesProvider(env, props);
     }
+    
+
+	static {
+		var mapper = json()
+				.modules(new JavaTimeModule(), new ParameterNamesModule(), coreModule().registerSubtypes(
+						new NamedType(InstanceTrace.class, "inst-trc"), 
+						new NamedType(InstanceEnvironmentUpdate.class, "inst-updt")))
+				.build()
+			    .setSerializationInclusion(JsonInclude.Include.NON_EMPTY); // !null & !empty
+		mapper.configure(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL, true);
+		// Deprecated(since = "v1.1", forRemoval = true)
+		mapper.registerSubtypes(
+				new NamedType(MainSessionWrapper.class, "main"), 
+				new NamedType(RestSessionWrapper.class, "rest"));
+		defaultMapper = mapper;
+	}
 }

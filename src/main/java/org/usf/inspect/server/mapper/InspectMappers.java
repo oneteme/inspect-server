@@ -1,16 +1,59 @@
 package org.usf.inspect.server.mapper;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.usf.inspect.core.*;
-import org.usf.inspect.server.dto.*;
-import org.usf.inspect.server.model.*;
-import org.usf.jquery.core.ResultSetMapper;
-import org.usf.jquery.core.RowMapper;
+import static org.usf.inspect.server.JsonUtils.safeReadValue;
+import static org.usf.inspect.server.Utils.fromNullableTimestamp;
+import static org.usf.inspect.server.config.TraceApiColumn.ADDRESS;
+import static org.usf.inspect.server.config.TraceApiColumn.API_NAME;
+import static org.usf.inspect.server.config.TraceApiColumn.APP_NAME;
+import static org.usf.inspect.server.config.TraceApiColumn.AUTH;
+import static org.usf.inspect.server.config.TraceApiColumn.BODY_CONTENT;
+import static org.usf.inspect.server.config.TraceApiColumn.BRANCH;
+import static org.usf.inspect.server.config.TraceApiColumn.CACHE_CONTROL;
+import static org.usf.inspect.server.config.TraceApiColumn.CLIENT_VERSION;
+import static org.usf.inspect.server.config.TraceApiColumn.COLLECTOR;
+import static org.usf.inspect.server.config.TraceApiColumn.COMMAND;
+import static org.usf.inspect.server.config.TraceApiColumn.CONFIGURATION;
+import static org.usf.inspect.server.config.TraceApiColumn.CONTENT_ENCODING_IN;
+import static org.usf.inspect.server.config.TraceApiColumn.CONTENT_ENCODING_OUT;
+import static org.usf.inspect.server.config.TraceApiColumn.DB;
+import static org.usf.inspect.server.config.TraceApiColumn.DB_NAME;
+import static org.usf.inspect.server.config.TraceApiColumn.DB_VERSION;
+import static org.usf.inspect.server.config.TraceApiColumn.DRIVER;
+import static org.usf.inspect.server.config.TraceApiColumn.END;
+import static org.usf.inspect.server.config.TraceApiColumn.ENVIRONEMENT;
+import static org.usf.inspect.server.config.TraceApiColumn.ERR_MSG;
+import static org.usf.inspect.server.config.TraceApiColumn.ERR_TYPE;
+import static org.usf.inspect.server.config.TraceApiColumn.FAILED;
+import static org.usf.inspect.server.config.TraceApiColumn.HASH;
+import static org.usf.inspect.server.config.TraceApiColumn.HOST;
+import static org.usf.inspect.server.config.TraceApiColumn.ID;
+import static org.usf.inspect.server.config.TraceApiColumn.INSTANCE_ENV;
+import static org.usf.inspect.server.config.TraceApiColumn.LINKED;
+import static org.usf.inspect.server.config.TraceApiColumn.LOCATION;
+import static org.usf.inspect.server.config.TraceApiColumn.MASK;
+import static org.usf.inspect.server.config.TraceApiColumn.MEDIA;
+import static org.usf.inspect.server.config.TraceApiColumn.METHOD;
+import static org.usf.inspect.server.config.TraceApiColumn.NAME;
+import static org.usf.inspect.server.config.TraceApiColumn.OS;
+import static org.usf.inspect.server.config.TraceApiColumn.PARENT;
+import static org.usf.inspect.server.config.TraceApiColumn.PATH;
+import static org.usf.inspect.server.config.TraceApiColumn.PORT;
+import static org.usf.inspect.server.config.TraceApiColumn.PROTOCOL;
+import static org.usf.inspect.server.config.TraceApiColumn.QUERY;
+import static org.usf.inspect.server.config.TraceApiColumn.RE;
+import static org.usf.inspect.server.config.TraceApiColumn.RESOURCE;
+import static org.usf.inspect.server.config.TraceApiColumn.SCHEMA;
+import static org.usf.inspect.server.config.TraceApiColumn.SERVER_VERSION;
+import static org.usf.inspect.server.config.TraceApiColumn.SIZE_IN;
+import static org.usf.inspect.server.config.TraceApiColumn.SIZE_OUT;
+import static org.usf.inspect.server.config.TraceApiColumn.STACKTRACE;
+import static org.usf.inspect.server.config.TraceApiColumn.START;
+import static org.usf.inspect.server.config.TraceApiColumn.STATUS;
+import static org.usf.inspect.server.config.TraceApiColumn.THREAD;
+import static org.usf.inspect.server.config.TraceApiColumn.TYPE;
+import static org.usf.inspect.server.config.TraceApiColumn.USER;
+import static org.usf.inspect.server.config.TraceApiColumn.USER_AGT;
+import static org.usf.inspect.server.config.TraceApiColumn.VERSION;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -18,10 +61,45 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import static java.util.Optional.ofNullable;
-import static org.usf.inspect.server.JsonUtils.*;
-import static org.usf.inspect.server.Utils.fromNullableTimestamp;
-import static org.usf.inspect.server.config.TraceApiColumn.*;
+import org.usf.inspect.core.DatabaseRequestStage;
+import org.usf.inspect.core.DirectoryRequestStage;
+import org.usf.inspect.core.ExceptionInfo;
+import org.usf.inspect.core.FtpRequestStage;
+import org.usf.inspect.core.HttpRequestStage;
+import org.usf.inspect.core.HttpSessionStage;
+import org.usf.inspect.core.InspectCollectorConfiguration;
+import org.usf.inspect.core.InstanceEnvironment;
+import org.usf.inspect.core.InstanceType;
+import org.usf.inspect.core.MachineResource;
+import org.usf.inspect.core.Mail;
+import org.usf.inspect.core.MailRequestStage;
+import org.usf.inspect.core.StackTraceRow;
+import org.usf.inspect.server.dto.DatabaseRequestDto;
+import org.usf.inspect.server.dto.DirectoryRequestDto;
+import org.usf.inspect.server.dto.FtpRequestDto;
+import org.usf.inspect.server.dto.MailRequestDto;
+import org.usf.inspect.server.dto.MainSessionDto;
+import org.usf.inspect.server.dto.RestRequestDto;
+import org.usf.inspect.server.dto.RestSessionDto;
+import org.usf.inspect.server.model.DatabaseRequest;
+import org.usf.inspect.server.model.DirectoryRequest;
+import org.usf.inspect.server.model.FtpRequest;
+import org.usf.inspect.server.model.LocalRequest;
+import org.usf.inspect.server.model.MailRequest;
+import org.usf.inspect.server.model.MainSession;
+import org.usf.inspect.server.model.RestRequest;
+import org.usf.inspect.server.model.RestSession;
+import org.usf.inspect.server.model.UserAction;
+import org.usf.jquery.core.ResultSetMapper;
+import org.usf.jquery.core.RowMapper;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
@@ -57,50 +135,50 @@ public final class InspectMappers {
         };
     }
 
-    public static RowMapper<InstanceTrace> instanceTraceMapper() {
-        return rs ->
-            new InstanceTrace(
-                    rs.getInt(PENDING.reference()),
-                    rs.getString(FILENAME.reference()),
-                    fromNullableTimestamp(rs.getTimestamp(START.reference())),
-                    rs.getString(INSTANCE_ENV.reference()),
-                    rs.getInt(TRACE_COUNT.reference()),
-                    rs.getInt(ATTEMPTS.reference())
-            );
-    }
-
-    public static RowMapper<MachineResourceUsage> instanceResourceUsageMapper() {
-        return rs ->
-                new MachineResourceUsage(
-                        fromNullableTimestamp(rs.getTimestamp(START.reference())),
-                        rs.getInt(USED_HEAP.reference()),
-                        rs.getInt(COMMITED_HEAP.reference()),
-                        rs.getInt(USED_DISK_SPACE.reference())
-                );
-    }
-
-    public static RowMapper<LogEntry> instanceLogEntryMapper(ObjectMapper mapper) {
-        return rs -> {
-            try {
-                return new LogEntry(
-                        fromNullableTimestamp(rs.getTimestamp(START.reference())),
-                        LogEntry.Level.valueOf(rs.getString(LOG_LEVEL.reference())),
-                        rs.getString(LOG_MESSAGE.reference()),
-                        rs.getString(STACKTRACE.reference()) != null ? mapper.readValue(rs.getString(STACKTRACE.reference()), new TypeReference<StackTraceRow[]>() {}) : null
-                );
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        };
-    }
-
-    public static RowMapper<RestRequestDto> restRequestLazyMapper() {
-        return rs -> {
-            RestRequestDto out = createBaseRestRequest(rs);
-            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
-            return out;
-        };
-    }
+//    public static RowMapper<InstanceTrace> instanceTraceMapper() {
+//        return rs ->
+//            new InstanceTrace(
+//                    rs.getInt(PENDING.reference()),
+//                    rs.getString(FILENAME.reference()),
+//                    fromNullableTimestamp(rs.getTimestamp(START.reference())),
+//                    rs.getString(INSTANCE_ENV.reference()),
+//                    rs.getInt(TRACE_COUNT.reference()),
+//                    rs.getInt(ATTEMPTS.reference())
+//            );
+//    }
+//
+//    public static RowMapper<MachineResourceUsage> instanceResourceUsageMapper() {
+//        return rs ->
+//                new MachineResourceUsage(
+//                        fromNullableTimestamp(rs.getTimestamp(START.reference())),
+//                        rs.getInt(USED_HEAP.reference()),
+//                        rs.getInt(COMMITED_HEAP.reference()),
+//                        rs.getInt(USED_DISK_SPACE.reference())
+//                );
+//    }
+//
+//    public static RowMapper<LogEntry> instanceLogEntryMapper(ObjectMapper mapper) {
+//        return rs -> {
+//            try {
+//                return new LogEntry(
+//                        fromNullableTimestamp(rs.getTimestamp(START.reference())),
+//                        LogEntry.Level.valueOf(rs.getString(LOG_LEVEL.reference())),
+//                        rs.getString(LOG_MESSAGE.reference()),
+//                        rs.getString(STACKTRACE.reference()) != null ? mapper.readValue(rs.getString(STACKTRACE.reference()), new TypeReference<StackTraceRow[]>() {}) : null
+//                );
+//            } catch (JsonProcessingException e) {
+//                throw new RuntimeException(e);
+//            }
+//        };
+//    }
+//
+//    public static RowMapper<RestRequestDto> restRequestLazyMapper() {
+//        return rs -> {
+//            RestRequestDto out = createBaseRestRequest(rs);
+//            out.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
+//            return out;
+//        };
+//    }
 
     public static RestRequestDto createBaseRestRequest(ResultSet rs) throws SQLException {
         RestRequestDto out = new RestRequestDto();
