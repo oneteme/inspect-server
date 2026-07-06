@@ -7,12 +7,11 @@ import static org.usf.jquery.core.Parameter.varargs;
 import static org.usf.jquery.core.TypeResolver.firstArgType;
 
 import org.usf.jquery.core.OperatorDefinition;
-import org.usf.jquery.core.Operators;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.Expose;
-import org.usf.jquery.mvc.StoreResource;
+import org.usf.jquery.mvc.StoreCatalogue;
 
-public interface InspectStore extends StoreResource {
+public interface InspectStore extends StoreCatalogue {
 
 	@Bind("e_rst_rqt")
 	@Expose(identity = "rest_request")

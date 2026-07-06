@@ -10,9 +10,9 @@ import static org.usf.inspect.server.config.constant.FieldConstant.VA_SZE;
 
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
-import org.usf.jquery.mvc.DatasetResource;
+import org.usf.jquery.mvc.DatasetCatalogue;
 
-public interface SMTPMail extends DatasetResource {
+public interface SMTPMail extends DatasetCatalogue {
 
 	@Bind(VA_SBJ)
 	ViewColumn subject();

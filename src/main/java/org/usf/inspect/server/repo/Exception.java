@@ -5,12 +5,12 @@ import static org.usf.jquery.core.Predicate.isNotNull;
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
-import org.usf.jquery.mvc.DatasetResource;
+import org.usf.jquery.mvc.DatasetCatalogue;
 import org.usf.jquery.mvc.Expose;
 
 import static org.usf.inspect.server.config.constant.FieldConstant.*;
 
-public interface Exception extends DatasetResource {
+public interface Exception extends DatasetCatalogue {
 	
 	@Bind(VA_TYP)
 	ViewColumn type();

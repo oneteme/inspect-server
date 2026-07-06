@@ -24,11 +24,11 @@ import org.usf.jquery.core.JoinGroup;
 import org.usf.jquery.core.Predicate;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
-import org.usf.jquery.mvc.DatasetResource;
+import org.usf.jquery.mvc.DatasetCatalogue;
 import org.usf.jquery.mvc.Expose;
 
 //@IncludeResources({PeriodColumns.class})
-public interface MainSession extends DatasetResource {
+public interface MainSession extends DatasetCatalogue {
 
 	@Bind(ID_SES)
 	ViewColumn id();

@@ -22,10 +22,10 @@ import org.usf.jquery.core.Column;
 import org.usf.jquery.core.JoinGroup;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
-import org.usf.jquery.mvc.DatasetResource;
+import org.usf.jquery.mvc.DatasetCatalogue;
 import org.usf.jquery.mvc.Expose;
 
-public interface LDAPRequest extends DatasetResource {
+public interface LDAPRequest extends DatasetCatalogue {
 
 	@Bind(ID_LDAP_RQT)
 	ViewColumn id();
