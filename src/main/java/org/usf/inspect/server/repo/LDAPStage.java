@@ -11,9 +11,9 @@ import static org.usf.inspect.server.config.constant.FieldConstant.VA_NAM;
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
-import org.usf.jquery.mvc.DatasetResource;
+import org.usf.jquery.mvc.DatasetCatalogue;
 
-public interface LDAPStage extends DatasetResource {
+public interface LDAPStage extends DatasetCatalogue {
 	
 	@Bind(VA_NAM)
 	ViewColumn name();

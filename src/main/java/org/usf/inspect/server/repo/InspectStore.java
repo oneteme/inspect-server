@@ -34,14 +34,14 @@ import org.usf.jquery.core.OperatorDefinition;
 import org.usf.jquery.core.ResultSetMapper;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.Expose;
-import org.usf.jquery.mvc.StoreResource;
+import org.usf.jquery.mvc.StoreCatalogue;
 import org.usf.jquery.mvc.ViewRegistry;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public interface InspectStore extends StoreResource {
+public interface InspectStore extends StoreCatalogue {
 
 	
 	static ViewRegistry registry = new ViewRegistry()

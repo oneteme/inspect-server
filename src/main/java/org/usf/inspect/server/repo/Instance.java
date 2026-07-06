@@ -21,10 +21,10 @@ import static org.usf.inspect.server.config.constant.FieldConstant.VA_VRS;
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
-import org.usf.jquery.mvc.DatasetResource;
+import org.usf.jquery.mvc.DatasetCatalogue;
 import org.usf.jquery.mvc.Expose;
 
-public interface Instance extends DatasetResource {
+public interface Instance extends DatasetCatalogue {
 
 	//TODO typed
 	@Bind(ID_INS)
