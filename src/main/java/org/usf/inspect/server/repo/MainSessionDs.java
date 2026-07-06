@@ -13,6 +13,8 @@ import static org.usf.inspect.server.config.constant.FieldConstant.VA_STK;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_THR;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_TYP;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_USR;
+import static org.usf.jquery.core.JDBCType.UUID;
+import static org.usf.jquery.core.JDBCType.VARCHAR;
 import static org.usf.jquery.core.Join.innerJoin;
 import static org.usf.jquery.core.JoinGroup.joins;
 import static org.usf.jquery.core.Predicate.isNotNull;
@@ -20,17 +22,20 @@ import static org.usf.jquery.core.Predicate.isNull;
 import static org.usf.jquery.mvc.StoreManager.getInstance;
 
 import org.usf.jquery.core.Column;
+import org.usf.jquery.core.JDBCType;
 import org.usf.jquery.core.JoinGroup;
 import org.usf.jquery.core.Predicate;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalogue;
 import org.usf.jquery.mvc.Expose;
+import org.usf.jquery.mvc.Typed;
 
 //@IncludeResources({PeriodColumns.class})
-public interface MainSession extends DatasetCatalogue {
+public interface MainSessionDs extends DatasetCatalogue {
 
 	@Bind(ID_SES)
+	@Typed(UUID)
 	ViewColumn id();
 
 	@Bind(VA_USR)
@@ -56,11 +61,11 @@ public interface MainSession extends DatasetCatalogue {
 
 	@Bind(VA_ERR_TYP)
 	@Expose(identity = "err_type")
-	ViewColumn errType();
+	ViewColumn errorType();
 
 	@Bind(VA_ERR_MSG)
 	@Expose(identity = "err_msg")
-	ViewColumn errMsg();
+	ViewColumn errorMessage();
 
 	@Bind(VA_STK)
 	ViewColumn stacktrace();
@@ -83,11 +88,11 @@ public interface MainSession extends DatasetCatalogue {
 	
 	@Expose(identity = "count_exception")
 	default Column countExceptions() {
-		return errType().toCase().when(isNotNull(), 1).orElse(0).sum();
+		return errorType().toCase().when(isNotNull(), 1).orElse(0).sum();
 	}
 	
 	@Expose(identity = "status_main_tranche")
     default Column statusMainTranche() {
-        return errType().toCase().when(isNull(), "false").orElse("true");
+        return errorType().toCase().when(isNull(), "false").orElse("true");
     }
 }

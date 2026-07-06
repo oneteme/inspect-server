@@ -157,20 +157,20 @@ public final class InspectMappers {
 //                );
 //    }
 //
-//    public static RowMapper<LogEntry> instanceLogEntryMapper(ObjectMapper mapper) {
-//        return rs -> {
-//            try {
-//                return new LogEntry(
-//                        fromNullableTimestamp(rs.getTimestamp(START.reference())),
-//                        LogEntry.Level.valueOf(rs.getString(LOG_LEVEL.reference())),
-//                        rs.getString(LOG_MESSAGE.reference()),
-//                        rs.getString(STACKTRACE.reference()) != null ? mapper.readValue(rs.getString(STACKTRACE.reference()), new TypeReference<StackTraceRow[]>() {}) : null
-//                );
-//            } catch (JsonProcessingException e) {
-//                throw new RuntimeException(e);
-//            }
-//        };
-//    }
+    public static RowMapper<LogEntry> instanceLogEntryMapper(ObjectMapper mapper) {
+        return rs -> {
+            try {
+                return new LogEntry(
+                        fromNullableTimestamp(rs.getTimestamp(START.reference())),
+                        LogEntry.Level.valueOf(rs.getString(LOG_LEVEL.reference())),
+                        rs.getString(LOG_MESSAGE.reference()),
+                        rs.getString(STACKTRACE.reference()) != null ? mapper.readValue(rs.getString(STACKTRACE.reference()), new TypeReference<StackTraceRow[]>() {}) : null
+                );
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        };
+    }
 //
 //    public static RowMapper<RestRequestDto> restRequestLazyMapper() {
 //        return rs -> {
@@ -313,7 +313,7 @@ public final class InspectMappers {
     
     public static RowMapper<MainSession> mainSessionPulseRowMapper(){
         return rs -> {
-            MainSession out = new MainSession();
+            MainSessionDs out = new MainSessionDs();
             out.setId(rs.getString(ID.reference())); // add value of nullable
             out.setName(rs.getString(NAME.reference()));
             out.setStart(fromNullableTimestamp(rs.getTimestamp(START.reference())));

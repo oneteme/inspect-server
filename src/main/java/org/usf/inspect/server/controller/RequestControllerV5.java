@@ -10,6 +10,7 @@ import static org.usf.inspect.server.config.TraceApiDatabase.INSPECT;
 import static org.usf.jquery.mvc.QueryExtension.Modifier.REJECT;
 
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.usf.inspect.core.LogEntry;
 import org.usf.inspect.server.mapper.InspectMappers;
 import org.usf.inspect.server.model.MainSession;
 import org.usf.inspect.server.model.RequestType;
@@ -70,14 +72,25 @@ public class RequestControllerV5 {
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
 	}
 	
-//    @GetMapping(value = "session/main/{idSession}", produces = APPLICATION_JSON_VALUE)
-//    public ResponseEntity<MainSession> getMainSession(
-//            @QueryRequestFilter(
-//                view = "main_session",
-//                column = "id,name,start,end,type,location,thread,err_type,err_msg,stacktrace,mask,user,instance_env") QueryComposer request,
-//            @PathVariable String idSession) throws SQLException {
-//        return Optional.ofNullable(INSPECT.execute(request.filters(column("id_ses").eq(fromString(idSession))), InspectMappers.createBaseMainSession(mapper)))
-//                .map(o -> ok().body(o))
-//                .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
+	@GetMapping(value = "session/{sessionId}/log/entry", produces = APPLICATION_JSON_VALUE)
+	@QueryExtension(select = REJECT)
+	@QueryTemplate(dataset = "log_entry",
+	view = "instanceLogEntryMapper",
+	select = "start,log_level,log_message,stacktrace",
+	order = "start.desc")
+	public Object fetchLogEntriesBySession(MvcRequest mvc, HttpServletResponse res, @PathVariable String sessionId) {
+		var store = (InspectStore) mvc.getStore();
+		mvc.getComposer().criteria(store.logEntry().parent().eq(fromString(sessionId))); // UUID
+		
+		return mvc.execute();
+	}
+	
+
+//    @GetMapping(value = "session/{sessionId}/log/entry", produces = APPLICATION_JSON_VALUE)
+//    public List<LogEntry> getLogEntriesBySessionId(
+//    		@QueryRequestFilter(view = "log_entry",
+//    		column = "start,log_level,log_message,stacktrace", order = "start.desc") QueryComposer request,
+//    		@PathVariable String sessionId)  {
+//    	return INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(sessionId))), InspectMappers.instanceLogEntryMapper(mapper));
 //    }
 }

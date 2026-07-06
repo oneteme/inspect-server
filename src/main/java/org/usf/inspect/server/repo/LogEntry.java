@@ -15,9 +15,11 @@ import org.usf.jquery.mvc.Expose;
 public interface LogEntry extends DatasetCatalogue {
 	
 	@Bind(VA_LVL)
+	@Expose(identity = "log_level")
 	ViewColumn logLevel();
 	
 	@Bind(VA_MSG)
+	@Expose(identity = "log_message")
 	ViewColumn logMessage();
 	
 	@Bind(VA_STK)
