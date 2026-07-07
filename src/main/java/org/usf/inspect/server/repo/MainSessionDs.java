@@ -27,12 +27,12 @@ import org.usf.jquery.core.JoinGroup;
 import org.usf.jquery.core.Predicate;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
-import org.usf.jquery.mvc.DatasetCatalogue;
+import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
 import org.usf.jquery.mvc.Typed;
 
 //@IncludeResources({PeriodColumns.class})
-public interface MainSessionDs extends DatasetCatalogue {
+public interface MainSessionDs extends DatasetCatalog {
 
 	@Bind(ID_SES)
 	@Typed(UUID)

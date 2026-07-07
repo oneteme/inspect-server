@@ -10,9 +10,9 @@ import static org.usf.inspect.server.config.constant.FieldConstant.VA_NAM;
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
-import org.usf.jquery.mvc.DatasetCatalogue;
+import org.usf.jquery.mvc.DatasetCatalog;
 
-public interface SMTPStage extends DatasetCatalogue {
+public interface SMTPStage extends DatasetCatalog {
 	
 	@Bind(VA_NAM)
 	ViewColumn name();

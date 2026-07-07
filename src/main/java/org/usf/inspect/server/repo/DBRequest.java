@@ -28,10 +28,10 @@ import org.usf.jquery.core.Join;
 import org.usf.jquery.core.JoinGroup;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
-import org.usf.jquery.mvc.DatasetCatalogue;
+import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
 
-public interface DBRequest extends DatasetCatalogue {
+public interface DBRequest extends DatasetCatalog {
 
 	@Bind(ID_DTB_RQT)
 	ViewColumn id();

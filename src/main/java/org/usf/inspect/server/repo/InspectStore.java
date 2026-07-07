@@ -15,10 +15,10 @@ import static org.usf.jquery.core.TypeResolver.firstArgType;
 import org.usf.jquery.core.OperatorDefinition;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.Expose;
-import org.usf.jquery.mvc.StoreCatalogue;
+import org.usf.jquery.mvc.StoreCatalog;
 import org.usf.jquery.mvc.ViewRegistry;
 
-public interface InspectStore extends StoreCatalogue {
+public interface InspectStore extends StoreCatalog {
 
 	
 	static ViewRegistry registry = new ViewRegistry()
@@ -110,7 +110,4 @@ public interface InspectStore extends StoreCatalogue {
 	default ViewRegistry viewRegistry() {
 		return registry;
 	}
-	
-
-
 }

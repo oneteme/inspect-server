@@ -8,10 +8,10 @@ import static org.usf.inspect.server.config.constant.FieldConstant.VA_USED_HEP;
 
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
-import org.usf.jquery.mvc.DatasetCatalogue;
+import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
 
-public interface ResourceUsage extends DatasetCatalogue {
+public interface ResourceUsage extends DatasetCatalog {
 	
 	@Bind(VA_USED_HEP)
 	ViewColumn usedHeap();

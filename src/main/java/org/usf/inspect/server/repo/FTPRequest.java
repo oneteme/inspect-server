@@ -24,10 +24,10 @@ import org.usf.jquery.core.Column;
 import org.usf.jquery.core.JoinGroup;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
-import org.usf.jquery.mvc.DatasetCatalogue;
+import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
 
-public interface FTPRequest extends DatasetCatalogue {
+public interface FTPRequest extends DatasetCatalog {
 
 	@Bind(ID_FTP_RQT)
 	ViewColumn id();

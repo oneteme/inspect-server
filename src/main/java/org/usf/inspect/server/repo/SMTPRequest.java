@@ -21,10 +21,10 @@ import org.usf.jquery.core.Column;
 import org.usf.jquery.core.JoinGroup;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
-import org.usf.jquery.mvc.DatasetCatalogue;
+import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
 
-public interface SMTPRequest extends DatasetCatalogue {
+public interface SMTPRequest extends DatasetCatalog {
 
 	@Bind(ID_SMTP_RQT)
 	ViewColumn id();

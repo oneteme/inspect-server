@@ -15,10 +15,10 @@ import static org.usf.inspect.server.config.constant.FieldConstant.VA_USR;
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
-import org.usf.jquery.mvc.DatasetCatalogue;
+import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
 
-public interface LocalRequest extends DatasetCatalogue {
+public interface LocalRequest extends DatasetCatalog {
 
 	@Bind(ID_LCL_RQT)
 	ViewColumn id();

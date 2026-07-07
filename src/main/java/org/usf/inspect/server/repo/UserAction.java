@@ -8,9 +8,9 @@ import static org.usf.inspect.server.config.constant.FieldConstant.VA_TYP;
 
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
-import org.usf.jquery.mvc.DatasetCatalogue;
+import org.usf.jquery.mvc.DatasetCatalog;
 
-public interface UserAction extends DatasetCatalogue {
+public interface UserAction extends DatasetCatalog {
 	
 	@Bind(VA_TYP)
 	ViewColumn type();

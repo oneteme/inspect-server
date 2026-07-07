@@ -35,7 +35,7 @@ import org.usf.jquery.mvc.QueryExtension;
 import org.usf.jquery.mvc.QueryExtension.Modifier;
 import org.usf.jquery.mvc.QueryGuard;
 import org.usf.jquery.mvc.QueryTemplate;
-import org.usf.jquery.mvc.StoreCatalogue;
+import org.usf.jquery.mvc.StoreCatalog;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -154,8 +154,8 @@ public class CommonRequestQueryResolver implements HandlerMethodArgumentResolver
 		}
 	}
 
-	StoreCatalogue resolveStore(QueryTemplate ann, MethodParameter parameter) {
-		var store = ann.store() == StoreCatalogue.class 
+	StoreCatalog resolveStore(QueryTemplate ann, MethodParameter parameter) {
+		var store = ann.store() == StoreCatalog.class 
 				? getInstance().getDefaultStore() 
 				: getInstance().getStore(ann.store());
 		var rst = parameter.getMethodAnnotation(QueryGuard.class);
