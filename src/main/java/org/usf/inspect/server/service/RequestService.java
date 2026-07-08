@@ -132,6 +132,7 @@ public class RequestService {
     private final JdbcTemplate template;
     private final RequestDao dao;
     private final int requestLimit = 300000;
+    private static final int SESSION_ID_BATCH_SIZE = 500;
     private final ExecutorService executorService = wrap(virtualThreadExecutor("inspect-tree", 10));
 
     public Session getMainTree(String id)  {
@@ -350,9 +351,20 @@ public class RequestService {
     }
 
     public List<Session> getRestSessions(Collection<String> ids, Instant start)  { // remove if possible after optimizing tree
-        if (ids.isEmpty()) {
-            return new ArrayList<>();
+        // Batch the IN clause: a single query with a very large id list, combined with
+        // the scan over the partitioned table, can be heavy enough for the DB backend
+        // to drop the connection (EOFException / SQLSTATE 08006). Chunking keeps each
+        // query small and bounded. An empty input naturally yields an empty result.
+        var idList = new ArrayList<>(ids);
+        var sessions = new ArrayList<Session>();
+        for (int i = 0; i < idList.size(); i += SESSION_ID_BATCH_SIZE) {
+            var batch = idList.subList(i, Math.min(i + SESSION_ID_BATCH_SIZE, idList.size()));
+            sessions.addAll(getRestSessionsBatch(batch, start));
         }
+        return sessions;
+    }
+
+    private List<Session> getRestSessionsBatch(Collection<String> ids, Instant start)  {
         var v = new QueryComposer()
                 .columns(
                         getColumns(
