@@ -78,16 +78,14 @@ public class RequestService {
                         Column.constant("REST").as("source")
                 )
                 .distinct(true)
-                .joins(
-                        restSession.instance(),
-                        restSession.databaseRequest()
-                )
+                .joins(restSession.instance().getJoins())
+                .joins(restSession.databaseRequest().getJoins())         
                 .criterias(
                         restSession.start().ge(from(start)),
                         restSession.end().lt(from(end)),
                         databaseRequest.db().notNull().or(databaseRequest.schema().notNull()),
                         databaseRequest.start().ge(from(start)),
-                        instance.environment().in(env)
+                        instance.environement().in(env)
                 );
         var q2 = new QueryComposer()
                 .columns(
@@ -97,16 +95,14 @@ public class RequestService {
                         Column.constant("REST").as("source")
                 )
                 .distinct(true)
-                .joins(
-                        restSession.instance(),
-                        restSession.ftpRequest()
-                )
+                .joins(restSession.instance().getJoins())
+                .joins(restSession.ftpRequest().getJoins())
                 .criterias(
                         restSession.start().ge(from(start)),
                         restSession.end().lt(from(end)),
                         ftpRequest.host().notNull(),
                         ftpRequest.start().ge(from(start)),
-                        instance.environment().in(env)
+                        instance.environement().in(env)
                 )
                 .compose(store).asUnion(true);
         var q3 =  new QueryComposer()
@@ -117,16 +113,14 @@ public class RequestService {
                         Column.constant("REST").as("source")
                 )
                 .distinct(true)
-                .joins(
-                        restSession.instance(),
-                        restSession.smtpRequest()
-                )
+                .joins(restSession.instance().getJoins())
+                .joins(restSession.smtpRequest().getJoins())
                 .criterias(
                         restSession.start().ge(from(start)),
                         restSession.end().lt(from(end)),
                         smtpRequest.host().notNull(),
                         smtpRequest.start().ge(from(start)),
-                        instance.environment().in(env)
+                        instance.environement().in(env)
                 ).compose(store).asUnion(true);
         var q4 = new QueryComposer()
                 .columns(
@@ -137,15 +131,16 @@ public class RequestService {
                 )
                 .distinct(true)
                 .joins(
-                        restSession.instance(),
-                        restSession.ldapRequest()
+                        restSession.instance().getJoins())
+                .joins(
+                        restSession.ldapRequest().getJoins()
                 )
                 .criterias(
                         restSession.start().ge(from(start)),
                         restSession.end().lt(from(end)),
                         ldapRequest.host().notNull(),
                         ldapRequest.start().ge(from(start)),
-                        instance.environment().in(env)
+                        instance.environement().in(env)
                 ).compose(store).asUnion(true);
         var q5 = new QueryComposer()
                 .columns(
@@ -165,7 +160,7 @@ public class RequestService {
                         restSession.start().ge(from(start)),
                         restSession.end().lt(from(end)),
                         restRequest.start().ge(from(start)),
-                        instance.environment().in(env)
+                        instance.environement().in(env)
                 ).compose(store).asUnion(true);
         var q6 = new QueryComposer()
                 .columns(
@@ -186,7 +181,7 @@ public class RequestService {
                         mainSession.end().lt(from(end)),
                         mainSession.type().eq("VIEW"),
                         restRequest.start().ge(from(start)),
-                        instance.environment().in(env)
+                        instance.environement().in(env)
                 ).compose(store).asUnion(true);
         return store.execute(q.unions(q2, q3, q4, q5, q6).compose(store), rs -> {
             Map<String, List<Architecture>> map = new HashMap<>();
@@ -303,7 +298,7 @@ public class RequestService {
                         restSession.errMsg(), restSession.mask(), restSession.user(), restSession.userAgt(), restSession.cacheControl(), restSession.instanceEnv(),
                         instance.appName(), instance.os(), instance.re(), instance.address()
                 )
-                .joins(restSession.instance())
+                .joins(restSession.instance().getJoins())
                 .criteria(restSession.id().in(ids.stream().map(UUID::fromString).toArray()).and(restSession.start().ge(instance.start())));
         if (start != null) {
             v.criteria(restSession.start().ge(from(start)));
@@ -622,10 +617,10 @@ public class RequestService {
         var v = new QueryComposer()
                 .distinct(true)
                 .columns(request.host())
-                .joins(request.instance())
+                .joins(request.instance().getJoins())
                 .criterias(
                         request.start().ge(start).and(request.start().lt(end)),
-                        instance.environment().eq(environment)
+                        instance.environement().eq(environment)
                 )
                 .order(request.host().order());
         return store.execute(v.compose(store), toListMapper((rs, row) -> rs.getString("host")));
@@ -639,10 +634,10 @@ public class RequestService {
         var v = new QueryComposer()
                 .distinct(true)
                 .columns(databaseRequest.schema())
-                .joins(databaseRequest.instance())
+                .joins(databaseRequest.instance().getJoins())
                 .criterias(
                         databaseRequest.start().ge(start).and(databaseRequest.start().lt(end)).and(databaseRequest.host().eq(host)),
-                        instance.environment().eq(environment)
+                        instance.environement().eq(environment)
                 );
         return store.execute(v.compose(store), toListMapper((rs, row) -> rs.getString("schema")));
     }

@@ -46,12 +46,12 @@ public class PurgeDao {
         return store.execute(store.newQuery(v ->
                 v.columns(
                         instance.type(),
-                        instance.environment(),
+                        instance.environement(),
                         instance.appName(),
                         instance.configuration()
                 ).criterias(
                         Column.rank().over(
-                                new Column[]{instance.environment(), instance.appName(), instance.type()},
+                                new Column[]{instance.environement(), instance.appName(), instance.type()},
                                 new Order[] {instance.end().coalesce(ctimestamp()).desc(), instance.start().desc()}
                         ).eq(1)
                 )

@@ -2,6 +2,7 @@ package org.usf.inspect.server.repo;
 
 import static org.usf.inspect.server.config.constant.FieldConstant.*;
 import static org.usf.jquery.core.Join.innerJoin;
+import static org.usf.jquery.core.JoinGroup.joins;
 import static org.usf.jquery.core.Predicate.ge;
 import static org.usf.jquery.core.Predicate.lt;
 import static org.usf.jquery.mvc.StoreManager.getInstance;
@@ -106,29 +107,29 @@ public interface RestSessionCatalog extends DatasetCatalog {
 	@Expose(identity = "instance_env")
 	ViewColumn instanceEnv();
 
-	default Join instance() {
+	default JoinGroup instance() {
 		var instance = getInstance().getStore(InspectStore.class).instance();
-		return innerJoin(instance.getView(), instanceEnv().eq(instance.id()));
+		return joins(innerJoin(instance.getView(), instanceEnv().eq(instance.id())));
 	}
 
-	default Join databaseRequest() {
+	default JoinGroup databaseRequest() {
 		var databaseRequest = getInstance().getStore(InspectStore.class).databaseRequest();
-		return innerJoin(databaseRequest.getView(), id().eq(databaseRequest.parent()));
+		return joins(innerJoin(databaseRequest.getView(), id().eq(databaseRequest.parent())));
 	}
 
-	default Join ftpRequest() {
+	default JoinGroup ftpRequest() {
 		var ftpRequest = getInstance().getStore(InspectStore.class).ftpRequest();
-		return innerJoin(ftpRequest.getView(), id().eq(ftpRequest.parent()));
+		return joins(innerJoin(ftpRequest.getView(), id().eq(ftpRequest.parent())));
 	}
 
-	default Join smtpRequest() {
+	default JoinGroup smtpRequest() {
 		var smtpRequest = getInstance().getStore(InspectStore.class).smtpRequest();
-		return innerJoin(smtpRequest.getView(), id().eq(smtpRequest.parent()));
+		return joins(innerJoin(smtpRequest.getView(), id().eq(smtpRequest.parent())));
 	}
 
-	default Join ldapRequest() {
+	default JoinGroup ldapRequest() {
 		var ldapRequest = getInstance().getStore(InspectStore.class).ldapRequest();
-		return innerJoin(ldapRequest.getView(), id().eq(ldapRequest.parent()));
+		return joins(innerJoin(ldapRequest.getView(), id().eq(ldapRequest.parent())));
 	}
 
 	@Expose(identity = "error_type_session")

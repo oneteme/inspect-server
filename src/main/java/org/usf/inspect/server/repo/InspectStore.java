@@ -59,6 +59,7 @@ public interface InspectStore extends StoreCatalog {
 	RestRequestCatalog restRequest();
 	
 	@Bind("e_rst_rqt_stg")
+	@Expose(identity = "rest_request_stage")
 	RestRequestStageCatalog restRequestStage();
 	
 	@Bind("e_rst_ses")

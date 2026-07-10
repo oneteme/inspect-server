@@ -222,7 +222,7 @@ public class RequestController {
             @RequestParam(name = "environment") String environment
     )  {
         var store = (InspectStore) mvc.getStore();
-        mvc.getComposer().criteria(store.instance().environment().eq(environment));
+        mvc.getComposer().criteria(store.instance().environement().eq(environment));
 
         return (Collection<MainSessionDto>) mvc.execute();
     }
@@ -289,12 +289,12 @@ public class RequestController {
 //    @RequestParam(required = false, name = "lazy") boolean lazy
 
     @GetMapping(value = "session/rest", produces = APPLICATION_JSON_VALUE)
+    @QueryGuard(maxRows = 300000)
     @QueryExtension(select = REJECT, overrideView = false, overrideLimit = false)
     @QueryTemplate(dataset = "rest_session",
             view = REST_SESSION_ROW_MAPPER,
-            select = "id,apiName,method,protocol,path,query,status,start,end,user,appName",
+            select = "id,apiName,method,protocol,path,query,status,start,end,user,instance.app_name",
             join = "instance",
-            limit = 300000,
             order = "start",
             ignore = "environment")
     public Collection<RestSessionDto> fetchRestSessions(
@@ -302,7 +302,7 @@ public class RequestController {
             @RequestParam(name = "environment") String environment
     )  {
         var store = (InspectStore) mvc.getStore();
-        mvc.getComposer().criteria(store.instance().environment().eq(environment));
+        mvc.getComposer().criteria(store.instance().environement().eq(environment));
 
         return (Collection<RestSessionDto>) mvc.execute();
     }
@@ -478,7 +478,7 @@ public class RequestController {
             @RequestParam(name = "environment") String environment
     )  {
         var store = (InspectStore) mvc.getStore();
-        mvc.getComposer().criteria(store.instance().environment().eq(environment));
+        mvc.getComposer().criteria(store.instance().environement().eq(environment));
 
         return (Collection<RestRequestDto>) mvc.execute();
     }
@@ -533,7 +533,7 @@ public class RequestController {
             @RequestParam(name = "environment") String environment
     )  {
         var store = (InspectStore) mvc.getStore();
-        mvc.getComposer().criteria(store.instance().environment().eq(environment));
+        mvc.getComposer().criteria(store.instance().environement().eq(environment));
 
         return (Collection<DatabaseRequestDto>) mvc.execute();
     }
@@ -588,7 +588,7 @@ public class RequestController {
             @RequestParam(name = "environment") String environment
     )  {
         var store = (InspectStore) mvc.getStore();
-        mvc.getComposer().criteria(store.instance().environment().eq(environment));
+        mvc.getComposer().criteria(store.instance().environement().eq(environment));
 
         return (Collection<FtpRequestDto>) mvc.execute();
     }
@@ -643,7 +643,7 @@ public class RequestController {
             @RequestParam(name = "environment") String environment
     )  {
         var store = (InspectStore) mvc.getStore();
-        mvc.getComposer().criteria(store.instance().environment().eq(environment));
+        mvc.getComposer().criteria(store.instance().environement().eq(environment));
 
         return (Collection<MailRequestDto>) mvc.execute();
     }
@@ -712,7 +712,7 @@ public class RequestController {
             @RequestParam(name = "environment") String environment
     )  {
         var store = (InspectStore) mvc.getStore();
-        mvc.getComposer().criteria(store.instance().environment().eq(environment));
+        mvc.getComposer().criteria(store.instance().environement().eq(environment));
 
         return (Collection<DirectoryRequestDto>) mvc.execute();
     }

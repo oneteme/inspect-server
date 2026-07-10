@@ -50,7 +50,7 @@ public interface InstanceCatalog extends DatasetCatalog {
 	ViewColumn address();
 	
 	@Bind(VA_ENV)
-	ViewColumn environment();
+	ViewColumn environement();
 	
 	@Bind(VA_OS)
 	ViewColumn os();

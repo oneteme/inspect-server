@@ -98,4 +98,6 @@ public interface MainSessionCatalog extends DatasetCatalog {
     default Column statusMainTranche() {
         return errType().toCase().when(isNull(), "false").orElse("true");
     }
+	
+	
 }

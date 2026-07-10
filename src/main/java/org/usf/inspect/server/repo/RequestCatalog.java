@@ -1,6 +1,7 @@
 package org.usf.inspect.server.repo;
 
 import org.usf.jquery.core.Join;
+import org.usf.jquery.core.JoinGroup;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
@@ -8,6 +9,7 @@ import org.usf.jquery.mvc.Expose;
 
 import static org.usf.inspect.server.config.constant.FieldConstant.*;
 import static org.usf.jquery.core.Join.innerJoin;
+import static org.usf.jquery.core.JoinGroup.joins;
 import static org.usf.jquery.mvc.StoreManager.getInstance;
 
 public interface RequestCatalog extends DatasetCatalog {
@@ -37,8 +39,8 @@ public interface RequestCatalog extends DatasetCatalog {
     @Expose(identity = "instance_env")
     ViewColumn instanceEnv();
 
-    default Join instance() {
+    default JoinGroup instance() {
         var instance = getInstance().getStore(InspectStore.class).instance();
-        return innerJoin(instance.getView(), instanceEnv().eq(instance.id()));
+        return joins(innerJoin(instance.getView(), instanceEnv().eq(instance.id())));
     }
 }
