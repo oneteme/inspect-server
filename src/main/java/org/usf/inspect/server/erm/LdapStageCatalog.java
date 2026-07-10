@@ -1,6 +1,6 @@
-package org.usf.inspect.server.repo;
+package org.usf.inspect.server.erm;
 
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_FTP_RQT;
+import static org.usf.inspect.server.config.constant.FieldConstant.CD_LDAP_RQT;
 import static org.usf.inspect.server.config.constant.FieldConstant.CD_ORD;
 import static org.usf.inspect.server.config.constant.FieldConstant.DH_END;
 import static org.usf.inspect.server.config.constant.FieldConstant.DH_STR;
@@ -13,7 +13,7 @@ import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
 
-public interface FtpStageCatalog extends StageCatalog {
+public interface LdapStageCatalog extends StageCatalog {
 	
 	@Bind(DH_STR)
 	ViewColumn start();
@@ -27,8 +27,9 @@ public interface FtpStageCatalog extends StageCatalog {
 	@Bind(VA_CMD)
 	ViewColumn command();
 	
-	@Bind(CD_FTP_RQT)
+	@Bind(CD_LDAP_RQT)
 	ViewColumn parent();
+
 	
 	default Column elapsedTime() {
 		return end().minus(start()).epoch();

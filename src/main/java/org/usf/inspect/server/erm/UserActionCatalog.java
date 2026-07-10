@@ -1,28 +1,29 @@
-package org.usf.inspect.server.repo;
+package org.usf.inspect.server.erm;
 
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_ORD;
 import static org.usf.inspect.server.config.constant.FieldConstant.CD_PRN_SES;
-import static org.usf.inspect.server.config.constant.FieldConstant.DH_END;
 import static org.usf.inspect.server.config.constant.FieldConstant.DH_STR;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_NAM;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_NDE_NAM;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_TYP;
 
-import org.usf.jquery.core.Column;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
 
-public interface RestSessionStageCatalog extends StageCatalog {
+public interface UserActionCatalog extends DatasetCatalog {
+	
+	@Bind(VA_TYP)
+	ViewColumn type();
+	
+	@Bind(VA_NAM)
+	ViewColumn name();
+	
+	@Bind(VA_NDE_NAM)
+	ViewColumn nodeName();
 	
 	@Bind(DH_STR)
 	ViewColumn start();
 	
-	@Bind(DH_END)
-	ViewColumn end();
-	
 	@Bind(CD_PRN_SES)
 	ViewColumn parent();
-	
-	default Column elapsedTime() {
-		return end().minus(start()).epoch();
-	}
 }

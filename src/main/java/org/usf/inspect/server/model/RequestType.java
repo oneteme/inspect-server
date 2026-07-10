@@ -2,10 +2,11 @@ package org.usf.inspect.server.model;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.usf.inspect.server.repo.InspectStore;
-import org.usf.inspect.server.repo.RequestCatalog;
 
 import java.util.function.Function;
+
+import org.usf.inspect.server.erm.InspectStore;
+import org.usf.inspect.server.erm.RequestCatalog;
 
 @RequiredArgsConstructor
 @Getter

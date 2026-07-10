@@ -1,4 +1,4 @@
-package org.usf.inspect.server.repo;
+package org.usf.inspect.server.erm;
 
 import static org.usf.jquery.core.Predicate.isNotNull;
 

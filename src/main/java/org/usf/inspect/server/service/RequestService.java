@@ -8,11 +8,11 @@ import org.usf.inspect.core.RequestMask;
 import org.usf.inspect.core.StackTraceRow;
 import org.usf.inspect.server.Utils;
 import org.usf.inspect.server.dao.RequestDao;
+import org.usf.inspect.server.erm.*;
 import org.usf.inspect.server.model.Architecture;
 import org.usf.inspect.server.model.RequestType;
 import org.usf.inspect.server.model.Session;
 import org.usf.inspect.server.model.wrapper.*;
-import org.usf.inspect.server.repo.*;
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.QueryComposer;
 import org.usf.jquery.core.ViewColumn;
@@ -427,7 +427,7 @@ public class RequestService {
                         restRequest.linked(), restRequest.parent(),
                         exception.errType(), exception.errMsg()
                 )
-                .joins(restRequest.exception())
+                .joins(restRequest.exception().getJoins())
                 .criteria(restRequest.parent().in(ids.stream().map(UUID::fromString).toArray()));
         if(start != null) {
             v.criteria(restRequest.start().ge(start));

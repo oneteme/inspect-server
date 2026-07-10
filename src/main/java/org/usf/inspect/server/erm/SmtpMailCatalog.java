@@ -1,4 +1,4 @@
-package org.usf.inspect.server.repo;
+package org.usf.inspect.server.erm;
 
 import static org.usf.inspect.server.config.constant.FieldConstant.CD_SMTP_RQT;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_CNT_TYP;

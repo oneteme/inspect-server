@@ -9,8 +9,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.usf.inspect.core.*;
 import org.usf.inspect.server.dto.*;
+import org.usf.inspect.server.erm.InspectStore;
 import org.usf.inspect.server.model.*;
-import org.usf.inspect.server.repo.InspectStore;
 import org.usf.inspect.server.service.RequestService;
 import org.usf.inspect.server.validation.Condition;
 import org.usf.inspect.server.validation.Validate;
@@ -32,7 +32,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.http.ResponseEntity.status;
 import static org.usf.inspect.server.Utils.fromNullableTimestamp;
-import static org.usf.inspect.server.repo.ViewRegistryConstant.*;
+import static org.usf.inspect.server.erm.ViewRegistryConstant.*;
 import static org.usf.jquery.mvc.QueryExtension.Modifier.REJECT;
 
 @Slf4j

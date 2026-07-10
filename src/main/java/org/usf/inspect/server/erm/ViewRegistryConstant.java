@@ -1,4 +1,4 @@
-package org.usf.inspect.server.repo;
+package org.usf.inspect.server.erm;
 
 public class ViewRegistryConstant {
     public static final String INSTANCE_ENVIRONMENT_RESULTSET_MAPPER = "instanceEnvironmentResultSetMapper";

@@ -1,4 +1,4 @@
-package org.usf.inspect.server.repo;
+package org.usf.inspect.server.erm;
 
 import static org.usf.inspect.server.config.constant.FieldConstant.CD_INS;
 import static org.usf.inspect.server.config.constant.FieldConstant.DH_END;
@@ -91,12 +91,12 @@ public interface MainSessionCatalog extends DatasetCatalog {
 	
 	@Expose(identity = "count_exception")
 	default Column countExceptions() {
-		return errType().toCase().when(isNotNull(), 1).orElse(0).sum();
+		return errType().toCase().when(isNotNull(), 1).orElse(0).sum(); //TODO errType().count exclude null
 	}
 	
 	@Expose(identity = "status_main_tranche")
     default Column statusMainTranche() {
-        return errType().toCase().when(isNull(), "false").orElse("true");
+        return errType().toCase().when(isNull(), "false").orElse("true"); //TODO errType().notNull()
     }
 	
 	

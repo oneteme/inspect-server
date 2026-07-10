@@ -1,4 +1,4 @@
-package org.usf.inspect.server.repo;
+package org.usf.inspect.server.erm;
 
 import static org.usf.inspect.server.config.constant.FieldConstant.CD_INS;
 import static org.usf.inspect.server.config.constant.FieldConstant.CD_PRN_SES;

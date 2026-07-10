@@ -1,4 +1,4 @@
-package org.usf.inspect.server.repo;
+package org.usf.inspect.server.erm;
 
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.JoinGroup;

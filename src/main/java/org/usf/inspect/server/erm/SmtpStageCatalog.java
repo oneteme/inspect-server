@@ -1,9 +1,10 @@
-package org.usf.inspect.server.repo;
+package org.usf.inspect.server.erm;
 
 import static org.usf.inspect.server.config.constant.FieldConstant.CD_ORD;
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_PRN_SES;
+import static org.usf.inspect.server.config.constant.FieldConstant.CD_SMTP_RQT;
 import static org.usf.inspect.server.config.constant.FieldConstant.DH_END;
 import static org.usf.inspect.server.config.constant.FieldConstant.DH_STR;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_CMD;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_NAM;
 
 import org.usf.jquery.core.Column;
@@ -11,7 +12,7 @@ import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
 
-public interface RestRequestStageCatalog extends StageCatalog {
+public interface SmtpStageCatalog extends StageCatalog {
 	
 	@Bind(DH_STR)
 	ViewColumn start();
@@ -19,7 +20,10 @@ public interface RestRequestStageCatalog extends StageCatalog {
 	@Bind(DH_END)
 	ViewColumn end();
 	
-	@Bind(CD_PRN_SES)
+	@Bind(VA_CMD)
+	ViewColumn command();
+	
+	@Bind(CD_SMTP_RQT)
 	ViewColumn parent();
 	
 	default Column elapsedTime() {
