@@ -15,10 +15,10 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping(value = "purge", produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 public class PurgeController {
-    private final PurgeService purgeService;
+    //private final PurgeService purgeService; TODO  delete this comment 
 
     @DeleteMapping("batch")
     public void purge(){
-        purgeService.launchPurge();
+        //purgeService.launchPurge(); TODO  delete this comment 
     }
 }
