@@ -30,6 +30,7 @@ import static java.util.Objects.nonNull;
 import static java.util.Objects.requireNonNullElseGet;
 import static org.usf.inspect.core.RequestMask.*;
 import static org.usf.inspect.core.SessionContextManager.emitError;
+import static org.usf.jquery.core.Column.ctimestamp;
 
 @Slf4j
 @Repository
@@ -51,7 +52,7 @@ public class PurgeDao {
                 ).criterias(
                         Column.rank().over(
                                 new Column[]{instance.environment(), instance.appName(), instance.type()},
-                                new Order[] {instance.end().coalesce(Column.ctimestamp().operation()).desc(), instance.start().desc()}
+                                new Order[] {instance.end().coalesce(ctimestamp()).desc(), instance.start().desc()}
                         ).eq(1)
                 )
         ), this::mapInstances);

@@ -62,14 +62,14 @@ public class RequestService {
         InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
         MainSessionCatalog mainSession = store.mainSession();
         RestSessionCatalog restSession = store.restSession();
-        RestSessionCatalog restSessionFork = (RestSessionCatalog) store.restSession().fork();
+        RestSessionCatalog restSessionFork = (RestSessionCatalog) store.restSession().mirror();
         RestRequestCatalog restRequest = store.restRequest();
         DatabaseRequestCatalog databaseRequest = store.databaseRequest();
         FtpRequestCatalog ftpRequest = store.ftpRequest();
         SmtpRequestCatalog smtpRequest = store.smtpRequest();
         LdapRequestCatalog ldapRequest = store.ldapRequest();
         InstanceCatalog instance = store.instance();
-        InstanceCatalog instanceFork = (InstanceCatalog) store.instance().fork();
+        InstanceCatalog instanceFork = (InstanceCatalog) store.instance().mirror();
         var q = new QueryComposer()
                 .columns(
                         databaseRequest.db().as("name"), databaseRequest.schema().as("schema"),
