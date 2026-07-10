@@ -24,7 +24,7 @@ import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
 
-public interface Instance extends DatasetCatalog {
+public interface InstanceCatalog extends DatasetCatalog {
 
 	//TODO typed
 	@Bind(ID_INS)
@@ -50,7 +50,7 @@ public interface Instance extends DatasetCatalog {
 	ViewColumn address();
 	
 	@Bind(VA_ENV)
-	ViewColumn environement();
+	ViewColumn environment();
 	
 	@Bind(VA_OS)
 	ViewColumn os();

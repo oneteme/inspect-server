@@ -1,47 +1,17 @@
 package org.usf.inspect.server.repo;
 
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_INS;
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_PRT;
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_STT;
-import static org.usf.inspect.server.config.constant.FieldConstant.DH_END;
-import static org.usf.inspect.server.config.constant.FieldConstant.DH_STR;
-import static org.usf.inspect.server.config.constant.FieldConstant.ID_SES;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_ATH_SCH;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_CCH_CTR;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_CNT_TYP;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_ERR_MSG;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_ERR_TYP;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_HST;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_I_CNT_ENC;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_I_SZE;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_LNK;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_MSK;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_MTH;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_NAM;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_O_CNT_ENC;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_O_SZE;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_PCL;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_PTH;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_QRY;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_STK;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_THR;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_USR;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_USR_AGT;
+import static org.usf.inspect.server.config.constant.FieldConstant.*;
 import static org.usf.jquery.core.Join.innerJoin;
-import static org.usf.jquery.core.JoinGroup.joins;
 import static org.usf.jquery.core.Predicate.ge;
 import static org.usf.jquery.core.Predicate.lt;
 import static org.usf.jquery.mvc.StoreManager.getInstance;
 
-import org.usf.jquery.core.Column;
-import org.usf.jquery.core.JoinGroup;
-import org.usf.jquery.core.Predicate;
-import org.usf.jquery.core.ViewColumn;
+import org.usf.jquery.core.*;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
 
-public interface RestSession extends DatasetCatalog,CommunColumns {
+public interface RestSessionCatalog extends DatasetCatalog {
 
 	@Bind(ID_SES)
 	ViewColumn id();
@@ -110,7 +80,7 @@ public interface RestSession extends DatasetCatalog,CommunColumns {
 	ViewColumn thread();
 	
 	@Bind(VA_NAM)
-	ViewColumn ApiName();
+	ViewColumn apiName();
 	
 	@Bind(VA_USR)
 	ViewColumn user();
@@ -128,16 +98,39 @@ public interface RestSession extends DatasetCatalog,CommunColumns {
 	
 	@Bind(VA_LNK)
 	ViewColumn linked();
-	
+
+	@Bind(CD_STT)
+	ViewColumn status();
+
 	@Bind(CD_INS)
 	@Expose(identity = "instance_env")
 	ViewColumn instanceEnv();
-	
-	default JoinGroup instance() {
+
+	default Join instance() {
 		var instance = getInstance().getStore(InspectStore.class).instance();
-		return joins(innerJoin(instance.getView(), instanceEnv().eq(instance.id())));
+		return innerJoin(instance.getView(), instanceEnv().eq(instance.id()));
 	}
-	
+
+	default Join databaseRequest() {
+		var databaseRequest = getInstance().getStore(InspectStore.class).databaseRequest();
+		return innerJoin(databaseRequest.getView(), id().eq(databaseRequest.parent()));
+	}
+
+	default Join ftpRequest() {
+		var ftpRequest = getInstance().getStore(InspectStore.class).ftpRequest();
+		return innerJoin(ftpRequest.getView(), id().eq(ftpRequest.parent()));
+	}
+
+	default Join smtpRequest() {
+		var smtpRequest = getInstance().getStore(InspectStore.class).smtpRequest();
+		return innerJoin(smtpRequest.getView(), id().eq(smtpRequest.parent()));
+	}
+
+	default Join ldapRequest() {
+		var ldapRequest = getInstance().getStore(InspectStore.class).ldapRequest();
+		return innerJoin(ldapRequest.getView(), id().eq(ldapRequest.parent()));
+	}
+
 	@Expose(identity = "error_type_session")
     default Column errorTypeExpressionsSession() {
         return status().toCase()

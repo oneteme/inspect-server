@@ -12,7 +12,7 @@ import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
 
-public interface SMTPMail extends DatasetCatalog {
+public interface SmtpMailCatalog extends DatasetCatalog {
 
 	@Bind(VA_SBJ)
 	ViewColumn subject();

@@ -13,10 +13,7 @@ import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
 
-public interface LDAPStage extends DatasetCatalog {
-	
-	@Bind(VA_NAM)
-	ViewColumn name();
+public interface LdapStageCatalog extends StageCatalog {
 	
 	@Bind(DH_STR)
 	ViewColumn start();
@@ -29,9 +26,6 @@ public interface LDAPStage extends DatasetCatalog {
 	
 	@Bind(VA_CMD)
 	ViewColumn command();
-	
-	@Bind(CD_ORD)
-	ViewColumn order();
 	
 	@Bind(CD_LDAP_RQT)
 	ViewColumn parent();

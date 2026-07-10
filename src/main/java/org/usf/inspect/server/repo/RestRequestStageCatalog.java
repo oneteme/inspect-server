@@ -11,19 +11,13 @@ import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
 
-public interface RestSessionStage extends DatasetCatalog {
-
-	@Bind(VA_NAM)
-	ViewColumn name();
+public interface RestRequestStageCatalog extends StageCatalog {
 	
 	@Bind(DH_STR)
 	ViewColumn start();
 	
 	@Bind(DH_END)
 	ViewColumn end();
-	
-	@Bind(CD_ORD)
-	ViewColumn order();
 	
 	@Bind(CD_PRN_SES)
 	ViewColumn parent();

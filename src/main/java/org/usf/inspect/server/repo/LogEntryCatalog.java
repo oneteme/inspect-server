@@ -12,7 +12,7 @@ import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
 
-public interface LogEntry extends DatasetCatalog {
+public interface LogEntryCatalog extends DatasetCatalog {
 	
 	@Bind(VA_LVL)
 	@Expose(identity = "log_level")

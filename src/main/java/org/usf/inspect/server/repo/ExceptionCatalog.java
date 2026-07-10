@@ -10,7 +10,7 @@ import org.usf.jquery.mvc.Expose;
 
 import static org.usf.inspect.server.config.constant.FieldConstant.*;
 
-public interface Exception extends DatasetCatalog {
+public interface ExceptionCatalog extends DatasetCatalog {
 	
 	@Bind(VA_TYP)
 	ViewColumn type();

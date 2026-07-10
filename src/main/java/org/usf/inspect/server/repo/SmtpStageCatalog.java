@@ -1,12 +1,10 @@
 package org.usf.inspect.server.repo;
 
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_DTB_RQT;
 import static org.usf.inspect.server.config.constant.FieldConstant.CD_ORD;
+import static org.usf.inspect.server.config.constant.FieldConstant.CD_SMTP_RQT;
 import static org.usf.inspect.server.config.constant.FieldConstant.DH_END;
 import static org.usf.inspect.server.config.constant.FieldConstant.DH_STR;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_ARG;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_CMD;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_CNT;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_NAM;
 
 import org.usf.jquery.core.Column;
@@ -14,10 +12,7 @@ import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
 
-public interface DBStage extends DatasetCatalog {
-	
-	@Bind(VA_NAM)
-	ViewColumn name();
+public interface SmtpStageCatalog extends StageCatalog {
 	
 	@Bind(DH_STR)
 	ViewColumn start();
@@ -25,19 +20,10 @@ public interface DBStage extends DatasetCatalog {
 	@Bind(DH_END)
 	ViewColumn end();
 	
-	@Bind(VA_CNT)
-	ViewColumn actionCount();
-	
-	@Bind(VA_ARG)
-	ViewColumn arg();
-	
 	@Bind(VA_CMD)
 	ViewColumn command();
 	
-	@Bind(CD_ORD)
-	ViewColumn order();
-	
-	@Bind(CD_DTB_RQT)
+	@Bind(CD_SMTP_RQT)
 	ViewColumn parent();
 	
 	default Column elapsedTime() {

@@ -1,11 +1,9 @@
 package org.usf.inspect.server.repo;
 
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_FTP_RQT;
 import static org.usf.inspect.server.config.constant.FieldConstant.CD_ORD;
+import static org.usf.inspect.server.config.constant.FieldConstant.CD_PRN_SES;
 import static org.usf.inspect.server.config.constant.FieldConstant.DH_END;
 import static org.usf.inspect.server.config.constant.FieldConstant.DH_STR;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_ARG;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_CMD;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_NAM;
 
 import org.usf.jquery.core.Column;
@@ -13,10 +11,7 @@ import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
 
-public interface FTPStage extends DatasetCatalog {
-
-	@Bind(VA_NAM)
-	ViewColumn name();
+public interface RestSessionStageCatalog extends StageCatalog {
 	
 	@Bind(DH_STR)
 	ViewColumn start();
@@ -24,16 +19,7 @@ public interface FTPStage extends DatasetCatalog {
 	@Bind(DH_END)
 	ViewColumn end();
 	
-	@Bind(VA_ARG)
-	ViewColumn arg();
-	
-	@Bind(VA_CMD)
-	ViewColumn command();
-	
-	@Bind(CD_ORD)
-	ViewColumn order();
-	
-	@Bind(CD_FTP_RQT)
+	@Bind(CD_PRN_SES)
 	ViewColumn parent();
 	
 	default Column elapsedTime() {

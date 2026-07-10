@@ -11,7 +11,7 @@ import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
 
-public interface ResourceUsage extends DatasetCatalog {
+public interface ResourceUsageCatalog extends DatasetCatalog {
 	
 	@Bind(VA_USED_HEP)
 	ViewColumn usedHeap();

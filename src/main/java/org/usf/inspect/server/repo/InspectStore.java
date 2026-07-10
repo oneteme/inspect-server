@@ -1,9 +1,8 @@
 package org.usf.inspect.server.repo;
 
 import static org.usf.inspect.server.InspectApplication.defaultMapper;
-import static org.usf.inspect.server.repo.Mappers.createBaseMainSession;
-import static org.usf.inspect.server.repo.Mappers.instanceEnvironmentMapper;
-import static org.usf.inspect.server.repo.Mappers.instanceLogEntryMapper;
+import static org.usf.inspect.server.mapper.Mappers.*;
+import static org.usf.inspect.server.repo.ViewRegistryConstant.*;
 import static org.usf.jquery.core.JDBCType.VARCHAR;
 import static org.usf.jquery.core.Mappers.toListMapper;
 import static org.usf.jquery.core.Operators.function;
@@ -22,85 +21,112 @@ public interface InspectStore extends StoreCatalog {
 
 	
 	static ViewRegistry registry = new ViewRegistry()
-			.register("instanceMapper", rsp-> defaultExecutor(instanceEnvironmentMapper(defaultMapper)))
-			.register("mainSessionMapper", rsp-> defaultExecutor(createBaseMainSession(defaultMapper)))
-			.register("instanceLogEntryMapper", rsp-> defaultExecutor(toListMapper(instanceLogEntryMapper(defaultMapper)) ))
+			.register(INSTANCE_ENVIRONMENT_RESULTSET_MAPPER, rsp-> defaultExecutor(instanceEnvironmentResultSetMapper(defaultMapper)))
+			.register(LOG_ENTRY_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(logEntryRowMapper(defaultMapper)) ))
+			.register(INSTANCE_TRACE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(instanceTraceRowMapper()) ))
+			.register(MACHINE_RESOURCE_USAGE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(machineResourceUsageRowMapper()) ))
+			.register(REST_SESSION_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(restSessionRowMapper())))
+			.register(REST_SESSION_RESULTSET_MAPPER, rsp-> defaultExecutor(restSessionResultSetMapper(defaultMapper)))
+			.register(REST_SESSION_STAGE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(restSessionStageRowMapper())))
+			.register(REST_SESSION_PULSE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(restSessionPulseRowMapper())))
+			.register(MAIN_SESSION_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(mainSessionRowMapper())))
+			.register(MAIN_SESSION_RESULTSET_MAPPER, rsp-> defaultExecutor(mainSessionResultSetMapper(defaultMapper)))
+			.register(MAIN_SESSION_PULSE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(mainSessionPulseRowMapper())))
+			.register(REST_REQUEST_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(restRequestRowMapper())))
+			.register(REST_REQUEST_RESULTSET_MAPPER, rsp-> defaultExecutor(restRequestResultSetMapper()))
+			.register(REST_REQUEST_STAGE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(restRequestStageRowMapper(defaultMapper))))
+			.register(LOCAL_REQUEST_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(localRequestRowMapper())))
+			.register(DATABASE_REQUEST_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(databaseRequestRowMapper())))
+			.register(DATABASE_REQUEST_RESULTSET_MAPPER, rsp-> defaultExecutor(databaseRequestResultSetMapper()))
+			.register(DATABASE_REQUEST_STAGE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(databaseRequestStageRowMapper(defaultMapper))))
+			.register(FTP_REQUEST_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(ftpRequestRowMapper())))
+			.register(FTP_REQUEST_RESULTSET_MAPPER, rsp-> defaultExecutor(ftpRequestResultSetMapper()))
+			.register(FTP_REQUEST_STAGE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(ftpRequestStageRowMapper(defaultMapper))))
+			.register(SMTP_REQUEST_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(smtpRequestRowMapper())))
+			.register(SMTP_REQUEST_RESULTSET_MAPPER, rsp-> defaultExecutor(smtpRequestResultSetMapper()))
+			.register(SMTP_REQUEST_STAGE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(smtpRequestStageRowMapper(defaultMapper))))
+			.register(SMTP_REQUEST_MAIL_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(smtpRequestMailRowMapper())))
+			.register(LDAP_REQUEST_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(ldapRequestRowMapper())))
+			.register(LDAP_REQUEST_RESULTSET_MAPPER, rsp-> defaultExecutor(ldapRequestResultSetMapper()))
+			.register(LDAP_REQUEST_STAGE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(ldapRequestStageRowMapper(defaultMapper))))
+			.register(EXCEPTION_BY_REQUEST_RESULTSET_MAPPER, rsp-> defaultExecutor(exceptionByRequestResultSetMapper()))
+			.register(USER_ACTION_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(userActionRowMapper())))
 			;
 	
 	
 	@Bind("e_rst_rqt")
 	@Expose(identity = "rest_request")
-	RestRequest restRequest();
+	RestRequestCatalog restRequest();
 	
 	@Bind("e_rst_rqt_stg")
-	RestRequestStage restRequestStage();
+	RestRequestStageCatalog restRequestStage();
 	
 	@Bind("e_rst_ses")
 	@Expose(identity = "rest_session")
-	RestSession restSession();
+	RestSessionCatalog restSession();
 	
 	@Bind("e_rst_ses_stg")
-	RestSessionStage restSessionStage();
+	RestSessionStageCatalog restSessionStage();
 	
 	@Bind("e_main_ses")
 	@Expose(identity = "main_session")
-	MainSessionDs mainSession();
+	MainSessionCatalog mainSession();
 	
 	@Bind("e_dtb_rqt")
 	@Expose(identity = "database_request")
-	DBRequest dbRequest();
+	DatabaseRequestCatalog databaseRequest();
 	
 	@Bind("e_dtb_stg")
-	DBStage dbStage();
+	DatabaseStageCatalog databaseRequestStage();
 	
 	@Bind("e_ftp_rqt")
 	@Expose(identity = "ftp_request")
-	FTPRequest ftpRequest();
+	FtpRequestCatalog ftpRequest();
 	
 	@Bind("e_ftp_stg")
-	FTPStage ftpStage();
+	FtpStageCatalog ftpStage();
 	
 	@Bind("e_smtp_rqt")
 	@Expose(identity = "smtp_request")
-	SMTPRequest smtpRequest();
+	SmtpRequestCatalog smtpRequest();
 	
 	@Bind("e_smtp_stg")
-	SMTPStage smtpStage();
+	SmtpStageCatalog smtpStage();
 	
 	@Bind("e_smtp_mail")
-	SMTPMail smtpMail();
+	SmtpMailCatalog smtpMail();
 	
 	@Bind("e_ldap_rqt")
 	@Expose(identity = "ldap_request")
-	LDAPRequest ldapRequest();
+	LdapRequestCatalog ldapRequest();
 	
 	@Bind("e_ldap_stg")
-	LDAPStage ldapStage();
+	LdapStageCatalog ldapStage();
 	
 	@Bind("e_lcl_rqt")
-	LocalRequest localRequest();
+	LocalRequestCatalog localRequest();
 	
 	@Bind("e_exc_inf")
-	Exception exception();
+	ExceptionCatalog exception();
 	
 	@Bind("e_env_ins")
-	Instance instance();
+	InstanceCatalog instance();
 	
 	@Bind("e_usr_acn")
 	@Expose(identity = "user_action")
-	UserAction userAction();
+	UserActionCatalog userAction();
 	
 	@Bind("e_ins_trc")
 	@Expose(identity = "instance_trace")
-	InstanceTrace instanceTrace();
+	InstanceTraceCatalog instanceTrace();
 	
 	@Bind("e_log_ent")
 	@Expose(identity = "log_entry")
-	LogEntry logEntry();
+	LogEntryCatalog logEntry();
 	
 	@Bind("e_rsc_usg")
 	@Expose(identity = "resource_usage")
-	ResourceUsage resourceUsage();
+	ResourceUsageCatalog resourceUsage();
 	
 	default OperatorDefinition coalesce() {
 		return function(firstArgType(), "COALESCE", required(), varargs(VARCHAR));
@@ -110,4 +136,5 @@ public interface InspectStore extends StoreCatalog {
 	default ViewRegistry viewRegistry() {
 		return registry;
 	}
+
 }
