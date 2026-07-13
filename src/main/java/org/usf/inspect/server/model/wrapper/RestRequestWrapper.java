@@ -31,4 +31,5 @@ public class RestRequestWrapper implements EventTrace {
     private String branch;
     private String hash;
     private String environment;
+    private String version;
 }

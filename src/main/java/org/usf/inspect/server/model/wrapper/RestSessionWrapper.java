@@ -34,6 +34,7 @@ public class RestSessionWrapper implements Session {
     private String branch;
     private String hash;
     private String environment;
+    private String version;
 
     public void setRequestsMask(int requestsMask) {
         restSession.setRequestsMask(requestsMask);

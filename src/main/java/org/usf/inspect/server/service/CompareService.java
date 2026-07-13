@@ -26,10 +26,10 @@ import org.usf.jquery.web.ViewDecorator;
 public class CompareService {
 
     public RestRequestWrapper getComparedSession(String id) {
-        var session = getRestSessionById(id);
-        if (session != null) {
-            var request = getRestRequestById(id);
-            if (request != null) {
+        var request = getRestRequestById(id);
+        if (request != null) {
+            var session = getRestSessionById(id);
+            if (session != null) {
                 request.setRemoteTrace(session);
             }
             return request;
@@ -45,7 +45,7 @@ public class CompareService {
                         CONTENT_ENCODING_IN, CONTENT_ENCODING_OUT, START, END, THREAD,
                         ERR_TYPE, ERR_MSG, MASK, USER, USER_AGT, CACHE_CONTROL, INSTANCE_ENV
                 ))
-                .columns(getColumns(INSTANCE, APP_NAME, OS, RE, ADDRESS, BRANCH, HASH, ENVIRONEMENT))
+                .columns(getColumns(INSTANCE, APP_NAME, OS, RE, ADDRESS, BRANCH, HASH, ENVIRONEMENT, VERSION))
                 .filters(REST_SESSION.column(INSTANCE_ENV).eq(INSTANCE.column(ID))
                         .and(REST_SESSION.column(START).ge(INSTANCE.column(START))))
                 .filters(column("id_ses").eq(fromString(id)));
@@ -84,6 +84,7 @@ public class CompareService {
                 session.setBranch(rs.getString(BRANCH.reference()));
                 session.setHash(rs.getString(HASH.reference()));
                 session.setEnvironment(rs.getString(ENVIRONEMENT.reference()));
+                session.setVersion(rs.getString(VERSION.reference()));
                 sessions.add(session);
             }
             return sessions;
@@ -97,14 +98,13 @@ public class CompareService {
                         SIZE_IN, SIZE_OUT, CONTENT_ENCODING_IN, CONTENT_ENCODING_OUT, START, END, THREAD, BODY_CONTENT, LINKED, PARENT
                 ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
-                .columns(getColumns(INSTANCE, APP_NAME, OS, RE, ADDRESS, ENVIRONEMENT, BRANCH, HASH))
+                .columns(getColumns(INSTANCE, APP_NAME, OS, RE, ADDRESS, ENVIRONEMENT, BRANCH, HASH, VERSION))
                 .joins(REST_REQUEST.join(EXCEPTION_JOIN))
                 .joins(REST_REQUEST.join(INSTANCE_JOIN))
                 .filters(REST_REQUEST.column(START).ge(INSTANCE.column(START)))
                 .filters(column("id_rst_rqt").eq(fromString(id)));
-        return requireSingle(INSPECT.execute(v, rs -> {
-            var requests = new ArrayList<RestRequestWrapper>();
-            while (rs.next()) {
+        return INSPECT.execute(v, rs -> {
+            if(rs.next()) {
                 var request = new RestRequestWrapper();
                 request.setSessionId(rs.getString(PARENT.reference()));
                 request.setId(rs.getString(ID.reference()));
@@ -132,11 +132,16 @@ public class CompareService {
                 request.setBranch(rs.getString(BRANCH.reference()));
                 request.setHash(rs.getString(HASH.reference()));
                 request.setEnvironment(rs.getString(ENVIRONEMENT.reference()));
+                request.setVersion(rs.getString(VERSION.reference()));
                 request.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
-                requests.add(request);
+
+                if(rs.next()) {
+                    log.warn("multiple rest request error found for id: {}", id);
+                }
+                return request;
             }
-            return requests;
-        }));
+            return null;
+        });
     }
 
     private static NamedColumn[] getColumns(ViewDecorator table, ColumnDecorator... columns) {
