@@ -7,6 +7,7 @@ import static org.usf.inspect.server.config.constant.FieldConstant.DH_STR;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_HST;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_THR;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_USR;
+import static org.usf.jquery.core.JDBCType.UUID;
 import static org.usf.jquery.core.Join.innerJoin;
 import static org.usf.jquery.core.Join.leftJoin;
 import static org.usf.jquery.core.JoinGroup.joins;
@@ -19,6 +20,7 @@ import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
+import org.usf.jquery.mvc.Typed;
 
 public interface RequestCatalog extends DatasetCatalog {
 
@@ -44,6 +46,7 @@ public interface RequestCatalog extends DatasetCatalog {
 
     @Bind(CD_INS)
     @Expose(identity = "instance_env")
+    @Typed(UUID)
     ViewColumn instanceEnv();
 	
 	default Column elapsedTime() {

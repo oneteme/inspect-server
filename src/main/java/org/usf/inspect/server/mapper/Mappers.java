@@ -172,6 +172,7 @@ public class Mappers {
     public static MainSessionDto defaultMainSession(ResultSet rs) throws SQLException {
         var mainSession = new MainSessionDto();
         mainSession.setId(rs.getString("id"));
+        mainSession.setType(rs.getString("type"));
         mainSession.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
         mainSession.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
         mainSession.setName(rs.getString("name"));
@@ -185,6 +186,7 @@ public class Mappers {
             MainSessionDto out = defaultMainSession(rs);
             out.setAddress(rs.getString("address"));
             out.setAppName(rs.getString("appName"));
+            out.setStatus(rs.getInt("status"));
             return out;
         };
     }
@@ -192,7 +194,7 @@ public class Mappers {
     public static ResultSetMapper<MainSession> mainSessionResultSetMapper(ObjectMapper mapper) {
         return rs -> {
             if (rs.next()) {
-                MainSession out = new MainSession();
+                MainSession out = defaultMainSession(rs);
                 out.setType(rs.getString("type"));
                 out.setThreadName(rs.getString("thread"));
                 try {
@@ -474,11 +476,7 @@ public class Mappers {
     }
 
     public static RowMapper<DirectoryRequestDto> ldapRequestRowMapper(){
-        return (rs, row) -> {
-            DirectoryRequestDto out = defaultLdapRequest(rs);
-            out.setException(getExceptionInfoIfNotNull(rs.getString("errType"), rs.getString("errMsg"), null));
-            return out;
-        };
+        return (rs, row) -> defaultLdapRequest(rs);
     }
 
     public static ResultSetMapper<DirectoryRequest> ldapRequestResultSetMapper() {

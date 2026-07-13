@@ -16,6 +16,7 @@ import static org.usf.inspect.server.config.constant.FieldConstant.VA_O_SZE;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_PCL;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_PTH;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_QRY;
+import static org.usf.jquery.core.JDBCType.UUID;
 import static org.usf.jquery.core.Predicate.eq;
 import static org.usf.jquery.core.Predicate.ge;
 import static org.usf.jquery.core.Predicate.lt;
@@ -26,10 +27,12 @@ import org.usf.jquery.core.Column;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.Expose;
+import org.usf.jquery.mvc.Typed;
 
 public interface RestRequestCatalog extends RequestCatalog {
 
 	@Bind(ID_RST_RQT)
+	@Typed(UUID)
 	ViewColumn id();
 
 	@Bind(VA_MTH)
@@ -77,6 +80,7 @@ public interface RestRequestCatalog extends RequestCatalog {
 	ViewColumn linked();
 	
 	@Bind(CD_PRN_SES)
+	@Typed(UUID)
 	ViewColumn parent();
 	
 	@Override
@@ -93,5 +97,9 @@ public interface RestRequestCatalog extends RequestCatalog {
                 .when(ge(400).and(lt(500)), "ClientError")
                 .orElse("ServerError");
     }
-	
+
+	@Expose(identity = "count_error")
+	default Column countError() {
+		return status().toCase().when(eq(0).or(ge(400)), true).compose(null).count();
+    }
 }

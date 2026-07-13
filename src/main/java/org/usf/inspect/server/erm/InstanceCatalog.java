@@ -17,17 +17,19 @@ import static org.usf.inspect.server.config.constant.FieldConstant.VA_RSR;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_TYP;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_USR;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_VRS;
+import static org.usf.jquery.core.JDBCType.UUID;
 
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
+import org.usf.jquery.mvc.Typed;
 
 public interface InstanceCatalog extends DatasetCatalog {
 
-	//TODO typed
 	@Bind(ID_INS)
+	@Typed(UUID)
 	ViewColumn id();
 	
 	@Bind(VA_TYP)

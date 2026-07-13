@@ -5,11 +5,13 @@ import static org.usf.inspect.server.config.constant.FieldConstant.DH_STR;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_COMMITED_HEP;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_USED_DISK_SPACE;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_USED_HEP;
+import static org.usf.jquery.core.JDBCType.UUID;
 
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
+import org.usf.jquery.mvc.Typed;
 
 public interface ResourceUsageCatalog extends DatasetCatalog {
 	
@@ -27,5 +29,6 @@ public interface ResourceUsageCatalog extends DatasetCatalog {
 	
 	@Bind(CD_INS)
 	@Expose(identity = "instance_env")
+	@Typed(UUID)
 	ViewColumn instanceEnv();
 }

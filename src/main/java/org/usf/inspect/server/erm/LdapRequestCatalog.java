@@ -6,14 +6,17 @@ import static org.usf.inspect.server.config.constant.FieldConstant.ID_LDAP_RQT;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_CMD;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_FAIL;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_PCL;
+import static org.usf.jquery.core.JDBCType.UUID;
 
 import org.usf.inspect.core.RequestMask;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
+import org.usf.jquery.mvc.Typed;
 
 public interface LdapRequestCatalog extends RequestCatalog {
 
 	@Bind(ID_LDAP_RQT)
+	@Typed(UUID)
 	ViewColumn id();
 	
 	@Bind(VA_PCL)
@@ -26,6 +29,7 @@ public interface LdapRequestCatalog extends RequestCatalog {
 	ViewColumn failed();
 	
 	@Bind(CD_PRN_SES)
+	@Typed(UUID)
 	ViewColumn parent();
 	
 	@Override

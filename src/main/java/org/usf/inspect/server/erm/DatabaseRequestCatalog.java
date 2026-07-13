@@ -10,14 +10,18 @@ import static org.usf.inspect.server.config.constant.FieldConstant.VA_NAM;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_PRD_NAM;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_PRD_VRS;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_SHA;
+import static org.usf.jquery.core.JDBCType.UUID;
 
 import org.usf.inspect.core.RequestMask;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
+import org.usf.jquery.mvc.Expose;
+import org.usf.jquery.mvc.Typed;
 
 public interface DatabaseRequestCatalog extends RequestCatalog {
 
 	@Bind(ID_DTB_RQT)
+	@Typed(UUID)
 	ViewColumn id();
 	
 	@Bind(VA_NAM)
@@ -30,9 +34,11 @@ public interface DatabaseRequestCatalog extends RequestCatalog {
 	ViewColumn driver();
 	
 	@Bind(VA_PRD_NAM)
+	@Expose(identity = "db_name")
 	ViewColumn dbName();
 	
 	@Bind(VA_PRD_VRS)
+	@Expose(identity = "db_version")
 	ViewColumn dbVersion();
 	
 	@Bind(VA_CMD)
@@ -42,6 +48,7 @@ public interface DatabaseRequestCatalog extends RequestCatalog {
 	ViewColumn failed();
 	
 	@Bind(CD_PRN_SES)
+	@Typed(UUID)
 	ViewColumn parent();
 	
 	@Override

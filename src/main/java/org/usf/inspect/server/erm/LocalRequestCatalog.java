@@ -6,9 +6,11 @@ import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
+import org.usf.jquery.mvc.Typed;
 
 import static org.usf.inspect.core.RequestMask.LOCAL;
 import static org.usf.inspect.server.config.constant.FieldConstant.*;
+import static org.usf.jquery.core.JDBCType.UUID;
 import static org.usf.jquery.core.Join.innerJoin;
 import static org.usf.jquery.core.Join.leftJoin;
 import static org.usf.jquery.core.JoinGroup.joins;
@@ -17,6 +19,7 @@ import static org.usf.jquery.mvc.StoreManager.getInstance;
 public interface LocalRequestCatalog extends DatasetCatalog {
 
 	@Bind(ID_LCL_RQT)
+	@Typed(UUID)
 	ViewColumn id();
 	
 	@Bind(VA_NAM)
@@ -44,10 +47,12 @@ public interface LocalRequestCatalog extends DatasetCatalog {
 	ViewColumn failed();
 	
 	@Bind(CD_PRN_SES)
+	@Typed(UUID)
 	ViewColumn parent();
 	
 	@Bind(CD_INS)
 	@Expose(identity = "instance_env")
+	@Typed(UUID)
 	ViewColumn instanceEnv();
 
 	default JoinGroup instance() {

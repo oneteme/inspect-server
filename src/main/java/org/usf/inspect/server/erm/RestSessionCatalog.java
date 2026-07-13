@@ -1,6 +1,7 @@
 package org.usf.inspect.server.erm;
 
 import static org.usf.inspect.server.config.constant.FieldConstant.*;
+import static org.usf.jquery.core.JDBCType.UUID;
 import static org.usf.jquery.core.Join.innerJoin;
 import static org.usf.jquery.core.JoinGroup.joins;
 import static org.usf.jquery.core.Predicate.ge;
@@ -11,10 +12,12 @@ import org.usf.jquery.core.*;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
+import org.usf.jquery.mvc.Typed;
 
 public interface RestSessionCatalog extends DatasetCatalog {
 
 	@Bind(ID_SES)
+	@Typed(UUID)
 	ViewColumn id();
 	
 	@Bind(VA_MTH)
@@ -81,6 +84,7 @@ public interface RestSessionCatalog extends DatasetCatalog {
 	ViewColumn thread();
 	
 	@Bind(VA_NAM)
+	@Expose(identity = "api_name")
 	ViewColumn apiName();
 	
 	@Bind(VA_USR)
@@ -105,6 +109,7 @@ public interface RestSessionCatalog extends DatasetCatalog {
 
 	@Bind(CD_INS)
 	@Expose(identity = "instance_env")
+	@Typed(UUID)
 	ViewColumn instanceEnv();
 
 	default JoinGroup instance() {

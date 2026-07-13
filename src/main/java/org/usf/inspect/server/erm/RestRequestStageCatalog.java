@@ -1,15 +1,14 @@
 package org.usf.inspect.server.erm;
 
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_ORD;
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_PRN_SES;
-import static org.usf.inspect.server.config.constant.FieldConstant.DH_END;
-import static org.usf.inspect.server.config.constant.FieldConstant.DH_STR;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_NAM;
-
+import org.usf.inspect.core.RequestMask;
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
-import org.usf.jquery.mvc.DatasetCatalog;
+import org.usf.jquery.mvc.Typed;
+
+import static org.usf.inspect.core.RequestMask.REST;
+import static org.usf.inspect.server.config.constant.FieldConstant.*;
+import static org.usf.jquery.core.JDBCType.UUID;
 
 public interface RestRequestStageCatalog extends StageCatalog {
 	
@@ -19,9 +18,15 @@ public interface RestRequestStageCatalog extends StageCatalog {
 	@Bind(DH_END)
 	ViewColumn end();
 	
-	@Bind(CD_PRN_SES)
+	@Bind(CD_RST_RQT)
+	@Typed(UUID)
 	ViewColumn parent();
-	
+
+	@Override
+	default RequestMask getRequestType() {
+		return REST;
+	}
+
 	default Column elapsedTime() {
 		return end().minus(start()).epoch();
 	}

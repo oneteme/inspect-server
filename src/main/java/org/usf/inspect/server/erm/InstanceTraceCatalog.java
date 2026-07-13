@@ -6,11 +6,13 @@ import static org.usf.inspect.server.config.constant.FieldConstant.VA_ATP;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_FILENAME;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_PND;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_TRC_CNT;
+import static org.usf.jquery.core.JDBCType.UUID;
 
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
+import org.usf.jquery.mvc.Typed;
 
 public interface InstanceTraceCatalog extends DatasetCatalog {
 	
@@ -30,6 +32,7 @@ public interface InstanceTraceCatalog extends DatasetCatalog {
 	ViewColumn start();
 	
 	@Bind(CD_INS)
+	@Typed(UUID)
 	@Expose(identity = "instance_env")
 	ViewColumn instanceEnv();
 }

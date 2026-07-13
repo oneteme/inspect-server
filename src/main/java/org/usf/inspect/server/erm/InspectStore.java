@@ -8,10 +8,13 @@ import static org.usf.jquery.core.Mappers.toListMapper;
 import static org.usf.jquery.core.Operators.function;
 import static org.usf.jquery.core.Parameter.required;
 import static org.usf.jquery.core.Parameter.varargs;
+import static org.usf.jquery.core.Predicate.*;
 import static org.usf.jquery.core.QueryExecutor.defaultExecutor;
 import static org.usf.jquery.core.TypeResolver.firstArgType;
 
+import org.usf.jquery.core.Chainable;
 import org.usf.jquery.core.OperatorDefinition;
+import org.usf.jquery.core.Predicate;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.Expose;
 import org.usf.jquery.mvc.StoreCatalog;
@@ -32,6 +35,7 @@ public interface InspectStore extends StoreCatalog {
 	RestSessionCatalog restSession();
 	
 	@Bind("e_rst_ses_stg")
+	@Expose(identity = "rest_session_stage")
 	RestSessionStageCatalog restSessionStage();
 	
 	@Bind("e_main_ses")
@@ -43,6 +47,7 @@ public interface InspectStore extends StoreCatalog {
 	DatabaseRequestCatalog databaseRequest();
 	
 	@Bind("e_dtb_stg")
+	@Expose(identity = "database_stage")
 	DatabaseStageCatalog databaseRequestStage();
 	
 	@Bind("e_ftp_rqt")
@@ -50,6 +55,7 @@ public interface InspectStore extends StoreCatalog {
 	FtpRequestCatalog ftpRequest();
 	
 	@Bind("e_ftp_stg")
+	@Expose(identity = "ftp_stage")
 	FtpStageCatalog ftpStage();
 	
 	@Bind("e_smtp_rqt")
@@ -57,9 +63,11 @@ public interface InspectStore extends StoreCatalog {
 	SmtpRequestCatalog smtpRequest();
 	
 	@Bind("e_smtp_stg")
+	@Expose(identity = "smtp_stage")
 	SmtpStageCatalog smtpStage();
 	
 	@Bind("e_smtp_mail")
+	@Expose(identity = "smtp_mail")
 	SmtpMailCatalog smtpMail();
 	
 	@Bind("e_ldap_rqt")
@@ -67,9 +75,11 @@ public interface InspectStore extends StoreCatalog {
 	LdapRequestCatalog ldapRequest();
 	
 	@Bind("e_ldap_stg")
+	@Expose(identity = "ldap_stage")
 	LdapStageCatalog ldapStage();
 	
 	@Bind("e_lcl_rqt")
+	@Expose(identity = "local_request")
 	LocalRequestCatalog localRequest();
 	
 	@Bind("e_exc_inf")
@@ -97,7 +107,18 @@ public interface InspectStore extends StoreCatalog {
 	default OperatorDefinition coalesce() {
 		return function(firstArgType(), "COALESCE", required(), varargs(VARCHAR));
 	}
-	
+
+	default Predicate origin(String... values){
+		return Chainable.or(values, v-> switch(v){
+			case "5xx"-> ge(500);
+			case "4xx"-> ge(400).and(lt(500));
+			case "2xx"-> ge(200).and(lt(300));
+			case "0"->	 eq(0);
+			case "pending"-> isNull();
+			default -> null;
+		});
+	}
+
 	@Override
 	default ViewRegistry viewRegistry() {
 		return registry;

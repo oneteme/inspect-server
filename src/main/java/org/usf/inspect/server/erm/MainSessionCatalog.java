@@ -72,6 +72,7 @@ public interface MainSessionCatalog extends DatasetCatalog {
 
 	@Bind(CD_INS)
 	@Expose(identity = "instance_env")
+	@Typed(UUID)
 	ViewColumn instanceEnv();
 
 	default JoinGroup instance() {
@@ -98,6 +99,12 @@ public interface MainSessionCatalog extends DatasetCatalog {
     default Column statusMainTranche() {
         return errType().toCase().when(isNull(), "false").orElse("true"); //TODO errType().notNull()
     }
-	
-	
+
+	default Column status() {
+		return Column.beginCase()
+				.when(end().isNull(), -1)
+				.when(errType().notNull(), 1)
+				.when(errType().isNull(), 0)
+				.compose(null).as("status");
+	}
 }

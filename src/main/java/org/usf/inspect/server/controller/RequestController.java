@@ -14,10 +14,7 @@ import org.usf.inspect.server.model.*;
 import org.usf.inspect.server.service.RequestService;
 import org.usf.inspect.server.validation.Condition;
 import org.usf.inspect.server.validation.Validate;
-import org.usf.jquery.mvc.MvcRequest;
-import org.usf.jquery.mvc.QueryExtension;
-import org.usf.jquery.mvc.QueryGuard;
-import org.usf.jquery.mvc.QueryTemplate;
+import org.usf.jquery.mvc.*;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -63,11 +60,6 @@ public class RequestController {
     }
 
     @GetMapping(value = "request/{type}/hosts", produces = APPLICATION_JSON_VALUE)
-    @QueryExtension(select = REJECT, overrideView = false)
-    @QueryTemplate(
-            dataset = "instance_trace",
-            view = INSTANCE_TRACE_ROW_MAPPER,
-            select = "pending,attempts,size_session,filename,start,instance_env")
     public Collection<String> getRequestHosts(
             @PathVariable String type,
             @RequestParam(name = "env") String environment,
@@ -210,18 +202,18 @@ public class RequestController {
 
     @GetMapping(value = "session/main", produces = APPLICATION_JSON_VALUE) // can't optimise, done
     @QueryGuard(maxRows = 300000)
-    @QueryExtension(select = REJECT, overrideView = false, overrideLimit = false)
+    @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "main_session",
             view = MAIN_SESSION_ROW_MAPPER,
-            select = "id,name,start,end,user,location,address,appName",
+            select = "id,type,name,start,end,user,location,status,instance.address,instance.app_name",
             join = "instance",
             order = "start",
-            ignore = "environment")
+            ignore = "env")
     public Collection<MainSessionDto> fetchMainSessions(
             MvcRequest mvc,
-            @RequestParam(name = "environment") String environment
+            @RequestParam(name = "env") String environment
     )  {
-        var store = (InspectStore) mvc.getStore();
+        var store = StoreManager.getInstance().getStore(InspectStore.class);
         mvc.getComposer().criteria(store.instance().environement().eq(environment));
 
         return (Collection<MainSessionDto>) mvc.execute();
@@ -290,18 +282,18 @@ public class RequestController {
 
     @GetMapping(value = "session/rest", produces = APPLICATION_JSON_VALUE)
     @QueryGuard(maxRows = 300000)
-    @QueryExtension(select = REJECT, overrideView = false, overrideLimit = false)
+    @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "rest_session",
             view = REST_SESSION_ROW_MAPPER,
             select = "id,apiName,method,protocol,path,query,status,start,end,user,instance.app_name",
             join = "instance",
             order = "start",
-            ignore = "environment")
+            ignore = "env")
     public Collection<RestSessionDto> fetchRestSessions(
             MvcRequest mvc,
-            @RequestParam(name = "environment") String environment
+            @RequestParam(name = "env") String environment
     )  {
-        var store = (InspectStore) mvc.getStore();
+        var store = StoreManager.getInstance().getStore(InspectStore.class);
         mvc.getComposer().criteria(store.instance().environement().eq(environment));
 
         return (Collection<RestSessionDto>) mvc.execute();
@@ -465,19 +457,19 @@ public class RequestController {
 //    @RequestParam(required = false, name = "lazy") boolean lazy
 
     @GetMapping(value = "request/rest", produces = APPLICATION_JSON_VALUE)
-    @QueryExtension(select = REJECT, overrideView = false, overrideLimit = false)
+    @QueryGuard(maxRows = 300000)
+    @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "rest_request",
             view = REST_REQUEST_ROW_MAPPER,
             select = "id,protocol,host,path,query,method,status,start,end,thread,user,body_content,linked,parent",
             join = "instance",
-            limit = 300000,
             order = "start",
-            ignore = "environment")
+            ignore = "env")
     public Collection<RestRequestDto> fetchRestRequests(
             MvcRequest mvc,
-            @RequestParam(name = "environment") String environment
+            @RequestParam(name = "env") String environment
     )  {
-        var store = (InspectStore) mvc.getStore();
+        var store = StoreManager.getInstance().getStore(InspectStore.class);
         mvc.getComposer().criteria(store.instance().environement().eq(environment));
 
         return (Collection<RestRequestDto>) mvc.execute();
@@ -520,19 +512,19 @@ public class RequestController {
     }
 
     @GetMapping(value = "request/database", produces = APPLICATION_JSON_VALUE)
-    @QueryExtension(select = REJECT, overrideView = false, overrideLimit = false)
+    @QueryGuard(maxRows = 300000)
+    @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "database_request",
             view = DATABASE_REQUEST_ROW_MAPPER,
             select = "id,host,db,db_name,start,end,user,thread,command,schema,failed,parent",
             join = "instance",
-            limit = 300000,
             order = "start",
-            ignore = "environment")
+            ignore = "env")
     public Collection<DatabaseRequestDto> fetchDatabaseRequests(
             MvcRequest mvc,
-            @RequestParam(name = "environment") String environment
+            @RequestParam(name = "env") String environment
     )  {
-        var store = (InspectStore) mvc.getStore();
+        var store = StoreManager.getInstance().getStore(InspectStore.class);
         mvc.getComposer().criteria(store.instance().environement().eq(environment));
 
         return (Collection<DatabaseRequestDto>) mvc.execute();
@@ -575,19 +567,19 @@ public class RequestController {
     }
 
     @GetMapping(value = "request/ftp", produces = APPLICATION_JSON_VALUE)
-    @QueryExtension(select = REJECT, overrideView = false, overrideLimit = false)
+    @QueryGuard(maxRows = 300000)
+    @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ftp_request",
             view = FTP_REQUEST_ROW_MAPPER,
             select = "id,host,start,end,thread,user,command,failed,parent",
             join = "instance",
-            limit = 300000,
             order = "start",
-            ignore = "environment")
+            ignore = "env")
     public Collection<FtpRequestDto> fetchFtpRequests(
             MvcRequest mvc,
-            @RequestParam(name = "environment") String environment
+            @RequestParam(name = "env") String environment
     )  {
-        var store = (InspectStore) mvc.getStore();
+        var store = StoreManager.getInstance().getStore(InspectStore.class);
         mvc.getComposer().criteria(store.instance().environement().eq(environment));
 
         return (Collection<FtpRequestDto>) mvc.execute();
@@ -630,19 +622,19 @@ public class RequestController {
     }
 
     @GetMapping(value = "request/smtp", produces = APPLICATION_JSON_VALUE)
-    @QueryExtension(select = REJECT, overrideView = false, overrideLimit = false)
+    @QueryGuard(maxRows = 300000)
+    @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "smtp_request",
             view = SMTP_REQUEST_ROW_MAPPER,
             select = "id,host,start,end,thread,user,command,failed,parent",
             join = "instance",
-            limit = 300000,
             order = "start",
-            ignore = "environment")
+            ignore = "env")
     public Collection<MailRequestDto> fetchSmtpRequests(
             MvcRequest mvc,
-            @RequestParam(name = "environment") String environment
+            @RequestParam(name = "env") String environment
     )  {
-        var store = (InspectStore) mvc.getStore();
+        var store = StoreManager.getInstance().getStore(InspectStore.class);
         mvc.getComposer().criteria(store.instance().environement().eq(environment));
 
         return (Collection<MailRequestDto>) mvc.execute();
@@ -699,19 +691,19 @@ public class RequestController {
     }
 
     @GetMapping(value = "request/ldap", produces = APPLICATION_JSON_VALUE)
-    @QueryExtension(select = REJECT, overrideView = false, overrideLimit = false)
-    @QueryTemplate(dataset = "smtp_request",
-            view = SMTP_REQUEST_ROW_MAPPER,
+    @QueryGuard(maxRows = 300000)
+    @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "ldap_request",
+            view = LDAP_REQUEST_ROW_MAPPER,
             select = "id,host,start,end,thread,user,command,failed,parent",
             join = "instance",
-            limit = 300000,
             order = "start",
-            ignore = "environment")
+            ignore = "env")
     public Collection<DirectoryRequestDto> fetchLdapRequests(
             MvcRequest mvc,
-            @RequestParam(name = "environment") String environment
+            @RequestParam(name = "env") String environment
     )  {
-        var store = (InspectStore) mvc.getStore();
+        var store = StoreManager.getInstance().getStore(InspectStore.class);
         mvc.getComposer().criteria(store.instance().environement().eq(environment));
 
         return (Collection<DirectoryRequestDto>) mvc.execute();

@@ -610,9 +610,9 @@ public class RequestService {
         });
     }
 
-    public Collection<String> getRequestHosts(RequestType requestType2, String environment, Instant start, Instant end){
+    public Collection<String> getRequestHosts(RequestType requestType, String environment, Instant start, Instant end){
         InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
-        RequestCatalog request = requestType2.getColFn().apply(store);
+        RequestCatalog request = requestType.getColFn().apply(store);
         InstanceCatalog instance = store.instance();
         var v = new QueryComposer()
                 .distinct(true)
