@@ -44,7 +44,7 @@ public class RequestController {
 
     @GetMapping(value = "{type}/{id}/parent", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, String>> getSessionParent(
-            @PathVariable String type,
+            @PathVariable String type, //TODO change string to RequestType
             @PathVariable String id
     )  {
         RequestType requestType;
@@ -84,7 +84,7 @@ public class RequestController {
             MvcRequest mvc,
             @PathVariable String instanceId
     ) {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.instance().id().eq(fromString(instanceId))); // UUID
 
         return ok().cacheControl(maxAge(1, HOURS)).body((InstanceEnvironment) mvc.execute());
@@ -100,7 +100,7 @@ public class RequestController {
             MvcRequest mvc,
             @PathVariable String instanceId
     )  {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.instanceTrace().instanceEnv().eq(fromString(instanceId))); // UUID
 
         return (Collection<InstanceTrace>) mvc.execute();
@@ -116,7 +116,7 @@ public class RequestController {
             MvcRequest mvc,
             @PathVariable String instanceId
     )  {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.resourceUsage().instanceEnv().eq(fromString(instanceId))); // UUID
 
         return (Collection<MachineResourceUsage>) mvc.execute();
@@ -132,7 +132,7 @@ public class RequestController {
             MvcRequest mvc,
             @PathVariable String instanceId
     ) {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.logEntry().instanceEnv().eq(fromString(instanceId))); // UUID
 
         return (Collection<LogEntry>) mvc.execute();
@@ -148,7 +148,7 @@ public class RequestController {
             MvcRequest mvc,
             @PathVariable String sessionId
     ) {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.logEntry().parent().eq(fromString(sessionId))); // UUID
 
         return (Collection<LogEntry>) mvc.execute();
@@ -163,7 +163,7 @@ public class RequestController {
     public Map<Long, ExceptionInfo> fetchExceptionByRequests(
             MvcRequest mvc,
             @RequestParam( name = "requestIds") String[] requestIds)  {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.exception().parent().in(Arrays.stream(requestIds).map(UUID::fromString).toArray())); // UUID
 
         return (Map<Long, ExceptionInfo>) mvc.execute();
@@ -177,7 +177,7 @@ public class RequestController {
     public Map<String, Integer> fetchDatabaseStageCountByRequests(
             MvcRequest mvc,
             @RequestParam(name = "requestIds") String[] requestIds) {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.databaseRequestStage().parent().in(Arrays.stream(requestIds).map(UUID::fromString).toArray()));
 
         return store.execute(mvc.getComposer().compose(store), rs -> {
@@ -213,7 +213,7 @@ public class RequestController {
             MvcRequest mvc,
             @RequestParam(name = "env") String environment
     )  {
-        var store = StoreManager.getInstance().getStore(InspectStore.class);
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.instance().environement().eq(environment));
 
         return (Collection<MainSessionDto>) mvc.execute();
@@ -228,7 +228,7 @@ public class RequestController {
             MvcRequest mvc,
             @PathVariable String sessionId
     ) {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.mainSession().id().eq(fromString(sessionId))); // UUID
 
         return Optional.ofNullable((MainSession) mvc.execute())

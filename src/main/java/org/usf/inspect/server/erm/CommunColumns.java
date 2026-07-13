@@ -10,7 +10,7 @@ import static org.usf.inspect.server.config.constant.FieldConstant.*;
 import static org.usf.jquery.core.Predicate.*;
 import static org.usf.jquery.mvc.StoreManager.getInstance;
 
-
+//TODO check this
 public interface CommunColumns {
 
 
