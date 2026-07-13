@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.NoSuchElementException;
 import java.util.stream.Stream;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.usf.inspect.server.model.wrapper.RestRequestWrapper;
 import org.usf.inspect.server.model.wrapper.RestSessionWrapper;
@@ -21,7 +22,7 @@ import org.usf.jquery.core.NamedColumn;
 import org.usf.jquery.core.QueryComposer;
 import org.usf.jquery.web.ColumnDecorator;
 import org.usf.jquery.web.ViewDecorator;
-
+@Slf4j
 @Service
 public class CompareService {
 
