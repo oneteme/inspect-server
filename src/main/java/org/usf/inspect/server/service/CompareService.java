@@ -11,6 +11,8 @@ import static org.usf.inspect.server.mapper.InspectMappers.getExceptionInfoIfNot
 import static org.usf.jquery.core.DBColumn.column;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.stream.Stream;
 
@@ -26,16 +28,40 @@ import org.usf.jquery.web.ViewDecorator;
 @Service
 public class CompareService {
 
-    public RestRequestWrapper getComparedSession(String id) {
+    public Map<String, Object> getComparedSession(String id) {
         var request = getRestRequestById(id);
         if (request != null) {
-            var session = getRestSessionById(id);
-            if (session != null) {
-                request.setRemoteTrace(session);
+            var name = getApiNameById(id);
+            if (name != null) {
+                request.setName(name);
             }
-            return request;
         }
-        throw new NoSuchElementException("no rest session found for id: " + id);
+        var result = new HashMap<String, Object>();
+        result.put("request", request);
+        result.put("session", getRestSessionById(id));
+        return result;
+    }
+
+    private String getApiNameById(String id) {
+        var r = getApiNameRestSessionById(id);
+        if (r != null) {
+            return r;
+        }
+        return getApiNameMainSessionById(id);
+    }
+
+    private String getApiNameRestSessionById(String id) {
+        var v = new QueryComposer()
+                .columns(getColumns(REST_SESSION, API_NAME))
+                .filters(REST_SESSION.column(ID).eq(REST_REQUEST.column(PARENT)).and(column("id_rst_rqt").eq(fromString(id))));
+        return INSPECT.execute(v, rs -> rs.next() ? rs.getString(API_NAME.reference()) : null);
+    }
+
+    private String getApiNameMainSessionById(String id) {
+        var v = new QueryComposer()
+                .columns(getColumns(MAIN_SESSION, NAME))
+                .filters(MAIN_SESSION.column(ID).eq(REST_REQUEST.column(PARENT)).and(column("id_rst_rqt").eq(fromString(id))));
+        return INSPECT.execute(v, rs -> rs.next() ? rs.getString(NAME.reference()) : null);
     }
 
     private RestSessionWrapper getRestSessionById(String id) {
