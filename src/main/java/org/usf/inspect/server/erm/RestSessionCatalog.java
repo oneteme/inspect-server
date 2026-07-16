@@ -4,8 +4,7 @@ import static org.usf.inspect.server.config.constant.FieldConstant.*;
 import static org.usf.jquery.core.JDBCType.UUID;
 import static org.usf.jquery.core.Join.innerJoin;
 import static org.usf.jquery.core.JoinGroup.joins;
-import static org.usf.jquery.core.Predicate.ge;
-import static org.usf.jquery.core.Predicate.lt;
+import static org.usf.jquery.core.Predicate.*;
 import static org.usf.jquery.mvc.StoreManager.getInstance;
 
 import org.usf.jquery.core.*;
@@ -43,9 +42,6 @@ public interface RestSessionCatalog extends DatasetCatalog {
 	
 	@Bind(VA_ATH_SCH)
 	ViewColumn auth();
-	
-//	@Bind(CD_STT)
-//	ViewColumn status();
 	
 	@Bind(VA_I_SZE)
 	@Expose(identity = "size_in")
@@ -137,6 +133,11 @@ public interface RestSessionCatalog extends DatasetCatalog {
 		return joins(innerJoin(ldapRequest.getView(), id().eq(ldapRequest.parent())));
 	}
 
+	@Expose(identity = "elapsed_time")
+	default Column elapsedTime() {
+		return end().minus(start()).epoch();
+	}
+
 	@Expose(identity = "error_type_session")
     default Column errorTypeExpressionsSession() {
         return status().toCase()
@@ -144,18 +145,65 @@ public interface RestSessionCatalog extends DatasetCatalog {
                 .when(ge(400).and(lt(500)), "ClientError")
                 .orElse(errType());
     }
-	
-    default Column countStatusByType(ViewColumn status, Predicate op) {
-        return status.toCase().when(op, status).orElse(null).count();
-    }
     
     @Expose(identity = "count_error_server")
     default Column countErrorServerStatus() {
-    	return countStatusByType(status(), ge(500));
+		return status().toCase().when(ge(500), status()).compose(null).count();
     }
     
     @Expose(identity = "count_error_client")
     default Column countClientErrorStatus() {
-    	return countStatusByType(status(), ge(400).and(lt(500)));
+		return status().toCase().when(ge(400).and(lt(500)), status()).compose(null).count();
     }
+
+	@Expose(identity = "count_error")
+	default Column countError() {
+		return status().toCase().when(eq(0).or(ge(400)), status()).compose(null).count();
+	}
+
+	@Expose(identity = "performance_tranche")
+	default Column performanceTranche1() {
+		return elapsedTime().toCase()
+				.when(lt(1), "1")
+				.when(ge(1).and(lt(3)), "2")
+               	.when(ge(3).and(lt(5)), "3")
+                .when(ge(5).and(lt(10)), "4")
+                .when(ge(10), "5").compose(null);
+	}
+
+	@Expose(identity = "performance_tranche2")
+	default Column performanceTranche2() {
+		return elapsedTime().toCase()
+				.when(lt(5), "1")
+				.when(ge(5).and(lt(10)), "2")
+				.when(ge(10), "3").compose(null);
+	}
+
+	@Expose(identity = "size_in_tranche")
+	default Column sizeInTranche() {
+		return sizeIn().toCase()
+				.when(lt(100), "1")
+				.when(ge(100).and(lt(200)), "2")
+				.when(ge(200).and(lt(300)), "3")
+				.when(ge(300), "4").compose(null);
+	}
+
+	@Expose(identity = "size_out_tranche")
+	default Column sizeOutTranche() {
+		return sizeOut().toCase()
+				.when(lt(100), "1")
+				.when(ge(100).and(lt(200)), "2")
+				.when(ge(200).and(lt(300)), "3")
+				.when(ge(300), "4").compose(null);
+	}
+
+	@Expose(identity = "size_in_notnull")
+	default Column sizeInNotNull() {
+		return sizeIn().toCase().when(eq(-1), 0).orElse(sizeIn());
+	}
+
+	@Expose(identity = "size_out_notnull")
+	default Column sizeOutNotNull() {
+		return sizeOut().toCase().when(eq(-1), 0).orElse(sizeOut());
+	}
 }

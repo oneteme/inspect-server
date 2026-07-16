@@ -102,4 +102,50 @@ public interface RestRequestCatalog extends RequestCatalog {
 	default Column countError() {
 		return status().toCase().when(eq(0).or(ge(400)), true).compose(null).count();
     }
+
+	@Expose(identity = "performance_tranche")
+	default Column performanceTranche1() {
+		return elapsedTime().toCase()
+				.when(lt(1), "1")
+				.when(ge(1).and(lt(3)), "2")
+				.when(ge(3).and(lt(5)), "3")
+				.when(ge(5).and(lt(10)), "4")
+				.when(ge(10), "5").compose(null);
+	}
+
+	@Expose(identity = "performance_tranche2")
+	default Column performanceTranche2() {
+		return elapsedTime().toCase()
+				.when(lt(5), "1")
+				.when(ge(5).and(lt(10)), "2")
+				.when(ge(10), "3").compose(null);
+	}
+
+	@Expose(identity = "size_in_tranche")
+	default Column sizeInTranche() {
+		return sizeIn().toCase()
+				.when(lt(100), "1")
+				.when(ge(100).and(lt(200)), "2")
+				.when(ge(200).and(lt(300)), "3")
+				.when(ge(300), "4").compose(null);
+	}
+
+	@Expose(identity = "size_out_tranche")
+	default Column sizeOutTranche() {
+		return sizeOut().toCase()
+				.when(lt(100), "1")
+				.when(ge(100).and(lt(200)), "2")
+				.when(ge(200).and(lt(300)), "3")
+				.when(ge(300), "4").compose(null);
+	}
+
+	@Expose(identity = "size_in_notnull")
+	default Column sizeInNotNull() {
+		return sizeIn().toCase().when(eq(-1), 0).orElse(sizeIn());
+	}
+
+	@Expose(identity = "size_out_notnull")
+	default Column sizeOutNotNull() {
+		return sizeOut().toCase().when(eq(-1), 0).orElse(sizeOut());
+	}
 }

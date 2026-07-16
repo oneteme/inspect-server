@@ -2,6 +2,7 @@ package org.usf.inspect.server.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 import org.usf.inspect.server.dao.PurgeDao;
 
 import java.sql.Timestamp;
@@ -23,7 +24,7 @@ import static org.usf.inspect.core.SessionContextManager.emitInfo;
 import static org.usf.inspect.server.Utils.virtualThreadExecutor;
 
 @Slf4j
-//@Service
+@Service
 @RequiredArgsConstructor
 public class PurgeService {
 

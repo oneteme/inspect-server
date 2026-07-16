@@ -89,7 +89,7 @@ public class RequestService {
                 );
         var q2 = new QueryComposer()
                 .columns(
-                        ftpRequest.host().as("name"), Column.constant(null).as("schema"),
+                        ftpRequest.host().as("name"), Column.constant("").as("schema"),
                         instance.appName(),
                         Column.constant("FTP").as("type"),
                         Column.constant("REST").as("source")
@@ -107,7 +107,7 @@ public class RequestService {
                 .compose(store).asUnion(true);
         var q3 =  new QueryComposer()
                 .columns(
-                        smtpRequest.host().as("name"), Column.constant(null).as("schema"),
+                        smtpRequest.host().as("name"), Column.constant("").as("schema"),
                         instance.appName(),
                         Column.constant("SMTP").as("type"),
                         Column.constant("REST").as("source")
@@ -124,7 +124,7 @@ public class RequestService {
                 ).compose(store).asUnion(true);
         var q4 = new QueryComposer()
                 .columns(
-                        ldapRequest.host().as("name"), Column.constant(null).as("schema"),
+                        ldapRequest.host().as("name"), Column.constant("").as("schema"),
                         instance.appName(),
                         Column.constant("LDAP").as("type"),
                         Column.constant("REST").as("source")
@@ -144,7 +144,7 @@ public class RequestService {
                 ).compose(store).asUnion(true);
         var q5 = new QueryComposer()
                 .columns(
-                        instanceFork.appName().as("name"), Column.constant(null).as("schema"),
+                        instanceFork.appName().as("name"), Column.constant("").as("schema"),
                         instance.appName(),
                         Column.constant("REST").as("type"),
                         Column.constant("REST").as("source")
@@ -164,7 +164,7 @@ public class RequestService {
                 ).compose(store).asUnion(true);
         var q6 = new QueryComposer()
                 .columns(
-                        instanceFork.appName().as("name"), Column.constant(null).as("schema"),
+                        instanceFork.appName().as("name"), Column.constant("").as("schema"),
                         instance.appName(),
                         Column.constant("VIEW").as("type"),
                         mainSession.type().as("source")

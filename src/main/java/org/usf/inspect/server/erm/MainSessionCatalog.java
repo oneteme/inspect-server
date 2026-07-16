@@ -16,8 +16,8 @@ import static org.usf.inspect.server.config.constant.FieldConstant.VA_USR;
 import static org.usf.jquery.core.JDBCType.UUID;
 import static org.usf.jquery.core.Join.innerJoin;
 import static org.usf.jquery.core.JoinGroup.joins;
-import static org.usf.jquery.core.Predicate.isNotNull;
-import static org.usf.jquery.core.Predicate.isNull;
+import static org.usf.jquery.core.Predicate.*;
+import static org.usf.jquery.core.Predicate.ge;
 import static org.usf.jquery.mvc.StoreManager.getInstance;
 
 import org.usf.jquery.core.Column;
@@ -86,6 +86,7 @@ public interface MainSessionCatalog extends DatasetCatalog {
 		return joins(innerJoin(userAction.getView(), id().eq(userAction.parent())));
 	}
 
+	@Expose(identity = "elapsed_time")
 	default Column elapsedTime() {
 		return end().minus(start()).epoch();
 	}
@@ -106,5 +107,23 @@ public interface MainSessionCatalog extends DatasetCatalog {
 				.when(errType().notNull(), 1)
 				.when(errType().isNull(), 0)
 				.compose(null).as("status");
+	}
+
+	@Expose(identity = "performance_tranche")
+	default Column performanceTranche1() {
+		return elapsedTime().toCase()
+				.when(lt(1), "1")
+				.when(ge(1).and(lt(3)), "2")
+				.when(ge(3).and(lt(5)), "3")
+				.when(ge(5).and(lt(10)), "4")
+				.when(ge(10), "5").compose(null);
+	}
+
+	@Expose(identity = "performance_tranche2")
+	default Column performanceTranche2() {
+		return elapsedTime().toCase()
+				.when(lt(5), "1")
+				.when(ge(5).and(lt(10)), "2")
+				.when(ge(10), "3").compose(null);
 	}
 }

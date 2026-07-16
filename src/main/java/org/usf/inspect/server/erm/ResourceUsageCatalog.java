@@ -16,12 +16,15 @@ import org.usf.jquery.mvc.Typed;
 public interface ResourceUsageCatalog extends DatasetCatalog {
 	
 	@Bind(VA_USED_HEP)
+	@Expose(identity = "used_heap")
 	ViewColumn usedHeap();
 	
 	@Bind(VA_COMMITED_HEP)
+	@Expose(identity = "commited_heap")
 	ViewColumn commitedHeap();
 	
 	@Bind(VA_USED_DISK_SPACE)
+	@Expose(identity = "used_disk_space")
 	ViewColumn usedDiskSpace();
 	
 	@Bind(DH_STR)

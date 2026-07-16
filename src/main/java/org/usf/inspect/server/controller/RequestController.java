@@ -285,7 +285,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "rest_session",
             view = REST_SESSION_ROW_MAPPER,
-            select = "id,apiName,method,protocol,path,query,status,start,end,user,instance.app_name",
+            select = "id,api_name,method,protocol,path,query,status,start,end,user,instance.app_name",
             join = "instance",
             order = "start",
             ignore = "env")

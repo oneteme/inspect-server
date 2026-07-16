@@ -48,7 +48,8 @@ public interface RequestCatalog extends DatasetCatalog {
     @Expose(identity = "instance_env")
     @Typed(UUID)
     ViewColumn instanceEnv();
-	
+
+    @Expose(identity = "elapsed_time")
 	default Column elapsedTime() {
 		return end().minus(start()).epoch();
 	}

@@ -23,6 +23,7 @@ public interface InstanceTraceCatalog extends DatasetCatalog {
 	ViewColumn attempts();
 	
 	@Bind(VA_TRC_CNT)
+	@Expose(identity = "trace_count")
 	ViewColumn traceCount();
 	
 	@Bind(VA_FILENAME)
