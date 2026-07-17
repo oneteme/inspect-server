@@ -59,7 +59,7 @@ public interface RequestCatalog extends DatasetCatalog {
         return joins(innerJoin(instance.getView(), instanceEnv().eq(instance.id())));
     }
 	
-	default JoinGroup exception() {
+	default JoinGroup exception() { //TODO parameterized resource =>  exception(RequestMask)
 		var exception = getInstance().getStore(InspectStore.class).exception();
 		return joins(leftJoin(exception.getView(), id().eq(exception.parent()), exception.type().eq(getRequestType().name())));
 	}
