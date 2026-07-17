@@ -11,6 +11,7 @@ import static org.usf.jquery.core.Predicate.*;
 import static org.usf.jquery.mvc.StoreManager.getInstance;
 
 //TODO check this
+@Deprecated
 public interface CommunColumns {
 
 
