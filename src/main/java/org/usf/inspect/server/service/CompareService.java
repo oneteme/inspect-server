@@ -30,15 +30,22 @@ public class CompareService {
 
     public Map<String, Object> getComparedSession(String id) {
         var request = getRestRequestById(id);
+        var result = new HashMap<String, Object>();
         if (request != null) {
             var name = getApiNameById(id);
             if (name != null) {
                 request.setName(name);
             }
+            result.put("request", request);
         }
-        var result = new HashMap<String, Object>();
-        result.put("request", request);
-        result.put("session", getRestSessionById(id));
+        var session = getRestSessionById(id);
+        if (session != null) {
+            result.put("session", getRestSessionById(id));
+        }
+
+        if(result.isEmpty()) {
+            throw new NoSuchElementException("neither session nor request found");
+        }
         return result;
     }
 
@@ -122,7 +129,7 @@ public class CompareService {
         var v = new QueryComposer()
                 .columns(getColumns(
                         REST_REQUEST, ID, PROTOCOL, AUTH, HOST, PORT, PATH, QUERY, METHOD, STATUS,
-                        SIZE_IN, SIZE_OUT, CONTENT_ENCODING_IN, CONTENT_ENCODING_OUT, START, END, THREAD, BODY_CONTENT, LINKED, PARENT
+                        SIZE_IN, SIZE_OUT, CONTENT_ENCODING_IN, CONTENT_ENCODING_OUT, START, END, THREAD, BODY_CONTENT, USER, LINKED, PARENT
                 ))
                 .columns(getColumns(EXCEPTION, ERR_TYPE, ERR_MSG))
                 .columns(getColumns(INSTANCE, APP_NAME, OS, RE, ADDRESS, ENVIRONEMENT, BRANCH, HASH, VERSION))
@@ -160,6 +167,7 @@ public class CompareService {
                 request.setHash(rs.getString(HASH.reference()));
                 request.setEnvironment(rs.getString(ENVIRONEMENT.reference()));
                 request.setVersion(rs.getString(VERSION.reference()));
+                request.setUser(rs.getString(USER.reference()));
                 request.setException(getExceptionInfoIfNotNull(rs.getString(ERR_TYPE.reference()), rs.getString(ERR_MSG.reference()), null));
 
                 if(rs.next()) {
