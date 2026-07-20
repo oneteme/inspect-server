@@ -16,7 +16,7 @@ import static org.usf.jquery.core.Join.leftJoin;
 import static org.usf.jquery.core.JoinGroup.joins;
 import static org.usf.jquery.mvc.StoreManager.getInstance;
 
-public interface LocalRequestCatalog extends DatasetCatalog {
+public interface LocalRequestCatalog extends DatasetCatalog<InspectStore> {
 
 	@Bind(ID_LCL_RQT)
 	@Typed(UUID)
@@ -56,12 +56,12 @@ public interface LocalRequestCatalog extends DatasetCatalog {
 	ViewColumn instanceEnv();
 
 	default JoinGroup instance() {
-		var instance = getInstance().getStore(InspectStore.class).instance();
+		var instance = getStore().instance();
 		return joins(innerJoin(instance.getView(), instanceEnv().eq(instance.id())));
 	}
 
 	default JoinGroup exception() {
-		var exception = getInstance().getStore(InspectStore.class).exception();
+		var exception = getStore().exception();
 		return joins(leftJoin(exception.getView(), exception.parent().eq(id()), exception.type().eq(LOCAL.name())));
 	}
 

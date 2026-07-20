@@ -256,7 +256,7 @@ public class RequestController {
             MvcRequest mvc,
             @PathVariable String instanceId
     )  {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.mainSession().instanceEnv().eq(fromString(instanceId))); // UUID
 
         return (Collection<MainSession>) mvc.execute();
@@ -293,7 +293,7 @@ public class RequestController {
             MvcRequest mvc,
             @RequestParam(name = "env") String environment
     )  {
-        var store = StoreManager.getInstance().getStore(InspectStore.class);
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.instance().environement().eq(environment));
 
         return (Collection<RestSessionDto>) mvc.execute();
@@ -307,7 +307,7 @@ public class RequestController {
     public ResponseEntity<RestSession> fetchRestSession(
             MvcRequest mvc,
             @PathVariable String sessionId) {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.restSession().id().eq(fromString(sessionId))); // UUID
 
         return Optional.ofNullable((RestSession) mvc.execute())
@@ -324,7 +324,7 @@ public class RequestController {
     public Collection<HttpSessionStage> fetchRestSessionStages (
             MvcRequest mvc,
             @PathVariable String sessionId) {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.restSessionStage().parent().eq(fromString(sessionId))); // UUID
 
         return (Collection<HttpSessionStage>) mvc.execute();
@@ -352,7 +352,7 @@ public class RequestController {
             MvcRequest mvc,
             @PathVariable String instanceId
     )  {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.restSession().instanceEnv().eq(fromString(instanceId))); // UUID
 
         return (Collection<RestSession>) mvc.execute();
@@ -367,7 +367,7 @@ public class RequestController {
     public Collection<RestRequestDto> fetchRestRequestsBySession(
             MvcRequest mvc,
             @PathVariable String sessionId){
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.restRequest().parent().eq(fromString(sessionId))); // UUID
 
         return (Collection<RestRequestDto>) mvc.execute();
@@ -383,7 +383,7 @@ public class RequestController {
     public Collection<LocalRequest> fetchLocalRequests(
             MvcRequest mvc,
             @PathVariable String sessionId)  {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.localRequest().parent().eq(fromString(sessionId))); // UUID
 
         return (Collection<LocalRequest>) mvc.execute();
@@ -398,7 +398,7 @@ public class RequestController {
     public Collection<DatabaseRequestDto> fetchDatabaseRequestsBySession(
             MvcRequest mvc,
             @PathVariable String sessionId) {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.databaseRequest().parent().eq(fromString(sessionId))); // UUID
 
         return (Collection<DatabaseRequestDto>) mvc.execute();
@@ -413,7 +413,7 @@ public class RequestController {
     public Collection<FtpRequestDto> fetchFtpRequestsBySession(
             MvcRequest mvc,
             @PathVariable String sessionId) {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.ftpRequest().parent().eq(fromString(sessionId))); // UUID
 
         return (Collection<FtpRequestDto>) mvc.execute();
@@ -428,7 +428,7 @@ public class RequestController {
     public Collection<MailRequestDto> fetchSmtpRequestsBySession(
             MvcRequest mvc,
             @PathVariable String sessionId){
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.smtpRequest().parent().eq(fromString(sessionId))); // UUID
 
         return (Collection<MailRequestDto>) mvc.execute();
@@ -443,7 +443,7 @@ public class RequestController {
     public Collection<DirectoryRequestDto> fetchLdapRequestsBySession(
             MvcRequest mvc,
             @PathVariable String sessionId){
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.ldapRequest().parent().eq(fromString(sessionId))); // UUID
 
         return (Collection<DirectoryRequestDto>) mvc.execute();
@@ -469,7 +469,7 @@ public class RequestController {
             MvcRequest mvc,
             @RequestParam(name = "env") String environment
     )  {
-        var store = StoreManager.getInstance().getStore(InspectStore.class);
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.instance().environement().eq(environment));
 
         return (Collection<RestRequestDto>) mvc.execute();
@@ -483,7 +483,7 @@ public class RequestController {
     public ResponseEntity<RestRequest> fetchRestRequest(
             MvcRequest mvc,
             @PathVariable String requestId) {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.restRequest().id().eq(fromString(requestId))); // UUID
 
         return Optional.ofNullable((RestRequest) mvc.execute())
@@ -505,7 +505,7 @@ public class RequestController {
     public Collection<HttpRequestStage> fetchRestRequestStages (
             MvcRequest mvc,
             @PathVariable String requestId) {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.restRequestStage().parent().eq(fromString(requestId))); // UUID
 
         return (Collection<HttpRequestStage>) mvc.execute();
@@ -524,7 +524,7 @@ public class RequestController {
             MvcRequest mvc,
             @RequestParam(name = "env") String environment
     )  {
-        var store = StoreManager.getInstance().getStore(InspectStore.class);
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.instance().environement().eq(environment));
 
         return (Collection<DatabaseRequestDto>) mvc.execute();
@@ -538,7 +538,7 @@ public class RequestController {
     public ResponseEntity<DatabaseRequest> fetchDatabaseRequest(
             MvcRequest mvc,
             @PathVariable String requestId) {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.databaseRequest().id().eq(fromString(requestId))); // UUID
 
         return Optional.ofNullable((DatabaseRequest) mvc.execute())
@@ -560,7 +560,7 @@ public class RequestController {
     public Collection<DatabaseRequestStage> fetchDatabaseRequestStages(
             MvcRequest mvc,
             @PathVariable String requestId) {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.databaseRequestStage().parent().eq(fromString(requestId))); // UUID
 
         return (Collection<DatabaseRequestStage>) mvc.execute();
@@ -579,7 +579,7 @@ public class RequestController {
             MvcRequest mvc,
             @RequestParam(name = "env") String environment
     )  {
-        var store = StoreManager.getInstance().getStore(InspectStore.class);
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.instance().environement().eq(environment));
 
         return (Collection<FtpRequestDto>) mvc.execute();
@@ -593,7 +593,7 @@ public class RequestController {
     public ResponseEntity<FtpRequest> fetchFtpRequest(
             MvcRequest mvc,
             @PathVariable String requestId){
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.ftpRequest().id().eq(fromString(requestId))); // UUID
 
         return Optional.ofNullable((FtpRequest) mvc.execute())
@@ -615,7 +615,7 @@ public class RequestController {
     public Collection<FtpRequestStage> fetchFtpRequestStages(
             MvcRequest mvc,
             @PathVariable String requestId) {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.ftpStage().parent().eq(fromString(requestId))); // UUID
 
         return (Collection<FtpRequestStage>) mvc.execute();
@@ -634,7 +634,7 @@ public class RequestController {
             MvcRequest mvc,
             @RequestParam(name = "env") String environment
     )  {
-        var store = StoreManager.getInstance().getStore(InspectStore.class);
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.instance().environement().eq(environment));
 
         return (Collection<MailRequestDto>) mvc.execute();
@@ -648,7 +648,7 @@ public class RequestController {
     public ResponseEntity<MailRequest> fetchSmtpRequest(
             MvcRequest mvc,
             @PathVariable String requestId){
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.smtpRequest().id().eq(fromString(requestId))); // UUID
 
         return Optional.ofNullable((MailRequest) mvc.execute())
@@ -670,7 +670,7 @@ public class RequestController {
     public Collection<MailRequestStage> fetchSmtpRequestStages(
             MvcRequest mvc,
             @PathVariable String requestId) {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.smtpStage().parent().eq(fromString(requestId))); // UUID
 
         return (Collection<MailRequestStage>) mvc.execute();
@@ -684,7 +684,7 @@ public class RequestController {
     public Collection<Mail> fetchSmtpRequestMails(
             MvcRequest mvc,
             @PathVariable String requestId) {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.smtpMail().parent().eq(fromString(requestId))); // UUID
 
         return (Collection<Mail>) mvc.execute();
@@ -703,7 +703,7 @@ public class RequestController {
             MvcRequest mvc,
             @RequestParam(name = "env") String environment
     )  {
-        var store = StoreManager.getInstance().getStore(InspectStore.class);
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.instance().environement().eq(environment));
 
         return (Collection<DirectoryRequestDto>) mvc.execute();
@@ -717,7 +717,7 @@ public class RequestController {
     public ResponseEntity<DirectoryRequest> fetchLdapRequest(
             MvcRequest mvc,
             @PathVariable String requestId){
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.ldapRequest().id().eq(fromString(requestId))); // UUID
 
         return Optional.ofNullable((DirectoryRequest) mvc.execute())
@@ -740,7 +740,7 @@ public class RequestController {
     public Collection<DirectoryRequestStage> fetchLdapRequestStages(
             MvcRequest mvc,
             @PathVariable String requestId) {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.ldapStage().parent().eq(fromString(requestId))); // UUID
 
         return (Collection<DirectoryRequestStage>) mvc.execute();
@@ -778,7 +778,7 @@ public class RequestController {
     public Collection<UserAction> getUserActions(
             MvcRequest mvc,
             @PathVariable String sessionId) {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.userAction().parent().eq(fromString(sessionId))); // UUID
 
         return (Collection<UserAction>) mvc.execute();
@@ -796,7 +796,7 @@ public class RequestController {
             @PathVariable(name = "user") String user,
             @RequestParam(name = "date") @Validate(Condition.INSTANT) Instant date
     ) {
-        var store = (InspectStore) mvc.getStore();
+        var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.mainSession().user().eq(user).and(store.mainSession().start().ge(date)));
 
         return store.execute(mvc.getComposer().compose(store), rs -> {

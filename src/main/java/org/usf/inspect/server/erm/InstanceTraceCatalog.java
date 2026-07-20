@@ -14,7 +14,7 @@ import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
 import org.usf.jquery.mvc.Typed;
 
-public interface InstanceTraceCatalog extends DatasetCatalog {
+public interface InstanceTraceCatalog extends DatasetCatalog<InspectStore> {
 	
 	@Bind(VA_PND)
 	ViewColumn pending();

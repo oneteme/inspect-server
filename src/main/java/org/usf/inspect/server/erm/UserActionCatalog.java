@@ -13,7 +13,7 @@ import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
 import org.usf.jquery.mvc.Typed;
 
-public interface UserActionCatalog extends DatasetCatalog {
+public interface UserActionCatalog extends DatasetCatalog<InspectStore> {
 	
 	@Bind(VA_TYP)
 	ViewColumn type();

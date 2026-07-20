@@ -13,7 +13,7 @@ import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
 import org.usf.jquery.mvc.Typed;
 
-public interface RestSessionCatalog extends DatasetCatalog {
+public interface RestSessionCatalog extends DatasetCatalog<InspectStore> {
 
 	@Bind(ID_SES)
 	@Typed(UUID)
@@ -109,27 +109,27 @@ public interface RestSessionCatalog extends DatasetCatalog {
 	ViewColumn instanceEnv();
 
 	default JoinGroup instance() {
-		var instance = getInstance().getStore(InspectStore.class).instance();
+		var instance = getStore().instance();
 		return joins(innerJoin(instance.getView(), instanceEnv().eq(instance.id())));
 	}
 
 	default JoinGroup databaseRequest() {
-		var databaseRequest = getInstance().getStore(InspectStore.class).databaseRequest();
+		var databaseRequest = getStore().databaseRequest();
 		return joins(innerJoin(databaseRequest.getView(), id().eq(databaseRequest.parent())));
 	}
 
 	default JoinGroup ftpRequest() {
-		var ftpRequest = getInstance().getStore(InspectStore.class).ftpRequest();
+		var ftpRequest = getStore().ftpRequest();
 		return joins(innerJoin(ftpRequest.getView(), id().eq(ftpRequest.parent())));
 	}
 
 	default JoinGroup smtpRequest() {
-		var smtpRequest = getInstance().getStore(InspectStore.class).smtpRequest();
+		var smtpRequest = getStore().smtpRequest();
 		return joins(innerJoin(smtpRequest.getView(), id().eq(smtpRequest.parent())));
 	}
 
 	default JoinGroup ldapRequest() {
-		var ldapRequest = getInstance().getStore(InspectStore.class).ldapRequest();
+		var ldapRequest = getStore().ldapRequest();
 		return joins(innerJoin(ldapRequest.getView(), id().eq(ldapRequest.parent())));
 	}
 
@@ -148,17 +148,17 @@ public interface RestSessionCatalog extends DatasetCatalog {
     
     @Expose(identity = "count_error_server")
     default Column countErrorServerStatus() {
-		return status().toCase().when(ge(500), status()).compose(null).count();
+		return status().toCase().when(ge(500), status()).compose().count();
     }
     
     @Expose(identity = "count_error_client")
     default Column countClientErrorStatus() {
-		return status().toCase().when(ge(400).and(lt(500)), status()).compose(null).count();
+		return status().toCase().when(ge(400).and(lt(500)), status()).compose().count();
     }
 
 	@Expose(identity = "count_error")
 	default Column countError() {
-		return status().toCase().when(eq(0).or(ge(400)), status()).compose(null).count();
+		return status().toCase().when(eq(0).or(ge(400)), status()).compose().count();
 	}
 
 	@Expose(identity = "performance_tranche")
@@ -168,7 +168,7 @@ public interface RestSessionCatalog extends DatasetCatalog {
 				.when(ge(1).and(lt(3)), "2")
                	.when(ge(3).and(lt(5)), "3")
                 .when(ge(5).and(lt(10)), "4")
-                .when(ge(10), "5").compose(null);
+                .when(ge(10), "5").compose();
 	}
 
 	@Expose(identity = "performance_tranche2")
@@ -176,7 +176,7 @@ public interface RestSessionCatalog extends DatasetCatalog {
 		return elapsedTime().toCase()
 				.when(lt(5), "1")
 				.when(ge(5).and(lt(10)), "2")
-				.when(ge(10), "3").compose(null);
+				.when(ge(10), "3").compose();
 	}
 
 	@Expose(identity = "size_in_tranche")
@@ -185,7 +185,7 @@ public interface RestSessionCatalog extends DatasetCatalog {
 				.when(lt(100), "1")
 				.when(ge(100).and(lt(200)), "2")
 				.when(ge(200).and(lt(300)), "3")
-				.when(ge(300), "4").compose(null);
+				.when(ge(300), "4").compose();
 	}
 
 	@Expose(identity = "size_out_tranche")
@@ -194,7 +194,7 @@ public interface RestSessionCatalog extends DatasetCatalog {
 				.when(lt(100), "1")
 				.when(ge(100).and(lt(200)), "2")
 				.when(ge(200).and(lt(300)), "3")
-				.when(ge(300), "4").compose(null);
+				.when(ge(300), "4").compose();
 	}
 
 	@Expose(identity = "size_in_notnull")

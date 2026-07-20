@@ -13,7 +13,7 @@ import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
 import org.usf.jquery.mvc.Typed;
 
-public interface ResourceUsageCatalog extends DatasetCatalog {
+public interface ResourceUsageCatalog extends DatasetCatalog<InspectStore> {
 	
 	@Bind(VA_USED_HEP)
 	@Expose(identity = "used_heap")

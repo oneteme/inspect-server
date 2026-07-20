@@ -100,7 +100,7 @@ public interface RestRequestCatalog extends RequestCatalog {
 
 	@Expose(identity = "count_error")
 	default Column countError() {
-		return status().toCase().when(eq(0).or(ge(400)), true).compose(null).count();
+		return status().toCase().when(eq(0).or(ge(400)), true).compose().count();
     }
 
 	@Expose(identity = "performance_tranche")
@@ -110,7 +110,7 @@ public interface RestRequestCatalog extends RequestCatalog {
 				.when(ge(1).and(lt(3)), "2")
 				.when(ge(3).and(lt(5)), "3")
 				.when(ge(5).and(lt(10)), "4")
-				.when(ge(10), "5").compose(null);
+				.when(ge(10), "5").compose();
 	}
 
 	@Expose(identity = "performance_tranche2")
@@ -118,7 +118,7 @@ public interface RestRequestCatalog extends RequestCatalog {
 		return elapsedTime().toCase()
 				.when(lt(5), "1")
 				.when(ge(5).and(lt(10)), "2")
-				.when(ge(10), "3").compose(null);
+				.when(ge(10), "3").compose();
 	}
 
 	@Expose(identity = "size_in_tranche")
@@ -127,7 +127,7 @@ public interface RestRequestCatalog extends RequestCatalog {
 				.when(lt(100), "1")
 				.when(ge(100).and(lt(200)), "2")
 				.when(ge(200).and(lt(300)), "3")
-				.when(ge(300), "4").compose(null);
+				.when(ge(300), "4").compose();
 	}
 
 	@Expose(identity = "size_out_tranche")
@@ -136,7 +136,7 @@ public interface RestRequestCatalog extends RequestCatalog {
 				.when(lt(100), "1")
 				.when(ge(100).and(lt(200)), "2")
 				.when(ge(200).and(lt(300)), "3")
-				.when(ge(300), "4").compose(null);
+				.when(ge(300), "4").compose();
 	}
 
 	@Expose(identity = "size_in_notnull")

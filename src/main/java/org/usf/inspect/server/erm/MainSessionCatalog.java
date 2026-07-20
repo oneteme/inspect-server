@@ -28,8 +28,7 @@ import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
 import org.usf.jquery.mvc.Typed;
 
-//@IncludeResources({PeriodColumns.class})
-public interface MainSessionCatalog extends DatasetCatalog {
+public interface MainSessionCatalog extends DatasetCatalog<InspectStore> {
 
 	@Bind(ID_SES)
 	@Typed(UUID)
@@ -76,13 +75,13 @@ public interface MainSessionCatalog extends DatasetCatalog {
 	ViewColumn instanceEnv();
 
 	default JoinGroup instance() {
-		var instance = getInstance().getStore(InspectStore.class).instance();
+		var instance = getStore().instance();
 		return joins(innerJoin(instance.getView(), instanceEnv().eq(instance.id())));
 	}
 
 	@Expose(identity = "user_action")
 	default JoinGroup userAction() {
-		var userAction = getInstance().getStore(InspectStore.class).userAction();
+		var userAction = getStore().userAction();
 		return joins(innerJoin(userAction.getView(), id().eq(userAction.parent())));
 	}
 
@@ -106,7 +105,7 @@ public interface MainSessionCatalog extends DatasetCatalog {
 				.when(end().isNull(), -1)
 				.when(errType().notNull(), 1)
 				.when(errType().isNull(), 0)
-				.compose(null).as("status");
+				.compose().as("status");
 	}
 
 	@Expose(identity = "performance_tranche")
@@ -116,7 +115,7 @@ public interface MainSessionCatalog extends DatasetCatalog {
 				.when(ge(1).and(lt(3)), "2")
 				.when(ge(3).and(lt(5)), "3")
 				.when(ge(5).and(lt(10)), "4")
-				.when(ge(10), "5").compose(null);
+				.when(ge(10), "5").compose();
 	}
 
 	@Expose(identity = "performance_tranche2")
@@ -124,6 +123,6 @@ public interface MainSessionCatalog extends DatasetCatalog {
 		return elapsedTime().toCase()
 				.when(lt(5), "1")
 				.when(ge(5).and(lt(10)), "2")
-				.when(ge(10), "3").compose(null);
+				.when(ge(10), "3").compose();
 	}
 }

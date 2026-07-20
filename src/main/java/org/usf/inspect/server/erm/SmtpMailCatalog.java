@@ -15,7 +15,7 @@ import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
 import org.usf.jquery.mvc.Typed;
 
-public interface SmtpMailCatalog extends DatasetCatalog {
+public interface SmtpMailCatalog extends DatasetCatalog<InspectStore> {
 
 	@Bind(VA_SBJ)
 	ViewColumn subject();

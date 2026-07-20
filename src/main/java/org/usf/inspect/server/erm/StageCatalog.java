@@ -12,7 +12,7 @@ import static org.usf.jquery.core.Join.leftJoin;
 import static org.usf.jquery.core.JoinGroup.joins;
 import static org.usf.jquery.mvc.StoreManager.getInstance;
 
-public interface StageCatalog extends DatasetCatalog {
+public interface StageCatalog extends DatasetCatalog<InspectStore> {
     @Bind(VA_NAM)
     ViewColumn name();
 
@@ -22,7 +22,7 @@ public interface StageCatalog extends DatasetCatalog {
     ViewColumn parent();
 
     default JoinGroup exception() {
-        var exception = getInstance().getStore(InspectStore.class).exception();
+        var exception = getStore().exception();
         return joins(leftJoin(exception.getView(), parent().eq(exception.parent()), exception.type().eq(getRequestType().name())));
     }
 

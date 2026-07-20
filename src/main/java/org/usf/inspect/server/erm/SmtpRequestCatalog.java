@@ -48,7 +48,7 @@ public interface SmtpRequestCatalog extends RequestCatalog {
 				.when(ge(1).and(lt(3)), "2")
 				.when(ge(3).and(lt(5)), "3")
 				.when(ge(5).and(lt(10)), "4")
-				.when(ge(10), "5").compose(null);
+				.when(ge(10), "5").compose();
 	}
 
 	@Expose(identity = "performance_tranche2")
@@ -56,6 +56,6 @@ public interface SmtpRequestCatalog extends RequestCatalog {
 		return elapsedTime().toCase()
 				.when(lt(5), "1")
 				.when(ge(5).and(lt(10)), "2")
-				.when(ge(10), "3").compose(null);
+				.when(ge(10), "3").compose();
 	}
 }

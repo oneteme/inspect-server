@@ -11,6 +11,7 @@ import static org.usf.jquery.core.JDBCType.UUID;
 import static org.usf.jquery.core.Join.innerJoin;
 import static org.usf.jquery.core.Join.leftJoin;
 import static org.usf.jquery.core.JoinGroup.joins;
+import static org.usf.jquery.core.Predicate.eq;
 import static org.usf.jquery.mvc.StoreManager.getInstance;
 
 import org.usf.inspect.core.RequestMask;
@@ -22,7 +23,7 @@ import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
 import org.usf.jquery.mvc.Typed;
 
-public interface RequestCatalog extends DatasetCatalog {
+public interface RequestCatalog extends DatasetCatalog<InspectStore> {
 
     ViewColumn id();
 
@@ -55,14 +56,14 @@ public interface RequestCatalog extends DatasetCatalog {
 	}
 
     default JoinGroup instance() {
-        var instance = getInstance().getStore(InspectStore.class).instance();
+        var instance = getStore().instance();
         return joins(innerJoin(instance.getView(), instanceEnv().eq(instance.id())));
     }
 	
 	default JoinGroup exception() { //TODO parameterized resource =>  exception(RequestMask)
-		var exception = getInstance().getStore(InspectStore.class).exception();
+		var exception = getStore().exception();
 		return joins(leftJoin(exception.getView(), id().eq(exception.parent()), exception.type().eq(getRequestType().name())));
 	}
-    
+
     RequestMask getRequestType();
 }
