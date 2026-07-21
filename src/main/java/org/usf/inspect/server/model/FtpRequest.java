@@ -20,6 +20,7 @@ public class FtpRequest extends AbstractRequest {
 	private int port;  // -1 otherwise
 	private String serverVersion;
 	private String clientVersion;
+    @Deprecated
 	private boolean failed;
 
 	@JsonCreator() public FtpRequest() { }

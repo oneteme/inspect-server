@@ -1,0 +1,64 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DATABASE_TO_LOWER=TRUE;
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+    hikari:
+      minimum-idle: 1
+      maximum-pool-size: 5
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+     # data-locations: classpath:data-h2.sql
+  h2:
+    console:
+      enabled: true
+      path: /h2
+
+logging:
+  level:
+    org.usf.jquery: DEBUG
+    org.usf.inspect: DEBUG
+    org.springframework.jdbc.core: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+
+inspect:
+  collector: 
+    enabled: false #default=false, enables the collector
+    scheduling:
+      interval: 30s #default=60s, interval between trace dispatches
+    monitoring:
+      http-route:
+        excludes:
+          method: OPTIONS #default=[], exclude OPTIONS requests
+          path: /favicon.ico #default=[], exclude matching request paths
+      exception:
+        max-stack-trace-rows: -1 #default=5, -1 no limit
+        max-cause-depth: -1 #default=-1
+        #class-name-pattern: fr.enedis.nova.*
+    resources:
+      enabled: true
+    tracing:
+      queue-capacity: 5000 #default=10000, queue capacity for trace dispatching
+      remote:
+        mode: REST #default=null, trace dispatch type (e.g., REST)
+        host: http://localhost:9001 #default=localhost, target dispatch host
+        retention-max-age: 10d #default=30d, maximum age of traces in days
+  server:
+    scheduling:
+      interval: 30s #default=60s, interval between trace dispatches
+    tracing:
+      queue-capacity: 500000 #default=10000, queue capacity for trace dispatching
+    partition:
+      enabled: true
+      schedule: "0 0 0 L * ?"
+      http-session: DAY
+      http-request: DAY
+      jdbc-request: DAY
+    purge:
+      enabled: false
+
+

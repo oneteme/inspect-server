@@ -446,14 +446,14 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests, TraceDao::mailRequestS
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteMailRequests(List<Pair<MailRequestSignal, MailRequestUpdate>> requests) {
     	executeBatchPair("""
-insert into e_smtp_rqt(id_smtp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str,dh_end,va_cmd,va_fail)
+insert into e_smtp_rqt(id_smtp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str,dh_end,va_cmd,status)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             var req = pair.getV1();
             var callback = pair.getV2();
             mailRequestSetter(ps, req);
             ps.setTimestamp(10, fromNullableInstant(callback.getEnd()));
             ps.setString(11, callback.getCommand());
-            ps.setBoolean(12, callback.isFailed());
+            ps.setInt(12, callback.getStatus());
         });
     }
 
@@ -473,11 +473,11 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
     @Transactional(rollbackFor = Throwable.class)
     public void updateMailRequests(List<MailRequestUpdate> requests) {
         executeBatch("""
-update e_smtp_rqt set dh_end = ?, va_cmd = ?, va_fail = ?
+update e_smtp_rqt set dh_end = ?, va_cmd = ?, status = ?
 where id_smtp_rqt = ?::uuid""", requests, (ps, req) -> {
             ps.setTimestamp(1, fromNullableInstant(req.getEnd()));
             ps.setString(2, req.getCommand());
-            ps.setBoolean(3, req.isFailed());
+            ps.setInt(3, req.getStatus());
             ps.setString(4, req.getId());
         });
     }
@@ -492,14 +492,14 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests, TraceDao::ftpReque
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteFtpRequests(List<Pair<FtpRequestSignal, FtpRequestUpdate>> requests) {
     	executeBatchPair("""
-insert into e_ftp_rqt(id_ftp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_srv_vrs,va_clt_vrs,va_usr,va_thr,dh_str,dh_end,va_cmd,va_fail)
+insert into e_ftp_rqt(id_ftp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_srv_vrs,va_clt_vrs,va_usr,va_thr,dh_str,dh_end,va_cmd,status)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             var req = pair.getV1();
             var callback = pair.getV2();
             ftpRequestSetter(ps, req);
             ps.setTimestamp(12, fromNullableInstant(callback.getEnd()));
             ps.setString(13, callback.getCommand());
-            ps.setBoolean(14, callback.isFailed());
+            ps.setInt(14, callback.getStatus());
         });
     }
 
@@ -520,11 +520,11 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -
     @Transactional(rollbackFor = Throwable.class)
     public void updateFtpRequests(List<FtpRequestUpdate> requests) {
         executeBatch("""
-update e_ftp_rqt set dh_end = ?, va_cmd = ?, va_fail = ?
+update e_ftp_rqt set dh_end = ?, va_cmd = ?, status = ?
 where id_ftp_rqt = ?::uuid""", requests, (ps, req) -> {
             ps.setTimestamp(1, fromNullableInstant(req.getEnd()));
             ps.setString(2, req.getCommand());
-            ps.setBoolean(3, req.isFailed());
+            ps.setInt(3, req.getStatus());
             ps.setString(4, req.getId());
         });
     }
@@ -539,14 +539,14 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests, TraceDao::ldapRequestS
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteLdapRequests(List<Pair<DirectoryRequestSignal, DirectoryRequestUpdate>> requests) {
     	executeBatchPair("""
-insert into e_ldap_rqt(id_ldap_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str,dh_end,va_cmd,va_fail)
-values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
+insert into e_ldap_rqt(id_ldap_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str,dh_end,va_cmd,status)
+values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             var req = pair.getV1();
             var callback = pair.getV2();
             ldapRequestSetter(ps, req);
             ps.setTimestamp(10, fromNullableInstant(callback.getEnd()));
             ps.setString(11, callback.getCommand());
-            ps.setBoolean(12, callback.isFailed());
+            ps.setInt(12, callback.getStatus());
         });
     }
 
@@ -565,11 +565,11 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
     @Transactional(rollbackFor = Throwable.class)
     public void updateLdapRequests(List<DirectoryRequestUpdate> requests) {
         executeBatch("""
-update e_ldap_rqt set dh_end = ?, va_cmd = ?, va_fail = ?
+update e_ldap_rqt set dh_end = ?, va_cmd = ?, status = ?
 where id_ldap_rqt = ?::uuid""", requests, (ps, req) -> {
             ps.setTimestamp(1, fromNullableInstant(req.getEnd()));
             ps.setString(2, req.getCommand());
-            ps.setBoolean(3, req.isFailed());
+            ps.setInt(3, req.getStatus());
             ps.setString(4, req.getId());
         });
     }
@@ -584,14 +584,14 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests, TraceDao::da
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteDatabaseRequests(List<Pair<DatabaseRequestSignal, DatabaseRequestUpdate>> requests) {
         executeBatchPair("""
-insert into e_dtb_rqt(id_dtb_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_she,va_nam,va_sha,va_usr,va_thr,va_drv,va_prd_nam,va_prd_vrs,dh_str,dh_end,va_cmd,va_fail)
+insert into e_dtb_rqt(id_dtb_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_she,va_nam,va_sha,va_usr,va_thr,va_drv,va_prd_nam,va_prd_vrs,dh_str,dh_end,va_cmd,status)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             var req = pair.getV1();
             var callback = pair.getV2();
             databaseRequestSetter(ps, req);
             ps.setTimestamp(15, fromNullableInstant(callback.getEnd()));
             ps.setString(16, callback.getCommand());
-            ps.setBoolean(17, callback.isFailed());
+            ps.setInt(17, callback.getStatus());
         });
     }
 
@@ -615,11 +615,11 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, p
     @Transactional(rollbackFor = Throwable.class)
     public void updateDatabaseRequests(List<DatabaseRequestUpdate> requests) {
         executeBatch("""
-update e_dtb_rqt set dh_end = ?, va_cmd = ?, va_fail = ?
+update e_dtb_rqt set dh_end = ?, va_cmd = ?, status = ?
 where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
             ps.setTimestamp(1, fromNullableInstant(req.getEnd()));
             ps.setString(2, req.getCommand());
-            ps.setBoolean(3, req.isFailed());
+            ps.setInt(3, req.getStatus());
             ps.setString(4, req.getId());
         });
     }

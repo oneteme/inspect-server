@@ -4,7 +4,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.usf.inspect.core.*;
+import org.usf.inspect.core.DispatchState;
+import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.core.InstanceEnvironment;
+import org.usf.inspect.core.TraceFail;
 import org.usf.inspect.server.exception.DispatchProcessingException;
 import org.usf.inspect.server.service.TraceService;
 
@@ -16,8 +19,6 @@ import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 import static org.springframework.http.ResponseEntity.*;
-import static org.usf.inspect.core.ErrorCode.SUCCESS;
-import static org.usf.inspect.core.ErrorCode.UNKNOWN_ERROR;
 import static org.usf.inspect.server.Utils.isUUID;
 import static org.usf.jquery.core.Utils.isBlank;
 
@@ -25,8 +26,8 @@ import static org.usf.jquery.core.Utils.isBlank;
 @CrossOrigin
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(value = "v4/trace", produces = APPLICATION_JSON_VALUE)
-public class TraceController {
+@RequestMapping(value = "v5/trace", produces = APPLICATION_JSON_VALUE)
+public class TraceV5Controller {
 
     private final TraceService service;
 
@@ -60,30 +61,6 @@ public class TraceController {
             return status(BAD_REQUEST).body("invalid instance ID");
         }
         try {
-            for (var t : traces) {
-                // Si c'est un AbstractRequestUpdate
-                if (t instanceof AbstractRequestUpdate req) {
-                    // Si le statut est encore à 0 (valeur par défaut) mais que "failed" était vrai
-                    // Note : il faut que `isFailed()` ou `getFailed()` soit accessible sur 'req' ou 't'
-                    if (req instanceof MailRequestUpdate mailReq && mailReq.isFailed()) {
-                        mailReq.setStatus(UNKNOWN_ERROR.getCode());
-                    }
-                    else if (req instanceof FtpRequestUpdate ftpReq && ftpReq.isFailed()) {
-                        ftpReq.setStatus(UNKNOWN_ERROR.getCode());
-                    }
-                    else if (req instanceof DatabaseRequestUpdate dbReq && dbReq.isFailed()) {
-                        dbReq.setStatus(UNKNOWN_ERROR.getCode());
-                    }
-                    else if (req instanceof DirectoryRequestUpdate dirReq && dirReq.isFailed()) {
-                        dirReq.setStatus(UNKNOWN_ERROR.getCode());
-                    }
-
-                    // Si  failed est false
-                    else {
-                        req.setStatus(SUCCESS.getCode());
-                    }
-                }
-            }
             return service.addTraces(traces, id, attempts, filename, end)
                     ? accepted().build()
                     : status(SERVICE_UNAVAILABLE).body(new TraceFail(service.getState().toString(), true));

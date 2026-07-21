@@ -124,7 +124,7 @@ public class ColumnConstant {
             case END -> DH_END;
             case THREAD -> VA_THR;
             case COMMAND -> VA_CMD;
-            case FAILED -> VA_FAIL;
+           // //case FAILED -> VA_FAIL;
             case PARENT -> CD_PRN_SES;
             case INSTANCE_ENV -> CD_INS;
             default -> null;
@@ -147,7 +147,7 @@ public class ColumnConstant {
             case DB_NAME -> VA_PRD_NAM;
             case DB_VERSION -> VA_PRD_VRS;
             case COMMAND -> VA_CMD;
-            case FAILED -> VA_FAIL;
+           // //case FAILED -> VA_FAIL;
             case PARENT -> CD_PRN_SES;
             case INSTANCE_ENV -> CD_INS;
             default -> null;
@@ -164,7 +164,7 @@ public class ColumnConstant {
             case END -> DH_END;
             case USER -> VA_USR;
             case THREAD -> VA_THR;
-            case FAILED -> VA_FAIL;
+          //  //case FAILED -> VA_FAIL;
             case PARENT -> CD_PRN_SES;
             case INSTANCE_ENV -> CD_INS;
             default -> null;
@@ -208,7 +208,7 @@ public class ColumnConstant {
             case USER -> VA_USR;
             case THREAD -> VA_THR;
             case COMMAND -> VA_CMD;
-            case FAILED -> VA_FAIL;
+            //case FAILED -> VA_FAIL;
             case PARENT -> CD_PRN_SES;
             case INSTANCE_ENV -> CD_INS;
             default -> null;
@@ -251,7 +251,7 @@ public class ColumnConstant {
             case USER -> VA_USR;
             case THREAD -> VA_THR;
             case COMMAND -> VA_CMD;
-            case FAILED -> VA_FAIL;
+            //case FAILED -> VA_FAIL;
             case PARENT -> CD_PRN_SES;
             case INSTANCE_ENV -> CD_INS;
             default -> null;

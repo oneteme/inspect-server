@@ -17,6 +17,9 @@ public class NoSecurityConfig {
 
 	    http
 	        .csrf(csrf -> csrf.disable())
+				.headers(headers -> headers
+						.frameOptions(frame -> frame.sameOrigin()) // ← ajouter ceci
+				)
 	        .authorizeHttpRequests(auth -> auth
 	            .anyRequest().permitAll()
 	        );

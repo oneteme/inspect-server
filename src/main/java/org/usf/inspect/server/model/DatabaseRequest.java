@@ -23,7 +23,8 @@ public class DatabaseRequest extends AbstractRequest {
 	private String driverVersion;
 	private String productName;
 	private String productVersion;
-	private boolean failed;
+    @Deprecated
+    private boolean failed;
 
 	@JsonCreator public DatabaseRequest() { }
 

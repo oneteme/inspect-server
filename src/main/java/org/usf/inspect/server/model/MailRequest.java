@@ -18,7 +18,12 @@ public class MailRequest extends AbstractRequest {
 	private String protocol; //smtp(s), imap, pop3
 	private String host;
 	private int port;
-	private boolean failed;
+    /**
+     * @deprecated As of version v5, replaced by status .
+     * Will be removed in a future release.
+     */
+    @Deprecated
+    private boolean failed;
 
 	@JsonCreator public MailRequest() {
         // empty
