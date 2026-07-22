@@ -9,12 +9,13 @@ import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.usf.jquery.core.LimitExceededException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler //TODO choose between @ControllerAdvice and @RestControllerAdvice
-    public ResponseEntity<Map<String, String>> handlePayloadTooLargeException(PayloadTooLargeException ex){
+    public ResponseEntity<Map<String, String>> handlePayloadTooLargeException(LimitExceededException ex){
         Map<String, String> body = new HashMap<>();
         body.put("error","PAYLOAD_TOO_LARGE"); //TODO realy need this ? client can easily detect it from http status code
         body.put("message","Données trop volumineuses, Veuillez affiner votre requête"); //TODO i18n

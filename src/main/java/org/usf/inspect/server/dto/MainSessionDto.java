@@ -9,4 +9,5 @@ import org.usf.inspect.server.model.MainSession;
 public class MainSessionDto extends MainSession {
     private String appName;
     private String address;
+    private int status;
 }
