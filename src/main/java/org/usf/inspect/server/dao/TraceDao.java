@@ -33,6 +33,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.AbstractStage;
@@ -798,25 +799,54 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
 			}
     	}
     }
-    
+
     private <T> int retryAsSingles(String sql, List<T> records, ParameterizedPreparedStatementSetter<T> pss, Consumer<T> fallback) {
         var rows = 0;
-    	for(var r : records) {
+        Connection cnx = null;
+
+        try {
+            cnx = DataSourceUtils.getConnection(template.getDataSource());
+        } catch (Exception e) {
+            log.warn("Impossible d'obtenir la connexion JDBC pour les Savepoints unitaires", e);
+        }
+        for (var r : records) {
+            Savepoint itemSp = null;
             try {
-            	rows += template.update(sql, ps-> pss.setValues(ps, r));
-            } catch (DuplicateKeyException e) { //SQLState 23505 
-            	++rows; 
-            	try {
-            		fallback.accept(r);
-     			} catch (Exception ex) {
-     				log.error("Failed to save record even in fallback for {}, skipping record", r, ex);
-     			}
+                //pose du Savepoint unitaire
+                if (nonNull(cnx)) {
+                    itemSp = cnx.setSavepoint("single_item_sp");
+                }
+                rows += template.update(sql, ps -> pss.setValues(ps, r));
+                //en cas de succès, on libère le savepoint
+                if (nonNull(cnx) && nonNull(itemSp)) {
+                    cnx.releaseSavepoint(itemSp);
+                }
+            } catch (Exception e) {
+                //nettoyage obligatoire du Savepoint pour débloquer PostgreSQL
+                if (nonNull(cnx) && nonNull(itemSp)) {
+                    try {
+                        cnx.rollback(itemSp);
+                    } catch (SQLException ex) {
+                        log.error("Échec du rollback au Savepoint unitaire pour l'enregistrement {}", r, ex);
+                    }
+                }
+                if (e instanceof DuplicateKeyException) {
+                    ++rows;
+                    try {
+                        fallback.accept(r);
+                    } catch (Exception ex) {
+                        log.error("Échec de l'exécution du fallback pour {}, enregistrement ignoré", r, ex);
+                    }
+                } else {
+                    log.error("Erreur inattendue pour l'enregistrement {}, ligne ignorée", r, e);
+                }
             }
         }
-    	if(rows > 0) {
-			log.warn("duplicate key exception occurred for {} records, but all records have been saved successfully in retry", rows);
-		}
-    	return records.size() - rows;
+        if (rows > 0) {
+            log.warn("{} doublon(s) / problème(s) géré(s) lors du traitement unitaire.", rows);
+        }
+
+        return records.size() - rows;
     }
-    
+
 }

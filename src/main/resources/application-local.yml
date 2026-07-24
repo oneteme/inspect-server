@@ -1,0 +1,84 @@
+server:
+  port: 9001
+  compression:
+    enabled: true
+    mime-types: application/json
+    min-response-size: 1MB
+spring:
+  security:
+    enabled: false
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ''
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+  application:
+    name: inspect
+  datasource:
+    url: jdbc:postgresql://calamar.pgaas.enedis.fr:32077/trace-api
+    username: trace-api-user
+    password: r5YVbWkr3t649Xc
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: 1
+      maximum-pool-size: 5
+ # sql:
+  #  init:
+   #   mode: always
+  #  schema-locations:
+  #      - classpath:schema-pg.sql
+  #      - classpath:schema-pg-update.sql
+     # data-locations: classpath:data-h2.sql
+#  h2:
+#    console:
+#      enabled: false
+#      path: /h2
+
+logging:
+  level:
+    org.usf.jquery: DEBUG
+    org.usf.inspect: DEBUG
+    org.springframework.jdbc.core: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+
+inspect:
+  collector: 
+    enabled: false #default=false, enables the collector
+    scheduling:
+      interval: 30s #default=60s, interval between trace dispatches
+    monitoring:
+      http-route:
+        excludes:
+          method: OPTIONS #default=[], exclude OPTIONS requests
+          path: /favicon.ico #default=[], exclude matching request paths
+      exception:
+        max-stack-trace-rows: -1 #default=5, -1 no limit
+        max-cause-depth: -1 #default=-1
+        #class-name-pattern: fr.enedis.nova.*
+    resources:
+      enabled: true
+    tracing:
+      queue-capacity: 5000 #default=10000, queue capacity for trace dispatching
+      remote:
+        mode: REST #default=null, trace dispatch type (e.g., REST)
+        host: http://localhost:9001 #default=localhost, target dispatch host
+        retention-max-age: 10d #default=30d, maximum age of traces in days
+  server:
+    scheduling:
+      interval: 30s #default=60s, interval between trace dispatches
+    tracing:
+      queue-capacity: 500000 #default=10000, queue capacity for trace dispatching
+    partition:
+      enabled: true
+      schedule: "0 0 0 L * ?"
+      http-session: DAY
+      http-request: DAY
+      jdbc-request: DAY
+    purge:
+      enabled: false
+
+
