@@ -8,11 +8,9 @@ import org.usf.inspect.server.model.wrapper.RestSessionWrapper;
 import org.usf.jquery.core.QueryComposer;
 import org.usf.jquery.mvc.StoreManager;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 
+import static java.util.UUID.*;
 import static org.usf.inspect.server.Utils.fromNullableTimestamp;
 import static org.usf.inspect.server.Utils.requireSingle;
 import static org.usf.inspect.server.mapper.Mappers.getExceptionInfoIfNotNull;
@@ -58,7 +56,7 @@ public class CompareService {
         var v = new QueryComposer()
                 .columns(restSession.apiName())
                 .joins(restSession.restRequest().getJoins())
-                .criterias(restRequest.id().eq(id));
+                .criterias(restRequest.id().eq(fromString(id)));
         return store.execute(v.compose(store), rs -> rs.next() ? rs.getString("apiName") : null);
     }
 
@@ -69,7 +67,7 @@ public class CompareService {
         var v = new QueryComposer()
                 .columns(mainSession.name())
                 .joins(mainSession.restRequest().getJoins())
-                .criterias(restRequest.id().eq(id));
+                .criterias(restRequest.id().eq(fromString(id)));
         return store.execute(v.compose(store), rs -> rs.next() ? rs.getString("name") : null);
     }
 
@@ -82,10 +80,10 @@ public class CompareService {
                         restSession.protocol(), restSession.host(), restSession.port(), restSession.path(), restSession.query(),
                         restSession.media(), restSession.auth(), restSession.status(), restSession.sizeIn(), restSession.sizeOut(),
                         restSession.contentEncodingIn(), restSession.contentEncodingOut(), restSession.start(), restSession.end(), restSession.thread(),
-                        restSession.errType(), restSession.errMsg(), restSession.mask(), restSession.user(), restSession.cacheControl(), restSession.instanceEnv(),
+                        restSession.errType(), restSession.errMsg(), restSession.mask(), restSession.user(), restSession.cacheControl(), restSession.userAgt(), restSession.instanceEnv(),
                         instance.appName(), instance.os(), instance.re(), instance.address(), instance.branch(), instance.hash(), instance.environement(), instance.version())
                 .joins(innerJoin(instance.getView(), restSession.instanceEnv().eq(instance.id()).and(restSession.start().ge(instance.start()))))
-                .criterias(restSession.id().eq(id));
+                .criterias(restSession.id().eq(fromString(id)));
         return requireSingle(store.execute(v.compose(store), rs -> {
             var sessions = new ArrayList<RestSessionWrapper>();
             while (rs.next()) {
@@ -142,7 +140,7 @@ public class CompareService {
                         exception.errType(), exception.errMsg())
                 .joins(restRequest.exception().getJoins())
                 .join(innerJoin(instance.getView(), restRequest.instanceEnv().eq(instance.id()).and(restRequest.start().ge(instance.start()))))
-                .criterias(restRequest.id().eq(id));
+                .criterias(restRequest.id().eq(fromString(id)));
         return store.execute(v.compose(store), rs -> {
             if(rs.next()) {
                 var request = new RestRequestWrapper();
