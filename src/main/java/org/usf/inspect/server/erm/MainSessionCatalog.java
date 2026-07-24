@@ -79,6 +79,11 @@ public interface MainSessionCatalog extends DatasetCatalog<InspectStore> {
 		return joins(innerJoin(instance.getView(), instanceEnv().eq(instance.id())));
 	}
 
+	default JoinGroup restRequest() {
+		var restRequest = getStore().restRequest();
+		return joins(innerJoin(restRequest.getView(), id().eq(restRequest.parent())));
+	}
+
 	@Expose(identity = "user_action")
 	default JoinGroup userAction() {
 		var userAction = getStore().userAction();

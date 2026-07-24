@@ -113,6 +113,11 @@ public interface RestSessionCatalog extends DatasetCatalog<InspectStore> {
 		return joins(innerJoin(instance.getView(), instanceEnv().eq(instance.id())));
 	}
 
+	default JoinGroup restRequest() {
+		var restRequest = getStore().restRequest();
+		return joins(innerJoin(restRequest.getView(), id().eq(restRequest.parent())));
+	}
+
 	default JoinGroup databaseRequest() {
 		var databaseRequest = getStore().databaseRequest();
 		return joins(innerJoin(databaseRequest.getView(), id().eq(databaseRequest.parent())));
