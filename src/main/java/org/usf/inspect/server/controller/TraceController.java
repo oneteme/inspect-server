@@ -19,7 +19,7 @@ import static org.springframework.http.ResponseEntity.*;
 import static org.usf.inspect.core.ErrorCode.SUCCESS;
 import static org.usf.inspect.core.ErrorCode.UNKNOWN_ERROR;
 import static org.usf.inspect.server.Utils.isUUID;
-import static org.usf.jquery.core.Utils.isBlank;
+import static org.usf.jquery.core.Utils.isEmpty;
 
 @Slf4j
 @CrossOrigin
@@ -33,7 +33,7 @@ public class TraceController {
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<String> addInstanceEnvironment(
             @RequestBody InstanceEnvironment instance){
-    	if(isBlank(instance.getName())) {
+    	if(isEmpty(instance.getName())) {
     		return status(BAD_REQUEST).body("invalid instance name");
     	}
         if(!isUUID(instance.getId())) {
