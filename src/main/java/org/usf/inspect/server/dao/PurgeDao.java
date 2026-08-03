@@ -3,7 +3,6 @@ package org.usf.inspect.server.dao;
 import static java.time.Duration.ofDays;
 import static java.util.Arrays.stream;
 import static java.util.Objects.nonNull;
-import static java.util.Objects.requireNonNullElseGet;
 import static org.usf.inspect.core.RequestMask.FTP;
 import static org.usf.inspect.core.RequestMask.JDBC;
 import static org.usf.inspect.core.RequestMask.LDAP;
@@ -24,6 +23,7 @@ import static org.usf.jquery.core.Operator.ctimestamp;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -31,14 +31,12 @@ import java.util.stream.Stream;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import org.usf.inspect.core.InspectCollectorConfiguration;
-import org.usf.inspect.core.InstanceEnvironment;
 import org.usf.inspect.core.InstanceType;
-import org.usf.inspect.core.RestRemoteServerProperties;
 import org.usf.jquery.core.DBColumn;
 import org.usf.jquery.core.DBOrder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -49,10 +47,20 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PurgeDao {
 
+    private static final Duration DEFAULT_RETENTION = ofDays(30);
+
+    public record PurgeCandidate(
+            InstanceType type,
+            String env,
+            String app,
+            Duration diagnosticRetention,
+            Duration auditRetention
+    ) {}
+
     private final ObjectMapper mapper;
     private final JdbcTemplate template;
 
-    public List<InstanceEnvironment> selectInstances() {
+    public List<PurgeCandidate> selectInstances() {
         return INSPECT.execute(v ->
                 v.columns(
                         INSTANCE.column(TYPE),
@@ -61,7 +69,7 @@ public class PurgeDao {
                         INSTANCE.column(CONFIGURATION))
                 .filters(rank().over(
                 		new DBColumn[]{INSTANCE.column(ENVIRONEMENT), INSTANCE.column(APP_NAME), INSTANCE.column(TYPE)},
-                        new DBOrder[] {INSTANCE.column(END).coalesce(ctimestamp().operation()).desc(), INSTANCE.column(START).desc()}).eq(1)), this::mapInstances);
+                        new DBOrder[] {INSTANCE.column(END).coalesce(ctimestamp().operation()).desc(), INSTANCE.column(START).desc()}).eq(1)), this::mapCandidates);
     }
 
     public List<String> selectInstanceIds(Timestamp before, String env, String app, InstanceType type) {
@@ -256,7 +264,7 @@ public class PurgeDao {
 			()-> vacuum("e_ins_trc"),
 			()-> vacuum("e_rsc_usg"));
     }
-    
+
     private int purgeRequest(String tableSuffix, String ids, Timestamp before, boolean withEnd) {
         return template.update("DELETE FROM e_" + tableSuffix +
                 " WHERE dh_str < '" + before + "'" +
@@ -311,38 +319,48 @@ public class PurgeDao {
             log.error("Error during vacuum analyze on table {}: {}", tableSuffix, e.getMessage());
         }
     }
-    
-    List<InstanceEnvironment> mapInstances(ResultSet rs) throws SQLException{
-        var envs = new ArrayList<InstanceEnvironment>();
-        while (rs.next()) {
-            InspectCollectorConfiguration conf = null;
-            try {
-                conf = rs.getString(CONFIGURATION.reference()) != null
-                        ? mapper.readValue(rs.getString(CONFIGURATION.reference()), InspectCollectorConfiguration.class)
-                        : null;
-            } catch (JsonProcessingException e) {
-                emitError("Error parsing configuration for instance [" + rs.getString(ENVIRONEMENT.reference()) + "]:[" + rs.getString(APP_NAME.reference()) + "]");
-            }
-            finally {
-                envs.add(createInstanceEnvironment(
-                		rs.getString(TYPE.reference()),
-                        rs.getString(APP_NAME.reference()),
-                        rs.getString(ENVIRONEMENT.reference()),
-                        requireNonNullElseGet(conf, PurgeDao::defaultConfig)));
-            }
-        }
-        return envs;
-}
 
-    private static InstanceEnvironment createInstanceEnvironment(String type, String env, String app, InspectCollectorConfiguration conf) {
-        return new InstanceEnvironment(null, null, InstanceType.valueOf(type), app, null, env, null, null, null, null, null, null, null, null, conf);
+    List<PurgeCandidate> mapCandidates(ResultSet rs) throws SQLException {
+        var out = new ArrayList<PurgeCandidate>();
+        while (rs.next()) {
+            var app = rs.getString(APP_NAME.reference());
+            var env = rs.getString(ENVIRONEMENT.reference());
+            var type = InstanceType.valueOf(rs.getString(TYPE.reference()));
+            var raw = rs.getString(CONFIGURATION.reference());
+            var retentions = resolveRetentions(raw);
+            out.add(new PurgeCandidate(type, env, app, retentions.diagnostic(), retentions.audit()));
+        }
+        return out;
     }
 
-    private static InspectCollectorConfiguration defaultConfig() {
-        var conf = new InspectCollectorConfiguration();
-        var rmt = new RestRemoteServerProperties();
-        rmt.setRetentionMaxAge(ofDays(60));
-        conf.getTracing().setRemote(rmt);
-        return conf;
+    private record Retentions(Duration diagnostic, Duration audit) {}
+
+    private Retentions resolveRetentions(String rawConfiguration) {
+        if (rawConfiguration == null || rawConfiguration.isBlank()) {
+            return new Retentions(DEFAULT_RETENTION, DEFAULT_RETENTION);
+        }
+        try {
+            var remote = mapper.readTree(rawConfiguration).path("tracing").path("remote");
+            var retention = remote.path("retention");
+            var diagnostic = parseDuration(retention.path("diagnostic"));
+            var audit = parseDuration(retention.path("audit"));
+            var legacy = parseDuration(remote.path("retentionMaxAge"));
+            var fallback = legacy != null ? legacy : DEFAULT_RETENTION;
+            return new Retentions(diagnostic != null ? diagnostic : fallback, audit != null ? audit : fallback);
+        } catch (JsonProcessingException e) {
+            emitError("Error parsing retention configuration: " + e.getMessage());
+            return new Retentions(DEFAULT_RETENTION, DEFAULT_RETENTION);
+        }
+    }
+
+    private Duration parseDuration(JsonNode node) {
+        if (node == null || node.isNull()) return null;
+        if (node.isNumber()) return Duration.ofSeconds(node.longValue()); // 864000 -> 10 jours
+        if (node.isTextual()) {
+            String s = node.asText();
+            try { return Duration.parse(s); } catch (Exception ignored) {}
+            try { return Duration.ofSeconds((long) Double.parseDouble(s)); } catch (Exception ignored) {}
+        }
+        return null;
     }
 }

@@ -35,36 +35,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import org.usf.inspect.core.AbstractStage;
-import org.usf.inspect.core.DatabaseRequestSignal;
-import org.usf.inspect.core.DatabaseRequestStage;
-import org.usf.inspect.core.DatabaseRequestUpdate;
-import org.usf.inspect.core.DirectoryRequestSignal;
-import org.usf.inspect.core.DirectoryRequestStage;
-import org.usf.inspect.core.DirectoryRequestUpdate;
-import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.FtpRequestSignal;
-import org.usf.inspect.core.FtpRequestStage;
-import org.usf.inspect.core.FtpRequestUpdate;
-import org.usf.inspect.core.HttpRequestSignal;
-import org.usf.inspect.core.HttpRequestStage;
-import org.usf.inspect.core.HttpRequestUpdate;
-import org.usf.inspect.core.HttpSessionSignal;
-import org.usf.inspect.core.HttpSessionStage;
-import org.usf.inspect.core.HttpSessionUpdate;
-import org.usf.inspect.core.InstanceEnvironment;
-import org.usf.inspect.core.InstanceType;
-import org.usf.inspect.core.LocalRequestSignal;
-import org.usf.inspect.core.LocalRequestUpdate;
-import org.usf.inspect.core.LogEntry;
-import org.usf.inspect.core.MachineResourceUsage;
-import org.usf.inspect.core.MailRequestSignal;
-import org.usf.inspect.core.MailRequestStage;
-import org.usf.inspect.core.MailRequestUpdate;
-import org.usf.inspect.core.MainSessionSignal;
-import org.usf.inspect.core.MainSessionUpdate;
-import org.usf.inspect.core.RequestMask;
-import org.usf.inspect.core.SessionMaskUpdate;
+import org.usf.inspect.core.*;
 import org.usf.inspect.server.event.UnsavedEventTraceEvent;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.InstanceTrace;
@@ -75,6 +46,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.Duration;
+import java.time.format.DateTimeParseException;
 
 /**
  * Using Types.OTHER with JSON serialization to ensure portability:
@@ -111,7 +84,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             ps.setString(11, instance.getCollector());
             ps.setString(12, instance.getBranch());
             ps.setString(13, instance.getHash());
-            ps.setObject(14, safeWriteValue(instance.getConfiguration(), mapper), OTHER);
+            ps.setObject(14, toConfigJsonWithRetention(instance.getConfiguration()), OTHER);
             ps.setObject(15, safeWriteValue(instance.getResource(), mapper), OTHER);
             ps.setObject(16, safeWriteValue(instance.getAdditionalProperties(), mapper), OTHER);
         });
@@ -818,5 +791,43 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
 		}
     	return records.size() - rows;
     }
-    
+
+    private String toConfigJsonWithRetention(InspectCollectorConfiguration conf) {
+        if (conf == null) return null;
+        try {
+            var root = (com.fasterxml.jackson.databind.node.ObjectNode) mapper.valueToTree(conf);
+            var remote = root.with("tracing").with("remote");
+            var retention = remote.with("retention");
+
+            Duration legacy = parseDuration(remote.get("retentionMaxAge"));
+            Duration diagnostic = parseDuration(retention.get("diagnostic"));
+            Duration audit = parseDuration(retention.get("audit"));
+
+            Duration fallback = legacy != null ? legacy : Duration.ofDays(30);
+            if (diagnostic == null) diagnostic = fallback;
+            if (audit == null) audit = fallback;
+
+            retention.put("diagnostic", diagnostic.toString()); // ex PT240H
+            retention.put("audit", audit.toString());           // ex PT240H
+
+            remote.remove("retentionMaxAge"); // DB: uniquement nouveau format
+            return mapper.writeValueAsString(root);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            return safeWriteValue(conf, mapper);
+        }
+    }
+
+
+
+
+    private Duration parseDuration(com.fasterxml.jackson.databind.JsonNode node) {
+        if (node == null || node.isNull()) return null;
+        if (node.isNumber()) return Duration.ofSeconds(node.longValue()); // 864000 -> 10 jours
+        if (node.isTextual()) {
+            String s = node.asText();
+            try { return Duration.parse(s); } catch (Exception ignored) {}
+            try { return Duration.ofSeconds((long) Double.parseDouble(s)); } catch (Exception ignored) {}
+        }
+        return null;
+    }
 }

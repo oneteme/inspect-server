@@ -1,22 +1,4 @@
-server:
-  port: 9001
-  compression:
-    enabled: true
-    mime-types: application/json
-    min-response-size: 1MB
 spring:
-  security:
-    enabled: false
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ''
-  servlet:
-    multipart:
-      max-file-size: 50MB
-      max-request-size: 50MB
-  application:
-    name: inspect
   datasource:
     url: jdbc:h2:mem:testdb;DATABASE_TO_LOWER=TRUE;
     username: sa
@@ -29,7 +11,7 @@ spring:
     init:
       mode: always
       schema-locations: classpath:schema.sql
-     # data-locations: classpath:data-h2.sql
+    #  data-locations: classpath:data-h2.sql
   h2:
     console:
       enabled: true
@@ -44,7 +26,7 @@ logging:
     org.springframework.web: DEBUG
 
 inspect:
-  collector: 
+  collector:
     enabled: false #default=false, enables the collector
     scheduling:
       interval: 30s #default=60s, interval between trace dispatches
@@ -64,9 +46,11 @@ inspect:
       remote:
         mode: REST #default=null, trace dispatch type (e.g., REST)
         host: http://localhost:9001 #default=localhost, target dispatch host
+        retention-max-age: 10d
         retention:
           diagnostic: P10D #default=P30D
           audit: P10D #default=P30D
+
   server:
     scheduling:
       interval: 30s #default=60s, interval between trace dispatches
@@ -79,5 +63,5 @@ inspect:
       http-request: DAY
       jdbc-request: DAY
     purge:
-      enabled: false
-
+      enabled: true
+      schedule: "0 */5 * * * ?"
