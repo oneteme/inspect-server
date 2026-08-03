@@ -40,6 +40,8 @@ import org.usf.inspect.server.event.UnsavedEventTraceEvent;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.InstanceTrace;
 import org.usf.inspect.server.model.Pair;
+import org.usf.inspect.server.retention.RetentionAdapter;
+import org.usf.inspect.server.retention.RetentionModels.RetentionConfig;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -47,7 +49,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
-import java.time.format.DateTimeParseException;
 
 /**
  * Using Types.OTHER with JSON serialization to ensure portability:
@@ -66,6 +67,7 @@ public class TraceDao {
     private final JdbcTemplate template;
     private final ObjectMapper mapper;
     private final ApplicationEventPublisher publisher;
+    private final RetentionAdapter retentionAdapter = new RetentionAdapter(Duration.ofDays(30));
 
     public void saveInstanceEnvironment(InstanceEnvironment instance) {
         template.update("""
@@ -798,14 +800,14 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
             var root = (com.fasterxml.jackson.databind.node.ObjectNode) mapper.valueToTree(conf);
             var remote = root.with("tracing").with("remote");
             var retention = remote.with("retention");
-
-            Duration legacy = parseDuration(remote.get("retentionMaxAge"));
-            Duration diagnostic = parseDuration(retention.get("diagnostic"));
-            Duration audit = parseDuration(retention.get("audit"));
-
-            Duration fallback = legacy != null ? legacy : Duration.ofDays(30);
-            if (diagnostic == null) diagnostic = fallback;
-            if (audit == null) audit = fallback;
+            RetentionConfig config;
+            if (remote.has("retention") && remote.path("retention").isObject()) {
+                config = mapper.treeToValue(remote.path("retention"), RetentionConfig.class);
+            } else {
+                config = mapper.treeToValue(remote, RetentionConfig.class);
+            }
+            Duration diagnostic = retentionAdapter.resolve(config, true);
+            Duration audit = retentionAdapter.resolve(config, false);
 
             retention.put("diagnostic", diagnostic.toString()); // ex PT240H
             retention.put("audit", audit.toString());           // ex PT240H
@@ -815,19 +817,5 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
             return safeWriteValue(conf, mapper);
         }
-    }
-
-
-
-
-    private Duration parseDuration(com.fasterxml.jackson.databind.JsonNode node) {
-        if (node == null || node.isNull()) return null;
-        if (node.isNumber()) return Duration.ofSeconds(node.longValue()); // 864000 -> 10 jours
-        if (node.isTextual()) {
-            String s = node.asText();
-            try { return Duration.parse(s); } catch (Exception ignored) {}
-            try { return Duration.ofSeconds((long) Double.parseDouble(s)); } catch (Exception ignored) {}
-        }
-        return null;
     }
 }

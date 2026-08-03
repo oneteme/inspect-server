@@ -20,7 +20,7 @@ import java.util.function.IntSupplier;
 
 import org.springframework.stereotype.Service;
 import org.usf.inspect.server.dao.PurgeDao;
-import org.usf.inspect.server.dao.PurgeDao.PurgeCandidate;
+import org.usf.inspect.server.dao.PurgeDao.PurgeScope;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,32 +40,32 @@ public class PurgeService {
         RuntimeException error = null;
         try {
             var now = now().atStartOfDay().atZone(systemDefault()).toInstant();
-            var candidates = purgeDao.selectInstances();
-            log.info("------ Purge ------ method=selected, label=Instance, rows={}", candidates.size());
-            emitInfo("method=select, label=Instance, rows=" + candidates.size());
+            var scopes = purgeDao.selectInstances();
+            log.info("------ Purge ------ method=selected, label=Instance, rows={}", scopes.size());
+            emitInfo("method=select, label=Instance, rows=" + scopes.size());
 
-            var tasks = new ArrayList<CompletableFuture<Void>>(candidates.size());
-            for (PurgeCandidate candidate : candidates) {
-                var beforeTechnical = from(now.minus(candidate.diagnosticRetention()));
-                var beforeFunctional = from(now.minus(candidate.auditRetention()));
+            var tasks = new ArrayList<CompletableFuture<Void>>(scopes.size());
+            for (PurgeScope scope : scopes) {
+                var beforeTechnical = from(now.minus(scope.diagnosticRetention()));
+                var beforeFunctional = from(now.minus(scope.auditRetention()));
 
                 var idsBefore = beforeTechnical.after(beforeFunctional) ? beforeTechnical : beforeFunctional;
-                var ids = purgeDao.selectInstanceIds(idsBefore, candidate.env(), candidate.app(), candidate.type());
+                var ids = purgeDao.selectInstanceIds(idsBefore, scope.env(), scope.app(), scope.type());
                 log.info("------ Purge ------ method=selected, label=InstanceId, rows={}, app={}, env={}, date={}",
-                        ids.size(), candidate.app(), candidate.env(), beforeFunctional);
+                        ids.size(), scope.app(), scope.env(), beforeFunctional);
                 emitInfo("method=select, label=InstanceId, rows=" + ids.size()
-                        + ", app=" + candidate.app()
-                        + ", env=" + candidate.env()
+                        + ", app=" + scope.app()
+                        + ", env=" + scope.env()
                         + ", date=" + beforeFunctional);
 
                 tasks.add(runAsync(
-                        runnablePurge(() -> purgeDao.purgeInstance(candidate.env(), candidate.app(), beforeFunctional),
-                                "Instance", candidate.app(), candidate.env(), beforeFunctional),
+                        runnablePurge(() -> purgeDao.purgeInstance(scope.env(), scope.app(), beforeFunctional),
+                                "Instance", scope.app(), scope.env(), beforeFunctional),
                         functionalExecutor));
 
                 if (!ids.isEmpty()) {
                     var stringIds = ids.stream().collect(joining("','", "'", "'"));
-                    tasks.add(purge(stringIds, beforeTechnical, beforeFunctional, candidate.env(), candidate.app()));
+                    tasks.add(purge(stringIds, beforeTechnical, beforeFunctional, scope.env(), scope.app()));
                 }
             }
 
