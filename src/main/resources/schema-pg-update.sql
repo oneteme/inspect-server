@@ -1,2 +1,3 @@
 
 
+ALTER TABLE e_rst_ses ADD COLUMN va_int_nds json;

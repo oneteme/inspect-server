@@ -201,6 +201,14 @@ public final class InspectMappers {
                 out.setInstanceId(rs.getString(INSTANCE_ENV.reference()));
                 out.setCacheControl(rs.getString(CACHE_CONTROL.reference()));
                 out.setLinked(rs.getBoolean(LINKED.reference()));
+                try {
+                    String intermediateNodesStr = rs.getString(INTERMEDIATE_NODES.reference());
+                    if (intermediateNodesStr != null) {
+                        out.setIntermediateNodes(mapper.readValue(intermediateNodesStr, new TypeReference<java.util.List<String>>() {}));
+                    }
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
                 return out;
             }
             return null;

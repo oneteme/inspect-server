@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS e_rst_ses (
     va_cch_ctr varchar,
     va_msk int,
     va_lnk boolean,
+    va_int_nds text,
     cd_ins UUID
 );
 

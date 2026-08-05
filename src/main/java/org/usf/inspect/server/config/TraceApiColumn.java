@@ -106,6 +106,7 @@ public enum TraceApiColumn implements ColumnDecorator {
     USED_DISK_SPACE("usedDiskSpace"),
     FILENAME("filename"),
     BODY_CONTENT("bodyContent"),
+    INTERMEDIATE_NODES("intermediateNodes"),
     //---
     ELAPSEDTIME("elapsedtime", FilterConstant::elapsedtime2, Builder.multiArgsCriteria(FilterConstant::elapsedTimeExpressions)),
     ELAPSED_PERCENTILE("elapsedPercentile",FilterConstant::percentileElapsed),
