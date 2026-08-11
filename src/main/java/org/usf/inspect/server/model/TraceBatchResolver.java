@@ -16,6 +16,12 @@ import java.util.stream.Collectors;
 
 import static org.usf.inspect.core.SessionContextManager.emitWarn;
 
+/**
+ * Resolves batches of trace parts into partial, callback, and complete trace groups.
+ *
+ * @param <T> the initializer trace signal type.
+ * @param <U> the callback trace update type.
+ */
 @Slf4j
 @RequiredArgsConstructor
 public class TraceBatchResolver<T extends TraceSignal, U extends TraceUpdate>  {
@@ -27,6 +33,12 @@ public class TraceBatchResolver<T extends TraceSignal, U extends TraceUpdate>  {
     private final Consumer<List<U>> updateBatchExecutor;
     private final Consumer<List<Pair<T, U>>> insertCompleteBatchExecutor;
 
+    /**
+     * Resolves the provided traces by grouping matching initializers and callbacks.
+     *
+     * @param traces the traces to resolve.
+     * @return the traces that could not be persisted by the configured executors.
+     */
     public List<EventTrace> resolve(Collection<EventTrace> traces){
         var map = traces.stream().filter(o-> initClazz.isInstance(o) || callbackClazz.isInstance(o))
                 .map(TracePart.class::cast)
@@ -88,11 +100,30 @@ public class TraceBatchResolver<T extends TraceSignal, U extends TraceUpdate>  {
         return res;
     }
 
+    /**
+     * Resolves the provided traces by using the supplied executors for partial, callback, and complete batches.
+     *
+     * @param c the traces to resolve.
+     * @param initClazz the initializer trace signal class.
+     * @param callClazz the callback trace update class.
+     * @param insertPartialBatchExecutor the executor that persists initializer-only traces.
+     * @param updateBatchExecutor the executor that updates callback-only traces.
+     * @param insertCompleteBatchExecutor the executor that persists complete trace pairs.
+     * @param <T> the initializer trace signal type.
+     * @param <U> the callback trace update type.
+     * @return the traces that could not be persisted by the supplied executors.
+     */
     public static <T extends TraceSignal, U extends TraceUpdate> List<EventTrace> resolve(Collection<EventTrace> c, Class<T> initClazz, Class<U> callClazz, Consumer<List<T>> insertPartialBatchExecutor, Consumer<List<U>> updateBatchExecutor, Consumer<List<Pair<T, U>>> insertCompleteBatchExecutor) {
         return new TraceBatchResolver<>(initClazz, callClazz, insertPartialBatchExecutor, updateBatchExecutor, insertCompleteBatchExecutor).resolve(c);
     }
 
 
+    /**
+     * Resolves the provided traces and updates the given instance trace counters.
+     *
+     * @param c the traces to resolve.
+     * @param instanceTrace the instance trace to update with the resolution results.
+     */
     public static void resolve(Collection<EventTrace> c, InstanceTrace instanceTrace) {
         resolve(c, TraceSignal.class, TraceUpdate.class,
             sessions -> {
@@ -104,7 +135,6 @@ public class TraceBatchResolver<T extends TraceSignal, U extends TraceUpdate>  {
         );
     }
 }
-
 
 
 

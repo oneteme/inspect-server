@@ -8,6 +8,9 @@ import org.springframework.stereotype.Service;
 import org.usf.inspect.core.TraceableStage;
 import org.usf.inspect.server.service.PurgeService;
 
+/**
+ * Schedules and triggers purge operations when server purging is enabled.
+ */
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -16,6 +19,9 @@ public class PurgeScheduler {
 	
     private final PurgeService purgeService;
 
+    /**
+     * Launches the configured purge process on the scheduler cadence (every day at 1:00)
+     */
     @TraceableStage
     @Scheduled(cron= "${inspect.server.purge.schedule:0 0 1 * * ?}")
     public void purge() {

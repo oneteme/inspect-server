@@ -48,6 +48,10 @@ import org.usf.inspect.server.metadata.SimpleFieldMetadata;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * REST controller exposing metadata describing available dashboard fields and filters
+ * for REST request statistics.
+ */
 @CrossOrigin
 @RestController
 @RequestMapping(value = "metadata", produces = APPLICATION_JSON_VALUE)
@@ -55,6 +59,12 @@ import lombok.RequiredArgsConstructor;
 public class MetadataController {
 
     private static final String COUNT= "count";
+
+    /**
+     * Returns the list of aggregate field metadata available for dashboard charts (elapsed time, call counts by status and response-time buckets).
+     *
+     * @return the list of aggregate {@link FieldMetadata} descriptors
+     */
     @GetMapping(value = "aggregate", produces = APPLICATION_JSON_VALUE)
     List<FieldMetadata> fetch() {
         return asList(
@@ -78,6 +88,11 @@ public class MetadataController {
     }
 
     @GetMapping(value = "filter", produces = APPLICATION_JSON_VALUE)
+    /**
+     * Returns the list of filter field metadata available for REST request queries (method, protocol, host, path, status, etc.).
+     *
+     * @return the list of {@link SimpleFieldMetadata} filter descriptors
+     */
     List<SimpleFieldMetadata> fetchFilters() {
         return asList(
                 new SimpleFieldMetadata(REST_REQUEST, METHOD, METHOD.reference(), "Methode", COUNT),

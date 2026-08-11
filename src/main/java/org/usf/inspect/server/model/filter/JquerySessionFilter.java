@@ -20,6 +20,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * Builds shared database filters for session-oriented queries.
+ */
 @Getter
 @Setter
 @AllArgsConstructor
@@ -30,6 +33,12 @@ public class JquerySessionFilter {
     private final Instant start;
     private final Instant end;
 
+    /**
+     * Creates the database filters that apply to the given trace table.
+     *
+     * @param table the trace table for which filters are created
+     * @return the collection of filters matching this session filter configuration
+     */
     public Collection<DBFilter> filters(TraceApiTable table) {
         Collection<DBFilter> filters = new ArrayList<>();
         if(!isEmpty(getAppNames())) {

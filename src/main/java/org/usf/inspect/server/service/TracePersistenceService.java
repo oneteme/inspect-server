@@ -27,6 +27,9 @@ import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.usf.inspect.core.ExecutorServiceWrapper.wrap;
 import static org.usf.inspect.server.model.TraceBatchResolver.resolve;
 
+/**
+ * Persists dispatched trace data and related instance information.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -36,17 +39,34 @@ public class TracePersistenceService implements TraceExporter {
 	private final ObjectMapper mapper;
 	private final ExecutorService executor = wrap(newFixedThreadPool(5));
 
+    /**
+     * Saves the provided instance environment.
+     *
+     * @param instance the instance environment to persist
+     */
     @Override
 	public void dispatch(InstanceEnvironment instance) {
         dao.saveInstanceEnvironment(instance);
 	}
 
+	/**
+	 * Persists the supplied event traces when the collection is not empty.
+	 *
+	 * @param complete indicates whether the dispatched batch is complete
+	 * @param traces the traces to persist
+	 * @return the traces that could not be persisted
+	 */
 	@TraceableStage
 	@Override
 	public List<EventTrace> dispatch(boolean complete, List<EventTrace> traces) {
 		return traces.isEmpty() ? emptyList() : addTraces(traces);
 	}
 
+	/**
+	 * Reads traces from the given dump file and dispatches them for persistence.
+	 *
+	 * @param dumpFile the dump file containing serialized traces
+	 */
 	@Override
 	public void dispatch(File dumpFile) {
 		try {
@@ -57,6 +77,12 @@ public class TracePersistenceService implements TraceExporter {
 		}
 	}
 	
+	/**
+	 * Persists the provided traces by grouping them per trace type.
+	 *
+	 * @param traces the traces to persist
+	 * @return the traces that could not be saved
+	 */
 	public List<EventTrace> addTraces(List<EventTrace> traces) {
         var cf = new ArrayList<CompletableFuture<Collection<EventTrace>>>();
         cf.add(supplyAsync(()-> {
@@ -104,6 +130,15 @@ public class TracePersistenceService implements TraceExporter {
                 .toList()).join();
     }
 
+    /**
+     * Filters traces by type and applies the save function to the matching values.
+     *
+     * @param <U> the target trace subtype
+     * @param c the traces to inspect
+     * @param clazz the class used to filter matching traces
+     * @param saveFn the function that persists the filtered traces
+     * @return the traces that were not saved
+     */
     public static <U> List<EventTrace> filterAndApply(Collection<EventTrace> c, Class<U> clazz, Consumer<List<U>> saveFn) {
         return filterAndApply(c, (e, consumer) -> {
             if(clazz.isInstance(e)) {
@@ -112,6 +147,15 @@ public class TracePersistenceService implements TraceExporter {
         }, saveFn);
     }
 
+    /**
+     * Maps traces to a target type and applies the save function to the mapped values.
+     *
+     * @param <U> the target mapped type
+     * @param c the traces to inspect
+     * @param mapper the mapper that extracts matching values from each trace
+     * @param saveFn the function that persists the mapped values
+     * @return the traces that were not saved
+     */
     public static <U> List<EventTrace> filterAndApply(Collection<EventTrace> c, BiConsumer<EventTrace, ? super Consumer<U>> mapper, Consumer<List<U>> saveFn) {
         var list = c.stream()
                 .mapMulti(mapper)
@@ -128,5 +172,3 @@ public class TracePersistenceService implements TraceExporter {
         return (List<EventTrace>) list;
     }
 }
-
-

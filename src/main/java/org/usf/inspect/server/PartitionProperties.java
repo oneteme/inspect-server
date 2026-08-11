@@ -4,6 +4,9 @@ import lombok.Getter;
 import lombok.Setter;
 import org.usf.inspect.server.model.Partition;
 
+/**
+ * Stores partition configuration for each supported server table category.
+ */
 @Getter
 @Setter
 public class PartitionProperties {

@@ -6,6 +6,9 @@ import org.usf.inspect.server.config.TraceApiTable;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Describes metadata for a single trace API field.
+ */
 @Getter
 @RequiredArgsConstructor
 public final class SimpleFieldMetadata implements FieldMetadata {

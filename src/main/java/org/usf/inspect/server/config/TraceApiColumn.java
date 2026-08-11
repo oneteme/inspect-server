@@ -13,10 +13,19 @@ import org.usf.jquery.web.ViewDecorator;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Enumerates the trace API columns and their mapping and criteria strategies.
+ */
 @RequiredArgsConstructor
 public enum TraceApiColumn implements ColumnDecorator {
 
     ID("id"){
+        /**
+         * Returns the JDBC type for this identifier column.
+         *
+         * @param vd the view decorator using the column
+         * @return the JDBC type of the column
+         */
         @Override
         public JDBCType type(ViewDecorator vd) {
             return JDBCType.VARCHAR;
@@ -74,6 +83,12 @@ public enum TraceApiColumn implements ColumnDecorator {
 
     ARG("arg"),
     PARENT("parent"){
+        /**
+         * Returns the JDBC type for this parent identifier column.
+         *
+         * @param vd the view decorator using the column
+         * @return the JDBC type of the column
+         */
         @Override
         public JDBCType type(ViewDecorator vd) {
             return JDBCType.VARCHAR;
@@ -83,6 +98,12 @@ public enum TraceApiColumn implements ColumnDecorator {
     CLIENT_VERSION("clientVersion"),
 
     INSTANCE_ENV("instance"){
+        /**
+         * Returns the JDBC type for this instance identifier column.
+         *
+         * @param vd the view decorator using the column
+         * @return the JDBC type of the column
+         */
         @Override
         public JDBCType type(ViewDecorator vd) {
             return JDBCType.VARCHAR;
@@ -161,20 +182,41 @@ public enum TraceApiColumn implements ColumnDecorator {
         this(tagname, columnTemplate, null);
     }
 
+    /**
+     * Returns the lowercase identifier of this trace API column.
+     *
+     * @return the column identifier
+     */
     @Override
     public String identity() {
         return this.name().toLowerCase();
     }
     
+    /**
+     * Returns the shared reference name used for this column.
+     *
+     * @return the shared column reference
+     */
     public String reference() {
         return this.out; //suppose that use same ref for all view
     }
     
+    /**
+     * Returns the reference name of this column for the provided view.
+     *
+     * @param vd the view decorator requesting the reference
+     * @return the column reference for the view
+     */
     @Override
     public String reference(ViewDecorator vd) {
         return reference();
     }
 
+    /**
+     * Returns the builder used to compose this column.
+     *
+     * @return the column builder for this trace API column
+     */
     @Override
     public Builder<ViewDecorator, DBColumn> builder() {
         return nonNull(columnTemplate)
@@ -182,6 +224,12 @@ public enum TraceApiColumn implements ColumnDecorator {
                 : ColumnDecorator.super.builder();
     }
     
+    /**
+     * Returns the criteria builder associated with the provided criteria name.
+     *
+     * @param name the logical criteria builder name
+     * @return the matching criteria builder
+     */
     @Override
     public Builder<ViewDecorator, ComparisonExpression> criteriaBuilder(String name) {
         return "group".equals(name) && nonNull(expressionFn)

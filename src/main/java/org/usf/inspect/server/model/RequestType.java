@@ -9,6 +9,9 @@ import org.usf.inspect.server.config.constant.FieldConstant;
 import static org.usf.inspect.server.config.TraceApiTable.*;
 import static org.usf.inspect.server.config.constant.FieldConstant.*;
 
+/**
+ * Enumerates supported request categories together with their storage table and identifier field.
+ */
 @RequiredArgsConstructor
 @Getter
 public enum RequestType {

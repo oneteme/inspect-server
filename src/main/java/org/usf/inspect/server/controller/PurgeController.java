@@ -10,6 +10,9 @@ import org.usf.inspect.server.service.PurgeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * REST controller triggering the purge of expired trace data.
+ */
 @Slf4j
 @RestController
 @RequestMapping(value = "purge", produces = APPLICATION_JSON_VALUE)
@@ -17,6 +20,9 @@ import lombok.extern.slf4j.Slf4j;
 public class PurgeController {
     private final PurgeService purgeService;
 
+    /**
+     * Launches an asynchronous purge batch of outdated trace data.
+     */
     @DeleteMapping("batch")
     public void purge(){
         purgeService.launchPurge();

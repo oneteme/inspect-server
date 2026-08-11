@@ -15,12 +15,20 @@ import org.usf.jquery.web.Environment;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Configures Spring MVC argument resolvers and query metadata registration.
+ */
 @Configuration
 @RequiredArgsConstructor
 public class WebmvcConfig implements WebMvcConfigurer {
 
     private final DataSource ds;
 
+    /**
+     * Registers custom argument resolvers and trace API metadata for web requests.
+     *
+     * @param resolvers the list of argument resolvers to extend
+     */
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
     	register(Environment.of(

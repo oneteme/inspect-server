@@ -5,7 +5,8 @@ import lombok.Setter;
 import org.usf.inspect.core.EventTrace;
 
 /**
- * 
+ * Provides shared session fields for session trace models.
+ *
  * @author u$f
  *
  */

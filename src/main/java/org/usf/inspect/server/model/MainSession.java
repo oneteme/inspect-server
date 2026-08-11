@@ -8,7 +8,8 @@ import org.usf.inspect.core.MainSessionSignal;
 import org.usf.inspect.core.MainSessionUpdate;
 
 /**
- * 
+ * Represents a main session and exposes conversions to core session DTOs.
+ *
  * @author u$f
  *
  */
@@ -20,10 +21,18 @@ public class MainSession extends AbstractSession {
 	@Delegate()
 	private final LocalRequest local; //!exception
 
+	/**
+	 * Creates an empty main session backed by a local request instance.
+	 */
 	public MainSession() {
 		this.local = new LocalRequest();
 	}
 
+    /**
+     * Converts this main session to its core session signal representation.
+     *
+     * @return the session signal built from this main session
+     */
     public MainSessionSignal toSession() {
         var session = new MainSessionSignal(getId(), getStart(), getThreadName(), getType());
         session.setLocation(getLocation());
@@ -33,6 +42,11 @@ public class MainSession extends AbstractSession {
         return session;
     }
 
+    /**
+     * Converts this main session to its callback update representation.
+     *
+     * @return the callback update built from this main session
+     */
     public MainSessionUpdate toCallback() {
         var callback = new MainSessionUpdate(getId());
         callback.setStart(getStart());

@@ -77,9 +77,15 @@ public class InspectApplication {
 	ApplicationListener<ApplicationReadyEvent> enableDispatcherOnReady(@Qualifier("inspectServerContext") TraceDispatcherHub ctx){
 		return e-> ctx.setState(ctx.getConfiguration().getScheduling().getState()); //wait for server startup before activate dispatcher
 	}
-	
 
-    @Bean //used by inspect-core to get application properties and git info
+    /**
+     * Creates the provider used to expose application and git properties to inspect-core.
+     *
+     * @param env the Spring environment used to resolve application properties
+     * @return the application properties provider
+     * @throws IOException if the git properties resource cannot be read
+     */
+    @Bean
     public static ApplicationPropertiesProvider applicationPropertiesProvider(Environment env) throws IOException {
         var props = new Properties();
         var resource = new ClassPathResource("git.properties");

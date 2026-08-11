@@ -8,6 +8,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 
+/**
+ * Configures OAuth2-based security for the application when security is enabled.
+ */
 @Configuration
 @EnableWebSecurity
 @ConditionalOnProperty(name = "spring.security.enabled", havingValue = "true")

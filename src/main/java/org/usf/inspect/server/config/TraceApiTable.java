@@ -12,6 +12,9 @@ import org.usf.jquery.web.ViewDecorator;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Enumerates the trace API tables and their column and join mapping strategies.
+ */
 @RequiredArgsConstructor
 public enum TraceApiTable implements ViewDecorator {
 
@@ -46,16 +49,33 @@ public enum TraceApiTable implements ViewDecorator {
 		this.builder = null;
 	}
 
+	/**
+	 * Returns the lowercase identifier of this trace API table.
+	 *
+	 * @return the table identifier
+	 */
 	@Override
     public String identity() {
         return name().toLowerCase();
     }
 
+    /**
+     * Resolves the physical column name associated with the provided column descriptor.
+     *
+     * @param desc the column descriptor to map
+     * @return the physical column name, or {@code null} when no mapping exists
+     */
     @Override
     public String columnName(ColumnDecorator desc) { //nullable
         return columnMap.apply((TraceApiColumn) desc);
     }
 
+	/**
+	 * Returns the join builder associated with the provided join name.
+	 *
+	 * @param name the logical join name
+	 * @return the join builder, or {@code null} when no join is available
+	 */
 	@Override
 	public Builder<ViewDecorator, ViewJoin[]> joinBuilder(String name) {
 		return builder == null ? null : builder.apply(name);

@@ -77,6 +77,9 @@ import lombok.extern.slf4j.Slf4j;
 
 
 /**
+ * Repository responsible for persisting inspect trace data: instance environments, sessions,
+ * requests, request/session stages and their related exceptions.
+ * <p>
  * Using Types.OTHER with JSON serialization to ensure portability:
  * - In PostgreSQL: Types.OTHER is interpreted as native JSONB type
  * - In H2: Types.OTHER is treated as VARCHAR without JSON parsing attempts
@@ -94,6 +97,11 @@ public class TraceDao {
     private final ObjectMapper mapper;
     private final ApplicationEventPublisher publisher;
 
+    /**
+     * Persists a new instance environment row.
+     *
+     * @param instance the instance environment to save
+     */
     public void saveInstanceEnvironment(InstanceEnvironment instance) {
         template.update("""
 insert into e_env_ins(id_ins,va_typ,dh_str,va_app,va_vrs,va_adr,va_env,va_os,va_re,va_usr,va_clr,va_brch,va_hsh,va_cnf,va_rsr,va_add_prp)
@@ -117,6 +125,11 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
         });
     }
 
+    /**
+     * Batch-updates the end date of the given instance environments.
+     *
+     * @param instances the instance environment updates to apply
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void updateInstanceEnvironments(List<InstanceEnvironmentUpdate> instances){
         executeBatch("update e_env_ins set dh_end = ? where id_ins = ?::uuid", instances, (ps, ins) -> {
@@ -125,6 +138,11 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
         });
     }
 
+    /**
+     * Batch-inserts instance trace summary entries.
+     *
+     * @param instanceTraces the instance traces to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void saveInstanceTraces(List<InstanceTrace> instanceTraces) {
         executeBatch("insert into e_ins_trc (va_pnd, va_atp, va_trc_cnt, dh_str, va_fln, cd_ins) values (?, ?, ?, ?, ?, ?::uuid)", 
@@ -138,6 +156,11 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
 		        });
     }
 
+    /**
+     * Batch-inserts log entries.
+     *
+     * @param logEntries the log entries to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void saveLogEntries(List<LogEntry> logEntries) {
         executeBatch("insert into e_log_ent(va_lvl,va_msg,va_stk,dh_str,cd_prn_ses,cd_ins) values (?,?,?,?,?::uuid,?::uuid)", 
@@ -151,6 +174,11 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
 		        });
     }
 
+    /**
+     * Batch-inserts machine resource usage measurements.
+     *
+     * @param usages the resource usage entries to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void saveMachineResourceUsages(List<MachineResourceUsage> usages) {
         executeBatch("insert into e_rsc_usg(dh_str,va_usd_hep,va_cmt_hep,va_usd_dsk,cd_ins) values (?,?,?,?,?::uuid)", usages, (ps, o)-> {
@@ -163,6 +191,11 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     }
 
     // New version
+    /**
+     * Batch-inserts REST sessions that are only starting (partial/in-progress signals).
+     *
+     * @param sessions the REST session start signals to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void savePartialRestSessions(List<HttpSessionSignal> sessions) {
         executeBatch("""
@@ -176,6 +209,11 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions, (ps, ses) 
         });
     }
 
+    /**
+     * Batch-inserts REST sessions that are already complete (start signal and end update combined).
+     *
+     * @param sessions the pairs of REST session start signal and completion update to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteRestSessions(List<Pair<HttpSessionSignal, HttpSessionUpdate>> sessions) {
     	executeBatchPair("""
@@ -218,6 +256,11 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", se
         ps.setTimestamp(14, fromNullableInstant(ses.getStart()));
     }
 
+    /**
+     * Batch-updates REST sessions with their completion data (end date, status, error, etc.).
+     *
+     * @param sessions the REST session updates to apply
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void updateRestSessions(List<HttpSessionUpdate> sessions) {
         executeBatch("""
@@ -240,6 +283,11 @@ where id_ses = ?::uuid""", sessions, (ps, ses) -> {
         });
     }
 
+    /**
+     * Batch-updates the request mask of REST sessions.
+     *
+     * @param sessions the session mask updates to apply
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void updateMaskRestSessions(List<SessionMaskUpdate> sessions) {
         executeBatch("update e_rst_ses set va_msk = ? where id_ses = ?::uuid", sessions, (ps, ses) -> {
@@ -248,6 +296,11 @@ where id_ses = ?::uuid""", sessions, (ps, ses) -> {
         });
     }
 
+    /**
+     * Batch-inserts main sessions that are only starting (partial/in-progress signals).
+     *
+     * @param sessions the main session start signals to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void savePartialMainSessions(List<MainSessionSignal> sessions) {
         executeBatch("""
@@ -262,6 +315,11 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
         });
     }
 
+    /**
+     * Batch-inserts main sessions that are already complete (start signal and end update combined).
+     *
+     * @param sessions the pairs of main session start signal and completion update to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteMainSessions(List<Pair<MainSessionSignal, MainSessionUpdate>> sessions) {
     	executeBatchPair("""
@@ -290,6 +348,11 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
         ps.setString(4, ses.getThreadName());
     }
 
+    /**
+     * Batch-updates main sessions with their completion data (end date, error, etc.).
+     *
+     * @param sessions the main session updates to apply
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void updateMainSessions(List<MainSessionUpdate> sessions) {
         executeBatch("""
@@ -309,6 +372,11 @@ where id_ses = ?::uuid""", sessions, (ps, ses) -> {
         });
     }
 
+    /**
+     * Batch-updates the request mask of main sessions.
+     *
+     * @param sessions the session mask updates to apply
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void updateMaskMainSessions(List<SessionMaskUpdate> sessions) {
         executeBatch("update e_main_ses set va_msk = ? where id_ses = ?::uuid", sessions, (ps, ses) -> {
@@ -317,6 +385,11 @@ where id_ses = ?::uuid""", sessions, (ps, ses) -> {
         });
     }
 
+    /**
+     * Batch-inserts REST requests that are only starting (partial/in-progress signals).
+     *
+     * @param requests the REST request start signals to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void savePartialRestRequests(List<HttpRequestSignal> requests) {
         executeBatch("""
@@ -324,6 +397,11 @@ insert into e_rst_rqt(id_rst_rqt,cd_prn_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,v
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, TraceDao::restRequestSetter);
     }
 
+    /**
+     * Batch-inserts REST requests that are already complete (start signal and end update combined).
+     *
+     * @param requests the pairs of REST request start signal and completion update to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteRestRequests(List<Pair<HttpRequestSignal, HttpRequestUpdate>> requests) {
     	executeBatchPair("""
@@ -360,6 +438,11 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", reques
         ps.setTimestamp(15, fromNullableInstant(req.getStart()));
     }
 
+    /**
+     * Batch-updates REST requests with their completion data (end date, status, body content, etc.).
+     *
+     * @param requests the REST request updates to apply
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void updateRestRequests(List<HttpRequestUpdate> requests) {
         executeBatch("""
@@ -376,6 +459,11 @@ where id_rst_rqt = ?::uuid""", requests, (ps, req) -> {
         });
     }
 
+    /**
+     * Batch-inserts local requests that are only starting (partial/in-progress signals).
+     *
+     * @param requests the local request start signals to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void savePartialLocalRequests(List<LocalRequestSignal> requests) {
         executeBatch("""
@@ -386,6 +474,12 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests, (ps, req) -> {
         });
     }
 
+    /**
+     * Batch-inserts local requests that are already complete (start signal and end update combined),
+     * also persisting any associated exception.
+     *
+     * @param requests the pairs of local request start signal and completion update to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteLocalRequests(List<Pair<LocalRequestSignal, LocalRequestUpdate>> requests) {
     	executeBatchPair("""
@@ -418,6 +512,11 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
         ps.setString(8, req.getThreadName());
     }
 
+    /**
+     * Batch-updates local requests with their completion data, also persisting any associated exception.
+     *
+     * @param requests the local request updates to apply
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void updateLocalRequests(List<LocalRequestUpdate> requests) {
         executeBatch("""
@@ -436,6 +535,11 @@ where id_lcl_rqt = ?::uuid""", requests, (ps, req) -> {
         }
     }
 
+    /**
+     * Batch-inserts SMTP requests that are only starting (partial/in-progress signals).
+     *
+     * @param requests the SMTP request start signals to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void savePartialMailRequests(List<MailRequestSignal> requests) {
         executeBatch("""
@@ -443,6 +547,11 @@ insert into e_smtp_rqt(id_smtp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests, TraceDao::mailRequestSetter);
     }
 
+    /**
+     * Batch-inserts SMTP requests that are already complete (start signal and end update combined).
+     *
+     * @param requests the pairs of SMTP request start signal and completion update to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteMailRequests(List<Pair<MailRequestSignal, MailRequestUpdate>> requests) {
     	executeBatchPair("""
@@ -470,6 +579,11 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
 
     }
 
+    /**
+     * Batch-updates SMTP requests with their completion data (end date, command, failed flag).
+     *
+     * @param requests the SMTP request updates to apply
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void updateMailRequests(List<MailRequestUpdate> requests) {
         executeBatch("""
@@ -482,6 +596,11 @@ where id_smtp_rqt = ?::uuid""", requests, (ps, req) -> {
         });
     }
 
+    /**
+     * Batch-inserts FTP requests that are only starting (partial/in-progress signals).
+     *
+     * @param requests the FTP request start signals to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void savePartialFtpRequests(List<FtpRequestSignal> requests) {
         executeBatch("""
@@ -489,6 +608,11 @@ insert into e_ftp_rqt(id_ftp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_srv_v
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests, TraceDao::ftpRequestSetter);
     }
 
+    /**
+     * Batch-inserts FTP requests that are already complete (start signal and end update combined).
+     *
+     * @param requests the pairs of FTP request start signal and completion update to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteFtpRequests(List<Pair<FtpRequestSignal, FtpRequestUpdate>> requests) {
     	executeBatchPair("""
@@ -517,6 +641,11 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -
         ps.setTimestamp(11, fromNullableInstant(req.getStart()));
     }
 
+    /**
+     * Batch-updates FTP requests with their completion data (end date, command, failed flag).
+     *
+     * @param requests the FTP request updates to apply
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void updateFtpRequests(List<FtpRequestUpdate> requests) {
         executeBatch("""
@@ -529,6 +658,11 @@ where id_ftp_rqt = ?::uuid""", requests, (ps, req) -> {
         });
     }
 
+    /**
+     * Batch-inserts LDAP requests that are only starting (partial/in-progress signals).
+     *
+     * @param requests the LDAP request start signals to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void savePartialLdapRequests(List<DirectoryRequestSignal> requests) {
         executeBatch("""
@@ -536,6 +670,11 @@ insert into e_ldap_rqt(id_ldap_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests, TraceDao::ldapRequestSetter);
     }
 
+    /**
+     * Batch-inserts LDAP requests that are already complete (start signal and end update combined).
+     *
+     * @param requests the pairs of LDAP request start signal and completion update to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteLdapRequests(List<Pair<DirectoryRequestSignal, DirectoryRequestUpdate>> requests) {
     	executeBatchPair("""
@@ -562,6 +701,11 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
         ps.setTimestamp(9, fromNullableInstant(req.getStart()));
     }
 
+    /**
+     * Batch-updates LDAP requests with their completion data (end date, command, failed flag).
+     *
+     * @param requests the LDAP request updates to apply
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void updateLdapRequests(List<DirectoryRequestUpdate> requests) {
         executeBatch("""
@@ -574,6 +718,11 @@ where id_ldap_rqt = ?::uuid""", requests, (ps, req) -> {
         });
     }
 
+    /**
+     * Batch-inserts database requests that are only starting (partial/in-progress signals).
+     *
+     * @param requests the database request start signals to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void savePartialDatabaseRequests(List<DatabaseRequestSignal> requests) {
         executeBatch("""
@@ -581,6 +730,11 @@ insert into e_dtb_rqt(id_dtb_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_she,va_nam,v
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests, TraceDao::databaseRequestSetter);
     }
 
+    /**
+     * Batch-inserts database requests that are already complete (start signal and end update combined).
+     *
+     * @param requests the pairs of database request start signal and completion update to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteDatabaseRequests(List<Pair<DatabaseRequestSignal, DatabaseRequestUpdate>> requests) {
         executeBatchPair("""
@@ -612,6 +766,11 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, p
         ps.setTimestamp(14, fromNullableInstant(req.getStart()));
     }
 
+    /**
+     * Batch-updates database requests with their completion data (end date, command, failed flag).
+     *
+     * @param requests the database request updates to apply
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void updateDatabaseRequests(List<DatabaseRequestUpdate> requests) {
         executeBatch("""
@@ -624,6 +783,11 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
         });
     }
 
+    /**
+     * Batch-inserts REST request stages and their associated exceptions.
+     *
+     * @param stages the REST request stages to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void saveHttpRequestStages(List<HttpRequestStage> stages) {
         executeBatch("insert into e_rst_rqt_stg(va_nam,dh_str,dh_end,cd_ord,cd_rst_rqt) values(?,?,?,?,?::uuid)", stages, (ps, stg)-> {
@@ -636,6 +800,11 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
         saveStageExceptions(stages, REST);
     }
 
+    /**
+     * Batch-inserts REST session stages.
+     *
+     * @param stages the REST session stages to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void saveHttpSessionStages(List<HttpSessionStage> stages) {
         executeBatch("insert into e_rst_ses_stg(va_nam,dh_str,dh_end,cd_ord,cd_prn_ses) values(?,?,?,?,?::uuid)", stages, (ps, stg)-> {
@@ -647,6 +816,11 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
         });
     }
 
+    /**
+     * Batch-inserts SMTP request stages, their related mail metadata and associated exceptions.
+     *
+     * @param stages the SMTP request stages to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void saveMailRequestStages(List<MailRequestStage> stages) {
         executeBatch("insert into e_smtp_stg(va_nam,dh_str,dh_end,va_cmd,cd_ord,cd_smtp_rqt) values(?,?,?,?,?,?::uuid)", stages, (ps, stg)-> {
@@ -682,6 +856,11 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
 		        });
     }
 
+    /**
+     * Batch-inserts FTP request stages and their associated exceptions.
+     *
+     * @param stages the FTP request stages to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void saveFtpRequestStages(List<FtpRequestStage> stages) {
         executeBatch("insert into e_ftp_stg(va_nam,dh_str,dh_end,va_cmd,va_arg,cd_ord,cd_ftp_rqt) values(?,?,?,?,?,?,?::uuid)", stages, (ps, stg)-> {
@@ -696,6 +875,11 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
         saveStageExceptions(stages, FTP);
     }
 
+    /**
+     * Batch-inserts LDAP request stages and their associated exceptions.
+     *
+     * @param stages the LDAP request stages to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void saveLdapRequestStages(List<DirectoryRequestStage> stages) {
         executeBatch("insert into e_ldap_stg(va_nam,dh_str,dh_end,va_cmd,va_arg,cd_ord,cd_ldap_rqt) values(?,?,?,?,?,?,?::uuid)", stages, (ps, stg)-> {
@@ -710,6 +894,11 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
         saveStageExceptions(stages, LDAP);
     }
 
+    /**
+     * Batch-inserts database request stages and their associated exceptions.
+     *
+     * @param stages the database request stages to save
+     */
     @Transactional(rollbackFor = Throwable.class)
     public void saveDatabaseRequestStages(List<DatabaseRequestStage> stages) {
         executeBatch("insert into e_dtb_stg(va_nam,dh_str,dh_end,va_cnt,va_cmd,va_arg,cd_ord,cd_dtb_rqt) values(?,?,?,?,?,?,?,?::uuid)", stages, (ps, stg)-> {

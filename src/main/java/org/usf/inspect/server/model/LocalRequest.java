@@ -8,7 +8,8 @@ import org.usf.inspect.core.LocalRequestSignal;
 import org.usf.inspect.core.LocalRequestUpdate;
 
 /**
- * 
+ * Represents a local request and its conversion to core local request DTOs.
+ *
  * @author u$f
  *
  */
@@ -21,8 +22,16 @@ public class LocalRequest extends AbstractRequest {
 	private String location; //class.method, URL
 	private ExceptionInfo exception;
 	
+	/**
+	 * Creates an empty local request.
+	 */
 	@JsonCreator public LocalRequest() { }
 
+    /**
+     * Converts this local request to its core request signal representation.
+     *
+     * @return the request signal built from this local request
+     */
     public LocalRequestSignal toRequest() {
         var req = new LocalRequestSignal(getId(), getSessionId(), getStart(), getThreadName());
         req.setLocation(getLocation());
@@ -33,6 +42,11 @@ public class LocalRequest extends AbstractRequest {
         return req;
     }
 
+    /**
+     * Converts this local request to its callback update representation.
+     *
+     * @return the callback update built from this local request
+     */
     public LocalRequestUpdate toCallback() {
         var callback = new LocalRequestUpdate(getId());
         callback.setEnd(getEnd());

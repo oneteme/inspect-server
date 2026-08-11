@@ -7,12 +7,16 @@ import java.lang.annotation.Target;
 
 import com.nimbusds.jose.Payload;
 import jakarta.validation.Constraint;
+
+/**
+ * Declares a custom validation rule based on a predefined {@link Condition}.
+ */
 @Target({PARAMETER, FIELD})
 @Retention(RUNTIME)
 @Constraint(validatedBy = Validator.class)
 public @interface Validate {
     Condition value();
-    String message() default "invalid value";
+    String message() default "invalid value"; //Failure message
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }

@@ -12,6 +12,9 @@ import static org.usf.inspect.server.config.TraceApiTable.*;
 import static org.usf.jquery.core.ViewJoin.innerJoin;
 import static org.usf.jquery.core.ViewJoin.leftJoin;
 
+/**
+ * Provides reusable join builders for trace API views.
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class JoinConstant {
     public static final String EXCEPTION_JOIN = "exception";
@@ -27,6 +30,12 @@ public class JoinConstant {
     public static final String USER_ACTION_JOIN ="user_action";
     public static final String REST_SESSION_INNER_JOIN = "rest_session_inner";
 
+    /**
+     * Returns the join builder used for the main session view.
+     *
+     * @param name the logical join name
+     * @return the join builder for the requested main session join, or {@code null} if unsupported
+     */
     public static Builder<ViewDecorator, ViewJoin[]> mainSessionJoins(String name) {
         return switch (name) {
             case INSTANCE_JOIN ->
@@ -39,6 +48,12 @@ public class JoinConstant {
         };
     }
 
+    /**
+     * Returns the join builder used for the REST session view.
+     *
+     * @param name the logical join name
+     * @return the join builder for the requested REST session join, or {@code null} if unsupported
+     */
     public static Builder<ViewDecorator, ViewJoin[]> restSessionJoins(String name) {
         return switch (name) {
             case "dependencies" ->
@@ -59,6 +74,12 @@ public class JoinConstant {
         };
     }
 
+    /**
+     * Returns the join builder used for the REST request view.
+     *
+     * @param name the logical join name
+     * @return the join builder for the requested REST request join, or {@code null} if unsupported
+     */
     public static Builder<ViewDecorator, ViewJoin[]> restRequestJoins(String name) {
         return switch (name) {
             case EXCEPTION_JOIN -> 
@@ -75,6 +96,12 @@ public class JoinConstant {
         };
     }
 
+    /**
+     * Returns the join builder used for the REST request stage view.
+     *
+     * @param name the logical join name
+     * @return the join builder for the requested REST request stage join, or {@code null} if unsupported
+     */
     public static Builder<ViewDecorator, ViewJoin[]> restRequestStageJoins(String name) {
         return switch (name) {
             case EXCEPTION_JOIN ->
@@ -83,6 +110,12 @@ public class JoinConstant {
         };
     }
 
+    /**
+     * Returns the join builder used for the local request view.
+     *
+     * @param name the logical join name
+     * @return the join builder for the requested local request join, or {@code null} if unsupported
+     */
     public static Builder<ViewDecorator, ViewJoin[]> localRequestJoins(String name) {
         return switch (name) {
             case EXCEPTION_JOIN ->
@@ -91,6 +124,12 @@ public class JoinConstant {
         };
     }
 
+    /**
+     * Returns the join builder used for the database request view.
+     *
+     * @param name the logical join name
+     * @return the join builder for the requested database request join, or {@code null} if unsupported
+     */
     public static Builder<ViewDecorator, ViewJoin[]> databaseRequestJoins(String name) {
         return switch (name) {
             case EXCEPTION_JOIN -> (view, args) -> new ViewJoin[]{
@@ -106,6 +145,12 @@ public class JoinConstant {
         };
     }
 
+    /**
+     * Returns the join builder used for the database stage view.
+     *
+     * @param name the logical join name
+     * @return the join builder for the requested database stage join, or {@code null} if unsupported
+     */
     public static Builder<ViewDecorator, ViewJoin[]> databaseStageJoins(String name) {
         return switch (name) {
             case EXCEPTION_JOIN ->
@@ -114,6 +159,12 @@ public class JoinConstant {
         };
     }
 
+    /**
+     * Returns the join builder used for the FTP request view.
+     *
+     * @param name the logical join name
+     * @return the join builder for the requested FTP request join, or {@code null} if unsupported
+     */
     public static Builder<ViewDecorator, ViewJoin[]> ftpRequestJoins(String name) {
         return switch (name) {
             case EXCEPTION_JOIN -> (view, args) -> new ViewJoin[]{
@@ -129,6 +180,12 @@ public class JoinConstant {
         };
     }
 
+    /**
+     * Returns the join builder used for the FTP stage view.
+     *
+     * @param name the logical join name
+     * @return the join builder for the requested FTP stage join, or {@code null} if unsupported
+     */
     public static Builder<ViewDecorator, ViewJoin[]> ftpStageJoins(String name) {
         return switch (name) {
             case EXCEPTION_JOIN ->
@@ -137,6 +194,12 @@ public class JoinConstant {
         };
     }
 
+    /**
+     * Returns the join builder used for the SMTP request view.
+     *
+     * @param name the logical join name
+     * @return the join builder for the requested SMTP request join, or {@code null} if unsupported
+     */
     public static Builder<ViewDecorator, ViewJoin[]> smtpRequestJoins(String name) {
         return switch (name) {
             case EXCEPTION_JOIN -> (view, args) -> new ViewJoin[]{
@@ -152,6 +215,12 @@ public class JoinConstant {
         };
     }
 
+    /**
+     * Returns the join builder used for the SMTP stage view.
+     *
+     * @param name the logical join name
+     * @return the join builder for the requested SMTP stage join, or {@code null} if unsupported
+     */
     public static Builder<ViewDecorator, ViewJoin[]> smtpStageJoins(String name) {
         return switch (name) {
             case EXCEPTION_JOIN ->
@@ -160,6 +229,12 @@ public class JoinConstant {
         };
     }
 
+    /**
+     * Returns the join builder used for the LDAP request view.
+     *
+     * @param name the logical join name
+     * @return the join builder for the requested LDAP request join, or {@code null} if unsupported
+     */
     public static Builder<ViewDecorator, ViewJoin[]> ldapRequestJoins(String name) {
         return switch (name) {
             case EXCEPTION_JOIN -> (view, args) -> new ViewJoin[]{
@@ -175,6 +250,12 @@ public class JoinConstant {
         };
     }
 
+    /**
+     * Returns the join builder used for the LDAP stage view.
+     *
+     * @param name the logical join name
+     * @return the join builder for the requested LDAP stage join, or {@code null} if unsupported
+     */
     public static Builder<ViewDecorator, ViewJoin[]> ldapStageJoins(String name) {
         return switch (name) {
             case EXCEPTION_JOIN ->
@@ -183,6 +264,12 @@ public class JoinConstant {
         };
     }
 
+    /**
+     * Returns the join builder used for the exception view.
+     *
+     * @param name the logical join name
+     * @return the join builder for the requested exception join, or {@code null} if unsupported
+     */
     public static Builder<ViewDecorator, ViewJoin[]> exceptionJoins(String name) {
         return switch (name) {
             case REST_REQUEST_JOIN ->
@@ -201,6 +288,12 @@ public class JoinConstant {
         };
     }
 
+    /**
+     * Returns the join builder used for the instance view.
+     *
+     * @param name the logical join name
+     * @return the join builder for the requested instance join, or {@code null} if unsupported
+     */
     public static Builder<ViewDecorator, ViewJoin[]> instanceJoins(String name) {
         return switch (name) {
             case REST_SESSION_JOIN ->
@@ -209,6 +302,12 @@ public class JoinConstant {
         };
     }
 
+    /**
+     * Returns the join builder used for the user action view.
+     *
+     * @param name the logical join name
+     * @return the join builder for the requested user action join, or {@code null} if unsupported
+     */
     public static Builder<ViewDecorator, ViewJoin[]> userActionJoins(String name) {
         return switch (name) {
             case MAIN_SESSION_JOIN ->

@@ -7,8 +7,17 @@ import lombok.NoArgsConstructor;
 
 import static org.usf.inspect.server.config.constant.FieldConstant.*;
 
+/**
+ * Maps logical trace API columns to their physical database field names for each view.
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ColumnConstant {
+    /**
+     * Returns the physical column name for a main session field.
+     *
+     * @param column the logical trace API column
+     * @return the matching physical field name, or {@code null} if unsupported
+     */
     public static String mainSessionColumns(TraceApiColumn column) {
         return switch (column) {
             case ID -> ID_SES;
@@ -28,6 +37,12 @@ public class ColumnConstant {
         };
     }
 
+    /**
+     * Returns the physical column name for a REST session field.
+     *
+     * @param column the logical trace API column
+     * @return the matching physical field name, or {@code null} if unsupported
+     */
     public static String restSessionColumns(TraceApiColumn column) {
         return switch (column) {
             case ID -> ID_SES;
@@ -61,6 +76,12 @@ public class ColumnConstant {
         };
     }
 
+    /**
+     * Returns the physical column name for a REST session stage field.
+     *
+     * @param column the logical trace API column
+     * @return the matching physical field name, or {@code null} if unsupported
+     */
     public static String restSessionStageColumns(TraceApiColumn column) {
         return switch (column) {
             case NAME -> VA_NAM;
@@ -72,6 +93,12 @@ public class ColumnConstant {
         };
     }
 
+    /**
+     * Returns the physical column name for a REST request field.
+     *
+     * @param column the logical trace API column
+     * @return the matching physical field name, or {@code null} if unsupported
+     */
     public static String restRequestColumns(TraceApiColumn column) {
         return switch (column) {
             case ID -> ID_RST_RQT;
@@ -100,6 +127,12 @@ public class ColumnConstant {
         };
     }
 
+    /**
+     * Returns the physical column name for a REST request stage field.
+     *
+     * @param column the logical trace API column
+     * @return the matching physical field name, or {@code null} if unsupported
+     */
     public static String restRequestStageColumns(TraceApiColumn column) {
         return switch (column) {
             case NAME -> VA_NAM;
@@ -111,6 +144,12 @@ public class ColumnConstant {
         };
     }
 
+    /**
+     * Returns the physical column name for an FTP request field.
+     *
+     * @param column the logical trace API column
+     * @return the matching physical field name, or {@code null} if unsupported
+     */
     public static String ftpRequestColumns(TraceApiColumn column) {
         return switch (column) {
             case ID -> ID_FTP_RQT;
@@ -131,6 +170,12 @@ public class ColumnConstant {
         };
     }
 
+    /**
+     * Returns the physical column name for a database request field.
+     *
+     * @param column the logical trace API column
+     * @return the matching physical field name, or {@code null} if unsupported
+     */
     public static String databaseRequestColumns(TraceApiColumn column) {
         return switch (column) {
             case ID -> ID_DTB_RQT;
@@ -154,6 +199,12 @@ public class ColumnConstant {
         };
     }
 
+    /**
+     * Returns the physical column name for a local request field.
+     *
+     * @param column the logical trace API column
+     * @return the matching physical field name, or {@code null} if unsupported
+     */
     public static String localRequestColumns(TraceApiColumn column) {
         return switch (column) {
             case ID -> ID_LCL_RQT;
@@ -171,6 +222,12 @@ public class ColumnConstant {
         };
     }
 
+    /**
+     * Returns the physical column name for an FTP stage field.
+     *
+     * @param column the logical trace API column
+     * @return the matching physical field name, or {@code null} if unsupported
+     */
     public static String ftpStageColumns(TraceApiColumn column){
         return switch (column) {
             case NAME -> VA_NAM;
@@ -184,6 +241,12 @@ public class ColumnConstant {
         };
     }
 
+    /**
+     * Returns the physical column name for a database stage field.
+     *
+     * @param column the logical trace API column
+     * @return the matching physical field name, or {@code null} if unsupported
+     */
     public static String databaseStageColumns(TraceApiColumn column){
         return switch (column) {
             case NAME -> VA_NAM;
@@ -198,6 +261,12 @@ public class ColumnConstant {
         };
     }
 
+    /**
+     * Returns the physical column name for an SMTP request field.
+     *
+     * @param column the logical trace API column
+     * @return the matching physical field name, or {@code null} if unsupported
+     */
     public static String smtpRequestColumns(TraceApiColumn column) {
         return switch (column) {
             case ID -> ID_SMTP_RQT;
@@ -215,6 +284,12 @@ public class ColumnConstant {
         };
     }
 
+    /**
+     * Returns the physical column name for an SMTP stage field.
+     *
+     * @param column the logical trace API column
+     * @return the matching physical field name, or {@code null} if unsupported
+     */
     public static String smtpStageColumns(TraceApiColumn column){
         return switch (column) {
             case NAME -> VA_NAM;
@@ -227,6 +302,12 @@ public class ColumnConstant {
         };
     }
 
+    /**
+     * Returns the physical column name for an SMTP mail field.
+     *
+     * @param column the logical trace API column
+     * @return the matching physical field name, or {@code null} if unsupported
+     */
     public static String smtpMailColumns(TraceApiColumn column){
         return switch (column) {
             case SUBJECT -> VA_SBJ;
@@ -240,6 +321,12 @@ public class ColumnConstant {
         };
     }
 
+    /**
+     * Returns the physical column name for an LDAP request field.
+     *
+     * @param column the logical trace API column
+     * @return the matching physical field name, or {@code null} if unsupported
+     */
     public static String ldapRequestColumns(TraceApiColumn column) {
         return switch (column) {
             case ID -> ID_LDAP_RQT;
@@ -258,6 +345,12 @@ public class ColumnConstant {
         };
     }
 
+    /**
+     * Returns the physical column name for an LDAP stage field.
+     *
+     * @param column the logical trace API column
+     * @return the matching physical field name, or {@code null} if unsupported
+     */
     public static String ldapStageColumns(TraceApiColumn column){
         return switch (column) {
             case NAME -> VA_NAM;
@@ -271,6 +364,12 @@ public class ColumnConstant {
         };
     }
 
+    /**
+     * Returns the physical column name for an exception field.
+     *
+     * @param column the logical trace API column
+     * @return the matching physical field name, or {@code null} if unsupported
+     */
     public static String exceptionColumns(TraceApiColumn column) {
         return switch (column) {
             case TYPE -> VA_TYP;
@@ -283,6 +382,12 @@ public class ColumnConstant {
         };
     }
 
+    /**
+     * Returns the physical column name for an instance field.
+     *
+     * @param column the logical trace API column
+     * @return the matching physical field name, or {@code null} if unsupported
+     */
     public static String instanceColumns(TraceApiColumn column){
         return switch (column) {
             case ID -> ID_INS;
@@ -306,6 +411,12 @@ public class ColumnConstant {
         };
     }
 
+    /**
+     * Returns the physical column name for a user action field.
+     *
+     * @param column the logical trace API column
+     * @return the matching physical field name, or {@code null} if unsupported
+     */
     public static String userActionColumns(TraceApiColumn column){
         return switch (column) {
             case TYPE -> VA_TYP;
@@ -317,6 +428,12 @@ public class ColumnConstant {
         };
     }
 
+    /**
+     * Returns the physical column name for an instance trace field.
+     *
+     * @param column the logical trace API column
+     * @return the matching physical field name, or {@code null} if unsupported
+     */
     public static String instanceTraceColumns(TraceApiColumn column) {
         return switch (column) {
             case PENDING -> VA_PND;
@@ -329,6 +446,12 @@ public class ColumnConstant {
         };
     }
 
+    /**
+     * Returns the physical column name for a log entry field.
+     *
+     * @param column the logical trace API column
+     * @return the matching physical field name, or {@code null} if unsupported
+     */
     public static String logEntryColumns(TraceApiColumn column) {
         return switch (column) {
             case LOG_LEVEL -> VA_LVL;
@@ -341,6 +464,12 @@ public class ColumnConstant {
         };
     }
 
+    /**
+     * Returns the physical column name for a resource usage field.
+     *
+     * @param column the logical trace API column
+     * @return the matching physical field name, or {@code null} if unsupported
+     */
     public static String resourceUsageColumns(TraceApiColumn column) {
         return switch (column) {
             case USED_HEAP -> VA_USED_HEP;

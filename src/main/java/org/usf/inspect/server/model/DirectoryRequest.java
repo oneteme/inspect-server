@@ -7,7 +7,8 @@ import org.usf.inspect.core.DirectoryRequestSignal;
 import org.usf.inspect.core.DirectoryRequestUpdate;
 
 /**
- * 
+ * Represents a directory service request and its conversion to core request DTOs.
+ *
  * @author u$f
  *
  */
@@ -20,8 +21,16 @@ public class DirectoryRequest extends AbstractRequest {
 	private int port;
 	private boolean failed;
 
+	/**
+	 * Creates an empty directory request.
+	 */
 	@JsonCreator public DirectoryRequest() { }
 
+    /**
+     * Converts this directory request to its core request signal representation.
+     *
+     * @return the request signal built from this directory request
+     */
     public DirectoryRequestSignal toRequest() {
         DirectoryRequestSignal dr = new DirectoryRequestSignal(getId(), getSessionId(), getStart(), getThreadName());
         dr.setInstanceId(getInstanceId());
@@ -32,6 +41,11 @@ public class DirectoryRequest extends AbstractRequest {
         return dr;
     }
 
+    /**
+     * Converts this directory request to its callback update representation.
+     *
+     * @return the callback update built from this directory request
+     */
     public DirectoryRequestUpdate toCallback() {
         DirectoryRequestUpdate drc = new DirectoryRequestUpdate(getId());
         drc.setEnd(getEnd());

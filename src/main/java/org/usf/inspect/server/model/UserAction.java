@@ -6,6 +6,9 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Represents a user action captured during a traced session.
+ */
 @Getter
 @Setter
 @RequiredArgsConstructor

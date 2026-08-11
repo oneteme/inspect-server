@@ -6,6 +6,9 @@ import org.usf.inspect.core.EventTrace;
 
 import java.time.Instant;
 
+/**
+ * Represents an environment update event for a traced instance.
+ */
 @Getter
 @RequiredArgsConstructor
 public final class InstanceEnvironmentUpdate implements EventTrace {

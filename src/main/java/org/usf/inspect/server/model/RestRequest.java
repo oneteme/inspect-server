@@ -7,9 +7,9 @@ import org.usf.inspect.core.HttpRequestSignal;
 import org.usf.inspect.core.HttpRequestUpdate;
 
 /**
- * 
- * @author u$f
+ * Represents a traced REST request together with its transport and payload metadata.
  *
+ * @author u$f
  */
 @Getter
 @Setter
@@ -31,8 +31,16 @@ public class RestRequest extends AbstractRequest { //APiRequest
 	private String bodyContent; //incoming content, //4xx, 5xx only
 	private boolean linked;
 	
+    /**
+     * Creates an empty REST request.
+     */
 	@JsonCreator public RestRequest() { }
 
+    /**
+     * Converts this REST request into an outbound request signal.
+     *
+     * @return the request signal built from this REST request.
+     */
     public HttpRequestSignal toRequest() {
         HttpRequestSignal req = new HttpRequestSignal(getId(), getSessionId(), getStart(), getThreadName());
         req.setProtocol(getProtocol());
@@ -49,6 +57,11 @@ public class RestRequest extends AbstractRequest { //APiRequest
         return req;
     }
 
+    /**
+     * Converts this REST request into an outbound request update callback.
+     *
+     * @return the request update built from this REST request.
+     */
     public HttpRequestUpdate toCallback() {
         HttpRequestUpdate cb = new HttpRequestUpdate(getId());
         cb.setStatus(getStatus());

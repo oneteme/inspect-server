@@ -7,7 +7,8 @@ import org.usf.inspect.core.MailRequestSignal;
 import org.usf.inspect.core.MailRequestUpdate;
 
 /**
- * 
+ * Represents a mail request and its conversion to core mail request DTOs.
+ *
  * @author u$f
  *
  */
@@ -20,10 +21,18 @@ public class MailRequest extends AbstractRequest {
 	private int port;
 	private boolean failed;
 
+	/**
+	 * Creates an empty mail request.
+	 */
 	@JsonCreator public MailRequest() {
         // empty
     }
 
+	/**
+	 * Converts this mail request to its core request signal representation.
+	 *
+	 * @return the request signal built from this mail request
+	 */
 	public MailRequestSignal toRequest() {
         MailRequestSignal req = new MailRequestSignal(getId(), getSessionId(), getStart(), getThreadName());
         req.setInstanceId(getInstanceId());
@@ -34,6 +43,11 @@ public class MailRequest extends AbstractRequest {
         return req;
     }
 
+    /**
+     * Converts this mail request to its callback update representation.
+     *
+     * @return the callback update built from this mail request
+     */
     public MailRequestUpdate toCallback() {
         MailRequestUpdate cb = new MailRequestUpdate(getId());
         cb.setEnd(getEnd());

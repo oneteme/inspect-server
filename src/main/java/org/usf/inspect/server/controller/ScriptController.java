@@ -21,6 +21,9 @@ import org.usf.inspect.server.service.ScriptService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * REST controller for administrative scripts, notably table partitioning maintenance.
+ */
 @Slf4j
 @RestController
 @RequestMapping(value = "script", produces = APPLICATION_JSON_VALUE)
@@ -29,6 +32,14 @@ public class ScriptController {
 
     private final ScriptService service;
 
+    /**
+     * Creates database partitions covering the given period.
+     *
+     * @param config per-table partition configuration overrides, may be {@code null} (defaults to an empty map)
+     * @param start the first month (inclusive) to create partitions for
+     * @param end the last month (inclusive) to create partitions for
+     * @return {@code 400 BAD_REQUEST} if {@code end} is before {@code start}, otherwise {@code 200 OK}
+     */
     @PatchMapping(value = "partition")
     public ResponseEntity<?> createPartition(@RequestBody(required = false) Map<PartitionedTable, Partition> config, @RequestParam YearMonth start, @RequestParam YearMonth end) {
         if(end.compareTo(start) < 0) {

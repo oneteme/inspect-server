@@ -16,6 +16,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * Builds database filters for request traces based on request attributes.
+ */
 @Getter
 @Setter
 @AllArgsConstructor
@@ -27,6 +30,12 @@ public class JqueryRequestFilter {
     private final Boolean[] failed;
     private final boolean lazy;
 
+    /**
+     * Creates the database filters that apply to the given request table.
+     *
+     * @param table the trace table for which filters are created
+     * @return the collection of filters matching this request filter configuration
+     */
     public Collection<DBFilter> filters(TraceApiTable table) {
         Collection<DBFilter> filters = new ArrayList<>();
         if(!isEmpty(getEnvironments())) {

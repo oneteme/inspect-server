@@ -3,6 +3,9 @@ package org.usf.inspect.server.config.constant;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+/**
+ * Defines the physical field names used by the trace API database views.
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE) //hide constructor better than throwing exception
 public final class FieldConstant {
    

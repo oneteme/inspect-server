@@ -22,6 +22,10 @@ import static org.springframework.http.ResponseEntity.*;
 import static org.usf.inspect.server.Utils.isUUID;
 import static org.usf.jquery.core.Utils.isBlank;
 
+/**
+ * REST controller exposing the trace ingestion API (v4) used by inspect agents/collectors
+ * to register instances, push traces and inspect/manage the dispatch state.
+ */
 @Slf4j
 @CrossOrigin
 @RestController
@@ -31,6 +35,15 @@ public class TraceController {
 
     private final TraceService service;
 
+    /**
+     * Registers a new instance environment.
+     *
+     * @param instance the instance environment to register
+     * @return {@code 200 OK} with the instance ID if registration succeeded,
+     *         {@code 400 BAD_REQUEST} if the instance name or ID is invalid,
+     *         {@code 503 SERVICE_UNAVAILABLE} if the dispatcher cannot accept the instance,
+     *         or {@code 500 INTERNAL_SERVER_ERROR} if an unexpected exception occurs
+     */
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<String> addInstanceEnvironment(
             @RequestBody InstanceEnvironment instance){
@@ -50,6 +63,18 @@ public class TraceController {
 		}
     }
 
+    /**
+     * Appends a batch of event traces to an existing instance session.
+     *
+     * @param id the instance ID the traces belong to
+     * @param attempts the number of dispatch attempts already made for this batch, may be {@code null}
+     * @param filename the name of the file the traces originate from, may be {@code null}
+     * @param end the end timestamp of the batch, may be {@code null}
+     * @param traces the list of event traces to add
+     * @return {@code 400 BAD_REQUEST} if the instance ID is invalid, {@code 202 ACCEPTED} if the traces
+     *         were successfully queued, {@code 503 SERVICE_UNAVAILABLE} if they could not be queued,
+     *         or {@code 500 INTERNAL_SERVER_ERROR} with a {@link TraceFail} if processing failed
+     */
     @PutMapping(value = "instance/{id}/session", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> addSessions(
     		@PathVariable String id,
@@ -70,11 +95,21 @@ public class TraceController {
         }
     }
     
+    /**
+     * Returns a snapshot of the traces currently pending in the dispatch queue.
+     *
+     * @return the list of event traces currently waiting in the queue
+     */
     @GetMapping(value = "queue", produces = APPLICATION_JSON_VALUE)
     public List<EventTrace> peekQueue(){
 		return service.peekQueue();
     }
 
+    /**
+     * Updates the current dispatch state of the trace service.
+     *
+     * @param state the new dispatch state to apply
+     */
     @PostMapping("state/{state}")
     public void updateState(@PathVariable DispatchState state){
 		service.updateState(state);

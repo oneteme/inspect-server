@@ -23,10 +23,19 @@ import static org.usf.inspect.server.JsonUtils.*;
 import static org.usf.inspect.server.Utils.fromNullableTimestamp;
 import static org.usf.inspect.server.config.TraceApiColumn.*;
 
+/**
+ * Provides result set and row mappers for inspect server domain objects and DTOs.
+ */
 @Slf4j
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public final class InspectMappers {
 
+    /**
+     * Creates a mapper that reads a single instance environment from a result set.
+     *
+     * @param mapper the object mapper used to deserialize JSON columns
+     * @return a result set mapper for instance environments
+     */
     public static ResultSetMapper<InstanceEnvironment> instanceEnvironmentMapper(ObjectMapper mapper) {
         return rs->{
             if(rs.next()) {
@@ -57,6 +66,11 @@ public final class InspectMappers {
         };
     }
 
+    /**
+     * Creates a row mapper for instance trace records.
+     *
+     * @return a row mapper for instance traces
+     */
     public static RowMapper<InstanceTrace> instanceTraceMapper() {
         return rs ->
             new InstanceTrace(
@@ -69,6 +83,11 @@ public final class InspectMappers {
             );
     }
 
+    /**
+     * Creates a row mapper for machine resource usage records.
+     *
+     * @return a row mapper for machine resource usage entries
+     */
     public static RowMapper<MachineResourceUsage> instanceResourceUsageMapper() {
         return rs ->
                 new MachineResourceUsage(
@@ -79,6 +98,12 @@ public final class InspectMappers {
                 );
     }
 
+    /**
+     * Creates a row mapper for log entries.
+     *
+     * @param mapper the object mapper used to deserialize stack traces
+     * @return a row mapper for log entries
+     */
     public static RowMapper<LogEntry> instanceLogEntryMapper(ObjectMapper mapper) {
         return rs -> {
             try {
@@ -94,6 +119,11 @@ public final class InspectMappers {
         };
     }
 
+    /**
+     * Creates a lightweight row mapper for REST request DTOs.
+     *
+     * @return a row mapper for REST request DTOs
+     */
     public static RowMapper<RestRequestDto> restRequestLazyMapper() {
         return rs -> {
             RestRequestDto out = createBaseRestRequest(rs);
@@ -102,6 +132,13 @@ public final class InspectMappers {
         };
     }
 
+    /**
+     * Creates the base REST request DTO from the current result set row.
+     *
+     * @param rs the result set positioned on the row to read
+     * @return the populated base REST request DTO
+     * @throws SQLException if the result set cannot be read
+     */
     public static RestRequestDto createBaseRestRequest(ResultSet rs) throws SQLException {
         RestRequestDto out = new RestRequestDto();
         out.setId(rs.getString(ID.reference()));
@@ -120,6 +157,13 @@ public final class InspectMappers {
         return out;
     }
 
+    /**
+     * Reads a complete REST request from the result set.
+     *
+     * @param rs the result set containing the REST request data
+     * @return the populated REST request, or {@code null} when the result set is empty
+     * @throws SQLException if the result set cannot be read
+     */
     public static RestRequest restRequestMapperComplete(ResultSet rs) throws SQLException {
         if (rs.next()) {
             var out = createBaseRestRequest(rs);
@@ -136,6 +180,11 @@ public final class InspectMappers {
         return null;
     }
     
+    /**
+     * Creates a shallow row mapper for REST session DTOs.
+     *
+     * @return a row mapper for shallow REST session DTOs
+     */
     public static RowMapper<RestSessionDto> restSessionShallowMapper() {
         return rs -> {
             RestSessionDto out = defaultRestSessionMapper(rs);
@@ -145,6 +194,11 @@ public final class InspectMappers {
         };
     }
 
+    /**
+     * Creates a row mapper for REST session pulse views.
+     *
+     * @return a row mapper for REST session pulse data
+     */
     public static RowMapper<RestSession> restSessionPulseRowMapper() {
         return rs -> {
             RestSession out = new RestSession();
@@ -162,6 +216,13 @@ public final class InspectMappers {
         };
     }
 
+    /**
+     * Creates the base REST session DTO from the current result set row.
+     *
+     * @param rs the result set positioned on the row to read
+     * @return the populated base REST session DTO
+     * @throws SQLException if the result set cannot be read
+     */
     public static RestSessionDto defaultRestSessionMapper(ResultSet rs) throws SQLException {
         var restSession = new RestSessionDto();
         restSession.setId(rs.getString(ID.reference()));
@@ -179,6 +240,12 @@ public final class InspectMappers {
         return restSession;
     }
 
+    /**
+     * Creates a mapper that reads a single REST session from a result set.
+     *
+     * @param mapper the object mapper used to deserialize stack traces
+     * @return a result set mapper for REST sessions
+     */
     public static ResultSetMapper<RestSession> restSessionResultSetMapper(ObjectMapper mapper) {
         return rs->{
             if (rs.next()) {
@@ -207,6 +274,12 @@ public final class InspectMappers {
         };
     }
 
+    /**
+     * Creates a mapper that reads a single main session from a result set.
+     *
+     * @param mapper the object mapper used to deserialize stack traces
+     * @return a result set mapper for main sessions
+     */
     public static ResultSetMapper<MainSession> createBaseMainSession(ObjectMapper mapper) {
         return rs-> {
             if (rs.next()) {
@@ -233,6 +306,11 @@ public final class InspectMappers {
         };
     }
     
+    /**
+     * Creates a row mapper for main session pulse views.
+     *
+     * @return a row mapper for main session pulse data
+     */
     public static RowMapper<MainSession> mainSessionPulseRowMapper(){
         return rs -> {
             MainSession out = new MainSession();
@@ -247,6 +325,11 @@ public final class InspectMappers {
         };
     }
     
+    /**
+     * Creates a row mapper for searchable main session DTOs.
+     *
+     * @return a row mapper for searchable main session DTOs
+     */
     public static RowMapper<MainSessionDto> mainSessionForSearchMapper(){
         return rs -> {
             MainSessionDto out = new MainSessionDto();
@@ -264,6 +347,11 @@ public final class InspectMappers {
         };
     }
 
+    /**
+     * Creates a row mapper for local requests.
+     *
+     * @return a row mapper for local requests
+     */
     public static RowMapper<LocalRequest> localRequestMapper(){
         return rs -> {
             LocalRequest out = new LocalRequest();
@@ -280,6 +368,11 @@ public final class InspectMappers {
         };
     }
 
+    /**
+     * Creates a lightweight row mapper for database request DTOs.
+     *
+     * @return a row mapper for database request DTOs
+     */
     public static RowMapper<DatabaseRequestDto> databaseRequestLazyMapper() {
         return rs -> {
             DatabaseRequestDto out = createBaseDatabaseRequest(rs);
@@ -288,6 +381,13 @@ public final class InspectMappers {
         };
     }
 
+    /**
+     * Reads a complete database request from the result set.
+     *
+     * @param rs the result set containing the database request data
+     * @return the populated database request, or {@code null} when the result set is empty
+     * @throws SQLException if the result set cannot be read
+     */
     public static DatabaseRequest databaseRequestComplete(ResultSet rs) throws SQLException { // return null
         if (rs.next()) {
             DatabaseRequest out = createBaseDatabaseRequest(rs);
@@ -318,7 +418,15 @@ public final class InspectMappers {
         out.setFailed(rs.getBoolean(FAILED.reference()));
         return out;
     }
-    
+
+
+
+    /**
+     * Creates a row mapper for database request stages.
+     *
+     * @param mapper the object mapper used to deserialize stack traces
+     * @return a row mapper for database request stages
+     */
     public static RowMapper<DatabaseRequestStage> databaseRequestStageMapper(ObjectMapper mapper){
         return rs -> {
             DatabaseRequestStage out= new DatabaseRequestStage();
@@ -338,6 +446,12 @@ public final class InspectMappers {
         };
     }
 
+    /**
+     * Creates a row mapper for REST request stages.
+     *
+     * @param mapper the object mapper used to deserialize stack traces
+     * @return a row mapper for REST request stages
+     */
     public static RowMapper<HttpRequestStage> restRequestStageMapper(ObjectMapper mapper) {
         return rs -> {
             HttpRequestStage out= new HttpRequestStage();
@@ -354,6 +468,11 @@ public final class InspectMappers {
         };
     }
 
+    /**
+     * Creates a row mapper for REST session stages.
+     *
+     * @return a row mapper for REST session stages
+     */
     public static RowMapper<HttpSessionStage> restSessionStageMapper(){
         return rs -> {
             HttpSessionStage out= new HttpSessionStage();
@@ -365,6 +484,11 @@ public final class InspectMappers {
         };
     }
 
+    /**
+     * Creates a lightweight row mapper for FTP request DTOs.
+     *
+     * @return a row mapper for FTP request DTOs
+     */
     public static RowMapper<FtpRequestDto> ftpRequestLazyMapper(){
         return rs -> {
             FtpRequestDto out = createBaseFtpRequest(rs);
@@ -386,6 +510,13 @@ public final class InspectMappers {
         return out;
     }
 
+    /**
+     * Reads a complete FTP request from the result set.
+     *
+     * @param rs the result set containing the FTP request data
+     * @return the populated FTP request, or {@code null} when the result set is empty
+     * @throws SQLException if the result set cannot be read
+     */
     public static FtpRequest ftpRequestComplete(ResultSet rs) throws SQLException {
         if (rs.next()) {
             FtpRequest out = createBaseFtpRequest(rs);
@@ -400,6 +531,12 @@ public final class InspectMappers {
         return null;
     }
     
+    /**
+     * Creates a row mapper for FTP request stages.
+     *
+     * @param mapper the object mapper used to deserialize stack traces
+     * @return a row mapper for FTP request stages
+     */
     public static RowMapper<FtpRequestStage> ftpRequestStageMapper(ObjectMapper mapper){
         return rs -> {
             FtpRequestStage out = new FtpRequestStage();
@@ -418,6 +555,11 @@ public final class InspectMappers {
         };
     }
 
+    /**
+     * Creates a lightweight row mapper for mail request DTOs.
+     *
+     * @return a row mapper for mail request DTOs
+     */
     public static RowMapper<MailRequestDto> smtpRequestLazyMapper(){
         return rs -> {
             MailRequestDto out = createBaseMailRequest(rs);
@@ -439,6 +581,13 @@ public final class InspectMappers {
         return out;
     }
 
+    /**
+     * Reads a complete mail request from the result set.
+     *
+     * @param rs the result set containing the mail request data
+     * @return the populated mail request, or {@code null} when the result set is empty
+     * @throws SQLException if the result set cannot be read
+     */
     public static MailRequest mailRequestCompleteMapper(ResultSet rs) throws SQLException {
         if (rs.next()) {
             MailRequest out = createBaseMailRequest(rs);
@@ -450,6 +599,12 @@ public final class InspectMappers {
         return null;
     }
 
+    /**
+     * Creates a row mapper for mail request stages.
+     *
+     * @param mapper the object mapper used to deserialize stack traces
+     * @return a row mapper for mail request stages
+     */
     public static RowMapper<MailRequestStage> mailRequestStageMapper(ObjectMapper mapper){
         return rs -> {
             MailRequestStage out = new MailRequestStage();
@@ -467,6 +622,11 @@ public final class InspectMappers {
         };
     }
     
+    /**
+     * Creates a row mapper for mail details.
+     *
+     * @return a row mapper for mail records
+     */
     public static RowMapper<Mail> mailMapper(){
         return rs -> {
             var out = new Mail();
@@ -480,6 +640,11 @@ public final class InspectMappers {
         };
     }
 
+    /**
+     * Creates a lightweight row mapper for directory request DTOs.
+     *
+     * @return a row mapper for directory request DTOs
+     */
     public static RowMapper<DirectoryRequestDto> ldapRequestLazyMapper(){
         return rs -> {
             DirectoryRequestDto out = createBaseLdapRequest(rs);
@@ -501,6 +666,13 @@ public final class InspectMappers {
         return out;
     }
 
+    /**
+     * Reads a complete directory request from the result set.
+     *
+     * @param rs the result set containing the directory request data
+     * @return the populated directory request, or {@code null} when the result set is empty
+     * @throws SQLException if the result set cannot be read
+     */
     public static DirectoryRequest ldapRequestCompleteMapper(ResultSet rs) throws SQLException {
         if (rs.next()) {
             DirectoryRequest out = createBaseLdapRequest(rs);
@@ -513,6 +685,12 @@ public final class InspectMappers {
         return null;
     }
     
+    /**
+     * Creates a row mapper for directory request stages.
+     *
+     * @param mapper the object mapper used to deserialize stack traces
+     * @return a row mapper for directory request stages
+     */
     public static RowMapper<DirectoryRequestStage> ldapRequestStageMapper(ObjectMapper mapper){
         return rs -> {
             var out = new DirectoryRequestStage();
@@ -530,6 +708,11 @@ public final class InspectMappers {
         };
     }
 
+    /**
+     * Creates a row mapper for user actions.
+     *
+     * @return a row mapper for user actions
+     */
     public static RowMapper<UserAction> userActionMapper(){
         return rs -> {
                 UserAction out = new UserAction(
@@ -544,6 +727,13 @@ public final class InspectMappers {
 
     }
 
+    /**
+     * Reads exception information indexed by parent identifier from the result set.
+     *
+     * @param rs the result set containing exception information rows
+     * @return a map of parent identifiers to exception information
+     * @throws SQLException if the result set cannot be read
+     */
     public static Map<Long, ExceptionInfo> exceptionInfoMapper(ResultSet rs) throws SQLException {
         Map<Long, ExceptionInfo> out = new HashMap<>();
         while(rs.next()) {
@@ -552,6 +742,14 @@ public final class InspectMappers {
         return out;
     }
 
+    /**
+     * Creates exception information only when an exception class name or message is present.
+     *
+     * @param className the exception class name
+     * @param message the exception message
+     * @param stackTraceRows the stack trace rows associated with the exception
+     * @return the exception information, or {@code null} when no exception data is available
+     */
     public static ExceptionInfo getExceptionInfoIfNotNull(String className, String message, StackTraceRow[] stackTraceRows) {
         if(className != null || message != null) {
             return new ExceptionInfo(className, message, stackTraceRows, null);

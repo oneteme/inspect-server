@@ -13,6 +13,9 @@ import org.usf.jquery.core.LogicalOperator;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * Builds database filters for request sessions with request-specific criteria.
+ */
 @Getter
 @Setter
 public class JqueryRequestSessionFilter extends JquerySessionFilter {
@@ -29,6 +32,27 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
     private final String[] rangeStatus;
     private final boolean lazy;
 
+    /**
+     * Creates a request session filter with session and request criteria.
+     *
+     * @param appNames the application names to include
+     * @param environments the environments to include
+     * @param users the users to include
+     * @param start the inclusive lower bound for the start time
+     * @param end the exclusive upper bound for the start time
+     * @param methods the request methods to include
+     * @param protocols the protocols to include
+     * @param hosts the hosts to include
+     * @param ports the ports to include
+     * @param medias the media types to include
+     * @param auths the authentication types to include
+     * @param status the HTTP statuses to include
+     * @param apiNames the API names to include
+     * @param path the path pattern to match
+     * @param query the query pattern to match
+     * @param rangestatus the status code ranges to include
+     * @param lazy whether unfinished requests should also be included
+     */
     public JqueryRequestSessionFilter(String[] appNames, String[] environments, String[] users, Instant start, Instant end, String[] methods, String[] protocols, String[] hosts, String[] ports, String[] medias, String[] auths, Integer[] status, String[] apiNames, String path, String query,String[] rangestatus, boolean lazy) {
         super(appNames, environments, users, start, end);
         this.methods = methods;
@@ -45,6 +69,12 @@ public class JqueryRequestSessionFilter extends JquerySessionFilter {
         this.lazy = lazy;
     }
 
+    /**
+     * Creates the database filters that apply to the given request session table.
+     *
+     * @param table the trace table for which filters are created
+     * @return the collection of filters matching this request session filter configuration
+     */
     @Override
     public Collection<DBFilter> filters(TraceApiTable table) {
         Collection<DBFilter> filters = super.filters(table);

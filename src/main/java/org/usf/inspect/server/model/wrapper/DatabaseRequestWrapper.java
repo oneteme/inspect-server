@@ -11,12 +11,14 @@ import org.usf.inspect.server.model.DatabaseRequest;
 
 import java.util.List;
 
+/**
+ * Deprecated wrapper that exposes a database request and its recorded stages for legacy API payloads.
+ *
+ * @deprecated since v1.1.
+ */
 @Getter
 @Setter
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = DatabaseRequestWrapper.class)
-/**
- * @deprecated
- */
 @Deprecated(since = "v1.1")
 public final class DatabaseRequestWrapper implements EventTrace {
 

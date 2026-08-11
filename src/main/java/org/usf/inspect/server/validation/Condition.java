@@ -4,6 +4,10 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Collection;
 import java.util.function.Predicate;
+
+/**
+ * Defines reusable predicates for custom validation rules.
+ */
 public enum Condition {
     UUID(o -> isUUID(o.toString())),
     INSTANT(o -> isInstant(o.toString())),
@@ -12,6 +16,13 @@ public enum Condition {
     Condition(Predicate<Object> predicate) {
         this.predicate = predicate;
     }
+
+    /**
+     * Evaluates whether the supplied value matches this validation condition.
+     *
+     * @param value the value to evaluate
+     * @return {@code true} if the value satisfies the condition, otherwise {@code false}
+     */
     public boolean test(Object value) {
         return predicate.test(value);
     }

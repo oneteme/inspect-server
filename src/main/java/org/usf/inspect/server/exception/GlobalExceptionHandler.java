@@ -10,9 +10,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+/**
+ * Centralizes exception handling for controller requests.
+ */
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+    /**
+     * Handles a payload-too-large exception and builds the corresponding HTTP error response.
+     *
+     * @return the HTTP response containing the payload size error details
+     */
     @ExceptionHandler //TODO choose between @ControllerAdvice and @RestControllerAdvice
     public ResponseEntity<Map<String, String>> handlePayloadTooLargeException(PayloadTooLargeException ex){
         Map<String, String> body = new HashMap<>();

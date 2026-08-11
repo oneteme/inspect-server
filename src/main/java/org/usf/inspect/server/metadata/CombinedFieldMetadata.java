@@ -5,6 +5,9 @@ import java.util.List;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Describes metadata composed of multiple simple fields grouped under one label.
+ */
 @Getter
 @RequiredArgsConstructor
 public final class CombinedFieldMetadata  implements FieldMetadata {

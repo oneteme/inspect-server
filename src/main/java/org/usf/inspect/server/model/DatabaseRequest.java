@@ -7,7 +7,8 @@ import org.usf.inspect.core.DatabaseRequestSignal;
 import org.usf.inspect.core.DatabaseRequestUpdate;
 
 /**
- * 
+ * Represents a database request and its conversion to core database request DTOs.
+ *
  * @author u$f
  *
  */
@@ -25,8 +26,16 @@ public class DatabaseRequest extends AbstractRequest {
 	private String productVersion;
 	private boolean failed;
 
+	/**
+	 * Creates an empty database request.
+	 */
 	@JsonCreator public DatabaseRequest() { }
 
+    /**
+     * Converts this database request to its core request signal representation.
+     *
+     * @return the request signal built from this database request
+     */
     public DatabaseRequestSignal toRequest(){
         DatabaseRequestSignal req = new DatabaseRequestSignal(getId(), getSessionId(), getStart(), getThreadName());
         req.setScheme(getScheme());
@@ -42,6 +51,11 @@ public class DatabaseRequest extends AbstractRequest {
         return req;
     }
 
+    /**
+     * Converts this database request to its callback update representation.
+     *
+     * @return the callback update built from this database request
+     */
     public DatabaseRequestUpdate toCallback(){
         DatabaseRequestUpdate cb = new DatabaseRequestUpdate(getId());
         cb.setFailed(isFailed());

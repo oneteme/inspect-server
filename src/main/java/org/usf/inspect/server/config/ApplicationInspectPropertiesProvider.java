@@ -11,6 +11,9 @@ import static java.lang.String.join;
 import static java.util.Objects.isNull;
 
 
+/**
+ * Provides application metadata sourced from the Spring environment and git properties.
+ */
 @RequiredArgsConstructor
 public final class ApplicationInspectPropertiesProvider implements ApplicationPropertiesProvider {
 

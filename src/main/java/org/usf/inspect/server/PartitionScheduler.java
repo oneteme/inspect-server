@@ -16,6 +16,9 @@ import java.util.Map;
 import static java.util.Optional.ofNullable;
 import static org.usf.inspect.server.model.PartitionedTable.*;
 
+/**
+ * Schedules partition creation for configured partitioned tables.
+ */
 @Service
 @Setter
 @ConditionalOnProperty(prefix = "inspect.server.partition", name="enabled", havingValue = "true")
@@ -29,6 +32,9 @@ public class PartitionScheduler {
         this.properties = conf.getPartition();
     }
 
+    /**
+     * Creates the next month's partitions according to the configured partition settings.
+     */
     @TraceableStage
     @Scheduled(cron= "${inspect.server.partition.schedule:0 0 0 L * ?}")
     public void createPartition(){

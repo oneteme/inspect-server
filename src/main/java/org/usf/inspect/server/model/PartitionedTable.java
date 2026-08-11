@@ -6,6 +6,9 @@ import java.util.Set;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Enumerates trace tables that can participate in partition creation.
+ */
 @RequiredArgsConstructor
 public enum PartitionedTable {
 	
@@ -30,6 +33,12 @@ public enum PartitionedTable {
 
     private final String table;
 
+    /**
+     * Returns the enum constant associated with the given table name.
+     *
+     * @param table the table name to look up.
+     * @return the matching enum constant, or an empty optional when none matches.
+     */
     public static Optional<PartitionedTable> enumOf(String table) {
         return Arrays.stream(values()).filter(e-> e.table.equals(table)).findAny();
     }

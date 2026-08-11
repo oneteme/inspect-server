@@ -44,6 +44,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Repository implementing the purge (deletion) of expired trace data: instances,
+ * requests, request stages, sessions and their related staging/exception tables,
+ * as well as periodic table vacuuming.
+ */
 @Slf4j
 @Repository
 @RequiredArgsConstructor
@@ -52,6 +57,11 @@ public class PurgeDao {
     private final ObjectMapper mapper;
     private final JdbcTemplate template;
 
+    /**
+     * Selects, for each distinct (type, environment, application) triple, the most recent instance environment.
+     *
+     * @return the list of latest instance environments
+     */
     public List<InstanceEnvironment> selectInstances() {
         return INSPECT.execute(v ->
                 v.columns(
@@ -64,6 +74,15 @@ public class PurgeDao {
                         new DBOrder[] {INSTANCE.column(END).coalesce(ctimestamp().operation()).desc(), INSTANCE.column(START).desc()}).eq(1)), this::mapInstances);
     }
 
+    /**
+     * Selects the identifiers of the instances matching the given criteria and older than the given date.
+     *
+     * @param before the exclusive upper bound of the instance start date
+     * @param env the environment name to filter on, may be {@code null} to match instances without an environment
+     * @param app the application name to filter on, may be {@code null} to match instances without an application
+     * @param type the instance type to filter on
+     * @return the matching list of instance IDs
+     */
     public List<String> selectInstanceIds(Timestamp before, String env, String app, InstanceType type) {
         var args = new ArrayList<>(3);
         args.add(before);
@@ -73,46 +92,115 @@ public class PurgeDao {
                 " AND va_app" + (nonNull(app) && args.add(app) ? "=?" : " IS NULL"), String.class, args.toArray());
     }
 
+    /**
+     * Deletes ended instances matching the given environment and application, ended before the given date.
+     *
+     * @param env the environment name to match
+     * @param app the application name to match
+     * @param dateLimit the exclusive upper bound of the instance end date
+     * @return the number of deleted rows
+     */
     public int purgeInstance(String env, String app, Timestamp dateLimit) {
         return template.update("DELETE FROM e_env_ins WHERE dh_end < '" + dateLimit + "' AND va_env = '" + env + "' AND va_app = '" + app + "';");
     }
 
+    /**
+     * Deletes instance traces belonging to the given instances and started before the given date.
+     *
+     * @param ids a comma-separated list of instance IDs (SQL {@code IN} clause content)
+     * @param before the exclusive upper bound of the trace start date
+     * @return the number of deleted rows
+     */
     public int purgeInstanceTrace(String ids, Timestamp before){
         return purgeRequest("ins_trc", ids, before, false);
     }
 
+    /**
+     * Deletes instance traces whose instance no longer exists.
+     *
+     * @return the number of deleted rows
+     */
     public int purgeInstanceTrace(){
         return purgeRequest("ins_trc");
     }
 
+    /**
+     * Deletes resource usage entries belonging to the given instances and started before the given date.
+     *
+     * @param ids a comma-separated list of instance IDs (SQL {@code IN} clause content)
+     * @param before the exclusive upper bound of the entry start date
+     * @return the number of deleted rows
+     */
     public int purgeResourceUsage(String ids, Timestamp before){
         return purgeRequest("rsc_usg", ids, before, false);
     }
 
+    /**
+     * Deletes resource usage entries whose instance no longer exists.
+     *
+     * @return the number of deleted rows
+     */
     public int purgeResourceUsage(){
         return purgeRequest("rsc_usg");
     }
 
+    /**
+     * Deletes main sessions belonging to the given instances, started and ended before the given date.
+     *
+     * @param ids a comma-separated list of instance IDs (SQL {@code IN} clause content)
+     * @param before the exclusive upper bound of the session start/end date
+     * @return the number of deleted rows
+     */
     public int purgeMainSession(String ids, Timestamp before){
         return purgeRequest("main_ses", ids, before, true);
     }
 
+    /**
+     * Deletes main sessions whose instance no longer exists.
+     *
+     * @return the number of deleted rows
+     */
     public int purgeMainSession(){
         return purgeRequest("main_ses");
     }
 
+    /**
+     * Deletes main session user action stage entries whose parent session no longer exists.
+     *
+     * @return the number of deleted rows
+     */
     public int purgeMainSessionStage(){
         return purgeSessionStage("main_ses", "usr_acn");
     }
 
+    /**
+     * Deletes REST sessions belonging to the given instances, started and ended before the given date.
+     *
+     * @param ids a comma-separated list of instance IDs (SQL {@code IN} clause content)
+     * @param before the exclusive upper bound of the session start/end date
+     * @return the number of deleted rows
+     */
     public int purgeRestSession(String ids, Timestamp before){
         return purgeRequest("rst_ses", ids, before, true);
     }
 
+    /**
+     * Deletes REST sessions whose instance no longer exists.
+     *
+     * @return the number of deleted rows
+     */
     public int purgeRestSession(){
         return purgeRequest("rst_ses");
     }
 
+    /**
+     * Deletes REST session stage entries belonging to sessions of the given instances,
+     * started and ended before the given date.
+     *
+     * @param ids a comma-separated list of instance IDs (SQL {@code IN} clause content)
+     * @param before the exclusive upper bound of the session/stage start/end date
+     * @return the number of deleted rows
+     */
     public int purgeRestSessionStage(String ids, Timestamp before) {
         var subQuery = "SELECT ses.id_ses" +
                 " FROM e_rst_ses ses " +
@@ -126,116 +214,275 @@ public class PurgeDao {
                 " AND dh_end < '" + before + "'");
     }
 
+    /**
+     * Deletes REST session stage entries whose parent session no longer exists.
+     *
+     * @return the number of deleted rows
+     */
     public int purgeRestSessionStage() {
         return purgeSessionStage("rst_ses", "rst_ses_stg");
     }
 
+    /**
+     * Deletes REST requests belonging to the given instances, started and ended before the given date.
+     *
+     * @param ids a comma-separated list of instance IDs (SQL {@code IN} clause content)
+     * @param before the exclusive upper bound of the request start/end date
+     * @return the number of deleted rows
+     */
     public int purgeRestRequest(String ids, Timestamp before){
         return purgeRequest("rst_rqt", ids, before, true);
     }
 
+    /**
+     * Deletes REST requests whose instance no longer exists.
+     *
+     * @return the number of deleted rows
+     */
     public int purgeRestRequest(){
         return purgeRequest("rst_rqt");
     }
 
+    /**
+     * Deletes REST request stage entries and related exceptions for the given instances,
+     * started and ended before the given date.
+     *
+     * @param ids a comma-separated list of instance IDs (SQL {@code IN} clause content)
+     * @param before the exclusive upper bound of the request/stage start/end date
+     * @return the total number of deleted rows across the stage and exception tables
+     */
     @Transactional(rollbackFor = Throwable.class)
     public int purgeRestRequestStage(String ids, Timestamp before){
         return purgeRequestStage("rst_rqt", "rst_rqt_stg", REST.name(), ids, before);
     }
 
+    /**
+     * Deletes REST request stage entries and related exceptions whose request no longer exists.
+     *
+     * @return the total number of deleted rows across the stage and exception tables
+     */
     @Transactional(rollbackFor = Throwable.class)
     public int purgeRestRequestStage(){
         return purgeRequestStage("rst_rqt", "rst_rqt_stg", REST.name());
     }
 
+    /**
+     * Deletes SMTP requests belonging to the given instances, started and ended before the given date.
+     *
+     * @param ids a comma-separated list of instance IDs (SQL {@code IN} clause content)
+     * @param before the exclusive upper bound of the request start/end date
+     * @return the number of deleted rows
+     */
     public int purgeSmtpRequest(String ids, Timestamp before){
         return purgeRequest("smtp_rqt", ids, before, true);
     }
 
+    /**
+     * Deletes SMTP requests whose instance no longer exists.
+     *
+     * @return the number of deleted rows
+     */
     public int purgeSmtpRequest(){
         return purgeRequest("smtp_rqt");
     }
 
+    /**
+     * Deletes SMTP request stage entries and related exceptions whose request no longer exists.
+     *
+     * @return the total number of deleted rows across the stage and exception tables
+     */
     @Transactional(rollbackFor = Throwable.class)
     public int purgeSmtpRequestStage(){
         return purgeRequestStage("smtp_rqt", "smtp_stg", SMTP.name());
     }
 
+    /**
+     * Deletes SMTP request stage entries and related exceptions for the given instances,
+     * started and ended before the given date.
+     *
+     * @param ids a comma-separated list of instance IDs (SQL {@code IN} clause content)
+     * @param before the exclusive upper bound of the request/stage start/end date
+     * @return the total number of deleted rows across the stage and exception tables
+     */
     @Transactional(rollbackFor = Throwable.class)
     public int purgeSmtpRequestStage(String ids, Timestamp before){
         return purgeRequestStage("smtp_rqt", "smtp_stg", SMTP.name(), ids, before);
     }
 
+    /**
+     * Deletes FTP requests belonging to the given instances, started and ended before the given date.
+     *
+     * @param ids a comma-separated list of instance IDs (SQL {@code IN} clause content)
+     * @param before the exclusive upper bound of the request start/end date
+     * @return the number of deleted rows
+     */
     public int purgeFtpRequest(String ids, Timestamp before){
         return purgeRequest("ftp_rqt", ids, before, true);
     }
 
+    /**
+     * Deletes FTP requests whose instance no longer exists.
+     *
+     * @return the number of deleted rows
+     */
     public int purgeFtpRequest(){
         return purgeRequest("ftp_rqt");
     }
 
+    /**
+     * Deletes FTP request stage entries and related exceptions for the given instances,
+     * started and ended before the given date.
+     *
+     * @param ids a comma-separated list of instance IDs (SQL {@code IN} clause content)
+     * @param before the exclusive upper bound of the request/stage start/end date
+     * @return the total number of deleted rows across the stage and exception tables
+     */
     @Transactional(rollbackFor = Throwable.class)
     public int purgeFtpRequestStage(String ids, Timestamp before){
         return purgeRequestStage("ftp_rqt", "ftp_stg", FTP.name(), ids, before);
     }
 
+    /**
+     * Deletes FTP request stage entries and related exceptions whose request no longer exists.
+     *
+     * @return the total number of deleted rows across the stage and exception tables
+     */
     @Transactional(rollbackFor = Throwable.class)
     public int purgeFtpRequestStage(){
         return purgeRequestStage("ftp_rqt", "ftp_stg", FTP.name());
     }
 
+    /**
+     * Deletes LDAP requests belonging to the given instances, started and ended before the given date.
+     *
+     * @param ids a comma-separated list of instance IDs (SQL {@code IN} clause content)
+     * @param before the exclusive upper bound of the request start/end date
+     * @return the number of deleted rows
+     */
     public int purgeLdapRequest(String ids, Timestamp before){
         return purgeRequest("ldap_rqt", ids, before, true);
     }
 
+    /**
+     * Deletes LDAP requests whose instance no longer exists.
+     *
+     * @return the number of deleted rows
+     */
     public int purgeLdapRequest(){
         return purgeRequest("ldap_rqt");
     }
 
+    /**
+     * Deletes LDAP request stage entries and related exceptions for the given instances,
+     * started and ended before the given date.
+     *
+     * @param ids a comma-separated list of instance IDs (SQL {@code IN} clause content)
+     * @param dateLimit the exclusive upper bound of the request/stage start/end date
+     * @return the total number of deleted rows across the stage and exception tables
+     */
     @Transactional(rollbackFor = Throwable.class)
     public int purgeLdapRequestStage(String ids, Timestamp dateLimit){
         return purgeRequestStage("ldap_rqt", "ldap_stg", LDAP.name(), ids, dateLimit);
     }
 
+    /**
+     * Deletes LDAP request stage entries and related exceptions whose request no longer exists.
+     *
+     * @return the total number of deleted rows across the stage and exception tables
+     */
     @Transactional(rollbackFor = Throwable.class)
     public int purgeLdapRequestStage(){
         return purgeRequestStage("ldap_rqt", "ldap_stg", LDAP.name());
     }
 
+    /**
+     * Deletes database requests belonging to the given instances, started and ended before the given date.
+     *
+     * @param ids a comma-separated list of instance IDs (SQL {@code IN} clause content)
+     * @param dateLimit the exclusive upper bound of the request start/end date
+     * @return the number of deleted rows
+     */
     public int purgeDtbRequest(String ids, Timestamp dateLimit){
         return purgeRequest("dtb_rqt", ids, dateLimit, true);
     }
 
+    /**
+     * Deletes database requests whose instance no longer exists.
+     *
+     * @return the number of deleted rows
+     */
     public int purgeDtbRequest(){
         return purgeRequest("dtb_rqt");
     }
 
+    /**
+     * Deletes database request stage entries and related exceptions for the given instances,
+     * started and ended before the given date.
+     *
+     * @param ids a comma-separated list of instance IDs (SQL {@code IN} clause content)
+     * @param before the exclusive upper bound of the request/stage start/end date
+     * @return the total number of deleted rows across the stage and exception tables
+     */
     @Transactional(rollbackFor = Throwable.class)
     public int purgeDtbRequestStage(String ids, Timestamp before){
         return purgeRequestStage("dtb_rqt", "dtb_stg", JDBC.name(), ids, before);
     }
 
+    /**
+     * Deletes database request stage entries and related exceptions whose request no longer exists.
+     *
+     * @return the total number of deleted rows across the stage and exception tables
+     */
     @Transactional(rollbackFor = Throwable.class)
     public int purgeDtbRequestStage(){
         return purgeRequestStage("dtb_rqt", "dtb_stg", JDBC.name());
     }
 
+    /**
+     * Deletes local requests belonging to the given instances, started and ended before the given date.
+     *
+     * @param ids a comma-separated list of instance IDs (SQL {@code IN} clause content)
+     * @param before the exclusive upper bound of the request start/end date
+     * @return the number of deleted rows
+     */
     public int purgeLocalRequest(String ids, Timestamp before){
         return purgeRequest("lcl_rqt", ids, before, true);
     }
 
+    /**
+     * Deletes local requests whose instance no longer exists.
+     *
+     * @return the number of deleted rows
+     */
     public int purgeLocalRequest(){
         return purgeRequest("lcl_rqt");
     }
 
+    /**
+     * Deletes log entries belonging to the given instances and started before the given date.
+     *
+     * @param ids a comma-separated list of instance IDs (SQL {@code IN} clause content)
+     * @param before the exclusive upper bound of the entry start date
+     * @return the number of deleted rows
+     */
     public int purgeLogEntry(String ids, Timestamp before){
         return purgeRequest("log_ent", ids, before, false);
     }
 
+    /**
+     * Deletes log entries whose instance no longer exists.
+     *
+     * @return the number of deleted rows
+     */
     public int purgeLogEntry(){
         return purgeRequest("log_ent");
     }
 
+    /**
+     * Builds the stream of {@code VACUUM ANALYZE} actions to run for every trace-related table.
+     *
+     * @return a stream of runnable vacuum actions, one per table
+     */
     public Stream<Runnable> vacuumTables(){
     	return Stream.of(
     		//instance !?

@@ -9,7 +9,8 @@ import org.usf.inspect.core.*;
 import java.time.Instant;
 
 /**
- * 
+ * Provides shared request fields and conversion contracts for request trace models.
+ *
  * @author u$f
  *
  */

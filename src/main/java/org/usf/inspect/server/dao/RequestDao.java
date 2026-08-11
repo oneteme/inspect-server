@@ -11,6 +11,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Repository providing recursive lookup queries over REST request hierarchies.
+ */
 @Slf4j
 @Repository
 @RequiredArgsConstructor
@@ -18,6 +21,13 @@ public class RequestDao {
 
 	private final JdbcTemplate template;
 
+    /**
+     * Recursively selects the identifiers of all descendant REST requests of the given request/session ID.
+     *
+     * @param id the identifier of the root request/session
+     * @param start the lower bound instant used to enable partition pruning, may be {@code null}
+     * @return the set of descendant IDs, excluding the given {@code id}
+     */
     public Set<String> selectChildsById(String id, Instant start) {
         var query = "with recursive recusive(prnt,chld) as (" +
                 " select null::uuid as prnt, ?::uuid as chld " +

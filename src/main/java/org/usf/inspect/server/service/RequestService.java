@@ -124,6 +124,9 @@ import org.usf.jquery.web.ViewDecorator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Retrieves sessions, requests, and architecture views from stored trace data.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -134,6 +137,12 @@ public class RequestService {
     private final int requestLimit = 300000;
     private final ExecutorService executorService = wrap(virtualThreadExecutor("inspect-tree", 10));
 
+    /**
+     * Retrieves the main session tree rooted at the specified session identifier.
+     *
+     * @param id the root main session identifier
+     * @return the populated main session tree
+     */
     public Session getMainTree(String id)  {
         var session = requireSingle(getMainSessions(Collections.singletonList(id)));
         if(session != null) {
@@ -143,6 +152,12 @@ public class RequestService {
         throw new NoSuchElementException("no main session found");
     }
 
+    /**
+     * Retrieves the REST session tree rooted at the specified session identifier.
+     *
+     * @param id the root REST session identifier
+     * @return the populated REST session tree
+     */
     public Session getRestTree(String id)  {
         var session = requireSingle(getRestSessions(Collections.singletonList(id),null));
         if(session != null) {
@@ -152,6 +167,14 @@ public class RequestService {
         throw new NoSuchElementException("no rest session found");
     }
 
+    /**
+     * Builds the application architecture observed within the given time range and environments.
+     *
+     * @param start the inclusive lower bound of the time range
+     * @param end the exclusive upper bound of the time range
+     * @param env the environments to include
+     * @return the discovered architecture entries
+     */
     public List<Architecture> createArchitecture(Instant start, Instant end, String[] env){
         var v = new QueryComposer()
                 .columns(getColumns(INSTANCE, APP_NAME))
@@ -258,6 +281,13 @@ public class RequestService {
         });
     }
 
+    /**
+     * Resolves the parent session identifier and type for the given child request.
+     *
+     * @param tableType the request type that owns the child identifier
+     * @param childId the child request identifier
+     * @return a map containing the parent session identifier and type, or an empty map if none is found
+     */
     public Map<String, String> getSessionParent(RequestType tableType, String childId){
         var prnt = getPropertyByFilters(tableType.getTable(), PARENT, column(tableType.getId()).eq(fromString(childId)));
         if(prnt != null){
@@ -275,6 +305,12 @@ public class RequestService {
     }
 
 
+    /**
+     * Populates the given parent session with its child sessions and related requests.
+     *
+     * @param ids the child session identifiers to resolve
+     * @param parent the parent session to enrich
+     */
     public void updateSessionsForTree(Collection<String> ids, Session parent)  {
         var start = parent.getStart();
         var sessions = Utils.isEmpty(ids) ? new ArrayList<Session>() : getRestSessions(ids, start);
@@ -309,6 +345,10 @@ public class RequestService {
     }
 
     /**
+     * Retrieves REST sessions matching the provided search filter.
+     *
+     * @param jsf the search filter to apply
+     * @return the matching REST sessions
      * @deprecated
      */
     @Deprecated
@@ -333,6 +373,12 @@ public class RequestService {
         return INSPECT.execute(v, restSessionShallowMapper());
     }
 
+    /**
+     * Counts REST sessions matching the provided search filter.
+     *
+     * @param jsf the search filter to apply
+     * @return the number of matching REST sessions
+     */
     public int getRestSessionCountForSearch(JqueryRequestSessionFilter jsf) {
 
         var v = new QueryComposer()
@@ -349,6 +395,13 @@ public class RequestService {
         });
     }
 
+    /**
+     * Retrieves REST sessions for the given identifiers, optionally filtered by start time.
+     *
+     * @param ids the REST session identifiers to load
+     * @param start the optional minimum session start time
+     * @return the matching REST sessions
+     */
     public List<Session> getRestSessions(Collection<String> ids, Instant start)  { // remove if possible after optimizing tree
         if (ids.isEmpty()) {
             return new ArrayList<>();
@@ -421,6 +474,10 @@ public class RequestService {
         });
     }
     /**
+     * Retrieves main sessions matching the provided search filter.
+     *
+     * @param jsf the search filter to apply
+     * @return the matching main sessions
      * @deprecated
      */
     @Deprecated
@@ -445,6 +502,12 @@ public class RequestService {
         return INSPECT.execute(v, mainSessionForSearchMapper());
     }
 
+    /**
+     * Counts main sessions matching the provided search filter.
+     *
+     * @param jsf the search filter to apply
+     * @return the number of matching main sessions
+     */
     public int getMainSessionCountForSearch(JqueryMainSessionFilter jsf) {
         var v = new QueryComposer()
                 .columns(MAIN_SESSION.column(INSTANCE_ENV).count().as("count"));
@@ -460,6 +523,12 @@ public class RequestService {
         });
     }
 
+    /**
+     * Retrieves main sessions for the given identifiers.
+     *
+     * @param ids the main session identifiers to load
+     * @return the matching main sessions
+     */
     public List<Session> getMainSessions(List<String> ids) {
         var v = new QueryComposer()
                 .columns(
@@ -512,6 +581,13 @@ public class RequestService {
         });
     }
 
+    /**
+     * Retrieves complete REST requests for the specified parent sessions.
+     *
+     * @param cdSession the parent session identifiers
+     * @param start the optional minimum request start time
+     * @return the matching complete REST requests
+     */
     public List<RestRequestWrapper> getRestRequestsCompleteForParent(Collection<String> cdSession, Instant start)  {
         var idFilter = column("cd_prn_ses").in(cdSession.stream().map(UUID::fromString).toArray());
         if (start != null) {
@@ -572,6 +648,12 @@ public class RequestService {
         });
     }
 
+    /**
+     * Retrieves REST requests matching the provided session filter.
+     *
+     * @param jsf the filter to apply to REST requests
+     * @return the matching REST requests
+     */
     public List<RestRequestDto> getRestRequests(JqueryRequestSessionFilter jsf)  {
         var filters = jsf.filters(REST_REQUEST).toArray(DBFilter[]::new);
         var count = getRequestCountByTable(REST_REQUEST, filters);
@@ -612,14 +694,34 @@ public class RequestService {
         });
     }
 
+    /**
+     * Retrieves complete database requests for the specified parent sessions.
+     *
+     * @param cdSession the parent session identifiers
+     * @param start the optional minimum request start time
+     * @return the matching complete database requests
+     */
     public List<DatabaseRequestWrapper> getDatabaseRequestsComplete(Collection<String> cdSession, Instant start)  {
         return getDatabaseRequestsComplete(column("cd_prn_ses").in(cdSession.stream().map(UUID::fromString).toArray()), start);
     }
 
+    /**
+     * Retrieves complete database requests for the specified parent session.
+     *
+     * @param cdSession the parent session identifier
+     * @param start the optional minimum request start time
+     * @return the matching complete database requests
+     */
     public List<DatabaseRequestWrapper> getDatabaseRequestsComplete(String cdSession, Instant start)  {
         return getDatabaseRequestsComplete(column("cd_prn_ses").eq(fromString(cdSession)), start);
     }
 
+    /**
+     * Retrieves database requests matching the provided filter.
+     *
+     * @param jsf the filter to apply to database requests
+     * @return the matching database requests
+     */
     public List<DatabaseRequestDto> getDatabaseRequests(JqueryRequestFilter jsf)  {
         var filters = jsf.filters(DATABASE_REQUEST).toArray(DBFilter[]::new);
         var count = getRequestCountByTable(DATABASE_REQUEST, filters);
@@ -697,14 +799,34 @@ public class RequestService {
         });
     }
 
+    /**
+     * Retrieves complete FTP requests for the specified parent sessions.
+     *
+     * @param cdSession the parent session identifiers
+     * @param start the optional minimum request start time
+     * @return the matching complete FTP requests
+     */
     public List<FtpRequestWrapper> getFtpRequestsComplete(Collection<String> cdSession, Instant start)  {
         return getFtpRequestsComplete(column("cd_prn_ses").in(cdSession.stream().map(UUID::fromString).toArray()), start);
     }
 
+    /**
+     * Retrieves complete FTP requests for the specified parent session.
+     *
+     * @param cdSession the parent session identifier
+     * @param start the optional minimum request start time
+     * @return the matching complete FTP requests
+     */
     public List<FtpRequestWrapper> getFtpRequestsComplete(String cdSession, Instant start) {
         return getFtpRequestsComplete(column("cd_prn_ses").eq(fromString(cdSession)), start);
     }
 
+    /**
+     * Retrieves FTP requests matching the provided filter.
+     *
+     * @param jsf the filter to apply to FTP requests
+     * @return the matching FTP requests
+     */
     public List<FtpRequestDto> getFtpRequests(JqueryRequestFilter jsf)  {
         var filters = jsf.filters(FTP_REQUEST).toArray(DBFilter[]::new);
         var count = getRequestCountByTable(FTP_REQUEST, filters);
@@ -778,14 +900,34 @@ public class RequestService {
         });
     }
 
+    /**
+     * Retrieves complete SMTP requests for the specified parent sessions.
+     *
+     * @param cdSession the parent session identifiers
+     * @param start the optional minimum request start time
+     * @return the matching complete SMTP requests
+     */
     public List<MailRequestWrapper> getSmtpRequestsComplete(Collection<String> cdSession, Instant start) {
         return getSmtpRequestsComplete(column("cd_prn_ses").in(cdSession.stream().map(UUID::fromString).toArray()), start);
     }
 
+    /**
+     * Retrieves complete SMTP requests for the specified parent session.
+     *
+     * @param cdSession the parent session identifier
+     * @param start the optional minimum request start time
+     * @return the matching complete SMTP requests
+     */
     public List<MailRequestWrapper> getSmtpRequestsComplete(String cdSession, Instant start) {
         return getSmtpRequestsComplete(column("cd_prn_ses").eq(fromString(cdSession)), start);
     }
 
+    /**
+     * Retrieves SMTP requests matching the provided filter.
+     *
+     * @param jsf the filter to apply to SMTP requests
+     * @return the matching SMTP requests
+     */
     public List<MailRequestDto> getSmtpRequestsByFilter(JqueryRequestFilter jsf)  {
         var filters = jsf.filters(SMTP_REQUEST).toArray(DBFilter[]::new);
         var count = getRequestCountByTable(SMTP_REQUEST, filters);
@@ -854,14 +996,34 @@ public class RequestService {
         });
     }
 
+    /**
+     * Retrieves complete LDAP requests for the specified parent sessions.
+     *
+     * @param cdSession the parent session identifiers
+     * @param start the optional minimum request start time
+     * @return the matching complete LDAP requests
+     */
     public List<DirectoryRequestWrapper> getLdapRequestsComplete(Collection<String> cdSession, Instant start)  {
         return getLdapRequestsComplete(column("cd_prn_ses").in(cdSession.stream().map(UUID::fromString).toArray()), start);
     }
 
+    /**
+     * Retrieves complete LDAP requests for the specified parent session.
+     *
+     * @param cdSession the parent session identifier
+     * @param start the optional minimum request start time
+     * @return the matching complete LDAP requests
+     */
     public List<DirectoryRequestWrapper> getLdapRequestsComplete(String cdSession, Instant start)  {
         return getLdapRequestsComplete(column("cd_prn_ses").eq(fromString(cdSession)), start);
     }
 
+    /**
+     * Retrieves LDAP requests matching the provided filter.
+     *
+     * @param jsf the filter to apply to LDAP requests
+     * @return the matching LDAP requests
+     */
     public List<DirectoryRequestDto> getLdapRequestsByFilter(JqueryRequestFilter jsf)  {
         var filters = jsf.filters(LDAP_REQUEST).toArray(DBFilter[]::new);
         var count = getRequestCountByTable(LDAP_REQUEST, filters);
@@ -932,6 +1094,15 @@ public class RequestService {
         });
     }
 
+    /**
+     * Retrieves the distinct request hosts for the specified table, environment, and time range.
+     *
+     * @param requestTable the request table to query
+     * @param environment the environment to filter on
+     * @param start the inclusive lower bound of the time range
+     * @param end the exclusive upper bound of the time range
+     * @return the distinct request hosts
+     */
     public String[] getRequestHosts(TraceApiTable requestTable, String environment, Instant start, Instant end){
         var v1 = new QueryComposer()
                 .distinct(true)
@@ -944,6 +1115,15 @@ public class RequestService {
         return INSPECT.execute(v1, toArray(rs -> rs.getString(HOST.reference()), String[]::new));
     }
 
+    /**
+     * Retrieves the distinct database schemas used by the specified host in the given environment and time range.
+     *
+     * @param environment the environment to filter on
+     * @param start the inclusive lower bound of the time range
+     * @param end the exclusive upper bound of the time range
+     * @param host the host to filter on
+     * @return the distinct schema names
+     */
     public String[] getRequestSchema( String environment, Instant start, Instant end, String host){
         var v1 = new QueryComposer()
                 .distinct(true)
@@ -958,6 +1138,12 @@ public class RequestService {
 
 
 
+    /**
+     * Retrieves the start time of the session identified by the given parent identifier.
+     *
+     * @param parent the session identifier to resolve
+     * @return the session start time, or {@code null} if not found
+     */
     public Instant getSessionStartByIds(String parent) {
         var filter = column("id_ses").eq(fromString(parent));
         Instant start = getSessionStartByFilter(REST_SESSION, filter);
@@ -998,6 +1184,14 @@ public class RequestService {
                 .orElse(null);
     }
 
+    /**
+     * Converts a comma-separated string into a list of matching enum constants.
+     *
+     * @param <T> the enum type
+     * @param classe the enum class to resolve values against
+     * @param values the comma-separated enum names
+     * @return the matching enum constants
+     */
     public static <T extends Enum<T>> List<T> valueOfNullabletoEnumList(Class<T> classe, String values){
         return Stream.of(splitNullable(values))
                 .map(v-> valueOfNullable(classe, v))

@@ -44,6 +44,10 @@ import static org.usf.inspect.server.config.TraceApiDatabase.INSPECT;
 import static org.usf.inspect.server.config.TraceApiTable.*;
 import static org.usf.jquery.core.DBColumn.*;
 
+/**
+ * Legacy (v3) REST controller exposing read/query endpoints over inspect trace data:
+ * instances, sessions, requests, request/session stages, exceptions, user actions and architecture views.
+ */
 @Slf4j
 @CrossOrigin
 @Validated
@@ -55,6 +59,13 @@ public class RequestController {
     private final RequestService requestService;
     private final ObjectMapper mapper;
 
+    /**
+     * Retrieves the environment of a single instance.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idInstance the instance ID to fetch
+     * @return the matching instance environment, cached for one hour
+     */
     @GetMapping(value = "instance/{idInstance}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<InstanceEnvironment> getInstance(
        @QueryRequestFilter(view = "instance",
@@ -66,6 +77,13 @@ public class RequestController {
     }
 
     // New
+    /**
+     * Retrieves the collector traces of a single instance.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idInstance the instance ID to fetch traces for
+     * @return the list of instance traces
+     */
     @GetMapping(value = "instance/{idInstance}/trace", produces = APPLICATION_JSON_VALUE)
     public List<InstanceTrace> getInstanceTraces(
             @QueryRequestFilter(view = "instance_trace",
@@ -74,6 +92,13 @@ public class RequestController {
         return INSPECT.execute(request.filters(column("cd_ins").eq(fromString(idInstance))), InspectMappers.instanceTraceMapper());
     }
 
+    /**
+     * Retrieves the machine resource usage history of a single instance.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idInstance the instance ID to fetch resource usages for
+     * @return the list of resource usage measurements
+     */
     @GetMapping(value = "instance/{idInstance}/resource/usage", produces = APPLICATION_JSON_VALUE)
     public List<MachineResourceUsage> getInstanceResourceUsages(
             @QueryRequestFilter(view = "resource_usage",
@@ -82,6 +107,13 @@ public class RequestController {
         return INSPECT.execute(request.filters(column("cd_ins").eq(fromString(idInstance))), InspectMappers.instanceResourceUsageMapper());
     }
 
+    /**
+     * Retrieves the log entries of a single instance, ordered by start date.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idInstance the instance ID to fetch log entries for
+     * @return the list of log entries
+     */
     @GetMapping(value = "instance/{idInstance}/log/entry", produces = APPLICATION_JSON_VALUE)
     public List<LogEntry> getLogEntries(
             @QueryRequestFilter(view = "log_entry",
@@ -90,6 +122,16 @@ public class RequestController {
         return INSPECT.execute(request.filters(column("cd_ins").eq(fromString(idInstance))), InspectMappers.instanceLogEntryMapper(mapper));
     }
 
+    /**
+     * Retrieves the distinct hosts contacted by requests of the given type within the given environment and period.
+     *
+     * @param type the request type (matching a {@link RequestType} name)
+     * @param environment the environment to search into
+     * @param start the lower bound (inclusive) of the request period
+     * @param end the upper bound (inclusive) of the request period
+     * @return the distinct list of hosts
+     * @throws IllegalArgumentException if {@code type} does not match a known {@link RequestType}
+     */
     @GetMapping(value = "request/{type}/hosts", produces = APPLICATION_JSON_VALUE)
     public String[] getRequestHosts(
             @PathVariable String type,
@@ -104,6 +146,15 @@ public class RequestController {
         }
         return requestService.getRequestHosts(requestTable, environment, start, end);
     }
+    /**
+     * Retrieves the distinct database schemas used by JDBC requests for the given host, environment and period.
+     *
+     * @param host the database host to search into
+     * @param environment the environment to search into
+     * @param start the lower bound (inclusive) of the request period
+     * @param end the upper bound (inclusive) of the request period
+     * @return the distinct list of schemas
+     */
     @GetMapping(value = "request/jdbc/schema", produces = APPLICATION_JSON_VALUE)
     public String[] getRequestSchema(
             @RequestParam(name = "host") String host,
@@ -113,6 +164,17 @@ public class RequestController {
 
         return requestService.getRequestSchema( environment, start, end, host);
     }
+    /**
+     * Searches REST requests matching the given filters.
+     *
+     * @param environments the environments to filter on, must not be empty if provided
+     * @param hosts the hosts to filter on
+     * @param start the lower bound (inclusive) of the request period
+     * @param end the upper bound (inclusive) of the request period
+     * @param rangestatus the status range codes to filter on
+     * @param lazy whether to load a lightweight (lazy) representation of the requests
+     * @return the list of matching REST requests
+     */
     @GetMapping(value = "request/rest", produces = APPLICATION_JSON_VALUE)
     public List<RestRequestDto> getRestRequests(@RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments,
                                                 @RequestParam(required = false, name = "host") String[] hosts,
@@ -125,6 +187,17 @@ public class RequestController {
         return requestService.getRestRequests(jsf);
     }
 
+    /**
+     * Searches database (JDBC) requests matching the given filters.
+     *
+     * @param environments the environments to filter on, must not be empty if provided
+     * @param hosts the hosts to filter on
+     * @param start the lower bound (inclusive) of the request period
+     * @param end the upper bound (inclusive) of the request period
+     * @param rangestatus the failed/success range flags to filter on
+     * @param lazy whether to load a lightweight (lazy) representation of the requests
+     * @return the list of matching database requests
+     */
     @GetMapping(value = "request/database", produces = APPLICATION_JSON_VALUE)
     public List<DatabaseRequestDto> getDatabaseRequestForSearch(@RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments,
                                                                 @RequestParam(required = false, name = "host") String[] hosts,
@@ -137,6 +210,17 @@ public class RequestController {
         return requestService.getDatabaseRequests(jsf);
     }
 
+    /**
+     * Searches FTP requests matching the given filters.
+     *
+     * @param environments the environments to filter on, must not be empty if provided
+     * @param hosts the hosts to filter on
+     * @param start the lower bound (inclusive) of the request period
+     * @param end the upper bound (inclusive) of the request period
+     * @param rangestatus the failed/success range flags to filter on
+     * @param lazy whether to load a lightweight (lazy) representation of the requests
+     * @return the list of matching FTP requests
+     */
     @GetMapping(value = "request/ftp", produces = APPLICATION_JSON_VALUE)
     public List<FtpRequestDto> getFtpRequestForSearch(@RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments,
                                                       @RequestParam(required = false, name = "host") String[] hosts,
@@ -149,6 +233,17 @@ public class RequestController {
         return requestService.getFtpRequests(jsf);
     }
 
+    /**
+     * Searches SMTP requests matching the given filters.
+     *
+     * @param environments the environments to filter on, must not be empty if provided
+     * @param hosts the hosts to filter on
+     * @param start the lower bound (inclusive) of the request period
+     * @param end the upper bound (inclusive) of the request period
+     * @param rangestatus the failed/success range flags to filter on
+     * @param lazy whether to load a lightweight (lazy) representation of the requests
+     * @return the list of matching SMTP requests
+     */
     @GetMapping(value = "request/smtp", produces = APPLICATION_JSON_VALUE)
     public List<MailRequestDto> getSmtpRequestForSearch(@RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments,
                                                         @RequestParam(required = false, name = "host") String[] hosts,
@@ -161,6 +256,17 @@ public class RequestController {
         return requestService.getSmtpRequestsByFilter(jsf);
     }
 
+    /**
+     * Searches LDAP requests matching the given filters.
+     *
+     * @param environments the environments to filter on, must not be empty if provided
+     * @param hosts the hosts to filter on
+     * @param start the lower bound (inclusive) of the request period
+     * @param end the upper bound (inclusive) of the request period
+     * @param rangestatus the failed/success range flags to filter on
+     * @param lazy whether to load a lightweight (lazy) representation of the requests
+     * @return the list of matching LDAP requests
+     */
     @GetMapping(value = "request/ldap", produces = APPLICATION_JSON_VALUE)
     public List<DirectoryRequestDto> getLdapRequestForSearch(@RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments,
                                                              @RequestParam(required = false, name = "host") String[] hosts,
@@ -173,6 +279,13 @@ public class RequestController {
         return requestService.getLdapRequestsByFilter(jsf);
     }
 
+    /**
+     * Retrieves the log entries of a single session, ordered by start date.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param sessionId the session ID to fetch log entries for
+     * @return the list of log entries
+     */
     @GetMapping(value = "session/{sessionId}/log/entry", produces = APPLICATION_JSON_VALUE)
     public List<LogEntry> getLogEntriesBySessionId(
             @QueryRequestFilter(view = "log_entry",
@@ -183,6 +296,28 @@ public class RequestController {
 
 
 
+    /**
+     * Searches REST sessions matching the given filters.
+     *
+     * @param methods the HTTP methods to filter on
+     * @param protocols the protocols to filter on
+     * @param hosts the hosts to filter on
+     * @param ports the ports to filter on
+     * @param path the request path to filter on
+     * @param query the request query string to filter on
+     * @param medias the content types to filter on
+     * @param auths the authentication schemes to filter on
+     * @param status the HTTP status codes to filter on
+     * @param start the lower bound (inclusive) of the session period
+     * @param end the upper bound (inclusive) of the session period
+     * @param apiNames the API names to filter on
+     * @param users the users to filter on
+     * @param appNames the application names to filter on
+     * @param environments the environments to filter on, must not be empty if provided
+     * @param rangestatus the status range codes to filter on
+     * @param lazy whether to load a lightweight (lazy) representation of the sessions
+     * @return the list of matching REST sessions
+     */
     @GetMapping(value = "session/rest", produces = APPLICATION_JSON_VALUE)
     public List<RestSessionDto> getRestSessions(
             @RequestParam(required = false, name = "method") String[] methods,
@@ -208,6 +343,13 @@ public class RequestController {
         return requestService.getRestSessionsForSearch(jsf);
     }
 
+    /**
+     * Retrieves the REST sessions ("pulse" summary) of a single instance.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param id the instance ID to fetch sessions for
+     * @return the list of REST sessions
+     */
     @GetMapping(value = "instance/{id}/session/rest", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<RestSession>> getRestSessionsByInstance(
             @QueryRequestFilter(
@@ -219,6 +361,13 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_ins").eq(fromString(id))), InspectMappers.restSessionPulseRowMapper()));
     }
 
+    /**
+     * Retrieves the main sessions ("pulse" summary) of a single instance.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param id the instance ID to fetch sessions for
+     * @return the list of main sessions
+     */
     @GetMapping(value = "instance/{id}/session/main", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<MainSession>> getMainSessionsByInstance(
             @QueryRequestFilter(
@@ -230,6 +379,14 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_ins").eq(fromString(id))), InspectMappers.mainSessionPulseRowMapper()));
     }
 
+    /**
+     * Retrieves the full details of a single REST session.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idSession the session ID to fetch
+     * @return {@code 200 OK} with the session, or {@code 404 NOT_FOUND} if it does not exist
+     * @throws SQLException if the underlying query fails
+     */
     @GetMapping(value = "session/rest/{idSession}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<RestSession> getRestSession(
             @QueryRequestFilter(view = "rest_session",
@@ -240,6 +397,13 @@ public class RequestController {
                 .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null));
     }
 
+    /**
+     * Retrieves the stages of a single REST session.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idSession the session ID to fetch stages for
+     * @return the list of session stages, ordered by their execution order
+     */
     @GetMapping(value = "session/rest/{idSession}/stage", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<HttpSessionStage>> getRestSessionStages (
             @QueryRequestFilter(view = "rest_session_stage",
@@ -249,6 +413,14 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.restSessionStageMapper()));
     }
 
+    /**
+     * Retrieves the parent session/request identifiers of a given request or session.
+     *
+     * @param type the request type (matching a {@link RequestType} name)
+     * @param id the identifier of the request/session to find the parent chain for
+     * @return {@code 200 OK} with a map of type to parent ID, or {@code 404 NOT_FOUND} if no parent was found
+     * @throws IllegalArgumentException if {@code type} does not match a known {@link RequestType}
+     */
     @GetMapping(value = "{type}/{id}/parent", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, String>> getSessionParent(
             @PathVariable String type,
@@ -266,6 +438,12 @@ public class RequestController {
                 .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null));
     }
 
+    /**
+     * Retrieves the full main session tree (session, requests and stages) for the given session ID.
+     *
+     * @param id the main session ID, must be a valid UUID
+     * @return {@code 200 OK} with the tree, cached for a day if completed, or {@code 404 NOT_FOUND} if not found
+     */
     @GetMapping(value = "session/main/{id}/tree", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Session> getMainTree(@PathVariable @Validate(Condition.UUID) String id)  {
         try {
@@ -276,6 +454,12 @@ public class RequestController {
         }
     }
 
+    /**
+     * Retrieves the full REST session tree (session, requests and stages) for the given session ID.
+     *
+     * @param id the REST session ID, must be a valid UUID
+     * @return {@code 200 OK} with the tree, cached for a day if completed, or {@code 404 NOT_FOUND} if not found
+     */
     @GetMapping(value = "session/rest/{id}/tree", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Session> getRestTree(@PathVariable @Validate(Condition.UUID) String id)  {
         try {
@@ -286,6 +470,21 @@ public class RequestController {
         }
     }
 
+    /**
+     * Searches main sessions matching the given filters.
+     *
+     * @param environments the environments to filter on, must not be empty if provided
+     * @param names the session names to filter on
+     * @param launchModes the launch modes/types to filter on
+     * @param location the location to filter on
+     * @param start the lower bound (inclusive) of the session period
+     * @param end the upper bound (inclusive) of the session period
+     * @param users the users to filter on
+     * @param appNames the application names to filter on
+     * @param failed the failed/success flags to filter on
+     * @param lazy whether to load a lightweight (lazy) representation of the sessions
+     * @return the list of matching main sessions
+     */
     @GetMapping(value = "session/main", produces = APPLICATION_JSON_VALUE) // can't optimise, done
     public List<MainSessionDto> getMainSessions(
             @RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments,
@@ -304,6 +503,14 @@ public class RequestController {
         return requestService.getMainSessionsForSearch(fc);
     }
 
+    /**
+     * Retrieves the full details of a single main session.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idSession the session ID to fetch
+     * @return {@code 200 OK} with the session, or {@code 404 NOT_FOUND} if it does not exist
+     * @throws SQLException if the underlying query fails
+     */
     @GetMapping(value = "session/main/{idSession}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<MainSession> getMainSession(
             @QueryRequestFilter(
@@ -315,6 +522,13 @@ public class RequestController {
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
+    /**
+     * Retrieves the REST requests of a single session, ordered by start date.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idSession the session ID to fetch requests for
+     * @return the list of REST requests belonging to the session
+     */
     @GetMapping(value = "session/{idSession}/request/rest", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<RestRequestDto>>  getRestRequests(
             @QueryRequestFilter(
@@ -326,6 +540,13 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.restRequestLazyMapper()));
     }
 
+    /**
+     * Retrieves the exception details for the given list of request IDs.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idRequestList the request IDs to fetch exceptions for
+     * @return a map of parent request ID to its exception information
+     */
     @GetMapping(value = "session/request/exception", produces = APPLICATION_JSON_VALUE) // need to add exception type to front call
     public ResponseEntity<Map<Long, ExceptionInfo>> getRequestExceptions(
             @QueryRequestFilter(
@@ -336,6 +557,13 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_rqt").in(Arrays.stream(idRequestList).map(UUID::fromString).toArray())), InspectMappers::exceptionInfoMapper));
     }
 
+    /**
+     * Retrieves the local (in-process) requests of a single session, ordered by start date.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idSession the session ID to fetch requests for
+     * @return the list of local requests belonging to the session
+     */
     @GetMapping(value = "session/{idSession}/request/local", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<LocalRequest>> getLocalRequests(
             @QueryRequestFilter(
@@ -346,6 +574,13 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.localRequestMapper()));
     }
 
+    /**
+     * Retrieves the database requests of a single session, ordered by start date.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idSession the session ID to fetch requests for
+     * @return the list of database requests belonging to the session
+     */
     @GetMapping(value = "session/{idSession}/request/database", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<DatabaseRequestDto>> getDatabaseRequests(
             @QueryRequestFilter(
@@ -357,6 +592,13 @@ public class RequestController {
     }
 
 
+    /**
+     * Retrieves the full details of a single REST request.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idRequest the request ID to fetch
+     * @return {@code 200 OK} with the request (cached for 30 days if old enough), or {@code 404 NOT_FOUND} if not found
+     */
     @GetMapping(value = "request/rest/{idRequest}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<RestRequest> getRestRequest (
             @QueryRequestFilter(view = "rest_request",
@@ -371,6 +613,13 @@ public class RequestController {
                 .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null));
     }
 
+    /**
+     * Retrieves the stages of a single REST request.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idRequest the request ID to fetch stages for
+     * @return the list of request stages, ordered by their execution order
+     */
     @GetMapping(value = "request/rest/{idRequest}/stage", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<HttpRequestStage>> getRestRequestStages (
             @QueryRequestFilter(view = "rest_request_stage",
@@ -381,6 +630,13 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_rst_rqt").eq(fromString(idRequest))), InspectMappers.restRequestStageMapper(mapper)));
     }
 
+    /**
+     * Retrieves the full details of a single database request.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idDatabase the request ID to fetch
+     * @return {@code 200 OK} with the request (cached for 30 days if old enough), or {@code 404 NOT_FOUND} if not found
+     */
     @GetMapping(value = "request/database/{idDatabase}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<DatabaseRequest> getDatabaseRequest(
             @QueryRequestFilter(
@@ -395,6 +651,13 @@ public class RequestController {
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
+    /**
+     * Retrieves the stages of a single database request.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idDatabase the request ID to fetch stages for
+     * @return the list of request stages, ordered by their execution order
+     */
     @GetMapping(value = "request/database/{idDatabase}/stage", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<DatabaseRequestStage>> getDatabaseRequestStages(
             @QueryRequestFilter(
@@ -405,6 +668,13 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_dtb_rqt").eq(fromString(idDatabase))), InspectMappers.databaseRequestStageMapper(mapper)));
     }
 
+    /**
+     * Computes the number of database action stages per parent request, for the given list of request IDs.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idDatabaseList the request IDs to compute stage counts for
+     * @return a map of parent request ID to its action stage count
+     */
     @GetMapping(value = "session/request/database/stages/count", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, Integer>> getDatabaseRequestStagesCount(
             @QueryRequestFilter(
@@ -421,6 +691,13 @@ public class RequestController {
         }));
     }
 
+    /**
+     * Retrieves the FTP requests of a single session, ordered by start date.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idSession the session ID to fetch requests for
+     * @return the list of FTP requests belonging to the session
+     */
     @GetMapping(value = "session/{idSession}/request/ftp", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<FtpRequestDto>> getFtpRequests(
             @QueryRequestFilter(
@@ -432,6 +709,13 @@ public class RequestController {
         return  ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.ftpRequestLazyMapper()));
     }
 
+    /**
+     * Retrieves the full details of a single FTP request.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idFtp the request ID to fetch
+     * @return {@code 200 OK} with the request (cached for 30 days if old enough), or {@code 404 NOT_FOUND} if not found
+     */
     @GetMapping(value = "request/ftp/{idFtp}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<FtpRequest> getFtpRequest(
             @QueryRequestFilter(
@@ -447,6 +731,13 @@ public class RequestController {
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
+    /**
+     * Retrieves the stages of a single FTP request.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idFtp the request ID to fetch stages for
+     * @return the list of request stages, ordered by their execution order
+     */
     @GetMapping(value = "request/ftp/{idFtp}/stage", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<FtpRequestStage>> getFtpRequestStages(
             @QueryRequestFilter(
@@ -457,6 +748,14 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_ftp_rqt").eq(fromString(idFtp))), InspectMappers.ftpRequestStageMapper(mapper)));
     }
 
+    /**
+     * Retrieves, for the given list of FTP request IDs, the distinct stage names per parent request
+     * (excluding CONNECTION/DISCONNECTION stages).
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idFtpList the request IDs to fetch stage names for
+     * @return a map of parent request ID to its list of stage names
+     */
     @GetMapping(value = "session/request/ftp/stages", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String,List<String>>> getFtpRequestStages(
             @QueryRequestFilter(
@@ -477,6 +776,13 @@ public class RequestController {
         }));
     }
 
+    /**
+     * Retrieves the SMTP requests of a single session, ordered by start date.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idSession the session ID to fetch requests for
+     * @return the list of SMTP requests belonging to the session
+     */
     @GetMapping(value = "session/{idSession}/request/smtp", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<MailRequestDto>> getSmtpRequests(
             @QueryRequestFilter(
@@ -488,6 +794,13 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.smtpRequestLazyMapper()));
     }
 
+    /**
+     * Retrieves the full details of a single SMTP request.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idSmtp the request ID to fetch
+     * @return {@code 200 OK} with the request (cached for 30 days if old enough), or {@code 404 NOT_FOUND} if not found
+     */
     @GetMapping(value = "request/smtp/{idSmtp}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<MailRequest> getSmtpRequest(
             @QueryRequestFilter(
@@ -503,6 +816,13 @@ public class RequestController {
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
+    /**
+     * Retrieves the stages of a single SMTP request.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idSmtp the request ID to fetch stages for
+     * @return the list of request stages, ordered by their execution order
+     */
     @GetMapping(value = "request/smtp/{idSmtp}/stage", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<MailRequestStage>> getSmtpRequestStages(
             @QueryRequestFilter(
@@ -513,6 +833,13 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_smtp_rqt").eq(fromString(idSmtp))), InspectMappers.mailRequestStageMapper(mapper)));
     }
 
+    /**
+     * Retrieves the mail contents (subject, from, recipients, etc.) sent by a single SMTP request.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idSmtp the request ID to fetch mails for
+     * @return the list of mails sent by the request
+     */
     @GetMapping(value = "request/smtp/{idSmtp}/mail", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<Mail>> getSmtpRequestMails(
             @QueryRequestFilter(
@@ -521,6 +848,14 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_smtp_rqt").eq(fromString(idSmtp))), InspectMappers.mailMapper()));
     }
 
+    /**
+     * Retrieves, for the given list of SMTP request IDs, the distinct stage names per parent request
+     * (excluding CONNECTION/DISCONNECTION stages).
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idSmtpList the request IDs to fetch stage names for
+     * @return a map of parent request ID to its list of stage names
+     */
     @GetMapping(value = "session/request/smtp/stages", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, List<String>>> getSmtpRequestStages(
             @QueryRequestFilter(
@@ -540,6 +875,13 @@ public class RequestController {
         }));
     }
 
+    /**
+     * Computes the number of mails sent per parent SMTP request, for the given list of request IDs.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idSmtpList the request IDs to compute mail counts for
+     * @return a map of parent request ID to its mail count
+     */
     @GetMapping(value = "session/request/smtp/stages/count", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, Integer>> getSmtpRequestStagesRowCount(
             @QueryRequestFilter(
@@ -557,6 +899,13 @@ public class RequestController {
     }
 
 
+    /**
+     * Retrieves the LDAP requests of a single session, ordered by start date.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idSession the session ID to fetch requests for
+     * @return the list of LDAP requests belonging to the session
+     */
     @GetMapping(value = "session/{idSession}/request/ldap", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<DirectoryRequestDto>> getLdapRequests(
             @QueryRequestFilter(
@@ -568,6 +917,13 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.ldapRequestLazyMapper()));
     }
 
+    /**
+     * Retrieves the full details of a single LDAP request.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idLdap the request ID to fetch
+     * @return {@code 200 OK} with the request (cached for 30 days if old enough), or {@code 404 NOT_FOUND} if not found
+     */
     @GetMapping(value = "request/ldap/{idLdap}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<DirectoryRequest> getLdapRequest(
             @QueryRequestFilter(
@@ -584,6 +940,13 @@ public class RequestController {
     }
 
 
+    /**
+     * Retrieves the stages of a single LDAP request.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idLdap the request ID to fetch stages for
+     * @return the list of request stages, ordered by their execution order
+     */
     @GetMapping(value = "request/ldap/{idLdap}/stage", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<DirectoryRequestStage>> getLdapRequestStages(
             @QueryRequestFilter(
@@ -594,6 +957,14 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_ldap_rqt").eq(fromString(idLdap))), InspectMappers.ldapRequestStageMapper(mapper)));
     }
 
+    /**
+     * Retrieves, for the given list of LDAP request IDs, the distinct stage names per parent request
+     * (excluding CONNECTION/DISCONNECTION stages).
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idFtpList the request IDs to fetch stage names for
+     * @return a map of parent request ID to its list of stage names
+     */
     @GetMapping(value = "session/request/ldap/stages", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, List<String>>> getLdapRequestStages(
             @QueryRequestFilter(
@@ -613,6 +984,13 @@ public class RequestController {
         }));
     }
 
+    /**
+     * Retrieves the user actions recorded within a single session, ordered by start date.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param idSession the session ID to fetch user actions for
+     * @return the list of user actions
+     */
     @GetMapping(value = "session/{idSession}/user/action", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<UserAction>> getUserActions(
             @QueryRequestFilter(
@@ -623,6 +1001,14 @@ public class RequestController {
         return ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.userActionMapper()));
     }
 
+    /**
+     * Retrieves, for a single user, all main sessions and their user actions started on or after the given date.
+     *
+     * @param request the dynamic query built from the requested columns
+     * @param user the user to fetch sessions and actions for
+     * @param date the lower bound (inclusive) of the session start date
+     * @return the list of sessions with their nested user actions
+     */
     @GetMapping(value = "session/user/{user}/action", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<AnalyticDto>> getUserActions(
             @QueryRequestFilter(
@@ -667,6 +1053,14 @@ public class RequestController {
         }));
     }
 
+    /**
+     * Builds the application architecture graph (instances and their connections) over the given period.
+     *
+     * @param start the lower bound (inclusive) of the period, may be {@code null}
+     * @param end the upper bound (inclusive) of the period, may be {@code null}
+     * @param environments the environments to filter on, must not be empty if provided
+     * @return {@code 200 OK} with the architecture, cached for a day if the period ends in the past
+     */
     @GetMapping(value = "architecture", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<Architecture>> getArchitecture(
             @RequestParam(required = false, name = "start") @Validate(Condition.INSTANT) Instant start,

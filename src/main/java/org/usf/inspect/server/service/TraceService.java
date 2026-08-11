@@ -23,6 +23,9 @@ import static org.usf.inspect.server.Utils.assertUUID;
 import static org.usf.inspect.server.model.TraceBatchResolver.resolve;
 import static org.usf.inspect.server.service.TracePersistenceService.filterAndApply;
 
+/**
+ * Coordinates trace enrichment and dispatching for incoming trace batches.
+ */
 @Slf4j
 @Service
 public class TraceService implements ApplicationListener<UnsavedEventTraceEvent> {
@@ -35,10 +38,27 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
         this.mapper = mapper;
     }
 
+    /**
+     * Dispatches the provided instance environment to the configured dispatcher.
+     *
+     * @param instance the instance environment to add
+     * @return {@code true} if the instance was accepted by the dispatcher
+     */
     public boolean addInstance(InstanceEnvironment instance) {
         return dispatcher.dispatch(instance);
     }
 
+    /**
+     * Enriches the given traces with instance metadata and emits them through the dispatcher.
+     *
+     * @param traces the traces to enrich and dispatch
+     * @param id the instance identifier associated with the traces
+     * @param attempts the number of attempts recorded for the trace batch
+     * @param filename the source filename of the trace batch
+     * @param end the optional instance end timestamp
+     * @return {@code true} if the traces were emitted successfully
+     * @throws DispatchProcessingException if trace processing or dispatching fails
+     */
     public boolean addTraces(List<EventTrace> traces, String id, Integer attempts, String filename, Instant end) throws DispatchProcessingException {
         var now = now();
         var emitted = false;
@@ -73,19 +93,39 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
         }
     }
 
+    /**
+     * Returns the traces currently queued in the dispatcher.
+     *
+     * @return the queued traces
+     */
     public List<EventTrace> peekQueue() {
         return dispatcher.peek();
     }
 
+    /**
+     * Updates the dispatcher state.
+     *
+     * @param state the new dispatcher state
+     */
     public void updateState(DispatchState state) {
         log.info("update dispatcher state to {}", state);
         dispatcher.setState(state);
     }
 
+    /**
+     * Returns the current dispatcher state.
+     *
+     * @return the current dispatcher state
+     */
     public DispatchState getState() {
         return dispatcher.getState();
     }
 
+    /**
+     * Handles unsaved trace events by retrying dispatch or reporting the failure as a log entry.
+     *
+     * @param event the unsaved trace event to process
+     */
     @Override
     public void onApplicationEvent(UnsavedEventTraceEvent event) {
     	var trace = event.getTrace();

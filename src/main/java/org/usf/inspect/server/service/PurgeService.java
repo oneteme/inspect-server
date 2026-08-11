@@ -28,6 +28,9 @@ import org.usf.inspect.server.dao.PurgeDao;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Purges expired trace data and performs database cleanup tasks.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -40,6 +43,9 @@ public class PurgeService {
 
     private final PurgeDao purgeDao;
 
+    /**
+     * Launches the configured purge workflow for expired trace data.
+     */
     public void launchPurge() {
         log.info("------ Purge start ------");
         RuntimeException error = null;
@@ -157,5 +163,3 @@ public class PurgeService {
         return runnablePurge(action, label, null, null, null);
     }
 }
-
-

@@ -18,11 +18,21 @@ import java.util.stream.LongStream;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+/**
+ * Provides shared helper methods used across the server module.
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class Utils {
 
     private static final Predicate<String> isUUID = compile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$").asPredicate();
 
+    /**
+     * Returns the single element from the collection when exactly one value is present.
+     *
+     * @param c the collection to inspect
+     * @param <T> the element type contained in the collection
+     * @return the single element in the collection, or {@code null} when the collection is empty or {@code null}
+     */
     public static <T> T requireSingle(Collection<T> c){
     	if(isEmpty(c)) {
     		return null;
@@ -33,37 +43,86 @@ public final class Utils {
     	return c.iterator().next();
     }
 
+    /**
+     * Joins the provided values with a comma separator when the array is not {@code null}.
+     *
+     * @param args the values to join
+     * @return the joined string, or {@code null} when the array is {@code null}
+     */
     public static String joinValuesOrNull(String... args) {
         return nonNull(args) ? String.join(", ", args) : null;
     }
 
+    /**
+     * Checks whether the collection is {@code null} or contains no elements.
+     *
+     * @param c the collection to evaluate
+     * @return {@code true} if the collection is {@code null} or empty, otherwise {@code false}
+     */
     public static boolean isEmpty(Collection<?> c) {
     	return isNull(c) || c.isEmpty();
     }
 
+	/**
+	 * Converts a nullable SQL timestamp to an instant.
+	 *
+	 * @param timestamp the timestamp to convert
+	 * @return the corresponding instant, or {@code null} when the timestamp is {@code null}
+	 */
 	public static Instant fromNullableTimestamp(Timestamp timestamp) {
 		return ofNullable(timestamp).map(Timestamp::toInstant).orElse(null);
 	}
 
+	/**
+	 * Converts a nullable instant to a SQL timestamp.
+	 *
+	 * @param instant the instant to convert
+	 * @return the corresponding timestamp, or {@code null} when the instant is {@code null}
+	 */
 	public static Timestamp fromNullableInstant(Instant instant) {
 		return nonNull(instant) ? Timestamp.from(instant) : null;
 	}
 
+	/**
+	 * Returns the string representation of the object when it is not {@code null}.
+	 *
+	 * @param o the object to convert
+	 * @return the object's string representation, or {@code null} when the object is {@code null}
+	 */
 	public static String valueOfNullable(Object o) {// do not use Objects::toString
 		return nonNull(o) ? o.toString() : null;
 	}
 
+	/**
+	 * Converts a nullable array of primitive long values to a comma-separated string.
+	 *
+	 * @param array the array to convert
+	 * @return the comma-separated values, or {@code null} when the array is {@code null}
+	 */
 	public static String  valueOfNullableArray(long[]array){
 		return nonNull(array)
 				? LongStream.of(array).mapToObj(Long::toString).collect(joining(","))
 				: null;
 	}
 
+	/**
+	 * Creates a fixed-size executor backed by virtual threads using the given name prefix.
+	 *
+	 * @param name the prefix to use for created thread names
+	 * @param size the maximum number of concurrent threads
+	 * @return a virtual-thread-based executor service
+	 */
 	public static ExecutorService virtualThreadExecutor(String name, int size) {
 		return newFixedThreadPool(size, ofVirtual().name(name + "-", 0).factory());
 	}
 
 	//TODO declare regex pattern as static final and reuse it
+	/**
+	 * Extracts a simplified user agent description from the raw header value.
+	 *
+	 * @param userAgent the raw user agent string to analyze
+	 * @return a simplified user agent description, or the original value when it cannot be simplified
+	 */
 	public static String userAgentExtract(String userAgent) {
 		if (userAgent == null) return null;
 		try {
@@ -103,6 +162,12 @@ public final class Utils {
 		}
 	}
 
+	/**
+	 * Extracts a normalized short content type label from the raw content type value.
+	 *
+	 * @param contentType the raw content type string to analyze
+	 * @return the normalized content type label, or the original value when it cannot be normalized
+	 */
 	public static String contentTypeExtract(String contentType) {
 		if (nonNull(contentType)) {
 			try {
@@ -132,6 +197,13 @@ public final class Utils {
 		return contentType;
 	}
 
+    /**
+     * Validates that the provided string is a UUID and returns it unchanged when valid.
+     *
+     * @param uuid the value to validate
+     * @param name the logical name of the value used in the error message
+     * @return the validated UUID string
+     */
     public static String assertUUID(String uuid, String name) {
         if (isUUID(uuid)) {
             return uuid;
@@ -139,6 +211,12 @@ public final class Utils {
         throw new IllegalArgumentException(name + " is not a valid UUID: " + uuid);
     }
 
+    /**
+     * Checks whether the provided string matches the expected UUID format.
+     *
+     * @param uuid the value to validate
+     * @return {@code true} if the value is a non-null UUID string, otherwise {@code false}
+     */
     public static boolean isUUID(String uuid) {
         return nonNull(uuid) && isUUID.test(uuid);
     }

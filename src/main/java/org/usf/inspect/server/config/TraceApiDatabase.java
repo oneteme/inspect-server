@@ -3,15 +3,29 @@ package org.usf.inspect.server.config;
 import org.usf.jquery.web.DatabaseDecorator;
 import org.usf.jquery.web.ViewDecorator;
 
+/**
+ * Enumerates the database namespace used by the trace API metadata.
+ */
 public enum TraceApiDatabase implements DatabaseDecorator {
 	
 	INSPECT;
 
+	/**
+	 * Returns the logical identifier of this trace API database.
+	 *
+	 * @return the database identifier
+	 */
 	@Override
 	public String identity() {
 		return "inspect";
 	}
 
+	/**
+	 * Returns the physical view name associated with the provided trace API table.
+	 *
+	 * @param vd the view decorator describing the trace API table
+	 * @return the underlying database view name, or {@code null} when none is defined
+	 */
 	@Override
 	public String viewName(ViewDecorator vd) {
 		return switch ((TraceApiTable) vd) {

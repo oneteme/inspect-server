@@ -19,6 +19,10 @@ import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.usf.inspect.core.DispatchState.DISABLE;
 
+/**
+ * REST controller managing the local trace cache used to import event traces
+ * from a remote inspect server instance or from an uploaded file.
+ */
 @Slf4j
 @CrossOrigin
 @RestController
@@ -35,6 +39,14 @@ public class CacheController {
     @Value("${inspect.server.cache.import.host:}")
 	private String host;
 
+	/**
+	 * Creates the controller and builds the {@link RestTemplate} used to communicate
+	 * with the remote inspect server instance.
+	 *
+	 * @param mapper the JSON object mapper used for (de)serialization
+	 * @param service the persistence service used to save imported traces
+	 * @param builder the builder used to construct the internal {@link RestTemplate}
+	 */
 	public CacheController(ObjectMapper mapper, TracePersistenceService service, RestTemplateBuilder builder) {
 		this.service = service;
 		this.mapper = mapper;
@@ -44,6 +56,14 @@ public class CacheController {
                 .build();
 	}
 
+    /**
+     * Imports the pending event traces cached on the remote instance of the same environment,
+     * disabling its dispatch first, then persists them locally.
+     *
+     * @param env the environment to import from, must match the active profile
+     * @return the number of imported traces
+     * @throws IllegalArgumentException if {@code env} does not match the active profile
+     */
     @PostMapping(value = "{env}/import", produces = APPLICATION_JSON_VALUE)
     public int importTraceable(@PathVariable String env) {
     	if(activeProfile.equals(env) && host != null) {
@@ -61,6 +81,15 @@ public class CacheController {
     	throw new IllegalArgumentException(String.format("mismatch env (actual : %s, expected : %s)", activeProfile, env));
     }
 
+    /**
+     * Imports event traces from an uploaded JSON file and persists them locally.
+     *
+     * @param env the environment the import is performed for, must match the active profile
+     * @param file the multipart file containing a JSON array of {@link EventTrace}
+     * @return the number of imported traces
+     * @throws IllegalArgumentException if {@code env} does not match the active profile or the file is empty
+     * @throws RuntimeException if the file cannot be read
+     */
     @PostMapping(value = "{env}/import/file", produces = APPLICATION_JSON_VALUE)
     public int importTraceableFromFile(@PathVariable String env, @RequestParam("file") MultipartFile file) {
         if(!activeProfile.equals(env)) {
