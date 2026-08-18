@@ -166,63 +166,65 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     @Transactional(rollbackFor = Throwable.class)
     public void savePartialRestSessions(List<HttpSessionSignal> sessions) {
         executeBatch("""
-insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,va_lnk,dh_str,va_nam,va_usr,va_usr_agt,va_msk)
+insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,va_int_nds,va_nam,va_usr,va_usr_agt,va_msk)
 values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
-            restSessionSetter(ps, ses);
-            ps.setString(15, ses.getName());
-            ps.setString(16, ses.getUser());
-            ps.setString(17, userAgentExtract(ses.getUserAgent()));
-            ps.setInt(18, 0);
+            var idx = restSessionSetter(ps, ses);
+            ps.setString(++idx, ses.getName());
+            ps.setString(++idx, ses.getUser());
+            ps.setString(++idx, userAgentExtract(ses.getUserAgent()));
+            ps.setInt(++idx, 0);
         });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteRestSessions(List<Pair<HttpSessionSignal, HttpSessionUpdate>> sessions) {
     	executeBatchPair("""
-insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,dh_end,va_err_typ,va_err_msg,va_stk,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_cnt_typ,cd_stt,va_o_sze,va_o_cnt_enc,va_msk,va_int_nds)
+insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,va_int_nds,dh_end,va_err_typ,va_err_msg,va_stk,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_cnt_typ,cd_stt,va_o_sze,va_o_cnt_enc,va_msk)
 values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
             var session = ses.getV1();
             var callback = ses.getV2();
             var exp = callback.getException();
-            restSessionSetter(ps, session);
-            ps.setTimestamp(15, fromNullableInstant(callback.getEnd()));
-            ps.setString(16, nonNull(exp) ? exp.getType() : null);
-            ps.setString(17, nonNull(exp) ? exp.getMessage() : null);
-            ps.setObject(18, nonNull(exp) ? safeWriteValue(exp.getStackTraceRows(), mapper) : null, OTHER);
-            ps.setString(19, nonNull(callback.getName()) ? callback.getName() : session.getName());
-            ps.setString(20, nonNull(callback.getUser()) ? callback.getUser() : session.getUser());
-            ps.setString(21, userAgentExtract(session.getUserAgent()));
-            ps.setString(22, callback.getCacheControl());
-            ps.setString(23, contentTypeExtract(callback.getContentType()));
-            ps.setInt(24, callback.getStatus());
-            ps.setLong(25, callback.getDataSize());
-            ps.setString(26, callback.getContentEncoding());
-            ps.setInt(27, callback.getRequestMask().get());
-            ps.setObject(28, safeWriteValue(callback.getIntermediateNodes(), mapper), OTHER);
+            var idx = restSessionSetter(ps, session);
+            ps.setTimestamp(++idx, fromNullableInstant(callback.getEnd()));
+            ps.setString(++idx, nonNull(exp) ? exp.getType() : null);
+            ps.setString(++idx, nonNull(exp) ? exp.getMessage() : null);
+            ps.setObject(++idx, nonNull(exp) ? safeWriteValue(exp.getStackTraceRows(), mapper) : null, OTHER);
+            ps.setString(++idx, nonNull(callback.getName()) ? callback.getName() : session.getName());
+            ps.setString(++idx, nonNull(callback.getUser()) ? callback.getUser() : session.getUser());
+            ps.setString(++idx, userAgentExtract(session.getUserAgent()));
+            ps.setString(++idx, callback.getCacheControl());
+            ps.setString(++idx, contentTypeExtract(callback.getContentType()));
+            ps.setInt(++idx, callback.getStatus());
+            ps.setLong(++idx, callback.getDataSize());
+            ps.setString(++idx, callback.getContentEncoding());
+            ps.setInt(++idx, callback.getRequestMask().get());
         });
     }
 
-    static void restSessionSetter(PreparedStatement ps, HttpSessionSignal ses) throws SQLException {
-        ps.setString(1, ses.getId());
-        ps.setString(2, ses.getInstanceId());
-        ps.setString(3, ses.getMethod());
-        ps.setString(4, ses.getProtocol());
-        ps.setString(5, ses.getHost());
-        ps.setInt(6, ses.getPort());
-        ps.setString(7, ses.getPath());
-        ps.setString(8, ses.getQuery());
-        ps.setString(9, ses.getAuthScheme());
-        ps.setLong(10, ses.getDataSize());
-        ps.setString(11, ses.getContentEncoding());
-        ps.setString(12, ses.getThreadName());
-        ps.setBoolean(13, ses.isLinked());
-        ps.setTimestamp(14, fromNullableInstant(ses.getStart()));
+    static int restSessionSetter(PreparedStatement ps, HttpSessionSignal ses) throws SQLException {
+    	var idx=0;
+        ps.setString(++idx, ses.getId());
+        ps.setString(++idx, ses.getInstanceId());
+        ps.setString(++idx, ses.getMethod());
+        ps.setString(++idx, ses.getProtocol());
+        ps.setString(++idx, ses.getHost());
+        ps.setInt(++idx, ses.getPort());
+        ps.setString(++idx, ses.getPath());
+        ps.setString(++idx, ses.getQuery());
+        ps.setString(++idx, ses.getAuthScheme());
+        ps.setLong(++idx, ses.getDataSize());
+        ps.setString(++idx, ses.getContentEncoding());
+        ps.setString(++idx, ses.getThreadName());
+        ps.setBoolean(++idx, ses.isLinked());
+        ps.setTimestamp(++idx, fromNullableInstant(ses.getStart()));
+        ps.setString(++idx, joinValuesOrNull(ses.getForwardedAddresses()));
+        return idx;
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateRestSessions(List<HttpSessionUpdate> sessions) {
         executeBatch("""
-update e_rst_ses set va_err_typ = coalesce(?, va_err_typ), va_err_msg = coalesce(?, va_err_msg), va_stk = coalesce(?, va_stk), va_nam = coalesce(?, va_nam), va_usr = coalesce(?, va_usr), va_cch_ctr = coalesce(?, va_usr_agt), va_cnt_typ = ?, cd_stt = ?, va_o_sze = ?, va_o_cnt_enc = ?, dh_end = ?, va_msk = ?, va_int_nds = ?
+update e_rst_ses set va_err_typ = coalesce(?, va_err_typ), va_err_msg = coalesce(?, va_err_msg), va_stk = coalesce(?, va_stk), va_nam = coalesce(?, va_nam), va_usr = coalesce(?, va_usr), va_cch_ctr = coalesce(?, va_usr_agt), va_cnt_typ = ?, cd_stt = ?, va_o_sze = ?, va_o_cnt_enc = ?, dh_end = ?, va_msk = ?
 where id_ses = ?::uuid""", sessions, (ps, ses) -> {
             var exp = ses.getException();
             ps.setString(1, nonNull(exp) ? exp.getType() : null);
@@ -237,8 +239,7 @@ where id_ses = ?::uuid""", sessions, (ps, ses) -> {
             ps.setString(10, ses.getContentEncoding());
             ps.setTimestamp(11, fromNullableInstant(ses.getEnd()));
             ps.setInt(12, ses.getRequestMask().get());
-            ps.setObject(13, safeWriteValue(ses.getIntermediateNodes(), mapper), OTHER);
-            ps.setString(14, ses.getId());
+            ps.setString(13, ses.getId());
         });
     }
 
