@@ -80,8 +80,8 @@ public class TraceBatchResolver<T extends TraceSignal, U extends TraceUpdate>  {
             } catch (Exception e) {
                 log.error("error while resolving complete requests: {}", e.getMessage());
                 completes.forEach(ent->{
-                    res.add(ent.getV1());
-                    res.add(ent.getV2());
+                    res.add(ent.signal());
+                    res.add(ent.update());
                 });
             }
         }
