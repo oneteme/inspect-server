@@ -256,7 +256,8 @@ CREATE TABLE IF NOT EXISTS e_env_ins (
     va_hsh varchar,
     va_cnf json,
     va_rsr json,
-    va_add_prp json
+    va_add_prp json,
+    cd_nsp varchar
 );
 
 CREATE TABLE IF NOT EXISTS e_usr_acn (
