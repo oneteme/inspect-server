@@ -516,7 +516,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "database_request",
             view = DATABASE_REQUEST_ROW_MAPPER,
-            select = "id,host,db,db_name,start,end,user,thread,command,schema,failed,parent",
+            select = "id,host,db,db_name,status,start,end,user,thread,command,schema,failed,parent",
             join = "instance",
             order = "start",
             ignore = "env")
@@ -571,7 +571,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ftp_request",
             view = FTP_REQUEST_ROW_MAPPER,
-            select = "id,host,start,end,thread,user,command,failed,parent",
+            select = "id,host,status,start,end,thread,user,command,failed,parent",
             join = "instance",
             order = "start",
             ignore = "env")
@@ -626,7 +626,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "smtp_request",
             view = SMTP_REQUEST_ROW_MAPPER,
-            select = "id,host,start,end,thread,user,command,failed,parent",
+            select = "id,host,status,start,end,thread,user,command,failed,parent",
             join = "instance",
             order = "start",
             ignore = "env")
@@ -695,7 +695,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ldap_request",
             view = LDAP_REQUEST_ROW_MAPPER,
-            select = "id,host,start,end,thread,user,command,failed,parent",
+            select = "id,host,status,start,end,thread,user,command,failed,parent",
             join = "instance",
             order = "start",
             ignore = "env")

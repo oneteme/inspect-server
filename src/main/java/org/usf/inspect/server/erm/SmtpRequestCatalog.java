@@ -38,7 +38,15 @@ public interface SmtpRequestCatalog extends RequestCatalog {
 
 	@Expose(identity = "count_request_error")
 	default Column countError() {
-		return failed().toCase().when(eq(true), failed()).compose(null).count();
+		return failed().toCase().when(eq(true), failed()).compose().count();
+	}
+
+	default Column status() {
+		return Column.beginCase()
+				.when(end().isNull(), null)
+				.when(failed().eq(true), 500)
+				.when(failed().eq(false), 200)
+				.compose().as("status");
 	}
 
 	@Expose(identity = "performance_tranche")
