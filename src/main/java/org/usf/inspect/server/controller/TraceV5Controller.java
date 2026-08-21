@@ -1,5 +1,6 @@
 package org.usf.inspect.server.controller;
 
+import static java.util.Objects.nonNull;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -53,7 +54,8 @@ public class TraceV5Controller {
             return status(BAD_REQUEST).body("invalid instance.id="+instance.getId());
         }
 		try {
-			return service.addInstance(instance, principal.getName())
+			var nsp = nonNull(principal) ? principal.getName() : ""; //disabled spring security
+			return service.addInstance(instance, nsp)
 					? ok(instance.getId())
 					: status(SERVICE_UNAVAILABLE).body("dispatcher.state=" + service.getState());
 		} catch(Exception e) {

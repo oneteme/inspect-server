@@ -14,11 +14,11 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
-@ConditionalOnProperty(name = "spring.security.enabled", havingValue = "true")
 public class SecurityConfig {
 	
     @Bean
     @Order(1)
+    @ConditionalOnProperty(name = "spring.security.enabled", havingValue = "true")
     public SecurityFilterChain basicSecurityFilterChain(HttpSecurity http, NamespaceAuthenticationCacheProvider provider) throws Exception {
     	return http
     			.csrf(AbstractHttpConfigurer::disable)
@@ -31,6 +31,7 @@ public class SecurityConfig {
     
 	@Bean
     @Order(2)
+	@ConditionalOnProperty(name = "spring.security.enabled", havingValue = "true")
 	SecurityFilterChain jwtSecurityFilterChain(HttpSecurity http) throws Exception {
 		return http
 				.csrf(AbstractHttpConfigurer::disable)
@@ -39,6 +40,16 @@ public class SecurityConfig {
 				.authorizeHttpRequests(auth-> auth
 						.requestMatchers("/public/**", "/h2/**", "/actuator/**", "/v4/trace/**").permitAll()
 						.anyRequest().authenticated())
+				.build();
+	}
+	
+	@Bean
+	@ConditionalOnProperty(name = "spring.security.enabled", havingValue = "false", matchIfMissing = true)
+	public SecurityFilterChain noSecurityFilterChain(HttpSecurity http) throws Exception {
+	    return http
+	    		.csrf(AbstractHttpConfigurer::disable)
+	    		.headers(headers -> headers.frameOptions(FrameOptionsConfig::sameOrigin)) //H2 frames
+	    		.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
 				.build();
 	}
 }
