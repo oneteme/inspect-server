@@ -14,7 +14,6 @@ import org.usf.inspect.server.model.InstanceTrace;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-
 import static java.time.Instant.now;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -35,7 +34,13 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
         this.mapper = mapper;
     }
 
+    @Deprecated(forRemoval = true, since = "1.2")
     public boolean addInstance(InstanceEnvironment instance) {
+        return dispatcher.dispatch(instance);
+    }
+
+    public boolean addInstance(InstanceEnvironment instance, String namespace) {
+        instance.setNamespace(namespace);
         return dispatcher.dispatch(instance);
     }
 

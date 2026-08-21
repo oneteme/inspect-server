@@ -15,16 +15,10 @@ public class NoSecurityConfig {
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-
-	    http
-	        .csrf(AbstractHttpConfigurer::disable)
-			.headers(headers -> headers
-					.frameOptions(frame -> frame.sameOrigin()) // ← ajouter ceci
-			)
-	        .authorizeHttpRequests(auth -> auth
-	            .anyRequest().permitAll()
-	        );
-
-	    return http.build();
+	    return http
+	    		.csrf(AbstractHttpConfigurer::disable)
+	    		.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+				.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
+				.build();
 	}
 }

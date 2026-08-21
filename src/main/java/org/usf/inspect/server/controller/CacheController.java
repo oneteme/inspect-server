@@ -47,8 +47,8 @@ public class CacheController {
     @PostMapping(value = "{env}/import", produces = APPLICATION_JSON_VALUE)
     public int importTraceable(@PathVariable String env) {
     	if(activeProfile.equals(env) && host != null) {
-	    	template.postForLocation(host + "/v4/trace/state/"+ DISABLE, null); //stop adding session first on remote server
-	        var arr = template.getForObject(host + "/v4/trace/queue", EventTrace[].class); //import sessions from remote server cache
+	    	template.postForLocation(host + "/v5/trace/state/"+ DISABLE, null); //stop adding session first on remote server
+	        var arr = template.getForObject(host + "/v5/trace/queue", EventTrace[].class); //import sessions from remote server cache
 	        if(nonNull(arr) && arr.length > 0) {
 	            var cnt = service.addTraces(asList(arr)); //save sessions on database (local.env == remote.env)
 	            if(!cnt.isEmpty()) {
