@@ -103,6 +103,17 @@ public interface RestRequestCatalog extends RequestCatalog {
 		return status().toCase().when(eq(0).or(ge(400)), true).compose().count();
     }
 
+	@Expose(identity = "status_tranche")
+	default Column statusTranche() {
+		return status().toCase()
+				.when(eq(0), "1")
+				.when(ge(100).and(lt(200)), "2")
+				.when(ge(200).and(lt(300)), "3")
+				.when(ge(300).and(lt(400)), "4")
+				.when(ge(400).and(lt(500)), "5")
+				.when(ge(500), "6").compose();
+	}
+
 	@Expose(identity = "performance_tranche")
 	default Column performanceTranche1() {
 		return elapsedTime().toCase()
