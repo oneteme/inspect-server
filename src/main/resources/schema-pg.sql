@@ -297,8 +297,8 @@ create table if not exists e_rsc_usg (
 PARTITION BY RANGE (dh_str);
 
 CREATE TABLE IF NOT EXISTS e_nsp_ins (
-     va_nam varchar NOT NULL UNIQUE,
-     va_enc_tkn varchar
+		va_nam varchar NOT NULL UNIQUE,
+		va_enc_tkn varchar NOT NULL
 );
 
 -- Ajouter les index du cd instance dans les requests

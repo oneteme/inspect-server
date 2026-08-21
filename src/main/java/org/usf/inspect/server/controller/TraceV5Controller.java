@@ -47,10 +47,10 @@ public class TraceV5Controller {
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<String> addInstanceEnvironment(@RequestBody InstanceEnvironment instance, Principal principal){ //check
     	if(isEmpty(instance.getName())) {
-    		return status(BAD_REQUEST).body("invalid instance name");
+    		return status(BAD_REQUEST).body("invalid instance.name="+instance.getName());
     	}
         if(!isUUID(instance.getId())) {
-            return status(BAD_REQUEST).body("invalid instance ID");
+            return status(BAD_REQUEST).body("invalid instance.id="+instance.getId());
         }
 		try {
 			return service.addInstance(instance, principal.getName())

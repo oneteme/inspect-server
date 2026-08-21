@@ -24,7 +24,6 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-//@ConditionalOnProperty(name = "spring.security.enabled", havingValue = "true")
 public class NamespaceAuthenticationCacheProvider implements AuthenticationProvider {
 
     private final JdbcTemplate template;
@@ -33,8 +32,13 @@ public class NamespaceAuthenticationCacheProvider implements AuthenticationProvi
 	private final Map<String, Object> locks = new ConcurrentHashMap<String, Object>();
 
     @Override
+    public boolean supports(Class<?> authentication) {
+        return UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication);
+    }
+
+    @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        var namespace  = authentication.getName();
+        var namespace = authentication.getName();
         var token = nonNull(authentication.getCredentials()) ? authentication.getCredentials().toString() : null;
         synchronized (lockFor(namespace)) {
             var expected = cache.computeIfAbsent(namespace, k->{
@@ -51,31 +55,30 @@ public class NamespaceAuthenticationCacheProvider implements AuthenticationProvi
             return authenticated(namespace, null, emptyList());
 		}
     }
+
+    public String getEncryptedToken(String namespace) {
+    	if(!namespace.isEmpty()) {
+    		assertIdentifier(namespace, "namespace");
+    	}
+        return template.queryForObject("SELECT va_nam, va_enc_tkn FROM e_nsp_ins WHERE va_nam=?",
+            (rs, idx)-> rs.getString("va_enc_tkn"), namespace);
+    }
+
+    public String saveNamespace(String namespace, String token) {
+    	if(!namespace.isEmpty()) {
+    		assertIdentifier(namespace, "namespace");
+    	}
+		var encryptedToken = nonNull(token) ? passwordEncoder.encode(token) : null;
+        template.update("INSERT INTO e_nsp_ins(va_nam, va_enc_tkn) VALUES(?, ?)", namespace, encryptedToken);
+        return encryptedToken;
+    }
     
-    public Object lockFor(String namespace){
+    Object lockFor(String namespace){
     	return locks.computeIfAbsent(namespace, v->{
     		if(locks.size() <= 20) {
     			return new Object();
     		}
     		throw new IllegalStateException("too many namespaces");
     	});
-    }
-
-    @Override
-    public boolean supports(Class<?> authentication) {
-        return UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication);
-    }
-
-    public String getEncryptedToken(String namespace) {
-    	assertIdentifier(namespace, "namespace");
-        return template.queryForObject("SELECT va_nam, va_enc_tkn FROM e_nsp_ins WHERE va_nam=?",
-            (rs, idx)-> rs.getString("va_enc_tkn"), namespace);
-    }
-
-    public String saveNamespace(String namespace, String token) {
-    	assertIdentifier(namespace, "namespace");
-		var encryptedToken = nonNull(token) ? passwordEncoder.encode(token) : null;
-        template.update("INSERT INTO e_nsp_ins(va_nam, va_enc_tkn) VALUES(?, ?)", namespace, encryptedToken);
-        return encryptedToken;
     }
 }

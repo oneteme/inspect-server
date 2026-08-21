@@ -114,7 +114,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             ps.setObject(14, safeWriteValue(instance.getConfiguration(), mapper), OTHER);
             ps.setObject(15, safeWriteValue(instance.getResource(), mapper), OTHER);
             ps.setObject(16, safeWriteValue(instance.getAdditionalProperties(), mapper), OTHER);
-            ps.setString(17, instance.getName()); // null autorisé
+            ps.setString(17, instance.getNamespace()); // null autorisé
         });
     }
 
