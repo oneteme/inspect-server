@@ -62,6 +62,7 @@ public class RestSession extends AbstractSession {
         cb.setContentType(getContentType());
         cb.setRequestMask(getRequestsMask());
         cb.setException(getException());
+        cb.setIntermediateNodes(getIntermediateNodes());
         return cb;
     }
 }

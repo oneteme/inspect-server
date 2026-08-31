@@ -135,6 +135,14 @@ public class Mappers {
                 out.setInstanceId(rs.getString("instanceEnv"));
                 out.setCacheControl(rs.getString("cacheControl"));
                 out.setLinked(rs.getBoolean("linked"));
+                try {
+                    String intermediateNodesStr = rs.getString("intermediateNodes");
+                    if (intermediateNodesStr != null) {
+                        out.setIntermediateNodes(mapper.readValue(intermediateNodesStr, new TypeReference<java.util.List<String>>() {}));
+                    }
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
                 return out;
             }
             return null;

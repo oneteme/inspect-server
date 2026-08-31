@@ -6,6 +6,8 @@ import lombok.Setter;
 import org.usf.inspect.core.HttpRequestSignal;
 import org.usf.inspect.core.HttpRequestUpdate;
 
+import java.util.List;
+
 /**
  * 
  * @author u$f
@@ -30,6 +32,7 @@ public class RestRequest extends AbstractRequest { //APiRequest
 	private String outContentEncoding; //gzip, compress, identity,..
 	private String bodyContent; //incoming content, //4xx, 5xx only
 	private boolean linked;
+    private List<String> intermediateNodes; //intermediate nodes
 	
 	@JsonCreator public RestRequest() { }
 
