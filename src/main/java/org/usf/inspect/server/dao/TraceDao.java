@@ -47,6 +47,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.usf.inspect.server.retention.RetentionModels;
 
 import java.time.Duration;
 
@@ -72,8 +73,8 @@ public class TraceDao {
 
     public void saveInstanceEnvironment(InstanceEnvironment instance) {
         template.update("""
-insert into e_env_ins(id_ins,va_typ,dh_str,va_app,va_vrs,va_adr,va_env,va_os,va_re,va_usr,va_clr,va_brch,va_hsh,va_cnf,va_rsr,va_add_prp)
-values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
+insert into e_env_ins(id_ins,va_typ,dh_str,va_app,va_vrs,va_adr,va_env,va_os,va_re,va_usr,va_clr,va_brch,va_hsh,va_cnf,va_rsr,va_add_prp,cd_nsp)
+values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             ps.setString(1, instance.getId());
             ps.setString(2, ofNullable(instance.getType()).map(InstanceType::name).orElse(null));
             ps.setTimestamp(3, fromNullableInstant(instance.getInstant()));
@@ -90,6 +91,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             ps.setObject(14, toConfigJsonWithRetention(instance.getConfiguration()), OTHER);
             ps.setObject(15, safeWriteValue(instance.getResource(), mapper), OTHER);
             ps.setObject(16, safeWriteValue(instance.getAdditionalProperties(), mapper), OTHER);
+            ps.setString(17, instance.getNamespace()); // null autorisé
         });
     }
 
@@ -803,7 +805,7 @@ where id_dtb_rqt = ?::uuid""", requests, (ps, req) -> {
             var root = (com.fasterxml.jackson.databind.node.ObjectNode) mapper.valueToTree(conf);
             var remote = root.with("tracing").with("remote");
             var retention = remote.with("retention");
-            RetentionConfig config;
+            RetentionModels.RetentionConfig config;
             if (remote.has("retention") && remote.path("retention").isObject()) {
                 config = mapper.treeToValue(remote.path("retention"), RetentionConfig.class);
             } else {
