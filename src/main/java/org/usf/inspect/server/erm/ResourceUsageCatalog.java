@@ -1,0 +1,37 @@
+package org.usf.inspect.server.erm;
+
+import static org.usf.inspect.server.config.constant.FieldConstant.CD_INS;
+import static org.usf.inspect.server.config.constant.FieldConstant.DH_STR;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_COMMITED_HEP;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_USED_DISK_SPACE;
+import static org.usf.inspect.server.config.constant.FieldConstant.VA_USED_HEP;
+import static org.usf.jquery.core.JDBCType.UUID;
+
+import org.usf.jquery.core.ViewColumn;
+import org.usf.jquery.mvc.Bind;
+import org.usf.jquery.mvc.DatasetCatalog;
+import org.usf.jquery.mvc.Expose;
+import org.usf.jquery.mvc.Typed;
+
+public interface ResourceUsageCatalog extends DatasetCatalog<InspectStore> {
+	
+	@Bind(VA_USED_HEP)
+	@Expose(identity = "used_heap")
+	ViewColumn usedHeap();
+	
+	@Bind(VA_COMMITED_HEP)
+	@Expose(identity = "commited_heap")
+	ViewColumn commitedHeap();
+	
+	@Bind(VA_USED_DISK_SPACE)
+	@Expose(identity = "used_disk_space")
+	ViewColumn usedDiskSpace();
+	
+	@Bind(DH_STR)
+	ViewColumn start();
+	
+	@Bind(CD_INS)
+	@Expose(identity = "instance_env")
+	@Typed(UUID)
+	ViewColumn instanceEnv();
+}

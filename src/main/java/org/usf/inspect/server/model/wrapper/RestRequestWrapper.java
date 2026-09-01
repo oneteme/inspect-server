@@ -23,4 +23,15 @@ public class RestRequestWrapper implements EventTrace {
     private ExceptionInfo exception;
 
     private RestSessionWrapper remoteTrace;
+
+    private String appName;
+    private String os;
+    private String re;
+    private String address;
+    private String branch;
+    private String hash;
+    private String environment;
+    private String version;
+    private String name;
+
 }

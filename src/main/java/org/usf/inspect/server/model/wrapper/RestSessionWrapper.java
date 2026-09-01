@@ -1,5 +1,6 @@
 package org.usf.inspect.server.model.wrapper;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -15,6 +16,8 @@ import java.util.List;
 @Setter
 @Deprecated(since = "v1.1")
 public class RestSessionWrapper implements Session {
+
+    @JsonIgnore
     private final RestSession restSession = new RestSession();
 
     private List<RestRequestWrapper> restRequests;
@@ -28,6 +31,10 @@ public class RestSessionWrapper implements Session {
     private String os;
     private String re;
     private String address;
+    private String branch;
+    private String hash;
+    private String environment;
+    private String version;
 
     public void setRequestsMask(int requestsMask) {
         restSession.setRequestsMask(requestsMask);

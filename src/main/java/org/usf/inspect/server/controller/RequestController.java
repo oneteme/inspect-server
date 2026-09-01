@@ -1,6 +1,5 @@
 package org.usf.inspect.server.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.CacheControl;
@@ -9,29 +8,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.usf.inspect.core.*;
-import org.usf.inspect.server.config.TraceApiTable;
 import org.usf.inspect.server.dto.*;
-import org.usf.inspect.server.mapper.InspectMappers;
+import org.usf.inspect.server.erm.InspectStore;
 import org.usf.inspect.server.model.*;
-import org.usf.inspect.server.model.Session;
-import org.usf.inspect.server.model.filter.JqueryMainSessionFilter;
-import org.usf.inspect.server.model.filter.JqueryRequestFilter;
-import org.usf.inspect.server.model.filter.JqueryRequestSessionFilter;
 import org.usf.inspect.server.service.RequestService;
 import org.usf.inspect.server.validation.Condition;
 import org.usf.inspect.server.validation.Validate;
-import org.usf.jquery.core.QueryComposer;
-import org.usf.jquery.web.Keyword;
-import org.usf.jquery.web.QueryRequestFilter;
+import org.usf.jquery.mvc.*;
 
-import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import static java.sql.Timestamp.from;
-import static java.util.UUID.*;
+import static java.util.UUID.fromString;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static org.springframework.http.CacheControl.maxAge;
@@ -39,10 +29,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.http.ResponseEntity.status;
 import static org.usf.inspect.server.Utils.fromNullableTimestamp;
-import static org.usf.inspect.server.config.TraceApiColumn.*;
-import static org.usf.inspect.server.config.TraceApiDatabase.INSPECT;
-import static org.usf.inspect.server.config.TraceApiTable.*;
-import static org.usf.jquery.core.DBColumn.*;
+import static org.usf.inspect.server.erm.ViewRegistryConstant.*;
+import static org.usf.jquery.mvc.QueryExtension.Modifier.REJECT;
 
 @Slf4j
 @CrossOrigin
@@ -53,340 +41,452 @@ import static org.usf.jquery.core.DBColumn.*;
 public class RequestController {
 
     private final RequestService requestService;
-    private final ObjectMapper mapper;
-
-    @GetMapping(value = "instance/{idInstance}", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<InstanceEnvironment> getInstance(
-       @QueryRequestFilter(view = "instance",
-                           column = "app_name,version,address,environement,os,re,user,type,start,collector,branch,hash,end,resource,configuration,id") QueryComposer request,
-       @PathVariable String idInstance)  {
-        return ok()
-                .cacheControl(maxAge(1, HOURS))
-                .body(INSPECT.execute(request.filters(column("id_ins").eq(fromString(idInstance))), InspectMappers.instanceEnvironmentMapper(mapper)));
-    }
-
-    // New
-    @GetMapping(value = "instance/{idInstance}/trace", produces = APPLICATION_JSON_VALUE)
-    public List<InstanceTrace> getInstanceTraces(
-            @QueryRequestFilter(view = "instance_trace",
-                    column = "pending,attempts,size_session,filename,start,instance_env") QueryComposer request,
-            @PathVariable String idInstance)  {
-        return INSPECT.execute(request.filters(column("cd_ins").eq(fromString(idInstance))), InspectMappers.instanceTraceMapper());
-    }
-
-    @GetMapping(value = "instance/{idInstance}/resource/usage", produces = APPLICATION_JSON_VALUE)
-    public List<MachineResourceUsage> getInstanceResourceUsages(
-            @QueryRequestFilter(view = "resource_usage",
-                    column = "low_heap,high_heap,start") QueryComposer request,
-            @PathVariable String idInstance)  {
-        return INSPECT.execute(request.filters(column("cd_ins").eq(fromString(idInstance))), InspectMappers.instanceResourceUsageMapper());
-    }
-
-    @GetMapping(value = "instance/{idInstance}/log/entry", produces = APPLICATION_JSON_VALUE)
-    public List<LogEntry> getLogEntries(
-            @QueryRequestFilter(view = "log_entry",
-                    column = "start,log_level,log_message,stacktrace", order = "start.desc") QueryComposer request,
-            @PathVariable String idInstance)  {
-        return INSPECT.execute(request.filters(column("cd_ins").eq(fromString(idInstance))), InspectMappers.instanceLogEntryMapper(mapper));
-    }
-
-    @GetMapping(value = "request/{type}/hosts", produces = APPLICATION_JSON_VALUE)
-    public String[] getRequestHosts(
-            @PathVariable String type,
-            @RequestParam(name = "env") String environment,
-            @RequestParam(name = "start") @Validate(Condition.INSTANT) Instant start,
-            @RequestParam(name = "end") @Validate(Condition.INSTANT) Instant end)  {
-        TraceApiTable requestTable;
-        try {
-            requestTable = RequestType.valueOf(type).getTable();
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid request type: " + type, e);
-        }
-        return requestService.getRequestHosts(requestTable, environment, start, end);
-    }
-    @GetMapping(value = "request/jdbc/schema", produces = APPLICATION_JSON_VALUE)
-    public String[] getRequestSchema(
-            @RequestParam(name = "host") String host,
-            @RequestParam(name = "env") String environment,
-            @RequestParam(name = "start") @Validate(Condition.INSTANT) Instant start,
-            @RequestParam(name = "end") @Validate(Condition.INSTANT) Instant end)  {
-
-        return requestService.getRequestSchema( environment, start, end, host);
-    }
-    @GetMapping(value = "request/rest", produces = APPLICATION_JSON_VALUE)
-    public List<RestRequestDto> getRestRequests(@RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments,
-                                                @RequestParam(required = false, name = "host") String[] hosts,
-                                                @RequestParam(required = false, name = "start") @Validate(Condition.INSTANT) Instant start,
-                                                @RequestParam(required = false, name = "end") @Validate(Condition.INSTANT) Instant end,
-                                                @RequestParam(required = false, name = "rangestatus") String[] rangestatus,
-                                                @RequestParam(required = false, name = "lazy") boolean lazy)  {
-
-        JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(null, environments, null, start, end, null, null, hosts, null, null, null, null, null, null, null, rangestatus, lazy);
-        return requestService.getRestRequests(jsf);
-    }
-
-    @GetMapping(value = "request/database", produces = APPLICATION_JSON_VALUE)
-    public List<DatabaseRequestDto> getDatabaseRequestForSearch(@RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments,
-                                                                @RequestParam(required = false, name = "host") String[] hosts,
-                                                                @RequestParam(required = false, name = "start") @Validate(Condition.INSTANT) Instant start,
-                                                                @RequestParam(required = false, name = "end") @Validate(Condition.INSTANT) Instant end,
-                                                                @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus,
-                                                                @RequestParam(required = false, name = "lazy") boolean lazy
-    )  {
-        JqueryRequestFilter jsf = new JqueryRequestFilter(environments, hosts, start, end, rangestatus, lazy);
-        return requestService.getDatabaseRequests(jsf);
-    }
-
-    @GetMapping(value = "request/ftp", produces = APPLICATION_JSON_VALUE)
-    public List<FtpRequestDto> getFtpRequestForSearch(@RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments,
-                                                      @RequestParam(required = false, name = "host") String[] hosts,
-                                                      @RequestParam(required = false, name = "start") @Validate(Condition.INSTANT) Instant start,
-                                                      @RequestParam(required = false, name = "end") @Validate(Condition.INSTANT) Instant end,
-                                                      @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus,
-                                                      @RequestParam(required = false, name = "lazy") boolean lazy
-    )  {
-        JqueryRequestFilter jsf = new JqueryRequestFilter(environments,hosts,start,end, rangestatus, lazy);
-        return requestService.getFtpRequests(jsf);
-    }
-
-    @GetMapping(value = "request/smtp", produces = APPLICATION_JSON_VALUE)
-    public List<MailRequestDto> getSmtpRequestForSearch(@RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments,
-                                                        @RequestParam(required = false, name = "host") String[] hosts,
-                                                        @RequestParam(required = false, name = "start") @Validate(Condition.INSTANT) Instant start,
-                                                        @RequestParam(required = false, name = "end") @Validate(Condition.INSTANT) Instant end,
-                                                        @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus,
-                                                        @RequestParam(required = false, name = "lazy") boolean lazy
-    )  {
-        JqueryRequestFilter jsf = new JqueryRequestFilter(environments,hosts,start,end, rangestatus, lazy);
-        return requestService.getSmtpRequestsByFilter(jsf);
-    }
-
-    @GetMapping(value = "request/ldap", produces = APPLICATION_JSON_VALUE)
-    public List<DirectoryRequestDto> getLdapRequestForSearch(@RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments,
-                                                             @RequestParam(required = false, name = "host") String[] hosts,
-                                                             @RequestParam(required = false, name = "start") @Validate(Condition.INSTANT) Instant start,
-                                                             @RequestParam(required = false, name = "end") @Validate(Condition.INSTANT) Instant end,
-                                                             @RequestParam(required = false, name = "rangestatus") Boolean[] rangestatus,
-                                                             @RequestParam(required = false, name = "lazy") boolean lazy
-    )  {
-        JqueryRequestFilter jsf = new JqueryRequestFilter(environments, hosts, start, end, rangestatus, lazy);
-        return requestService.getLdapRequestsByFilter(jsf);
-    }
-
-    @GetMapping(value = "session/{sessionId}/log/entry", produces = APPLICATION_JSON_VALUE)
-    public List<LogEntry> getLogEntriesBySessionId(
-            @QueryRequestFilter(view = "log_entry",
-                    column = "start,log_level,log_message,stacktrace", order = "start.desc") QueryComposer request,
-            @PathVariable String sessionId)  {
-        return INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(sessionId))), InspectMappers.instanceLogEntryMapper(mapper));
-    }
-
-
-
-    @GetMapping(value = "session/rest", produces = APPLICATION_JSON_VALUE)
-    public List<RestSessionDto> getRestSessions(
-            @RequestParam(required = false, name = "method") String[] methods,
-            @RequestParam(required = false, name = "protocol") String[] protocols,
-            @RequestParam(required = false, name = "host") String[] hosts,
-            @RequestParam(required = false, name = "port") String[] ports,
-            @RequestParam(required = false, name = "path") String path,
-            @RequestParam(required = false, name = "query") String query,
-            @RequestParam(required = false, name = "media") String[] medias,
-            @RequestParam(required = false, name = "auth") String[] auths,
-            @RequestParam(required = false, name = "status") Integer[] status,
-            @RequestParam(required = false, name = "start") @Validate(Condition.INSTANT) Instant start,
-            @RequestParam(required = false, name = "end") @Validate(Condition.INSTANT) Instant end,
-            @RequestParam(required = false, name = "apiname") String[] apiNames,
-            @RequestParam(required = false, name = "user") String[] users,
-            @RequestParam(required = false, name = "appname") String[] appNames,
-            @RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments,
-            @RequestParam(required = false, name = "rangestatus") String[] rangestatus,
-            @RequestParam(required = false, name = "lazy") boolean lazy
-    )  {
-
-        JqueryRequestSessionFilter jsf = new JqueryRequestSessionFilter(appNames, environments, users, start, end, methods, protocols, hosts, ports, medias, auths, status, apiNames, path, query,rangestatus, lazy);
-        return requestService.getRestSessionsForSearch(jsf);
-    }
-
-    @GetMapping(value = "instance/{id}/session/rest", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<RestSession>> getRestSessionsByInstance(
-            @QueryRequestFilter(
-                    view = "rest_session",
-                    column = "id,api_name,method,host,path,status,start,end,thread,user",
-                    order = "start,end") QueryComposer request,
-            @PathVariable String id
-    )  {
-        return ok().body(INSPECT.execute(request.filters(column("cd_ins").eq(fromString(id))), InspectMappers.restSessionPulseRowMapper()));
-    }
-
-    @GetMapping(value = "instance/{id}/session/main", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<MainSession>> getMainSessionsByInstance(
-            @QueryRequestFilter(
-                    view = "main_session",
-                    column = "id,name,start,end,thread,type,location",
-                    order = "start,end") QueryComposer request,
-            @PathVariable String id
-    )  {
-        return ok().body(INSPECT.execute(request.filters(column("cd_ins").eq(fromString(id))), InspectMappers.mainSessionPulseRowMapper()));
-    }
-
-    @GetMapping(value = "session/rest/{idSession}", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<RestSession> getRestSession(
-            @QueryRequestFilter(view = "rest_session",
-            column = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,err_type,err_msg,stacktrace,mask,user,user_agt,cache_control,linked,instance_env") QueryComposer request,
-            @PathVariable String idSession) throws SQLException {
-        return Optional.ofNullable(INSPECT.execute(request.filters(column("id_ses").eq(fromString(idSession))), InspectMappers.restSessionResultSetMapper(mapper)))
-                .map(o -> ok().body(o))
-                .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null));
-    }
-
-    @GetMapping(value = "session/rest/{idSession}/stage", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<HttpSessionStage>> getRestSessionStages (
-            @QueryRequestFilter(view = "rest_session_stage",
-                    column = "name,order,start,end",
-                    order = "order") QueryComposer request,
-            @PathVariable String idSession) {
-        return ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.restSessionStageMapper()));
-    }
 
     @GetMapping(value = "{type}/{id}/parent", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, String>> getSessionParent(
-            @PathVariable String type,
+            @PathVariable String type, //TODO change string to RequestType
             @PathVariable String id
     )  {
-        RequestType tableType;
+        RequestType requestType;
         try {
-            tableType = RequestType.valueOf(type);
+            requestType = RequestType.valueOf(type);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid request type: " + type, e);
         }
-        return Optional.of(requestService.getSessionParent(tableType, id))
+        return Optional.of(requestService.getSessionParent(requestType, id))
                 .filter(o -> !o.isEmpty())
                 .map(o -> ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(o))
                 .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping(value = "session/main/{id}/tree", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<Session> getMainTree(@PathVariable @Validate(Condition.UUID) String id)  {
+    @GetMapping(value = "request/{type}/hosts", produces = APPLICATION_JSON_VALUE)
+    public Collection<String> getRequestHosts(
+            @PathVariable String type,
+            @RequestParam(name = "env") String environment,
+            @RequestParam(name = "start") @Validate(Condition.INSTANT) Instant start,
+            @RequestParam(name = "end") @Validate(Condition.INSTANT) Instant end)  {
+        RequestType requestTable;
         try {
-            var result = requestService.getMainTree(id);
-            return result.wasCompleted() ? ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(result) : ok().body(result);
-        } catch (NoSuchElementException e) {
-            return status(HttpStatus.NOT_FOUND).body(null);
+            requestTable = RequestType.valueOf(type);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid request type: " + type, e);
         }
+        return requestService.getRequestHosts(requestTable, environment, start, end);
     }
 
-    @GetMapping(value = "session/rest/{id}/tree", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<Session> getRestTree(@PathVariable @Validate(Condition.UUID) String id)  {
-        try {
-            var result = requestService.getRestTree(id);
-            return result.wasCompleted() ? ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(result) : ok().body(result);
-        } catch (NoSuchElementException e) {
-            return status(HttpStatus.NOT_FOUND).body(null);
-        }
+    @GetMapping(value = "instance/{instanceId}", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(
+            dataset = "instance",
+            view = INSTANCE_ENVIRONMENT_RESULTSET_MAPPER,
+            select = "app_name,version,address,environement,os,re,user,type,start,collector,branch,hash,end,resource,configuration,id")
+    public ResponseEntity<InstanceEnvironment> fetchInstance(
+            MvcRequest mvc,
+            @PathVariable String instanceId
+    ) {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.instance().id().eq(fromString(instanceId))); // UUID
+
+        return ok().cacheControl(maxAge(1, HOURS)).body((InstanceEnvironment) mvc.execute());
     }
+
+    @GetMapping(value = "instance/{instanceId}/trace", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(
+            dataset = "instance_trace",
+            view = INSTANCE_TRACE_ROW_MAPPER,
+            select = "pending,attempts,size_session,filename,start,instance_env")
+    public Collection<InstanceTrace> fetchInstanceTraces(
+            MvcRequest mvc,
+            @PathVariable String instanceId
+    )  {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.instanceTrace().instanceEnv().eq(fromString(instanceId))); // UUID
+
+        return (Collection<InstanceTrace>) mvc.execute();
+    }
+
+    @GetMapping(value = "instance/{instanceId}/resource/usage", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(
+            dataset = "resource_usage",
+            view = MACHINE_RESOURCE_USAGE_ROW_MAPPER,
+            select = "low_heap,high_heap,start")
+    public Collection<MachineResourceUsage> fetchResourceUsages(
+            MvcRequest mvc,
+            @PathVariable String instanceId
+    )  {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.resourceUsage().instanceEnv().eq(fromString(instanceId))); // UUID
+
+        return (Collection<MachineResourceUsage>) mvc.execute();
+    }
+
+    @GetMapping(value = "instance/{instanceId}/log/entry", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "log_entry",
+            view = LOG_ENTRY_ROW_MAPPER,
+            select = "start,log_level,log_message,stacktrace",
+            order = "start.desc")
+    public Collection<LogEntry> fetchLogEntriesByInstance(
+            MvcRequest mvc,
+            @PathVariable String instanceId
+    ) {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.logEntry().instanceEnv().eq(fromString(instanceId))); // UUID
+
+        return (Collection<LogEntry>) mvc.execute();
+    }
+
+    @GetMapping(value = "session/{sessionId}/log/entry", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "log_entry",
+            view = LOG_ENTRY_ROW_MAPPER,
+            select = "start,log_level,log_message,stacktrace",
+            order = "start.desc")
+    public Collection<LogEntry> fetchLogEntriesBySession(
+            MvcRequest mvc,
+            @PathVariable String sessionId
+    ) {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.logEntry().parent().eq(fromString(sessionId))); // UUID
+
+        return (Collection<LogEntry>) mvc.execute();
+    }
+
+    @GetMapping(value = "session/request/exception", produces = APPLICATION_JSON_VALUE) // need to add exception type to front call
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "exception",
+            view = EXCEPTION_BY_REQUEST_RESULTSET_MAPPER,
+            select = "err_type,err_msg,parent",
+            ignore = "requestIds")
+    public Map<Long, ExceptionInfo> fetchExceptionByRequests(
+            MvcRequest mvc,
+            @RequestParam( name = "requestIds") String[] requestIds)  {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.exception().parent().in(Arrays.stream(requestIds).map(UUID::fromString).toArray())); // UUID
+
+        return (Map<Long, ExceptionInfo>) mvc.execute();
+    }
+
+    @GetMapping(value = "session/request/database/stages/count", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "database_stage",
+            select = "action_count,parent",
+            ignore = "requestIds")
+    public Map<String, Integer> fetchDatabaseStageCountByRequests(
+            MvcRequest mvc,
+            @RequestParam(name = "requestIds") String[] requestIds) {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.databaseRequestStage().parent().in(Arrays.stream(requestIds).map(UUID::fromString).toArray()));
+
+        return store.execute(mvc.getComposer().compose(store), rs -> {
+            Map<String, Integer> actionsMap= new HashMap<>();
+            while (rs.next()) {
+                actionsMap.put(rs.getString("parent"), rs.getInt("actionCount"));
+            }
+            return actionsMap;
+        });
+    }
+
+//    @RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments,
+//    @RequestParam(required = false, name = "name") String[] names,
+//    @RequestParam(required = false, name = "launchmode") String[] launchModes,
+//    @RequestParam(required = false, name = "location") String location,
+//    @RequestParam(required = false, name = "start") @Validate(Condition.INSTANT) Instant start,
+//    @RequestParam(required = false, name = "end") @Validate(Condition.INSTANT) Instant end,
+//    @RequestParam(required = false, name = "user") String[] users,
+//    @RequestParam(required = false, name = "appname") String[] appNames,
+//    @RequestParam(required = false, name = "failed") Boolean[] failed,
+//    @RequestParam(required = false, name = "lazy") boolean lazy
 
     @GetMapping(value = "session/main", produces = APPLICATION_JSON_VALUE) // can't optimise, done
-    public List<MainSessionDto> getMainSessions(
-            @RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments,
-            @RequestParam(required = false, name = "name") String[] names,
-            @RequestParam(required = false, name = "launchmode") String[] launchModes,
-            @RequestParam(required = false, name = "location") String location,
-            @RequestParam(required = false, name = "start") @Validate(Condition.INSTANT) Instant start,
-            @RequestParam(required = false, name = "end") @Validate(Condition.INSTANT) Instant end,
-            @RequestParam(required = false, name = "user") String[] users,
-            @RequestParam(required = false, name = "appname") String[] appNames,
-            @RequestParam(required = false, name = "failed") Boolean[] failed,
-            @RequestParam(required = false, name = "lazy") boolean lazy
+    @QueryGuard(maxRows = 300000)
+    @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "main_session",
+            view = MAIN_SESSION_ROW_MAPPER,
+            select = "id,type,name,start,end,user,location,status,instance.address,instance.app_name",
+            join = "instance",
+            order = "start",
+            ignore = "env")
+    public Collection<MainSessionDto> fetchMainSessions(
+            MvcRequest mvc,
+            @RequestParam(name = "env") String environment
     )  {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.instance().environement().eq(environment));
 
-        JqueryMainSessionFilter fc = new JqueryMainSessionFilter(appNames, environments, users, start, end, names, launchModes, location, failed, lazy);
-        return requestService.getMainSessionsForSearch(fc);
+        return (Collection<MainSessionDto>) mvc.execute();
     }
 
-    @GetMapping(value = "session/main/{idSession}", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<MainSession> getMainSession(
-            @QueryRequestFilter(
-                view = "main_session",
-                column = "id,name,start,end,type,location,thread,err_type,err_msg,stacktrace,mask,user,instance_env") QueryComposer request,
-            @PathVariable String idSession) throws SQLException {
-        return Optional.ofNullable(INSPECT.execute(request.filters(column("id_ses").eq(fromString(idSession))), InspectMappers.createBaseMainSession(mapper)))
+    @GetMapping(value = "session/main/{sessionId}", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "main_session",
+            view = MAIN_SESSION_RESULTSET_MAPPER,
+            select = "id,name,start,end,type,location,thread,err_type,err_msg,stacktrace,mask,user,instance_env")
+    public ResponseEntity<MainSession> fetchMainSession(
+            MvcRequest mvc,
+            @PathVariable String sessionId
+    ) {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.mainSession().id().eq(fromString(sessionId))); // UUID
+
+        return Optional.ofNullable((MainSession) mvc.execute())
                 .map(o -> ok().body(o))
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping(value = "session/{idSession}/request/rest", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<RestRequestDto>>  getRestRequests(
-            @QueryRequestFilter(
-                view = "rest_request",
-                column = "id,protocol,host,path,query,method,status,start,end,thread,user,body_content,linked,exception.err_type,exception.err_msg",
-                join = "exception",
-                order = "start") QueryComposer request,
-            @PathVariable String  idSession){
-        return ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.restRequestLazyMapper()));
+    @GetMapping(value = "session/main/{sessionId}/tree", produces = APPLICATION_JSON_VALUE)
+    public ResponseEntity<Session> getMainTree(@PathVariable @Validate(Condition.UUID) String sessionId)  {
+        try {
+            var result = requestService.getMainTree(sessionId);
+            return result.wasCompleted() ? ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(result) : ok().body(result);
+        } catch (NoSuchElementException e) {
+            return status(HttpStatus.NOT_FOUND).body(null);
+        }
     }
 
-    @GetMapping(value = "session/request/exception", produces = APPLICATION_JSON_VALUE) // need to add exception type to front call
-    public ResponseEntity<Map<Long, ExceptionInfo>> getRequestExceptions(
-            @QueryRequestFilter(
-                    view = "exception",
-                    column = "err_type,err_msg,parent",
-                    ignoreParameters = "ids") QueryComposer request,
-            @RequestParam( name = "ids") String[] idRequestList)  {
-        return ok().body(INSPECT.execute(request.filters(column("cd_rqt").in(Arrays.stream(idRequestList).map(UUID::fromString).toArray())), InspectMappers::exceptionInfoMapper));
+    @GetMapping(value = "instance/{instanceId}/session/main", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "main_session",
+            view = MAIN_SESSION_PULSE_ROW_MAPPER,
+            select = "id,name,start,end,thread,type,location",
+            order = "start,end")
+    public Collection<MainSession> fetchMainSessionsByInstance(
+            MvcRequest mvc,
+            @PathVariable String instanceId
+    )  {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.mainSession().instanceEnv().eq(fromString(instanceId))); // UUID
+
+        return (Collection<MainSession>) mvc.execute();
     }
 
-    @GetMapping(value = "session/{idSession}/request/local", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<LocalRequest>> getLocalRequests(
-            @QueryRequestFilter(
-                    view = "local_request",
-                    column = "id,name,location,start,end,user,thread,type,exception.err_type,exception.err_msg",
-                    join = "exception",
-                    order = "start") QueryComposer request, @PathVariable String idSession)  {
-        return ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.localRequestMapper()));
+//    @RequestParam(required = false, name = "method") String[] methods,
+//    @RequestParam(required = false, name = "protocol") String[] protocols,
+//    @RequestParam(required = false, name = "host") String[] hosts,
+//    @RequestParam(required = false, name = "port") String[] ports,
+//    @RequestParam(required = false, name = "path") String path,
+//    @RequestParam(required = false, name = "query") String query,
+//    @RequestParam(required = false, name = "media") String[] medias,
+//    @RequestParam(required = false, name = "auth") String[] auths,
+//    @RequestParam(required = false, name = "status") Integer[] status,
+//    @RequestParam(required = false, name = "start") @Validate(Condition.INSTANT) Instant start,
+//    @RequestParam(required = false, name = "end") @Validate(Condition.INSTANT) Instant end,
+//    @RequestParam(required = false, name = "apiname") String[] apiNames,
+//    @RequestParam(required = false, name = "user") String[] users,
+//    @RequestParam(required = false, name = "appname") String[] appNames,
+//    @RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments,
+//    @RequestParam(required = false, name = "rangestatus") String[] rangestatus,
+//    @RequestParam(required = false, name = "lazy") boolean lazy
+
+    @GetMapping(value = "session/rest", produces = APPLICATION_JSON_VALUE)
+    @QueryGuard(maxRows = 300000)
+    @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "rest_session",
+            view = REST_SESSION_ROW_MAPPER,
+            select = "id,api_name,method,protocol,path,query,status,start,end,user,instance.app_name",
+            join = "instance",
+            order = "start",
+            ignore = "env")
+    public Collection<RestSessionDto> fetchRestSessions(
+            MvcRequest mvc,
+            @RequestParam(name = "env") String environment
+    )  {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+
+        return (Collection<RestSessionDto>) mvc.execute();
     }
 
-    @GetMapping(value = "session/{idSession}/request/database", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<DatabaseRequestDto>> getDatabaseRequests(
-            @QueryRequestFilter(
-                    view = "database_request",
-                    column = "id,host,db,db_name,start,end,user,thread,command,schema,failed,exception.err_type,exception.err_msg",
-                    join = "exception",
-                    order = "start") QueryComposer request, @PathVariable String idSession) {
-        return ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.databaseRequestLazyMapper()));
+    @GetMapping(value = "session/rest/{sessionId}", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "rest_session",
+            view = REST_SESSION_RESULTSET_MAPPER,
+            select = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,err_type,err_msg,stacktrace,mask,user,user_agt,cache_control,linked,instance_env")
+    public ResponseEntity<RestSession> fetchRestSession(
+            MvcRequest mvc,
+            @PathVariable String sessionId) {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.restSession().id().eq(fromString(sessionId))); // UUID
+
+        return Optional.ofNullable((RestSession) mvc.execute())
+                .map(o -> ok().body(o))
+                .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
+    @GetMapping(value = "session/rest/{sessionId}/stage", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "rest_session_stage",
+            view = REST_SESSION_STAGE_ROW_MAPPER,
+            select = "name,order,start,end",
+            order = "order")
+    public Collection<HttpSessionStage> fetchRestSessionStages (
+            MvcRequest mvc,
+            @PathVariable String sessionId) {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.restSessionStage().parent().eq(fromString(sessionId))); // UUID
 
-    @GetMapping(value = "request/rest/{idRequest}", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<RestRequest> getRestRequest (
-            @QueryRequestFilter(view = "rest_request",
-                    column = "id,protocol,auth,host,port,path,query,method,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,user,body_content,linked,instance_env,parent") QueryComposer request,
-            @PathVariable String idRequest) {
-        return  Optional.ofNullable(INSPECT.execute(request.filters(column("id_rst_rqt").eq(fromString(idRequest))), InspectMappers::restRequestMapperComplete))
-                .map(o -> {
-                    Instant end = o.getEnd();
-                    boolean cacheable = end != null && Duration.between(Instant.now(), end).toDays() > 2;
-                    return cacheable ? ok().cacheControl(maxAge(30, DAYS)).body(o) : ok().body(o);
-                })
-                .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null));
+        return (Collection<HttpSessionStage>) mvc.execute();
     }
 
-    @GetMapping(value = "request/rest/{idRequest}/stage", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<HttpRequestStage>> getRestRequestStages (
-            @QueryRequestFilter(view = "rest_request_stage",
-                    column = "name,order,start,end,exception.err_type,exception.err_msg,exception.stacktrace",
-                    join = "exception",
-                    order = "order") QueryComposer request,
-            @PathVariable String idRequest) {
-        return ok().body(INSPECT.execute(request.filters(column("cd_rst_rqt").eq(fromString(idRequest))), InspectMappers.restRequestStageMapper(mapper)));
+    @GetMapping(value = "session/rest/{sessionId}/tree", produces = APPLICATION_JSON_VALUE)
+    public ResponseEntity<Session> getRestTree(
+            @PathVariable @Validate(Condition.UUID) String sessionId
+    )  {
+        try {
+            var result = requestService.getRestTree(sessionId);
+            return result.wasCompleted() ? ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(result) : ok().body(result);
+        } catch (NoSuchElementException e) {
+            return status(HttpStatus.NOT_FOUND).body(null);
+        }
     }
 
-    @GetMapping(value = "request/database/{idDatabase}", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<DatabaseRequest> getDatabaseRequest(
-            @QueryRequestFilter(
-                    view = "database_request",
-                    column = "id,host,port,db,start,end,user,thread,driver,db_name,db_version,command,schema,failed,instance_env,parent") QueryComposer request, @PathVariable String idDatabase) {
-        return Optional.ofNullable(INSPECT.execute(request.filters(column("id_dtb_rqt").eq(fromString(idDatabase))), InspectMappers::databaseRequestComplete))
+    @GetMapping(value = "instance/{instanceId}/session/rest", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "rest_session",
+            view = REST_SESSION_PULSE_ROW_MAPPER,
+            select = "id,api_name,method,host,path,status,start,end,thread,user",
+            order = "start,end")
+    public Collection<RestSession> fetchRestSessionsForPulse(
+            MvcRequest mvc,
+            @PathVariable String instanceId
+    )  {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.restSession().instanceEnv().eq(fromString(instanceId))); // UUID
+
+        return (Collection<RestSession>) mvc.execute();
+    }
+
+    @GetMapping(value = "session/{sessionId}/request/rest", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "rest_request",
+            view = REST_REQUEST_ROW_MAPPER,
+            select = "id,protocol,host,path,query,method,status,start,end,thread,user,body_content,linked,parent",
+            order = "start")
+    public Collection<RestRequestDto> fetchRestRequestsBySession(
+            MvcRequest mvc,
+            @PathVariable String sessionId){
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.restRequest().parent().eq(fromString(sessionId))); // UUID
+
+        return (Collection<RestRequestDto>) mvc.execute();
+    }
+
+    @GetMapping(value = "session/{sessionId}/request/local", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "local_request",
+            view = LOCAL_REQUEST_ROW_MAPPER,
+            select = "id,name,location,start,end,user,thread,type,exception.err_type,exception.err_msg",
+            join = "exception",
+            order = "start")
+    public Collection<LocalRequest> fetchLocalRequests(
+            MvcRequest mvc,
+            @PathVariable String sessionId)  {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.localRequest().parent().eq(fromString(sessionId))); // UUID
+
+        return (Collection<LocalRequest>) mvc.execute();
+    }
+
+    @GetMapping(value = "session/{sessionId}/request/database", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "database_request",
+            view = DATABASE_REQUEST_ROW_MAPPER,
+            select = "id,host,db,db_name,start,end,user,thread,command,schema,failed,parent",
+            order = "start")
+    public Collection<DatabaseRequestDto> fetchDatabaseRequestsBySession(
+            MvcRequest mvc,
+            @PathVariable String sessionId) {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.databaseRequest().parent().eq(fromString(sessionId))); // UUID
+
+        return (Collection<DatabaseRequestDto>) mvc.execute();
+    }
+
+    @GetMapping(value = "session/{sessionId}/request/ftp", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "ftp_request",
+            view = FTP_REQUEST_ROW_MAPPER,
+            select = "id,host,start,end,thread,user,command,failed,parent",
+            order = "start")
+    public Collection<FtpRequestDto> fetchFtpRequestsBySession(
+            MvcRequest mvc,
+            @PathVariable String sessionId) {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.ftpRequest().parent().eq(fromString(sessionId))); // UUID
+
+        return (Collection<FtpRequestDto>) mvc.execute();
+    }
+
+    @GetMapping(value = "session/{sessionId}/request/smtp", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "smtp_request",
+            view = SMTP_REQUEST_ROW_MAPPER,
+            select = "id,host,start,end,thread,user,command,failed,parent",
+            order = "start")
+    public Collection<MailRequestDto> fetchSmtpRequestsBySession(
+            MvcRequest mvc,
+            @PathVariable String sessionId){
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.smtpRequest().parent().eq(fromString(sessionId))); // UUID
+
+        return (Collection<MailRequestDto>) mvc.execute();
+    }
+
+    @GetMapping(value = "session/{sessionId}/request/ldap", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "ldap_request",
+            view = LDAP_REQUEST_ROW_MAPPER,
+            select = "id,host,start,end,thread,user,command,failed,parent",
+            order = "start")
+    public Collection<DirectoryRequestDto> fetchLdapRequestsBySession(
+            MvcRequest mvc,
+            @PathVariable String sessionId){
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.ldapRequest().parent().eq(fromString(sessionId))); // UUID
+
+        return (Collection<DirectoryRequestDto>) mvc.execute();
+    }
+
+//    @RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments,
+//    @RequestParam(required = false, name = "host") String[] hosts,
+//    @RequestParam(required = false, name = "start") @Validate(Condition.INSTANT) Instant start,
+//    @RequestParam(required = false, name = "end") @Validate(Condition.INSTANT) Instant end,
+//    @RequestParam(required = false, name = "rangestatus") String[] rangestatus,
+//    @RequestParam(required = false, name = "lazy") boolean lazy
+
+    @GetMapping(value = "request/rest", produces = APPLICATION_JSON_VALUE)
+    @QueryGuard(maxRows = 300000)
+    @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "rest_request",
+            view = REST_REQUEST_ROW_MAPPER,
+            select = "id,protocol,host,path,query,method,status,start,end,thread,user,body_content,linked,parent",
+            join = "instance",
+            order = "start",
+            ignore = "env")
+    public Collection<RestRequestDto> fetchRestRequests(
+            MvcRequest mvc,
+            @RequestParam(name = "env") String environment
+    )  {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+
+        return (Collection<RestRequestDto>) mvc.execute();
+    }
+
+    @GetMapping(value = "request/rest/{requestId}", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "rest_request",
+            view = REST_REQUEST_RESULTSET_MAPPER,
+            select = "id,protocol,auth,host,port,path,query,method,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,user,body_content,linked,instance_env,parent")
+    public ResponseEntity<RestRequest> fetchRestRequest(
+            MvcRequest mvc,
+            @PathVariable String requestId) {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.restRequest().id().eq(fromString(requestId))); // UUID
+
+        return Optional.ofNullable((RestRequest) mvc.execute())
                 .map(o -> {
                     Instant end = o.getEnd();
                     boolean cacheable = end != null && Duration.between(Instant.now(), end).toDays() > 2;
@@ -395,50 +495,53 @@ public class RequestController {
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping(value = "request/database/{idDatabase}/stage", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<DatabaseRequestStage>> getDatabaseRequestStages(
-            @QueryRequestFilter(
-                    view = "database_stage",
-                    column = "name,order,start,end,arg,action_count,command,exception.err_type,exception.err_msg,exception.stacktrace",
-                    join = "exception",
-                    order = "order") QueryComposer request, @PathVariable String idDatabase) {
-        return ok().body(INSPECT.execute(request.filters(column("cd_dtb_rqt").eq(fromString(idDatabase))), InspectMappers.databaseRequestStageMapper(mapper)));
+    @GetMapping(value = "request/rest/{requestId}/stage", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "rest_request_stage",
+            view = REST_REQUEST_STAGE_ROW_MAPPER,
+            select = "name,order,start,end,exception.err_type,exception.err_msg,exception.stacktrace",
+            join = "exception",
+            order = "order")
+    public Collection<HttpRequestStage> fetchRestRequestStages (
+            MvcRequest mvc,
+            @PathVariable String requestId) {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.restRequestStage().parent().eq(fromString(requestId))); // UUID
+
+        return (Collection<HttpRequestStage>) mvc.execute();
     }
 
-    @GetMapping(value = "session/request/database/stages/count", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String, Integer>> getDatabaseRequestStagesCount(
-            @QueryRequestFilter(
-                    view = "database_stage",
-                    column = "action_count,parent",
-                    ignoreParameters = "ids") QueryComposer request,
-            @RequestParam(name = "ids") String[] idDatabaseList) {
-        return ok().body(INSPECT.execute(request.filters(column("cd_dtb_rqt").in(Arrays.stream(idDatabaseList).map(UUID::fromString).toArray())), rs -> {
-            Map<String, Integer> actionsMap= new HashMap<>();
-            while (rs.next()) {
-                actionsMap.put(rs.getString(PARENT.reference()), rs.getInt(ACTION_COUNT.reference()));
-            }
-            return actionsMap;
-        }));
+    @GetMapping(value = "request/database", produces = APPLICATION_JSON_VALUE)
+    @QueryGuard(maxRows = 300000)
+    @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "database_request",
+            view = DATABASE_REQUEST_ROW_MAPPER,
+            select = "id,host,db,db_name,start,end,user,thread,command,schema,failed,parent",
+            join = "instance",
+            order = "start",
+            ignore = "env")
+    public Collection<DatabaseRequestDto> fetchDatabaseRequests(
+            MvcRequest mvc,
+            @RequestParam(name = "env") String environment
+    )  {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+
+        return (Collection<DatabaseRequestDto>) mvc.execute();
     }
 
-    @GetMapping(value = "session/{idSession}/request/ftp", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<FtpRequestDto>> getFtpRequests(
-            @QueryRequestFilter(
-                    view = "ftp_request",
-                    column = "id,host,start,end,thread,user,command,failed,exception.err_type,exception.err_msg",
-                    join = "exception",
-                    order = "start") QueryComposer request,
-            @PathVariable String idSession){
-        return  ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.ftpRequestLazyMapper()));
-    }
+    @GetMapping(value = "request/database/{requestId}", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "database_request",
+            view = DATABASE_REQUEST_RESULTSET_MAPPER,
+            select = "id,host,port,db,start,end,user,thread,driver,db_name,db_version,command,schema,failed,instance_env,parent")
+    public ResponseEntity<DatabaseRequest> fetchDatabaseRequest(
+            MvcRequest mvc,
+            @PathVariable String requestId) {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.databaseRequest().id().eq(fromString(requestId))); // UUID
 
-    @GetMapping(value = "request/ftp/{idFtp}", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<FtpRequest> getFtpRequest(
-            @QueryRequestFilter(
-                    view = "ftp_request",
-                    column = "id,host,port,protocol,server_version,client_version,start,end,user,thread,command,failed,instance_env,parent") QueryComposer request,
-            @PathVariable String idFtp){
-        return Optional.ofNullable(INSPECT.execute(request.filters(column("id_ftp_rqt").eq(fromString(idFtp))), InspectMappers::ftpRequestComplete))
+        return Optional.ofNullable((DatabaseRequest) mvc.execute())
                 .map(o -> {
                     Instant end = o.getEnd();
                     boolean cacheable = end != null && Duration.between(Instant.now(), end).toDays() > 2;
@@ -447,54 +550,53 @@ public class RequestController {
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping(value = "request/ftp/{idFtp}/stage", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<FtpRequestStage>> getFtpRequestStages(
-            @QueryRequestFilter(
-                    view = "ftp_stage",
-                    column = "name,order,start,end,command,arg,exception.err_type,exception.err_msg,exception.stacktrace",
-                    join = "exception",
-                    order = "order") QueryComposer request, @PathVariable String idFtp) {
-        return ok().body(INSPECT.execute(request.filters(column("cd_ftp_rqt").eq(fromString(idFtp))), InspectMappers.ftpRequestStageMapper(mapper)));
+    @GetMapping(value = "request/database/{requestId}/stage", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "database_stage",
+            view = DATABASE_REQUEST_STAGE_ROW_MAPPER,
+            select = "name,order,start,end,arg,action_count,command,exception.err_type,exception.err_msg,exception.stacktrace",
+            join = "exception",
+            order = "order")
+    public Collection<DatabaseRequestStage> fetchDatabaseRequestStages(
+            MvcRequest mvc,
+            @PathVariable String requestId) {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.databaseRequestStage().parent().eq(fromString(requestId))); // UUID
+
+        return (Collection<DatabaseRequestStage>) mvc.execute();
     }
 
-    @GetMapping(value = "session/request/ftp/stages", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String,List<String>>> getFtpRequestStages(
-            @QueryRequestFilter(
-                    view = "ftp_stage",
-                    column = "name,parent",
-                    ignoreParameters = "ids") QueryComposer request,
-            @RequestParam(name = "ids") String[] idFtpList) {
-        return  ok().body(INSPECT.execute(request.filters(column("cd_ftp_rqt").in(Arrays.stream(idFtpList).map(UUID::fromString).toArray())
-                                .and(FTP_STAGE.column(NAME).notIn("CONNECTION","DISCONNECTION"))), rs -> {
-            Map<String, List<String>> actionsMap= new HashMap<>();
-            while (rs.next()) {
-                if(!actionsMap.containsKey(rs.getString(PARENT.reference()))){
-                    actionsMap.put(rs.getString(PARENT.reference()), new ArrayList<>());
-                }
-                actionsMap.get(rs.getString(PARENT.reference())).add(rs.getString(NAME.reference()));
-            }
-            return actionsMap;
-        }));
+    @GetMapping(value = "request/ftp", produces = APPLICATION_JSON_VALUE)
+    @QueryGuard(maxRows = 300000)
+    @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "ftp_request",
+            view = FTP_REQUEST_ROW_MAPPER,
+            select = "id,host,start,end,thread,user,command,failed,parent",
+            join = "instance",
+            order = "start",
+            ignore = "env")
+    public Collection<FtpRequestDto> fetchFtpRequests(
+            MvcRequest mvc,
+            @RequestParam(name = "env") String environment
+    )  {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+
+        return (Collection<FtpRequestDto>) mvc.execute();
     }
 
-    @GetMapping(value = "session/{idSession}/request/smtp", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<MailRequestDto>> getSmtpRequests(
-            @QueryRequestFilter(
-                    view = "smtp_request",
-                    column = "id,host,start,end,thread,user,command,failed,exception.err_type,exception.err_msg",
-                    join = "exception",
-                    order = "start") QueryComposer request,
-            @PathVariable String idSession){
-        return ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.smtpRequestLazyMapper()));
-    }
+    @GetMapping(value = "request/ftp/{requestId}", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "ftp_request",
+            view = FTP_REQUEST_RESULTSET_MAPPER,
+            select = "id,host,port,protocol,server_version,client_version,start,end,user,thread,command,failed,instance_env,parent")
+    public ResponseEntity<FtpRequest> fetchFtpRequest(
+            MvcRequest mvc,
+            @PathVariable String requestId){
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.ftpRequest().id().eq(fromString(requestId))); // UUID
 
-    @GetMapping(value = "request/smtp/{idSmtp}", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<MailRequest> getSmtpRequest(
-            @QueryRequestFilter(
-                    view = "smtp_request",
-                    column = "id,host,port,start,end,user,thread,command,failed,instance_env,parent") QueryComposer request,
-            @PathVariable String idSmtp){
-        return Optional.ofNullable(INSPECT.execute(request.filters(column("id_smtp_rqt").eq(fromString(idSmtp))), InspectMappers::mailRequestCompleteMapper))
+        return Optional.ofNullable((FtpRequest) mvc.execute())
                 .map(o -> {
                     Instant end = o.getEnd();
                     boolean cacheable = end != null && Duration.between(Instant.now(), end).toDays() > 2;
@@ -503,78 +605,122 @@ public class RequestController {
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping(value = "request/smtp/{idSmtp}/stage", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<MailRequestStage>> getSmtpRequestStages(
-            @QueryRequestFilter(
-                    view = "smtp_stage",
-                    column = "name,order,start,command,end,exception.err_type,exception.err_msg,exception.stacktrace",
-                    join = "exception",
-                    order = "order") QueryComposer request, @PathVariable String idSmtp) {
-        return ok().body(INSPECT.execute(request.filters(column("cd_smtp_rqt").eq(fromString(idSmtp))), InspectMappers.mailRequestStageMapper(mapper)));
+    @GetMapping(value = "request/ftp/{requestId}/stage", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "ftp_stage",
+            view = FTP_REQUEST_STAGE_ROW_MAPPER,
+            select = "name,order,start,end,command,arg,exception.err_type,exception.err_msg,exception.stacktrace",
+            join = "exception",
+            order = "order")
+    public Collection<FtpRequestStage> fetchFtpRequestStages(
+            MvcRequest mvc,
+            @PathVariable String requestId) {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.ftpStage().parent().eq(fromString(requestId))); // UUID
+
+        return (Collection<FtpRequestStage>) mvc.execute();
     }
 
-    @GetMapping(value = "request/smtp/{idSmtp}/mail", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<Mail>> getSmtpRequestMails(
-            @QueryRequestFilter(
-                    view = "smtp_mail",
-                    column = "subject,from,recipients,media,reply_to,size") QueryComposer request, @PathVariable String idSmtp) {
-        return ok().body(INSPECT.execute(request.filters(column("cd_smtp_rqt").eq(fromString(idSmtp))), InspectMappers.mailMapper()));
+    @GetMapping(value = "request/smtp", produces = APPLICATION_JSON_VALUE)
+    @QueryGuard(maxRows = 300000)
+    @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "smtp_request",
+            view = SMTP_REQUEST_ROW_MAPPER,
+            select = "id,host,start,end,thread,user,command,failed,parent",
+            join = "instance",
+            order = "start",
+            ignore = "env")
+    public Collection<MailRequestDto> fetchSmtpRequests(
+            MvcRequest mvc,
+            @RequestParam(name = "env") String environment
+    )  {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+
+        return (Collection<MailRequestDto>) mvc.execute();
     }
 
-    @GetMapping(value = "session/request/smtp/stages", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String, List<String>>> getSmtpRequestStages(
-            @QueryRequestFilter(
-                    view = "smtp_stage",
-                    column = "name,parent",
-                    ignoreParameters = "ids") QueryComposer request,
-            @RequestParam(name = "ids") String[] idSmtpList) {
-        return ok().body(INSPECT.execute(request.filters(column("cd_smtp_rqt").in(Arrays.stream(idSmtpList).map(UUID::fromString).toArray()).and(SMTP_STAGE.column(NAME).notIn("CONNECTION","DISCONNECTION"))), rs -> {
-            Map<String, List<String>> actionsMap= new HashMap<>();
-            while (rs.next()) {
-                if(!actionsMap.containsKey(rs.getString(PARENT.reference()))){
-                    actionsMap.put(rs.getString(PARENT.reference()), new ArrayList<>());
-                }
-                actionsMap.get(rs.getString(PARENT.reference())).add(rs.getString(NAME.reference()));
-            }
-            return actionsMap;
-        }));
+    @GetMapping(value = "request/smtp/{requestId}", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "smtp_request",
+            view = SMTP_REQUEST_RESULTSET_MAPPER,
+            select = "id,host,port,start,end,user,thread,command,failed,instance_env,parent")
+    public ResponseEntity<MailRequest> fetchSmtpRequest(
+            MvcRequest mvc,
+            @PathVariable String requestId){
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.smtpRequest().id().eq(fromString(requestId))); // UUID
+
+        return Optional.ofNullable((MailRequest) mvc.execute())
+                .map(o -> {
+                    Instant end = o.getEnd();
+                    boolean cacheable = end != null && Duration.between(Instant.now(), end).toDays() > 2;
+                    return cacheable ? ok().cacheControl(maxAge(30, DAYS)).body(o) : ok().body(o);
+                })
+                .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping(value = "session/request/smtp/stages/count", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String, Integer>> getSmtpRequestStagesRowCount(
-            @QueryRequestFilter(
-                    view = "smtp_mail",
-                    column = "parent.count:count,parent",
-                    ignoreParameters = "ids") QueryComposer request,
-            @RequestParam(name = "ids") String[] idSmtpList) {
-        return ok().body(INSPECT.execute(request.filters(column("cd_smtp_rqt").in(Arrays.stream(idSmtpList).map(UUID::fromString).toArray())), rs -> {
-            Map<String, Integer> actionsMap= new HashMap<>();
-            while (rs.next()) {
-                actionsMap.put(rs.getString(PARENT.reference()), rs.getInt("count"));
-            }
-            return actionsMap;
-        }));
+    @GetMapping(value = "request/smtp/{requestId}/stage", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "smtp_stage",
+            view = SMTP_REQUEST_STAGE_ROW_MAPPER,
+            select = "name,order,start,command,end,exception.err_type,exception.err_msg,exception.stacktrace",
+            join = "exception",
+            order = "order")
+    public Collection<MailRequestStage> fetchSmtpRequestStages(
+            MvcRequest mvc,
+            @PathVariable String requestId) {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.smtpStage().parent().eq(fromString(requestId))); // UUID
+
+        return (Collection<MailRequestStage>) mvc.execute();
     }
 
+    @GetMapping(value = "request/smtp/{requestId}/mail", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "smtp_mail",
+            view = SMTP_REQUEST_MAIL_ROW_MAPPER,
+            select = "subject,from,recipients,media,reply_to,size")
+    public Collection<Mail> fetchSmtpRequestMails(
+            MvcRequest mvc,
+            @PathVariable String requestId) {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.smtpMail().parent().eq(fromString(requestId))); // UUID
 
-    @GetMapping(value = "session/{idSession}/request/ldap", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<DirectoryRequestDto>> getLdapRequests(
-            @QueryRequestFilter(
-                    view = "ldap_request",
-                    column = "id,host,start,end,thread,user,command,failed,exception.err_type,exception.err_msg",
-                    join = "exception",
-                    order = "start") QueryComposer request,
-            @PathVariable String idSession){
-        return ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.ldapRequestLazyMapper()));
+        return (Collection<Mail>) mvc.execute();
     }
 
-    @GetMapping(value = "request/ldap/{idLdap}", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<DirectoryRequest> getLdapRequest(
-            @QueryRequestFilter(
-                    view = "ldap_request",
-                    column = "id,host,port,protocol,start,end,user,command,thread,failed,instance_env,parent") QueryComposer request,
-            @PathVariable String idLdap){
-        return Optional.ofNullable(INSPECT.execute(request.filters(column("id_ldap_rqt").eq(fromString(idLdap))), InspectMappers::ldapRequestCompleteMapper))
+    @GetMapping(value = "request/ldap", produces = APPLICATION_JSON_VALUE)
+    @QueryGuard(maxRows = 300000)
+    @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "ldap_request",
+            view = LDAP_REQUEST_ROW_MAPPER,
+            select = "id,host,start,end,thread,user,command,failed,parent",
+            join = "instance",
+            order = "start",
+            ignore = "env")
+    public Collection<DirectoryRequestDto> fetchLdapRequests(
+            MvcRequest mvc,
+            @RequestParam(name = "env") String environment
+    )  {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+
+        return (Collection<DirectoryRequestDto>) mvc.execute();
+    }
+
+    @GetMapping(value = "request/ldap/{requestId}", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "ldap_request",
+            view = LDAP_REQUEST_RESULTSET_MAPPER,
+            select = "id,host,port,protocol,start,end,user,command,thread,failed,instance_env,parent")
+    public ResponseEntity<DirectoryRequest> fetchLdapRequest(
+            MvcRequest mvc,
+            @PathVariable String requestId){
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.ldapRequest().id().eq(fromString(requestId))); // UUID
+
+        return Optional.ofNullable((DirectoryRequest) mvc.execute())
                 .map(o -> {
                     Instant end = o.getEnd();
                     boolean cacheable = end != null && Duration.between(Instant.now(), end).toDays() > 2;
@@ -584,75 +730,93 @@ public class RequestController {
     }
 
 
-    @GetMapping(value = "request/ldap/{idLdap}/stage", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<DirectoryRequestStage>> getLdapRequestStages(
-            @QueryRequestFilter(
-                    view = "ldap_stage",
-                    column = "name,order,start,end,command,arg,exception.err_type,exception.err_msg,exception.stacktrace",
-                    join = "exception",
-                    order = "order") QueryComposer request, @PathVariable String idLdap) {
-        return ok().body(INSPECT.execute(request.filters(column("cd_ldap_rqt").eq(fromString(idLdap))), InspectMappers.ldapRequestStageMapper(mapper)));
+    @GetMapping(value = "request/ldap/{requestId}/stage", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "ldap_stage",
+            view = LDAP_REQUEST_STAGE_ROW_MAPPER,
+            select = "name,order,start,end,command,arg,exception.err_type,exception.err_msg,exception.stacktrace",
+            join = "exception",
+            order = "order")
+    public Collection<DirectoryRequestStage> fetchLdapRequestStages(
+            MvcRequest mvc,
+            @PathVariable String requestId) {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.ldapStage().parent().eq(fromString(requestId))); // UUID
+
+        return (Collection<DirectoryRequestStage>) mvc.execute();
     }
 
-    @GetMapping(value = "session/request/ldap/stages", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String, List<String>>> getLdapRequestStages(
-            @QueryRequestFilter(
-                    view = "ldap_stage",
-                    column = "name,parent",
-                    ignoreParameters = "ids") QueryComposer request,
-            @RequestParam(name = "ids") String[] idFtpList) {
-        return ok().body(INSPECT.execute(request.filters(column("cd_ldap_rqt").in(Arrays.stream(idFtpList).map(UUID::fromString).toArray()).and(LDAP_STAGE.column(NAME).notIn("CONNECTION","DISCONNECTION"))), rs -> {
-            Map<String, List<String>> actionsMap= new HashMap<>();
-            while (rs.next()) {
-                if(!actionsMap.containsKey(rs.getString(PARENT.reference()))){
-                    actionsMap.put(rs.getString(PARENT.reference()), new ArrayList<>());
-                }
-                actionsMap.get(rs.getString(PARENT.reference())).add(rs.getString(NAME.reference()));
-            }
-            return actionsMap;
-        }));
+    @GetMapping(value = "architecture", produces = APPLICATION_JSON_VALUE)
+    public ResponseEntity<Collection<Architecture>> getArchitecture(
+            @RequestParam(name = "start") @Validate(Condition.INSTANT) Instant start,
+            @RequestParam(name = "end") @Validate(Condition.INSTANT) Instant end,
+            @RequestParam(name = "env") @Validate(Condition.NOT_EMPTY) String[] environments
+    )  {
+        var result = requestService.createArchitecture(start, end, environments);
+        if (end != null && end.isBefore(Instant.now().truncatedTo(java.time.temporal.ChronoUnit.DAYS))) {
+            return ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(result);
+        }
+        return ok().body(result);
     }
 
-    @GetMapping(value = "session/{idSession}/user/action", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<UserAction>> getUserActions(
-            @QueryRequestFilter(
-                    view = "user_action",
-                    column = "name,node_name,type,start,parent",
-                    order = "start") QueryComposer request,
-            @PathVariable String idSession) {
-        return ok().body(INSPECT.execute(request.filters(column("cd_prn_ses").eq(fromString(idSession))), InspectMappers.userActionMapper()));
+    @GetMapping(value = "request/jdbc/schema", produces = APPLICATION_JSON_VALUE)
+    public Collection<String> getRequestSchema(
+            @RequestParam(name = "host") String host,
+            @RequestParam(name = "env") String environment,
+            @RequestParam(name = "start") @Validate(Condition.INSTANT) Instant start,
+            @RequestParam(name = "end") @Validate(Condition.INSTANT) Instant end)  {
+
+        return requestService.getRequestSchema(environment, start, end, host);
+    }
+
+    @GetMapping(value = "session/{sessionId}/user/action", produces = APPLICATION_JSON_VALUE)
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "user_action",
+            view = USER_ACTION_ROW_MAPPER,
+            select = "name,node_name,type,start,parent",
+            order = "start")
+    public Collection<UserAction> getUserActions(
+            MvcRequest mvc,
+            @PathVariable String sessionId) {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.userAction().parent().eq(fromString(sessionId))); // UUID
+
+        return (Collection<UserAction>) mvc.execute();
     }
 
     @GetMapping(value = "session/user/{user}/action", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<AnalyticDto>> getUserActions(
-            @QueryRequestFilter(
-                    view = "main_session",
-                    column = "id,start:session_start,end,location,name:session_name,user_action.name:action_name,user_action.node_name,user_action.type,user_action.start:action_start",
-                    join = "user_action",
-                    order = "main_session.start,user_action.start",
-                    ignoreParameters = "date",
-                    mergeParameters = {Keyword.LIMIT,Keyword.OFFSET}) QueryComposer request,
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "main_session",
+            view = USER_ACTION_ROW_MAPPER,
+            select = "id,start:session_start,end,location,name:session_name,user_action.name:action_name,user_action.node_name,user_action.type,user_action.start:action_start",
+            join = "user_action",
+            order = "main_session.start,user_action.start", ignore = "date")
+    public Collection<AnalyticDto> getUserActions(
+            MvcRequest mvc,
             @PathVariable(name = "user") String user,
             @RequestParam(name = "date") @Validate(Condition.INSTANT) Instant date
-            ) {
-        return ok().body(INSPECT.execute(request.filters(MAIN_SESSION.column(USER).eq(user).and(MAIN_SESSION.column(START).ge(from(date)))), rs -> {
+    ) {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.mainSession().user().eq(user).and(store.mainSession().start().ge(date)));
+
+        return store.execute(mvc.getComposer().compose(store), rs -> {
             List<AnalyticDto> sessions = new ArrayList<>();
             while (rs.next()) {
                 var userAction =  new UserAction(
                         rs.getString("action_name"),
-                        rs.getString(NODE_NAME.reference()),
-                        rs.getString(TYPE.reference()),
+                        rs.getString("nodeName"),
+                        rs.getString("type"),
                         fromNullableTimestamp(rs.getTimestamp("action_start"))
                 );
-                var cdSession = rs.getString(ID.reference());
+                var cdSession = rs.getString("id");
                 var session = sessions.stream().filter(s -> s.getId().equals(cdSession)).findFirst().orElse(null);
                 if(session == null) {
                     session = new AnalyticDto();
-                    session.setId(rs.getString(ID.reference()));
+                    session.setId(rs.getString("id"));
                     session.setStart(fromNullableTimestamp(rs.getTimestamp("session_start")));
-                    session.setEnd(fromNullableTimestamp(rs.getTimestamp(END.reference())));
+                    session.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
                     session.setName(rs.getString("session_name"));
-                    session.setLocation(rs.getString(LOCATION.reference()));
+                    session.setLocation(rs.getString("location"));
                     if(userAction.getStart() == null) {
                         session.setUserActions(new ArrayList<>());
                     } else {
@@ -664,19 +828,6 @@ public class RequestController {
                 }
             }
             return sessions;
-        }));
-    }
-
-    @GetMapping(value = "architecture", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<Architecture>> getArchitecture(
-            @RequestParam(required = false, name = "start") @Validate(Condition.INSTANT) Instant start,
-            @RequestParam(required = false, name = "end") @Validate(Condition.INSTANT) Instant end,
-            @RequestParam(required = false, name = "env") @Validate(Condition.NOT_EMPTY) String[] environments
-    )  {
-        var result = requestService.createArchitecture(start, end, environments);
-        if (end != null && end.isBefore(Instant.now().truncatedTo(java.time.temporal.ChronoUnit.DAYS))) {
-            return ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(result);
-        }
-        return ok().body(result);
+        });
     }
 }

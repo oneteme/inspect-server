@@ -1,18 +1,9 @@
 package org.usf.inspect.server.service;
 
-import static java.lang.Thread.ofVirtual;
-import static java.sql.Timestamp.from;
-import static java.time.LocalDate.now;
-import static java.time.ZoneId.systemDefault;
-import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
-import static java.util.concurrent.CompletableFuture.allOf;
-import static java.util.concurrent.CompletableFuture.runAsync;
-import static java.util.concurrent.Executors.newFixedThreadPool;
-import static java.util.stream.Collectors.joining;
-import static org.usf.inspect.core.ExecutorServiceWrapper.wrap;
-import static org.usf.inspect.core.SessionContextManager.emitInfo;
-import static org.usf.inspect.server.Utils.*;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.usf.inspect.server.dao.PurgeDao;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -20,13 +11,17 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.IntSupplier;
 
-import org.springframework.stereotype.Service;
-import org.usf.inspect.core.InstanceEnvironment;
-import org.usf.inspect.server.Utils;
-import org.usf.inspect.server.dao.PurgeDao;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import static java.sql.Timestamp.from;
+import static java.time.LocalDate.now;
+import static java.time.ZoneId.systemDefault;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+import static java.util.concurrent.CompletableFuture.allOf;
+import static java.util.concurrent.CompletableFuture.runAsync;
+import static java.util.stream.Collectors.joining;
+import static org.usf.inspect.core.ExecutorServiceWrapper.wrap;
+import static org.usf.inspect.core.SessionContextManager.emitInfo;
+import static org.usf.inspect.server.Utils.virtualThreadExecutor;
 
 @Slf4j
 @Service
