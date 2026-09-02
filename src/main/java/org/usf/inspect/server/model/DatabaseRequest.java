@@ -7,7 +7,7 @@ import org.usf.inspect.core.DatabaseRequestSignal;
 import org.usf.inspect.core.DatabaseRequestUpdate;
 
 /**
- * 
+ *
  * @author u$f
  *
  */
@@ -15,17 +15,18 @@ import org.usf.inspect.core.DatabaseRequestUpdate;
 @Setter
 public class DatabaseRequest extends AbstractRequest {
 
-	private String scheme;
-	private String host;
-	private int port;
-	private String name;
-	private String schema;
-	private String driverVersion;
-	private String productName;
-	private String productVersion;
-	private boolean failed;
+    private String scheme;
+    private String host;
+    private int port;
+    private String name;
+    private String schema;
+    private String driverVersion;
+    private String productName;
+    private String productVersion;
+    @Deprecated
+    private boolean failed;
 
-	@JsonCreator public DatabaseRequest() { }
+    @JsonCreator public DatabaseRequest() { }
 
     public DatabaseRequestSignal toRequest(){
         DatabaseRequestSignal req = new DatabaseRequestSignal(getId(), getSessionId(), getStart(), getThreadName());

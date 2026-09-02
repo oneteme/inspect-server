@@ -4,10 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.usf.inspect.core.DispatchState;
-import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.InstanceEnvironment;
-import org.usf.inspect.core.TraceFail;
+import org.usf.inspect.core.*;
 import org.usf.inspect.server.exception.DispatchProcessingException;
 import org.usf.inspect.server.service.TraceService;
 
@@ -19,6 +16,8 @@ import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 import static org.springframework.http.ResponseEntity.*;
+import static org.usf.inspect.core.ErrorCode.SUCCESS;
+import static org.usf.inspect.core.ErrorCode.UNKNOWN_ERROR;
 import static org.usf.inspect.server.Utils.isUUID;
 import static org.usf.jquery.core.Utils.isEmpty;
 
@@ -34,25 +33,25 @@ public class TraceController {
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<String> addInstanceEnvironment(
             @RequestBody InstanceEnvironment instance){
-    	if(isEmpty(instance.getName())) {
-    		return status(BAD_REQUEST).body("invalid instance.name="+instance.getName());
-    	}
+        if(isEmpty(instance.getName())) {
+            return status(BAD_REQUEST).body("invalid instance.name="+instance.getName());
+        }
         if(!isUUID(instance.getId())) {
             return status(BAD_REQUEST).body("invalid instance.id="+instance.getId());
         }
-		try {
-			return service.addInstance(instance) //configure env<>namespace mapping
-					? ok(instance.getId())
-					: status(SERVICE_UNAVAILABLE).body("dispatcher.state=" + service.getState());
-		} catch(Exception e) {
-			log.error("post instance", e);
-			return internalServerError().body("unexpected exception " + e.getClass().getSimpleName());
-		}
+        try {
+            return service.addInstance(instance) //configure env<>namespace mapping
+                    ? ok(instance.getId())
+                    : status(SERVICE_UNAVAILABLE).body("dispatcher.state=" + service.getState());
+        } catch(Exception e) {
+            log.error("post instance", e);
+            return internalServerError().body("unexpected exception " + e.getClass().getSimpleName());
+        }
     }
 
     @PutMapping(value = "instance/{id}/session", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> addSessions(
-    		@PathVariable String id,
+            @PathVariable String id,
             @RequestParam(required = false) Integer attempts,
             @RequestParam(required = false) String filename,
             @RequestParam(required = false) Instant end,
@@ -61,6 +60,30 @@ public class TraceController {
             return status(BAD_REQUEST).body("invalid instance ID");
         }
         try {
+            for (var t : traces) {
+                // Si c'est un AbstractRequestUpdate
+                if (t instanceof AbstractRequestUpdate req) {
+                    // Si le statut est encore à 0 (valeur par défaut) mais que "failed" était vrai
+                    // Note : il faut que `isFailed()` ou `getFailed()` soit accessible sur 'req' ou 't'
+                    if (req instanceof MailRequestUpdate mailReq && mailReq.isFailed()) {
+                        mailReq.setStatus(UNKNOWN_ERROR.getCode());
+                    }
+                    else if (req instanceof FtpRequestUpdate ftpReq && ftpReq.isFailed()) {
+                        ftpReq.setStatus(UNKNOWN_ERROR.getCode());
+                    }
+                    else if (req instanceof DatabaseRequestUpdate dbReq && dbReq.isFailed()) {
+                        dbReq.setStatus(UNKNOWN_ERROR.getCode());
+                    }
+                    else if (req instanceof DirectoryRequestUpdate dirReq && dirReq.isFailed()) {
+                        dirReq.setStatus(UNKNOWN_ERROR.getCode());
+                    }
+
+                    // Si  failed est false
+                    else {
+                        req.setStatus(SUCCESS.getCode());
+                    }
+                }
+            }
             return service.addTraces(traces, id, attempts, filename, end)
                     ? accepted().build()
                     : status(SERVICE_UNAVAILABLE).body(new TraceFail(service.getState().toString(), true));
@@ -69,14 +92,14 @@ public class TraceController {
             return internalServerError().body(new TraceFail(service.getState().toString(), e.isRetryable()));
         }
     }
-    
+
     @GetMapping(value = "queue", produces = APPLICATION_JSON_VALUE)
     public List<EventTrace> peekQueue(){
-		return service.peekQueue();
+        return service.peekQueue();
     }
 
     @PostMapping("state/{state}")
     public void updateState(@PathVariable DispatchState state){
-		service.updateState(state);
+        service.updateState(state);
     }
 }

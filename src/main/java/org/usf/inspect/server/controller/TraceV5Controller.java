@@ -47,26 +47,26 @@ public class TraceV5Controller {
 
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<String> addInstanceEnvironment(@RequestBody InstanceEnvironment instance, Principal principal){ //check
-    	if(isEmpty(instance.getName())) {
-    		return status(BAD_REQUEST).body("invalid instance.name="+instance.getName());
-    	}
+        if(isEmpty(instance.getName())) {
+            return status(BAD_REQUEST).body("invalid instance.name="+instance.getName());
+        }
         if(!isUUID(instance.getId())) {
             return status(BAD_REQUEST).body("invalid instance.id="+instance.getId());
         }
-		try {
-			var nsp = nonNull(principal) ? principal.getName() : ""; //disabled spring security
-			return service.addInstance(instance, nsp)
-					? ok(instance.getId())
-					: status(SERVICE_UNAVAILABLE).body("dispatcher.state=" + service.getState());
-		} catch(Exception e) {
-			log.error("post instance", e);
-			return internalServerError().body("unexpected exception " + e.getClass().getSimpleName());
-		}
+        try {
+            var nsp = nonNull(principal) ? principal.getName() : ""; //disabled spring security
+            return service.addInstance(instance, nsp)
+                    ? ok(instance.getId())
+                    : status(SERVICE_UNAVAILABLE).body("dispatcher.state=" + service.getState());
+        } catch(Exception e) {
+            log.error("post instance", e);
+            return internalServerError().body("unexpected exception " + e.getClass().getSimpleName());
+        }
     }
 
     @PutMapping(value = "instance/{id}/session", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> addSessions(
-    		@PathVariable String id,
+            @PathVariable String id,
             @RequestParam(required = false) Integer attempts,
             @RequestParam(required = false) String filename,
             @RequestParam(required = false) Instant end,
@@ -83,14 +83,14 @@ public class TraceV5Controller {
             return internalServerError().body(new TraceFail(service.getState().toString(), e.isRetryable()));
         }
     }
-    
+
     @GetMapping(value = "queue", produces = APPLICATION_JSON_VALUE)
     public List<EventTrace> peekQueue(){
-		return service.peekQueue();
+        return service.peekQueue();
     }
 
     @PostMapping("state/{state}")
     public void updateState(@PathVariable DispatchState state){
-		service.updateState(state);
+        service.updateState(state);
     }
 }
