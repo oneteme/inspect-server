@@ -6,7 +6,8 @@ import static java.sql.Types.OTHER;
 import static java.sql.Types.VARCHAR;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
-import static org.springframework.jdbc.datasource.DataSourceUtils.doGetConnection;
+import static org.springframework.jdbc.datasource.DataSourceUtils.getConnection;
+import static org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection;
 import static org.usf.inspect.core.RequestMask.FTP;
 import static org.usf.inspect.core.RequestMask.JDBC;
 import static org.usf.inspect.core.RequestMask.LDAP;
@@ -29,6 +30,8 @@ import java.sql.Savepoint;
 import java.util.List;
 import java.util.function.Consumer;
 
+import javax.sql.DataSource;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -45,7 +48,6 @@ import org.usf.inspect.server.retention.RetentionModels.RetentionConfig;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.usf.inspect.server.retention.RetentionModels;
 
@@ -62,21 +64,31 @@ import java.time.Duration;
  */
 @Slf4j
 @Repository
-@RequiredArgsConstructor
 public class TraceDao {
 
     private static final int BATCH_SIZE = 1_000;
+
+
 
     private final JdbcTemplate template;
     private final ObjectMapper mapper;
     private final ApplicationEventPublisher publisher;
     private final RetentionAdapter retentionAdapter = new RetentionAdapter(Duration.ofDays(30));
 
+    private final boolean supportsSavePoints;
+
+	public TraceDao(JdbcTemplate template, ObjectMapper mapper, ApplicationEventPublisher publisher) {
+		this.template = template;
+		this.mapper = mapper;
+		this.publisher = publisher;
+		this.supportsSavePoints = supportsSavePoints(template.getDataSource());
+	}
+
     public void saveInstanceEnvironment(InstanceEnvironment instance) {
         template.update("""
 insert into e_env_ins(id_ins,va_typ,dh_str,va_app,va_vrs,va_adr,va_env,va_os,va_re,va_usr,va_clr,va_brch,va_hsh,va_cnf,va_rsr,va_add_prp,cd_nsp)
-values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
-            ps.setString(1, String.valueOf(instance.getId()));
+values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
+            ps.setObject(1, instance.getId());
             ps.setString(2, ofNullable(instance.getType()).map(InstanceType::name).orElse(null));
             ps.setTimestamp(3, fromNullableInstant(instance.getInstant()));
             ps.setString(4, instance.getName());
@@ -100,7 +112,7 @@ values(?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     public void updateInstanceEnvironments(List<InstanceEnvironmentUpdate> instances){
         executeBatch("update e_env_ins set dh_end = ? where id_ins = ?::uuid", instances, (ps, ins) -> {
             ps.setTimestamp(1, fromNullableInstant(ins.getEnd()));
-            ps.setString(2, String.valueOf(ins.getId()));
+            ps.setObject(2, ins.getId());
         });
     }
 
@@ -157,11 +169,11 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions, (ps, ses) 
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteRestSessions(List<Pair<HttpSessionSignal, HttpSessionUpdate>> sessions) {
-        executeBatchPair("""
-insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,dh_end,va_err_typ,va_err_msg,va_stk,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_cnt_typ,cd_stt,va_o_sze,va_o_cnt_enc,va_msk,va_int_nds)
-values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
-            var session = ses.getV1();
-            var callback = ses.getV2();
+    	executeBatchPair("""
+insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,dh_end,va_err_typ,va_err_msg,va_stk,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_cnt_typ,cd_stt,va_o_sze,va_o_cnt_enc,va_msk)
+values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
+            var session = ses.signal();
+            var callback = ses.update();
             var exp = callback.getException();
             restSessionSetter(ps, session);
             ps.setTimestamp(15, fromNullableInstant(callback.getEnd()));
@@ -177,7 +189,6 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", 
             ps.setLong(25, callback.getDataSize());
             ps.setString(26, callback.getContentEncoding());
             ps.setInt(27, callback.getRequestMask().get());
-            //ps.setObject(28, safeWriteValue(callback.getIntermediateNodes(), mapper), OTHER);
         });
     }
 
@@ -201,8 +212,8 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", 
     @Transactional(rollbackFor = Throwable.class)
     public void updateRestSessions(List<HttpSessionUpdate> sessions) {
         executeBatch("""
-update e_rst_ses set va_err_typ = coalesce(?, va_err_typ), va_err_msg = coalesce(?, va_err_msg), va_stk = coalesce(?, va_stk), va_nam = coalesce(?, va_nam), va_usr = coalesce(?, va_usr), va_cch_ctr = coalesce(?, va_usr_agt), va_cnt_typ = ?, cd_stt = ?, va_o_sze = ?, va_o_cnt_enc = ?, dh_end = ?, va_msk = ?, va_int_nds = ?
-where id_ses = ?""", sessions, (ps, ses) -> {
+update e_rst_ses set va_err_typ = coalesce(?, va_err_typ), va_err_msg = coalesce(?, va_err_msg), va_stk = coalesce(?, va_stk), va_nam = coalesce(?, va_nam), va_usr = coalesce(?, va_usr), va_cch_ctr = coalesce(?, va_cch_ctr), va_cnt_typ = ?, cd_stt = ?, va_o_sze = ?, va_o_cnt_enc = ?, dh_end = ?, va_msk = ?
+where id_ses = ?::uuid""", sessions, (ps, ses) -> {
             var exp = ses.getException();
             ps.setString(1, nonNull(exp) ? exp.getType() : null);
             ps.setString(2, nonNull(exp) ? exp.getMessage() : null);
@@ -217,7 +228,7 @@ where id_ses = ?""", sessions, (ps, ses) -> {
             ps.setTimestamp(11, fromNullableInstant(ses.getEnd()));
             ps.setInt(12, ses.getRequestMask().get());
            // ps.setObject(13, safeWriteValue(ses.getIntermediateNodes(), mapper), OTHER);
-            ps.setObject(14, ses.getId());
+            ps.setObject(13, ses.getId());
         });
     }
 
@@ -245,11 +256,11 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteMainSessions(List<Pair<MainSessionSignal, MainSessionUpdate>> sessions) {
-        executeBatchPair("""
+    	executeBatchPair("""
 insert into e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str,dh_end,va_err_typ,va_err_msg,va_stk,va_msk)
 values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
-            var session = ses.getV1();
-            var callback = ses.getV2();
+            var session = ses.signal();
+            var callback = ses.update();
             var exp = callback.getException();
             mainSessionSetter(ps, session);
             ps.setString(5, nonNull(callback.getLocation()) ? callback.getLocation() : session.getLocation());
@@ -307,11 +318,11 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, TraceDao::
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteRestRequests(List<Pair<HttpRequestSignal, HttpRequestUpdate>> requests) {
-        executeBatchPair("""
+    	executeBatchPair("""
 insert into e_rst_rqt(id_rst_rqt,cd_prn_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,va_usr,dh_str,dh_end,va_cnt_typ,cd_stt,va_i_sze,va_i_cnt_enc,va_bdy_cnt,va_lnk)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, ses) -> {
-            var request = ses.getV1();
-            var callback = ses.getV2();
+            var request = ses.signal();
+            var callback = ses.update();
             restRequestSetter(ps, request);
             ps.setTimestamp(16, fromNullableInstant(callback.getEnd()));
             ps.setString(17, contentTypeExtract(callback.getContentType()));
@@ -369,18 +380,18 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests, (ps, req) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteLocalRequests(List<Pair<LocalRequestSignal, LocalRequestUpdate>> requests) {
-        executeBatchPair("""
+    	executeBatchPair("""
 insert into e_lcl_rqt(id_lcl_rqt,cd_prn_ses,cd_ins,va_typ,va_nam,va_lct,va_usr,va_thr,dh_str,dh_end,va_fail)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
-            var req = pair.getV1();
-            var callback = pair.getV2();
+            var req = pair.signal();
+            var callback = pair.update();
             localRequestSetter(ps, req);
             ps.setTimestamp(9, fromNullableInstant(nonNull(callback.getStart()) ? callback.getStart() : req.getStart()));
             ps.setTimestamp(10, fromNullableInstant(callback.getEnd()));
             ps.setBoolean(11, nonNull(callback.getException()));
         });
         var exceptions = requests.stream()
-                .map(Pair::getV2)
+                .map(Pair::update)
                 .filter(r -> nonNull(r.getException()))
                 .toList();
         if(!exceptions.isEmpty()) {
@@ -403,7 +414,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
     public void updateLocalRequests(List<LocalRequestUpdate> requests) {
         executeBatch("""
 update e_lcl_rqt set dh_str = coalesce(?, dh_str), dh_end = ?, va_fail = ?
-where id_lcl_rqt = ?::uuid""", requests, (ps, req) -> {
+where id_lcl_rqt = ?""", requests, (ps, req) -> {
             ps.setTimestamp(1, fromNullableInstant(req.getStart()));
             ps.setTimestamp(2, fromNullableInstant(req.getEnd()));
             ps.setBoolean(3, nonNull(req.getException()));
@@ -429,8 +440,8 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests, TraceDao::mailRequestS
         executeBatchPair("""
 insert into e_smtp_rqt(id_smtp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str,dh_end,va_cmd,status)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
-            var req = pair.getV1();
-            var callback = pair.getV2();
+            var req = pair.signal();
+            var callback = pair.update();
             mailRequestSetter(ps, req);
             ps.setTimestamp(10, fromNullableInstant(callback.getEnd()));
             ps.setString(11, callback.getCommand());
@@ -475,8 +486,8 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests, TraceDao::ftpReque
         executeBatchPair("""
 insert into e_ftp_rqt(id_ftp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_srv_vrs,va_clt_vrs,va_usr,va_thr,dh_str,dh_end,va_cmd,status)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
-            var req = pair.getV1();
-            var callback = pair.getV2();
+            var req = pair.signal();
+            var callback = pair.update();
             ftpRequestSetter(ps, req);
             ps.setTimestamp(12, fromNullableInstant(callback.getEnd()));
             ps.setString(13, callback.getCommand());
@@ -522,8 +533,8 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests, TraceDao::ldapRequestS
         executeBatchPair("""
 insert into e_ldap_rqt(id_ldap_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str,dh_end,va_cmd,status)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
-            var req = pair.getV1();
-            var callback = pair.getV2();
+            var req = pair.signal();
+            var callback = pair.update();
             ldapRequestSetter(ps, req);
             ps.setTimestamp(10, fromNullableInstant(callback.getEnd()));
             ps.setString(11, callback.getCommand());
@@ -567,8 +578,8 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests, TraceDao::da
         executeBatchPair("""
 insert into e_dtb_rqt(id_dtb_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_she,va_nam,va_sha,va_usr,va_thr,va_drv,va_prd_nam,va_prd_vrs,dh_str,dh_end,va_cmd,status)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
-            var req = pair.getV1();
-            var callback = pair.getV2();
+            var req = pair.signal();
+            var callback = pair.update();
             databaseRequestSetter(ps, req);
             ps.setTimestamp(15, fromNullableInstant(callback.getEnd()));
             ps.setString(16, callback.getCommand());
@@ -746,69 +757,102 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
     }
 
     private <T extends EventTrace, V extends EventTrace> void executeBatchPair(String sql, List<Pair<T,V>> it, ParameterizedPreparedStatementSetter<Pair<T,V>> pss) {
-        updateAll(sql, it, pss, t-> {
-            publisher.publishEvent(new UnsavedEventTraceEvent(this, t.getV1(), false));
-            publisher.publishEvent(new UnsavedEventTraceEvent(this, t.getV2(), true));
-        });
+		updateAll(sql, it, pss, t-> {
+			publisher.publishEvent(new UnsavedEventTraceEvent(this, t.signal(), false));
+			publisher.publishEvent(new UnsavedEventTraceEvent(this, t.update(), true));
+		});
     }
 
     private <T> void updateAll(String sql, List<T> records, ParameterizedPreparedStatementSetter<T> pss, Consumer<T> fallback) {
-        if(!isEmpty(records)) {
-            Connection cnx = null;
-            Savepoint sp = null;
-            try {
-                cnx = doGetConnection(template.getDataSource()); //current transaction connection
-                sp = cnx.setSavepoint("before_batch");
-            }
-            catch (Exception e) {
-                log.warn("Failed to set savepoint for batch update, retrying as single updates for batch", e);
-            }
-            try {
-                template.batchUpdate(sql, records, BATCH_SIZE, pss);
-                if(nonNull(cnx) && nonNull(sp)) {
-                    try {
-                        cnx.releaseSavepoint(sp);
-                    }
-                    catch (SQLException e) {
-                        throw new RuntimeException("Failed to release savepoint after batch update", e);
-                    }
-                }
-            } catch (DuplicateKeyException e) { //SQLState 23505
-                if(nonNull(cnx) && nonNull(sp)) {
-                    log.warn("Batch update failed with DuplicateKeyException, retrying as single updates for batch", e);
-                    try {
-                        cnx.rollback(sp);
-                    } catch (SQLException e1) {
-                        throw new RuntimeException("Failed to rollback after batch update failure", e1);
-                    }
-                    retryAsSingles(sql, records, pss, fallback);
-                }
-                else {
-                    log.warn("Batch update failed with DuplicateKeyException, but no savepoint available", e);
-                    throw e;
-                }
-            }
-        }
+    	if(isEmpty(records)) {
+    		return;
+    	}
+		var cnx = getConnection(template.getDataSource()); //current transaction connection
+		Savepoint sp = null;
+		if(supportsSavePoints) {
+			try {
+				sp = cnx.setSavepoint();
+			}
+			catch (SQLException e) {
+				log.warn("Failed to create savepoint before batch update", e);
+			}
+		}
+		try {
+			template.batchUpdate(sql, records, BATCH_SIZE, pss);
+			if(nonNull(sp)) {
+				try {
+					cnx.releaseSavepoint(sp);
+				}
+				catch (SQLException e) {
+					log.warn("Failed to release savepoint after batch update", e);
+				}
+			}
+		} catch (DuplicateKeyException e) { //SQLState 23505
+			if(nonNull(sp)) {
+				log.warn("Batch update failed with DuplicateKeyException, retrying as single updates for batch", e);
+				try {
+					cnx.rollback(sp);
+				} catch (SQLException e1) {
+					throw new IllegalStateException("Failed to rollback after batch update failure", e1);
+				}
+				var rows = retryAsSingles(sql, records, pss, fallback, cnx);
+		        log.warn("Batch update failed with DuplicateKeyException, retried as single updates for batch, total rows updated: {}", rows);
+			}
+			else {
+				log.warn("Batch update failed with DuplicateKeyException, but no active savepoint available to retry as single updates", e);
+				throw e;
+			}
+		} finally {
+			releaseConnection(cnx, template.getDataSource());
+		}
     }
 
-    private <T> int retryAsSingles(String sql, List<T> records, ParameterizedPreparedStatementSetter<T> pss, Consumer<T> fallback) {
-        var rows = 0;
-        for(var r : records) {
+    private <T> int retryAsSingles(String sql, List<T> records, ParameterizedPreparedStatementSetter<T> pss, Consumer<T> fallback, Connection cnx) {
+        if(!supportsSavePoints) {
+			throw new IllegalStateException("Cannot retry as single updates because savepoints are not supported");
+		}
+    	var rows = 0;
+        for (var r : records) {
+        	Savepoint sp = null;
             try {
-                rows += template.update(sql, ps-> pss.setValues(ps, r));
-            } catch (DuplicateKeyException e) { //SQLState 23505 
-                ++rows;
-                try {
-                    fallback.accept(r);
-                } catch (Exception ex) {
-                    log.error("Failed to save record even in fallback for {}, skipping record", r, ex);
+                sp = cnx.setSavepoint();
+                rows+= template.update(sql, ps -> pss.setValues(ps, r));
+                cnx.releaseSavepoint(sp);
+            } catch (Exception e) {
+                if (nonNull(sp)) {
+                    try {
+                        cnx.rollback(sp);
+                    } catch (SQLException ex) {
+    					throw new IllegalStateException("Failed to rollback after single update failure", ex);
+                    }
+                }
+                if (e instanceof DuplicateKeyException) {
+                    try {
+                        fallback.accept(r); //continue
+                    } catch (Exception ex) {
+                        log.error("Failed to execute fallback for record " + r, ex);
+                    }
+                }
+                else if (e instanceof RuntimeException re) {
+                	throw re;
+                }
+                else {
+                	throw new RuntimeException("Failed to execute single update for record " + r, e);
                 }
             }
         }
-        if(rows > 0) {
-            log.warn("duplicate key exception occurred for {} records, but all records have been saved successfully in retry", rows);
-        }
-        return records.size() - rows;
+        return rows;
+    }
+
+    static boolean supportsSavePoints(DataSource ds) {
+    	if(nonNull(ds)) {
+        	try(var cnx = ds.getConnection()){
+    			return cnx.getMetaData().supportsSavepoints();
+    		} catch (Exception e) {
+    			// do nothing
+    		}
+    	}
+    	return false;
     }
 
     private String toConfigJsonWithRetention(InspectCollectorConfiguration conf) {

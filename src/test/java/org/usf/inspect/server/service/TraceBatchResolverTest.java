@@ -127,10 +127,10 @@ class TraceBatchResolverTest {
         assertEquals(1, completeCaptor.getValue().size());
 
         Pair<TestInitializer, TestCallback> pair = completeCaptor.getValue().getFirst();
-        assertEquals(id, pair.getV1().getId());
-        assertEquals(id, pair.getV2().getId());
-        assertEquals(start, pair.getV1().getStart());
-        assertEquals(end, pair.getV2().getEnd());
+        assertEquals(id, pair.signal().getId());
+        assertEquals(id, pair.update().getId());
+        assertEquals(start, pair.signal().getStart());
+        assertEquals(end, pair.update().getEnd());
 
         verifyNoInteractions(insertPartialBatchExecutor, updateBatchExecutor);
     }
@@ -162,7 +162,7 @@ class TraceBatchResolverTest {
 
         verify(insertCompleteBatchExecutor, times(1)).accept(completeCaptor.capture());
         assertEquals(1, completeCaptor.getValue().size());
-        assertEquals("id2", completeCaptor.getValue().getFirst().getV1().getId());
+        assertEquals("id2", completeCaptor.getValue().getFirst().signal().getId());
     }
 
     @Test
