@@ -7,6 +7,7 @@ import lombok.Setter;
 import org.usf.inspect.core.EventTrace;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -17,7 +18,7 @@ public class InstanceTrace implements EventTrace {
     private final Integer attempts;
     private final String fileName;
     private final Instant instant;
-    private final String instanceId;
+    private final UUID instanceId;
     private int traceCount = 0;
     private int pending = 0;
 

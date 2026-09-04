@@ -10,10 +10,13 @@ import org.usf.inspect.server.event.UnsavedEventTraceEvent;
 import org.usf.inspect.server.exception.DispatchProcessingException;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.InstanceTrace;
+import org.usf.inspect.core.TraceDispatcherHub;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+
 import static java.time.Instant.now;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -25,7 +28,7 @@ import static org.usf.inspect.server.service.TracePersistenceService.filterAndAp
 @Slf4j
 @Service
 public class TraceService implements ApplicationListener<UnsavedEventTraceEvent> {
-	
+
     private final TraceDispatcherHub dispatcher;
     private final ObjectMapper mapper;
 
@@ -44,7 +47,7 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
         return dispatcher.dispatch(instance);
     }
 
-    public boolean addTraces(List<EventTrace> traces, String id, Integer attempts, String filename, Instant end) throws DispatchProcessingException {
+    public boolean addTraces(List<EventTrace> traces, UUID id, Integer attempts, String filename, Instant end) throws DispatchProcessingException {
         var now = now();
         var emitted = false;
         try {
@@ -61,15 +64,37 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
             for(var e : traces) {
                 if(e instanceof AbstractRequestSignal req) {
                     req.setInstanceId(id);
-                    assertUUID(req.getId(), "req.id");
+                   // assertUUID(req.getId(), "req.id");
                 } else if(e instanceof AbstractSessionSignal ses) {
                     ses.setInstanceId(id);
-                    assertUUID(ses.getId(), "ses.id");
+                   // assertUUID(ses.getId(), "ses.id");
                 } else if(e instanceof MachineResourceUsage usg) {
                     usg.setInstanceId(id);
                 } else if(e instanceof LogEntry ent) {
                     ent.setInstanceId(id);
                 }
+            }
+            // extraction manuelle des exceptions
+            var extractedExceptions = new ArrayList<EventTrace>();
+            for (var e : traces) {
+                if (e instanceof AbstractStage stg && stg.getException() != null) {
+                    var ex = stg.getException();
+                    if (ex.getTraceId() == null) {
+                        ex.setTraceId(stg.getRequestId());
+                    }
+                    ex.setOffset(stg.getOrder());
+                    extractedExceptions.add(ex);
+                } else if (e instanceof AbstractSessionUpdate ses && ses.getException() != null) {
+                    var ex = ses.getException();
+                    if (ex.getTraceId() == null) {
+                        ex.setTraceId(ses.getId());
+                    }
+                    ex.setOffset(0);
+                    extractedExceptions.add(ex);
+                }
+            }
+            if (!extractedExceptions.isEmpty()) {
+                traces.addAll(extractedExceptions);
             }
             emitted = true;
             return dispatcher.emitTraces(traces);
@@ -93,31 +118,31 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
 
     @Override
     public void onApplicationEvent(UnsavedEventTraceEvent event) {
-    	var trace = event.getTrace();
-    	if(event.isRetry()) {
-        	dispatcher.emitTrace(trace);
-    	}
-	 	else {
-            String id = null;
+        var trace = event.getTrace();
+        if(event.isRetry()) {
+            dispatcher.emitTrace(trace);
+        }
+        else {
+            UUID id = null;
             if(trace instanceof AbstractSessionSignal s) {
-            	id = s.getInstanceId();
+                id = s.getInstanceId();
             }
             else if(trace instanceof AbstractRequestSignal r) {
-            	id = r.getInstanceId();
+                id = r.getInstanceId();
             }
             if(nonNull(id)) {
-            	try {
-            		var report = new LogEntry(now(), REPORT, mapper.writeValueAsString(trace), null);
+                try {
+                    var report = new LogEntry(now(), REPORT, mapper.writeValueAsString(trace), null);
                     report.setInstanceId(id);
-                	dispatcher.emitTrace(report);
-            	}
-            	catch(Exception e) {
-            		log.warn("cannot report unsaved trace of type {} because of serialization error: {}", trace.getClass().getSimpleName(), e.getMessage());
-            	}
-			}
-            else {
-            	log.warn("cannot report unsaved trace of type {} because instanceId is missing", trace.getClass().getSimpleName());
+                    dispatcher.emitTrace(report);
+                }
+                catch(Exception e) {
+                    log.warn("cannot report unsaved trace of type {} because of serialization error: {}", trace.getClass().getSimpleName(), e.getMessage());
+                }
             }
-    	}
+            else {
+                log.warn("cannot report unsaved trace of type {} because instanceId is missing", trace.getClass().getSimpleName());
+            }
+        }
     }
 }

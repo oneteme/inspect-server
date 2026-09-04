@@ -88,7 +88,7 @@ public class CompareService {
             var sessions = new ArrayList<RestSessionWrapper>();
             while (rs.next()) {
                 var session = new RestSessionWrapper();
-                session.setId(rs.getString("id"));
+                session.setId(rs.getObject("id", UUID.class));
                 session.setMethod(rs.getString("method"));
                 session.setProtocol(rs.getString("protocol"));
                 session.setHost(rs.getString("host"));
@@ -109,7 +109,7 @@ public class CompareService {
                 session.setName(rs.getString("apiName"));
                 session.setUserAgent(rs.getString("userAgt"));
                 session.setUser(rs.getString("user"));
-                session.setInstanceId(rs.getString("instanceEnv"));
+                session.setInstanceId(rs.getObject("instanceEnv", UUID.class));
                 session.setCacheControl(rs.getString("cacheControl"));
                 session.setOs(rs.getString("os"));
                 session.setRe(rs.getString("re"));
@@ -144,8 +144,8 @@ public class CompareService {
         return store.execute(v.compose(store), rs -> {
             if(rs.next()) {
                 var request = new RestRequestWrapper();
-                request.setSessionId(rs.getString("parent"));
-                request.setId(rs.getString("id"));
+                request.setSessionId(rs.getObject("parent", UUID.class));
+                request.setId(rs.getObject("id", UUID.class));
                 request.setProtocol(rs.getString("protocol"));
                 request.setHost(rs.getString("host"));
                 request.setPort(rs.getInt("port"));

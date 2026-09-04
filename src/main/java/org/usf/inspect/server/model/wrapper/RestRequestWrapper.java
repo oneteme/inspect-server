@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;
 import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.ExceptionInfo;
+import org.usf.inspect.core.ExceptionTrace;
 import org.usf.inspect.server.model.RestRequest;
 
 @Getter
@@ -19,8 +19,8 @@ public class RestRequestWrapper implements EventTrace {
     @JsonIgnore
     private final RestRequest request = new RestRequest();
 
-    // Move ExceptionInfo to RestSession
-    private ExceptionInfo exception;
+    // Move ExceptionTrace to RestSession
+    private ExceptionTrace exception;
 
     private RestSessionWrapper remoteTrace;
 

@@ -2,7 +2,7 @@ package org.usf.inspect.server.model;
 
 import static java.util.Objects.nonNull;
 
-import java.util.Objects;
+import java.util.UUID;
 
 import org.usf.inspect.core.Metric;
 
@@ -14,7 +14,7 @@ import org.usf.inspect.core.Metric;
 @Deprecated
 public interface CompletableMetric extends Metric {
 	
-	String getId();
+	UUID getId();
 
 	CompletableMetric copy();
 	

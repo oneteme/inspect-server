@@ -10,14 +10,15 @@ import org.usf.inspect.server.service.TraceService;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 import static org.springframework.http.ResponseEntity.*;
-import static org.usf.inspect.core.ErrorCode.SUCCESS;
-import static org.usf.inspect.core.ErrorCode.UNKNOWN_ERROR;
+import static org.usf.inspect.core.StatefulExecutionListener.SERVER_ERROR;
+import static org.usf.inspect.core.StatefulExecutionListener.SUCCESS;
 import static org.usf.inspect.server.Utils.isUUID;
 import static org.usf.jquery.core.Utils.isEmpty;
 
@@ -36,12 +37,12 @@ public class TraceController {
         if(isEmpty(instance.getName())) {
             return status(BAD_REQUEST).body("invalid instance.name="+instance.getName());
         }
-        if(!isUUID(instance.getId())) {
+        if(!isUUID(String.valueOf(instance.getId()))) {
             return status(BAD_REQUEST).body("invalid instance.id="+instance.getId());
         }
         try {
             return service.addInstance(instance) //configure env<>namespace mapping
-                    ? ok(instance.getId())
+                    ? ok(instance.getId().toString())
                     : status(SERVICE_UNAVAILABLE).body("dispatcher.state=" + service.getState());
         } catch(Exception e) {
             log.error("post instance", e);
@@ -56,35 +57,33 @@ public class TraceController {
             @RequestParam(required = false) String filename,
             @RequestParam(required = false) Instant end,
             @RequestBody List<EventTrace> traces){
-        if(!isUUID(id)) {
+        UUID instanceId;
+        try {
+            instanceId = UUID.fromString(id);
+        } catch (IllegalArgumentException e) {
             return status(BAD_REQUEST).body("invalid instance ID");
         }
         try {
             for (var t : traces) {
-                // Si c'est un AbstractRequestUpdate
-                if (t instanceof AbstractRequestUpdate req) {
-                    // Si le statut est encore à 0 (valeur par défaut) mais que "failed" était vrai
-                    // Note : il faut que `isFailed()` ou `getFailed()` soit accessible sur 'req' ou 't'
+                if (t instanceof AbstractRequestUpdate req && req.getStatus() < 0) {
                     if (req instanceof MailRequestUpdate mailReq && mailReq.isFailed()) {
-                        mailReq.setStatus(UNKNOWN_ERROR.getCode());
+                        mailReq.setStatus(SERVER_ERROR);
                     }
                     else if (req instanceof FtpRequestUpdate ftpReq && ftpReq.isFailed()) {
-                        ftpReq.setStatus(UNKNOWN_ERROR.getCode());
+                        ftpReq.setStatus(SERVER_ERROR);
                     }
                     else if (req instanceof DatabaseRequestUpdate dbReq && dbReq.isFailed()) {
-                        dbReq.setStatus(UNKNOWN_ERROR.getCode());
+                        dbReq.setStatus(SERVER_ERROR);
                     }
                     else if (req instanceof DirectoryRequestUpdate dirReq && dirReq.isFailed()) {
-                        dirReq.setStatus(UNKNOWN_ERROR.getCode());
+                        dirReq.setStatus(SERVER_ERROR);
                     }
-
-                    // Si  failed est false
                     else {
-                        req.setStatus(SUCCESS.getCode());
+                        req.setStatus(SUCCESS);
                     }
                 }
             }
-            return service.addTraces(traces, id, attempts, filename, end)
+            return service.addTraces(traces, instanceId, attempts, filename, end)
                     ? accepted().build()
                     : status(SERVICE_UNAVAILABLE).body(new TraceFail(service.getState().toString(), true));
         } catch (DispatchProcessingException e) {

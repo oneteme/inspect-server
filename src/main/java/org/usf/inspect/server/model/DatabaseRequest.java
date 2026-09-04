@@ -30,7 +30,7 @@ public class DatabaseRequest extends AbstractRequest {
 
     public DatabaseRequestSignal toRequest(){
         DatabaseRequestSignal req = new DatabaseRequestSignal(getId(), getSessionId(), getStart(), getThreadName());
-        req.setScheme(getScheme());
+        req.setSchema(getSchema());
         req.setHost(getHost());
         req.setPort(getPort());
         req.setName(getName());

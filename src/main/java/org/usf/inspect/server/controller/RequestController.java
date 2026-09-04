@@ -160,13 +160,13 @@ public class RequestController {
             view = EXCEPTION_BY_REQUEST_RESULTSET_MAPPER,
             select = "err_type,err_msg,parent",
             ignore = "requestIds")
-    public Map<Long, ExceptionInfo> fetchExceptionByRequests(
+    public Map<Long, ExceptionTrace> fetchExceptionByRequests(
             MvcRequest mvc,
             @RequestParam( name = "requestIds") String[] requestIds)  {
         var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.exception().parent().in(Arrays.stream(requestIds).map(UUID::fromString).toArray())); // UUID
 
-        return (Map<Long, ExceptionInfo>) mvc.execute();
+        return (Map<Long, ExceptionTrace>) mvc.execute();
     }
 
     @GetMapping(value = "session/request/database/stages/count", produces = APPLICATION_JSON_VALUE)
@@ -812,7 +812,7 @@ public class RequestController {
                 var session = sessions.stream().filter(s -> s.getId().equals(cdSession)).findFirst().orElse(null);
                 if(session == null) {
                     session = new AnalyticDto();
-                    session.setId(rs.getString("id"));
+                    session.setId(rs.getObject("id", UUID.class));
                     session.setStart(fromNullableTimestamp(rs.getTimestamp("session_start")));
                     session.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
                     session.setName(rs.getString("session_name"));

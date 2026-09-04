@@ -3,10 +3,11 @@ package org.usf.inspect.server.model;
 import org.usf.inspect.server.model.wrapper.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @Deprecated(since = "v1.1")
 public interface Session extends CompletableMetric {
-    void setId(String id);
+    void setId(UUID id);
 
     List<RestRequestWrapper> getRestRequests();
 
@@ -20,8 +21,8 @@ public interface Session extends CompletableMetric {
 
     List<DirectoryRequestWrapper> getLdapRequests();
 
-    void setInstanceId(String instanceId);
-    String getInstanceId();
+    void setInstanceId(UUID instanceId);
+    UUID getInstanceId();
 
     int getRequestsMask();
 }

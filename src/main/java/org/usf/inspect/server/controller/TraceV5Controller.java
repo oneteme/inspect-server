@@ -15,6 +15,7 @@ import static org.usf.jquery.core.Utils.isEmpty;
 import java.security.Principal;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -50,13 +51,13 @@ public class TraceV5Controller {
         if(isEmpty(instance.getName())) {
             return status(BAD_REQUEST).body("invalid instance.name="+instance.getName());
         }
-        if(!isUUID(instance.getId())) {
+        if(!isUUID(String.valueOf(instance.getId()))) {
             return status(BAD_REQUEST).body("invalid instance.id="+instance.getId());
         }
         try {
             var nsp = nonNull(principal) ? principal.getName() : ""; //disabled spring security
             return service.addInstance(instance, nsp)
-                    ? ok(instance.getId())
+                    ? ok(instance.getId().toString())
                     : status(SERVICE_UNAVAILABLE).body("dispatcher.state=" + service.getState());
         } catch(Exception e) {
             log.error("post instance", e);
@@ -66,12 +67,12 @@ public class TraceV5Controller {
 
     @PutMapping(value = "instance/{id}/session", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> addSessions(
-            @PathVariable String id,
+            @PathVariable UUID id,
             @RequestParam(required = false) Integer attempts,
             @RequestParam(required = false) String filename,
             @RequestParam(required = false) Instant end,
             @RequestBody List<EventTrace> traces){
-        if(!isUUID(id)) {
+        if(!isUUID(String.valueOf(id))) {
             return status(BAD_REQUEST).body("invalid instance ID");
         }
         try {

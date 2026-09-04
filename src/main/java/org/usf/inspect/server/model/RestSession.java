@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;
-import org.usf.inspect.core.ExceptionInfo;
+import org.usf.inspect.core.ExceptionTrace;
 import org.usf.inspect.core.HttpSessionSignal;
 import org.usf.inspect.core.HttpSessionUpdate;
 
@@ -24,7 +24,8 @@ public class RestSession extends AbstractSession {
 	private String name; //api name
 	private String userAgent; //Mozilla, Chrome, curl, Postman,..
 	private String cacheControl; //max-age, no-cache
-	private ExceptionInfo exception;
+	private ExceptionTrace exception;
+    //private String[] forwardedAddresses;
 
 	@JsonCreator public RestSession() {
 		this.rest = new RestRequest();
@@ -46,6 +47,7 @@ public class RestSession extends AbstractSession {
         ses.setInstanceId(getInstanceId());
         ses.setLinked(isLinked());
         ses.setUserAgent(getUserAgent());
+        //ses.setForwardedAddresses(getForwardedAddresses());
         return ses;
     }
 
@@ -62,7 +64,6 @@ public class RestSession extends AbstractSession {
         cb.setContentType(getContentType());
         cb.setRequestMask(getRequestsMask());
         cb.setException(getException());
-        cb.setIntermediateNodes(getIntermediateNodes());
         return cb;
     }
 }
