@@ -157,20 +157,21 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     @Transactional(rollbackFor = Throwable.class)
     public void savePartialRestSessions(List<HttpSessionSignal> sessions) {
         executeBatch("""
-insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,va_lnk,dh_str,va_nam,va_usr,va_usr_agt,va_msk)
+insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,va_lnk,dh_str,va_nam,va_usr,va_usr_agt,va_msk,va_fwd_add)
 values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
             restSessionSetter(ps, ses);
             ps.setString(15, ses.getName());
             ps.setString(16, ses.getUser());
             ps.setString(17, userAgentExtract(ses.getUserAgent()));
             ps.setInt(18, 0);
+            ps.setObject(19, safeWriteValue(ses.getForwardedAddresses(), mapper), OTHER);
         });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteRestSessions(List<Pair<HttpSessionSignal, HttpSessionUpdate>> sessions) {
     	executeBatchPair("""
-insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,dh_end,va_err_typ,va_err_msg,va_stk,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_cnt_typ,cd_stt,va_o_sze,va_o_cnt_enc,va_msk)
+insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,dh_end,va_err_typ,va_err_msg,va_stk,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_cnt_typ,cd_stt,va_o_sze,va_o_cnt_enc,va_msk,va_fwd_add)
 values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
             var session = ses.signal();
             var callback = ses.update();
@@ -189,6 +190,7 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", se
             ps.setLong(25, callback.getDataSize());
             ps.setString(26, callback.getContentEncoding());
             ps.setInt(27, callback.getRequestMask().get());
+            ps.setObject(28, safeWriteValue(session.getForwardedAddresses(), mapper), OTHER);
         });
     }
 
@@ -227,7 +229,6 @@ where id_ses = ?::uuid""", sessions, (ps, ses) -> {
             ps.setString(10, ses.getContentEncoding());
             ps.setTimestamp(11, fromNullableInstant(ses.getEnd()));
             ps.setInt(12, ses.getRequestMask().get());
-           // ps.setObject(13, safeWriteValue(ses.getIntermediateNodes(), mapper), OTHER);
             ps.setObject(13, ses.getId());
         });
     }
