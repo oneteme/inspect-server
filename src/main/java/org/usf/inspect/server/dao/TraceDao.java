@@ -27,6 +27,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Savepoint;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -101,7 +102,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             ps.setString(11, instance.getCollector());
             ps.setString(12, instance.getBranch());
             ps.setString(13, instance.getHash());
-            ps.setObject(14, toConfigJsonWithRetention(instance.getConfiguration()), OTHER);
+            ps.setObject(14, safeWriteValue(instance.getConfiguration(), mapper), OTHER);
             ps.setObject(15, safeWriteValue(instance.getResource(), mapper), OTHER);
             ps.setObject(16, safeWriteValue(instance.getAdditionalProperties(), mapper), OTHER);
             ps.setString(17, instance.getNamespace()); // null autorisé
@@ -131,11 +132,11 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveLogEntries(List<LogEntry> logEntries) {
-        executeBatch("insert into e_log_ent(va_lvl,va_msg,va_stk,dh_str,cd_prn_ses,cd_ins) values (?,?,?,?,?,?)",
+        executeBatch("insert into e_log_ent(dh_str,cd_prn_ses,cd_ins) values (?,?,?)",
                 logEntries, (ps, o)-> {
-                    ps.setString(1, String.valueOf(o.getLevel()));
-                    ps.setString(2, o.getMessage());
-                    ps.setObject(3, safeWriteValue(o.getStackRows(), mapper), OTHER);
+                    //ps.setString(1, String.valueOf(o.getLevel()));
+                    //ps.setString(2, o.getMessage());
+                  //  ps.setObject(3, safeWriteValue(o.getStackRows(), mapper), OTHER);
                     ps.setTimestamp(4, fromNullableInstant(o.getInstant()));
                     ps.setObject(5, o.getSessionId());
                     ps.setObject(6, o.getInstanceId());
@@ -164,33 +165,30 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions, (ps, ses) 
             ps.setString(16, ses.getUser());
             ps.setString(17, userAgentExtract(ses.getUserAgent()));
             ps.setInt(18, 0);
-            ps.setObject(19, safeWriteValue(ses.getForwardedAddresses(), mapper), OTHER);
+            ps.setString(19, Arrays.toString(ses.getForwardedAddresses()));
         });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteRestSessions(List<Pair<HttpSessionSignal, HttpSessionUpdate>> sessions) {
     	executeBatchPair("""
-insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,dh_end,va_err_typ,va_err_msg,va_stk,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_cnt_typ,cd_stt,va_o_sze,va_o_cnt_enc,va_msk,va_fwd_add)
-values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
+insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,dh_end,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_cnt_typ,cd_stt,va_o_sze,va_o_cnt_enc,va_msk,va_fwd_add)
+values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
             var session = ses.signal();
             var callback = ses.update();
-            var exp = callback.getException();
+           // var exp = callback.getException();
             restSessionSetter(ps, session);
             ps.setTimestamp(15, fromNullableInstant(callback.getEnd()));
-            ps.setString(16, nonNull(exp) ? exp.getType() : null);
-            ps.setString(17, nonNull(exp) ? exp.getMessage() : null);
-            ps.setObject(18, nonNull(exp) ? safeWriteValue(exp.getStackTraceRows(), mapper) : null, OTHER);
-            ps.setString(19, nonNull(callback.getName()) ? callback.getName() : session.getName());
-            ps.setString(20, nonNull(callback.getUser()) ? callback.getUser() : session.getUser());
-            ps.setString(21, userAgentExtract(session.getUserAgent()));
-            ps.setString(22, callback.getCacheControl());
-            ps.setString(23, contentTypeExtract(callback.getContentType()));
-            ps.setInt(24, callback.getStatus());
-            ps.setLong(25, callback.getDataSize());
-            ps.setString(26, callback.getContentEncoding());
-            ps.setInt(27, callback.getRequestMask().get());
-            ps.setObject(28, safeWriteValue(session.getForwardedAddresses(), mapper), OTHER);
+            ps.setString(16, nonNull(callback.getName()) ? callback.getName() : session.getName());
+            ps.setString(17, nonNull(callback.getUser()) ? callback.getUser() : session.getUser());
+            ps.setString(18, userAgentExtract(session.getUserAgent()));
+            ps.setString(19, callback.getCacheControl());
+            ps.setString(20, contentTypeExtract(callback.getContentType()));
+            ps.setInt(21, callback.getStatus());
+            ps.setLong(22, callback.getDataSize());
+            ps.setString(23, callback.getContentEncoding());
+            ps.setInt(24, callback.getRequestMask().get());
+            ps.setString(25, Arrays.toString(session.getForwardedAddresses()));
         });
     }
 
@@ -214,22 +212,18 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", se
     @Transactional(rollbackFor = Throwable.class)
     public void updateRestSessions(List<HttpSessionUpdate> sessions) {
         executeBatch("""
-update e_rst_ses set va_err_typ = coalesce(?, va_err_typ), va_err_msg = coalesce(?, va_err_msg), va_stk = coalesce(?, va_stk), va_nam = coalesce(?, va_nam), va_usr = coalesce(?, va_usr), va_cch_ctr = coalesce(?, va_cch_ctr), va_cnt_typ = ?, cd_stt = ?, va_o_sze = ?, va_o_cnt_enc = ?, dh_end = ?, va_msk = ?
-where id_ses = ?::uuid""", sessions, (ps, ses) -> {
-            var exp = ses.getException();
-            ps.setString(1, nonNull(exp) ? exp.getType() : null);
-            ps.setString(2, nonNull(exp) ? exp.getMessage() : null);
-            ps.setObject(3, nonNull(exp) ? safeWriteValue(exp.getStackTraceRows(), mapper) : null, OTHER);
-            ps.setString(4, ses.getName());
-            ps.setString(5, ses.getUser());
-            ps.setString(6, ses.getCacheControl());
-            ps.setString(7, contentTypeExtract(ses.getContentType()));
-            ps.setInt(8, ses.getStatus());
-            ps.setLong(9, ses.getDataSize());
-            ps.setString(10, ses.getContentEncoding());
-            ps.setTimestamp(11, fromNullableInstant(ses.getEnd()));
-            ps.setInt(12, ses.getRequestMask().get());
-            ps.setObject(13, ses.getId());
+update e_rst_ses set  va_nam = coalesce(?, va_nam), va_usr = coalesce(?, va_usr), va_cch_ctr = coalesce(?, va_cch_ctr), va_cnt_typ = ?, cd_stt = ?, va_o_sze = ?, va_o_cnt_enc = ?, dh_end = ?, va_msk = ?
+where id_ses = ?""", sessions, (ps, ses) -> {
+            ps.setString(1, ses.getName());
+            ps.setString(2, ses.getUser());
+            ps.setString(3, ses.getCacheControl());
+            ps.setString(4, contentTypeExtract(ses.getContentType()));
+            ps.setInt(5, ses.getStatus());
+            ps.setLong(6, ses.getDataSize());
+            ps.setString(7, ses.getContentEncoding());
+            ps.setTimestamp(8, fromNullableInstant(ses.getEnd()));
+            ps.setInt(9, ses.getRequestMask().get());
+            ps.setObject(10, ses.getId());
         });
     }
 
@@ -258,20 +252,16 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteMainSessions(List<Pair<MainSessionSignal, MainSessionUpdate>> sessions) {
     	executeBatchPair("""
-insert into e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str,dh_end,va_err_typ,va_err_msg,va_stk,va_msk)
-values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
+insert into e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str,dh_end,va_msk)
+values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
             var session = ses.signal();
             var callback = ses.update();
-            var exp = callback.getException();
             mainSessionSetter(ps, session);
             ps.setString(5, nonNull(callback.getLocation()) ? callback.getLocation() : session.getLocation());
             ps.setString(6, nonNull(callback.getName()) ? callback.getName() : session.getName());
             ps.setString(7, nonNull(callback.getUser()) ? callback.getUser() : session.getUser());
             ps.setTimestamp(8, fromNullableInstant(nonNull(callback.getStart()) ? callback.getStart() : session.getStart()));
             ps.setTimestamp(9, fromNullableInstant(callback.getEnd()));
-            ps.setString(10, nonNull(exp) ? exp.getType() : null);
-            ps.setString(11, nonNull(exp) ? exp.getMessage() : null);
-            ps.setObject(12, nonNull(exp) ? safeWriteValue(exp.getStackTraceRows(), mapper) : null, OTHER);
             ps.setInt(13, callback.getRequestMask().get());
         });
     }
@@ -286,17 +276,14 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
     @Transactional(rollbackFor = Throwable.class)
     public void updateMainSessions(List<MainSessionUpdate> sessions) {
         executeBatch("""
-update e_main_ses set va_lct = coalesce(?, va_lct), va_nam = coalesce(?, va_nam), va_usr = coalesce(?, va_usr), dh_str = coalesce(?, dh_str), dh_end = ?, va_err_typ = ?, va_err_msg = ?, va_stk = ?, va_msk = ?
+update e_main_ses set va_lct = coalesce(?, va_lct), va_nam = coalesce(?, va_nam), va_usr = coalesce(?, va_usr), dh_str = coalesce(?, dh_str), dh_end = ?, va_msk = ?
 where id_ses = ?""", sessions, (ps, ses) -> {
-            var exp = ses.getException();
+          //  var exp = ses.getException();
             ps.setString(1, ses.getLocation());
             ps.setString(2, ses.getName());
             ps.setString(3, ses.getUser());
             ps.setTimestamp(4, fromNullableInstant(ses.getStart()));
             ps.setTimestamp(5, fromNullableInstant(ses.getEnd()));
-            ps.setString(6, nonNull(exp) ? exp.getType() : null);
-            ps.setString(7, nonNull(exp) ? exp.getMessage() : null);
-            ps.setObject(8, nonNull(exp) ? safeWriteValue(exp.getStackTraceRows(), mapper) : null, OTHER);
             ps.setInt(9, ses.getRequestMask().get());
             ps.setObject(10, ses.getId());
         });
@@ -382,22 +369,16 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests, (ps, req) -> {
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteLocalRequests(List<Pair<LocalRequestSignal, LocalRequestUpdate>> requests) {
     	executeBatchPair("""
-insert into e_lcl_rqt(id_lcl_rqt,cd_prn_ses,cd_ins,va_typ,va_nam,va_lct,va_usr,va_thr,dh_str,dh_end,va_fail)
+insert into e_lcl_rqt(id_lcl_rqt,cd_prn_ses,cd_ins,va_typ,va_nam,va_lct,va_usr,va_thr,dh_str,dh_end,status)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             var req = pair.signal();
             var callback = pair.update();
             localRequestSetter(ps, req);
             ps.setTimestamp(9, fromNullableInstant(nonNull(callback.getStart()) ? callback.getStart() : req.getStart()));
             ps.setTimestamp(10, fromNullableInstant(callback.getEnd()));
-            ps.setBoolean(11, nonNull(callback.getException()));
+            ps.setInt(11, callback.getStatus());
         });
-        var exceptions = requests.stream()
-                .map(Pair::update)
-                .filter(r -> nonNull(r.getException()))
-                .toList();
-        if(!exceptions.isEmpty()) {
-            saveLocalRequestExceptions(exceptions);
-        }
+
     }
 
     static void localRequestSetter(PreparedStatement ps, LocalRequestSignal req) throws SQLException {
@@ -414,19 +395,13 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
     @Transactional(rollbackFor = Throwable.class)
     public void updateLocalRequests(List<LocalRequestUpdate> requests) {
         executeBatch("""
-update e_lcl_rqt set dh_str = coalesce(?, dh_str), dh_end = ?, va_fail = ?
+update e_lcl_rqt set dh_str = coalesce(?, dh_str), dh_end = ?, status = ?
 where id_lcl_rqt = ?""", requests, (ps, req) -> {
             ps.setTimestamp(1, fromNullableInstant(req.getStart()));
             ps.setTimestamp(2, fromNullableInstant(req.getEnd()));
             ps.setBoolean(3, nonNull(req.getException()));
             ps.setObject(4, req.getId());
         });
-        var exceptions = requests.stream()
-                .filter(r -> nonNull(r.getException()))
-                .toList();
-        if(!exceptions.isEmpty()) {
-            saveLocalRequestExceptions(exceptions);
-        }
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -718,6 +693,7 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
         //saveStageExceptions(stages, JDBC);
     }
 
+    @Deprecated
     private void saveStageExceptions(List<? extends AbstractStage> stages, RequestMask mask) {
         var exceptions = stages.stream()
                 .filter(e -> nonNull(e.getException())).toList();
@@ -733,12 +709,12 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveExceptionTraces(List<ExceptionTrace> exceptions) {
-        executeBatch("insert into e_exc_inf(va_err_typ,va_err_msg,va_stk,cd_ord,cd_rqt) values(?,?,?,?,?,?::uuid)", exceptions, (ps, exp) -> {
+        executeBatch("insert into e_exc_inf(va_err_typ,va_err_msg,va_stk,cd_ord,cd_rqt) values(?,?,?,?,?,?)", exceptions, (ps, exp) -> {
              ps.setString(2, exp.getType());
             ps.setString(3, exp.getMessage());
             ps.setObject(4, safeWriteValue(exp.getStackTraceRows(), mapper), OTHER);
-            ps.setInt(5, exp.getOffset());
-            ps.setString(6, exp.getTraceId() != null ? exp.getTraceId().toString() : null);
+            ps.setLong(5, exp.getOffset());
+            ps.setObject(6, exp.getTraceId() != null ? exp.getTraceId() : null);
         });
     }
 
@@ -856,28 +832,4 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
     	return false;
     }
 
-    private String toConfigJsonWithRetention(InspectCollectorConfiguration conf) {
-        if (conf == null) return null;
-        try {
-            var root = (com.fasterxml.jackson.databind.node.ObjectNode) mapper.valueToTree(conf);
-            var remote = root.with("tracing").with("remote");
-            var retention = remote.with("retention");
-            RetentionModels.RetentionConfig config;
-            if (remote.has("retention") && remote.path("retention").isObject()) {
-                config = mapper.treeToValue(remote.path("retention"), RetentionConfig.class);
-            } else {
-                config = mapper.treeToValue(remote, RetentionConfig.class);
-            }
-            Duration diagnostic = retentionAdapter.resolve(config, true);
-            Duration audit = retentionAdapter.resolve(config, false);
-
-            retention.put("diagnostic", diagnostic.toString()); // ex PT240H
-            retention.put("audit", audit.toString());           // ex PT240H
-
-            remote.remove("retentionMaxAge"); // DB: uniquement nouveau format
-            return mapper.writeValueAsString(root);
-        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-            return safeWriteValue(conf, mapper);
-        }
-    }
 }

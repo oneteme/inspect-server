@@ -51,7 +51,7 @@ public class TraceV5Controller {
         if(isEmpty(instance.getName())) {
             return status(BAD_REQUEST).body("invalid instance.name="+instance.getName());
         }
-        if(!isUUID(String.valueOf(instance.getId()))) {
+        if (instance.getId() == null){
             return status(BAD_REQUEST).body("invalid instance.id="+instance.getId());
         }
         try {

@@ -27,59 +27,51 @@ import static org.usf.jquery.core.Utils.isEmpty;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(value = "v4/trace", produces = APPLICATION_JSON_VALUE)
-public class TraceController {
+public class TraceController{
+
 
     private final TraceService service;
+    private final TraceV5Controller controller;
+
 
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<String> addInstanceEnvironment(
             @RequestBody InstanceEnvironment instance){
-        if(isEmpty(instance.getName())) {
-            return status(BAD_REQUEST).body("invalid instance.name="+instance.getName());
-        }
-        if(!isUUID(String.valueOf(instance.getId()))) {
-            return status(BAD_REQUEST).body("invalid instance.id="+instance.getId());
-        }
-        try {
-            return service.addInstance(instance) //configure env<>namespace mapping
-                    ? ok(instance.getId().toString())
-                    : status(SERVICE_UNAVAILABLE).body("dispatcher.state=" + service.getState());
-        } catch(Exception e) {
-            log.error("post instance", e);
-            return internalServerError().body("unexpected exception " + e.getClass().getSimpleName());
-        }
+       return controller.addInstanceEnvironment(instance, null);
     }
+
 
     @PutMapping(value = "instance/{id}/session", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> addSessions(
-            @PathVariable String id,
+            @PathVariable UUID id,
             @RequestParam(required = false) Integer attempts,
             @RequestParam(required = false) String filename,
             @RequestParam(required = false) Instant end,
             @RequestBody List<EventTrace> traces){
         UUID instanceId;
         try {
-            instanceId = UUID.fromString(id);
+            instanceId = id;
         } catch (IllegalArgumentException e) {
             return status(BAD_REQUEST).body("invalid instance ID");
         }
         try {
             for (var t : traces) {
-                if (t instanceof AbstractRequestUpdate req && req.getStatus() < 0) {
-                    if (req instanceof MailRequestUpdate mailReq && mailReq.isFailed()) {
-                        mailReq.setStatus(SERVER_ERROR);
+                if (t instanceof AbstractRequestUpdate req ) {
+                    if (req instanceof MailRequestUpdate mailReq ) {
+                        mailReq.setStatus(mailReq.isFailed() ? SERVER_ERROR : SUCCESS);
+
                     }
-                    else if (req instanceof FtpRequestUpdate ftpReq && ftpReq.isFailed()) {
-                        ftpReq.setStatus(SERVER_ERROR);
+                    else if (req instanceof FtpRequestUpdate ftpReq ) {
+                        ftpReq.setStatus(ftpReq.isFailed() ? SERVER_ERROR : SUCCESS);
+                        }
+                    else if (req instanceof DatabaseRequestUpdate dbReq ) {
+                        dbReq.setStatus(dbReq.isFailed() ? SERVER_ERROR : SUCCESS);
                     }
-                    else if (req instanceof DatabaseRequestUpdate dbReq && dbReq.isFailed()) {
-                        dbReq.setStatus(SERVER_ERROR);
+                    else if (req instanceof DirectoryRequestUpdate dirReq ) {
+                        dirReq.setStatus(dirReq.isFailed() ? SERVER_ERROR : SUCCESS);
                     }
-                    else if (req instanceof DirectoryRequestUpdate dirReq && dirReq.isFailed()) {
-                        dirReq.setStatus(SERVER_ERROR);
-                    }
-                    else {
-                        req.setStatus(SUCCESS);
+                    else if (req instanceof LocalRequestUpdate localReq ) {
+                        localReq.setStatus(localReq.getException() != null ? SERVER_ERROR : SUCCESS);
                     }
                 }
             }

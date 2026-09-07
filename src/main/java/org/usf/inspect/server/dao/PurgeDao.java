@@ -2,6 +2,7 @@ package org.usf.inspect.server.dao;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -14,9 +15,11 @@ import org.usf.inspect.core.RestRemoteServerProperties;
 import org.usf.inspect.server.erm.InspectStore;
 import org.usf.inspect.server.erm.InstanceCatalog;
 import org.usf.inspect.server.retention.RetentionAdapter;
+import org.usf.inspect.server.retention.RetentionConfigDeserializer;
 import org.usf.inspect.server.retention.RetentionModels;
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.Order;
+import org.usf.inspect.core.Retention;
 import org.usf.jquery.mvc.StoreManager;
 
 import java.sql.ResultSet;
@@ -327,30 +330,33 @@ public class PurgeDao {
             var env = rs.getString(instance.environement().toString());
             var type = InstanceType.valueOf(rs.getString(instance.type().toString()));
             var raw = rs.getString(instance.configuration().toString());
-            var retentions = resolveRetentions(raw);
-            out.add(new PurgeScope(type, env, app, retentions.diagnostic(), retentions.audit()));
+
+            var config = deserializeRetentionConfig(raw);
+            var diagnostic = retentionAdapter.resolve(config, true);
+            var audit = retentionAdapter.resolve(config, false);
+
+            out.add(new PurgeScope(type, env, app, diagnostic, audit));
         }
         return out;
     }
 
-    private record Retentions(Duration diagnostic, Duration audit) {}
 
-    private Retentions resolveRetentions(String rawConfiguration) {
+    private RetentionModels.RetentionConfig deserializeRetentionConfig(String rawConfiguration) {
         if (rawConfiguration == null || rawConfiguration.isBlank()) {
-            return new Retentions(DEFAULT_RETENTION, DEFAULT_RETENTION);
+            return null;
         }
         try {
-            var remote = mapper.readTree(rawConfiguration).path("tracing").path("remote");
-            RetentionModels.RetentionConfig config;
-            if (remote.has("retention") && remote.path("retention").isObject()) {
-                config = mapper.treeToValue(remote.path("retention"), RetentionModels.RetentionConfig.class);
-            } else {
-                config = mapper.treeToValue(remote, RetentionModels.RetentionConfig.class);
-            }
-            return new Retentions(retentionAdapter.resolve(config, true), retentionAdapter.resolve(config, false));
+            ObjectMapper mapper = new ObjectMapper();
+            SimpleModule module = new SimpleModule();
+            module.addDeserializer(RetentionModels.RetentionConfig.class, new RetentionConfigDeserializer());
+            mapper.registerModule(module);
+
+            return mapper.readValue(rawConfiguration, RetentionModels.RetentionConfig.class);
         } catch (JsonProcessingException e) {
             emitError("Error parsing retention configuration: " + e.getMessage());
-            return new Retentions(DEFAULT_RETENTION, DEFAULT_RETENTION);
+            return null;
         }
     }
+
+
 }
