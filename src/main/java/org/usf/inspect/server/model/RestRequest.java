@@ -25,7 +25,7 @@ public class RestRequest extends AbstractRequest { //APiRequest
 	private String query; //request parameters
 	private String contentType; //text/html, application/json, application/xml,.. in/out ?
 	private String authScheme; //Basic, Bearer, Digest, OAuth,..
-	private int status; //2xx, 4xx, 5xx, 0 otherwise
+	private short status; //2xx, 4xx, 5xx, 0 otherwise
 	private long inDataSize; //in bytes, -1 unknown
 	private long outDataSize; //in bytes, -1 unknown
 	private String inContentEncoding; //gzip, compress, identity,..

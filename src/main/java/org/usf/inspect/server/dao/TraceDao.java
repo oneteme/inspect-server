@@ -184,7 +184,7 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions
             ps.setString(18, userAgentExtract(session.getUserAgent()));
             ps.setString(19, callback.getCacheControl());
             ps.setString(20, contentTypeExtract(callback.getContentType()));
-            ps.setInt(21, callback.getStatus());
+            ps.setShort(21, callback.getStatus());
             ps.setLong(22, callback.getDataSize());
             ps.setString(23, callback.getContentEncoding());
             ps.setInt(24, callback.getRequestMask().get());
@@ -218,7 +218,7 @@ where id_ses = ?""", sessions, (ps, ses) -> {
             ps.setString(2, ses.getUser());
             ps.setString(3, ses.getCacheControl());
             ps.setString(4, contentTypeExtract(ses.getContentType()));
-            ps.setInt(5, ses.getStatus());
+            ps.setShort(5, ses.getStatus());
             ps.setLong(6, ses.getDataSize());
             ps.setString(7, ses.getContentEncoding());
             ps.setTimestamp(8, fromNullableInstant(ses.getEnd()));
@@ -314,7 +314,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", reques
             restRequestSetter(ps, request);
             ps.setTimestamp(16, fromNullableInstant(callback.getEnd()));
             ps.setString(17, contentTypeExtract(callback.getContentType()));
-            ps.setInt(18, callback.getStatus());
+            ps.setShort(18, callback.getStatus());
             ps.setLong(19, callback.getDataSize());
             ps.setString(20, callback.getContentEncoding());
             ps.setString(21, callback.getBodyContent());
@@ -346,7 +346,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", reques
 update e_rst_rqt set va_cnt_typ = ?, cd_stt = ?, va_i_sze = ?, va_i_cnt_enc = ?, dh_end = ?, va_bdy_cnt = ?, va_lnk = ?
 where id_rst_rqt = ?::uuid""", requests, (ps, req) -> {
             ps.setString(1, contentTypeExtract(req.getContentType()));
-            ps.setInt(2, req.getStatus());
+            ps.setShort(2, req.getStatus());
             ps.setLong(3, req.getDataSize());
             ps.setString(4, req.getContentEncoding());
             ps.setTimestamp(5, fromNullableInstant(req.getEnd()));
@@ -376,7 +376,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             localRequestSetter(ps, req);
             ps.setTimestamp(9, fromNullableInstant(nonNull(callback.getStart()) ? callback.getStart() : req.getStart()));
             ps.setTimestamp(10, fromNullableInstant(callback.getEnd()));
-            ps.setInt(11, callback.getStatus());
+            ps.setShort(11, callback.getStatus());
         });
 
     }
@@ -421,7 +421,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             mailRequestSetter(ps, req);
             ps.setTimestamp(10, fromNullableInstant(callback.getEnd()));
             ps.setString(11, callback.getCommand());
-            ps.setInt(12, callback.getStatus());
+            ps.setShort(12, callback.getStatus());
         });
     }
 
@@ -445,7 +445,7 @@ update e_smtp_rqt set dh_end = ?, va_cmd = ?, status = ?
 where id_smtp_rqt = ?""", requests, (ps, req) -> {
             ps.setTimestamp(1, fromNullableInstant(req.getEnd()));
             ps.setString(2, req.getCommand());
-            ps.setInt(3, req.getStatus());
+            ps.setShort(3, req.getStatus());
             ps.setObject(4, req.getId());
         });
     }
@@ -467,7 +467,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -
             ftpRequestSetter(ps, req);
             ps.setTimestamp(12, fromNullableInstant(callback.getEnd()));
             ps.setString(13, callback.getCommand());
-            ps.setInt(14, callback.getStatus());
+            ps.setShort(14, callback.getStatus());
         });
     }
 
@@ -492,7 +492,7 @@ update e_ftp_rqt set dh_end = ?, va_cmd = ?, status = ?
 where id_ftp_rqt = ?""", requests, (ps, req) -> {
             ps.setTimestamp(1, fromNullableInstant(req.getEnd()));
             ps.setString(2, req.getCommand());
-            ps.setInt(3, req.getStatus());
+            ps.setShort(3, req.getStatus());
             ps.setObject(4, req.getId());
         });
     }
@@ -514,7 +514,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> 
             ldapRequestSetter(ps, req);
             ps.setTimestamp(10, fromNullableInstant(callback.getEnd()));
             ps.setString(11, callback.getCommand());
-            ps.setInt(12, callback.getStatus());
+            ps.setShort(12, callback.getStatus());
         });
     }
 
@@ -537,7 +537,7 @@ update e_ldap_rqt set dh_end = ?, va_cmd = ?, status = ?
 where id_ldap_rqt = ?::uuid""", requests, (ps, req) -> {
             ps.setTimestamp(1, fromNullableInstant(req.getEnd()));
             ps.setString(2, req.getCommand());
-            ps.setInt(3, req.getStatus());
+            ps.setShort(3, req.getStatus());
             ps.setObject(4, req.getId());
         });
     }
@@ -559,7 +559,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, p
             databaseRequestSetter(ps, req);
             ps.setTimestamp(15, fromNullableInstant(callback.getEnd()));
             ps.setString(16, callback.getCommand());
-            ps.setInt(17, callback.getStatus());
+            ps.setShort(17, callback.getStatus());
         });
     }
 
@@ -587,7 +587,7 @@ update e_dtb_rqt set dh_end = ?, va_cmd = ?, status = ?
 where id_dtb_rqt = ?""", requests, (ps, req) -> {
             ps.setTimestamp(1, fromNullableInstant(req.getEnd()));
             ps.setString(2, req.getCommand());
-            ps.setInt(3, req.getStatus());
+            ps.setShort(3, req.getStatus());
             ps.setObject(4, req.getId());
         });
     }
@@ -598,7 +598,7 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
             ps.setString(1, stg.getName());
             ps.setTimestamp(2, fromNullableInstant(stg.getStart()));
             ps.setTimestamp(3, fromNullableInstant(stg.getEnd()));
-            ps.setInt(4, stg.getOrder());
+            ps.setLong(4, stg.getOrder());
             ps.setObject(5, stg.getRequestId());
         });
       //  saveStageExceptions(stages, REST);
@@ -610,7 +610,7 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
             ps.setString(1, stg.getName());
             ps.setTimestamp(2, fromNullableInstant(stg.getStart()));
             ps.setTimestamp(3, fromNullableInstant(stg.getEnd()));
-            ps.setInt(4, stg.getOrder());
+            ps.setLong(4, stg.getOrder());
             ps.setObject(5, stg.getRequestId());
         });
     }
@@ -622,7 +622,7 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
             ps.setTimestamp(2, fromNullableInstant(stg.getStart()));
             ps.setTimestamp(3, fromNullableInstant(stg.getEnd()));
             ps.setString(4, stg.getCommand());
-            ps.setInt(5, stg.getOrder());
+            ps.setLong(5, stg.getOrder());
             ps.setObject(6, stg.getRequestId());
         });
         saveMailRequestMails(stages);
@@ -658,7 +658,7 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
             ps.setTimestamp(3, fromNullableInstant(stg.getEnd()));
             ps.setString(4, stg.getCommand());
             ps.setString(5, joinValuesOrNull(stg.getArgs()));
-            ps.setInt(6, stg.getOrder());
+            ps.setLong(6, stg.getOrder());
             ps.setObject(7, stg.getRequestId());
         });
         //saveStageExceptions(stages, FTP);
@@ -672,7 +672,7 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
             ps.setTimestamp(3, fromNullableInstant(stg.getEnd()));
             ps.setString(4, stg.getCommand());
             ps.setString(5, joinValuesOrNull(stg.getArgs()));
-            ps.setInt(6, stg.getOrder());
+            ps.setLong(6, stg.getOrder());
             ps.setObject(7, stg.getRequestId());
         });
        // saveStageExceptions(stages, LDAP);
@@ -687,7 +687,7 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
             ps.setString(4, valueOfNullableArray(stg.getCount()));
             ps.setString(5, stg.getCommand());
             ps.setString(6, joinValuesOrNull(stg.getArgs()));
-            ps.setInt(7, stg.getOrder());
+            ps.setLong(7, stg.getOrder());
             ps.setObject(8, stg.getRequestId());
         });
         //saveStageExceptions(stages, JDBC);
@@ -702,7 +702,7 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
             ps.setString(2, exp.getException().getType());
             ps.setString(3, exp.getException().getMessage());
             ps.setObject(4, safeWriteValue(exp.getException().getStackTraceRows(), mapper), OTHER);
-            ps.setInt(5, exp.getOrder());
+            ps.setLong(5, exp.getOrder());
             ps.setObject(6, exp.getRequestId());//.toString() ?
         });
     }

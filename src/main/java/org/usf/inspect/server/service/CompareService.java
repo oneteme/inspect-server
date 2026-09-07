@@ -97,7 +97,7 @@ public class CompareService {
                 session.setQuery(rs.getString("query"));
                 session.setContentType(rs.getString("media"));
                 session.setAuthScheme(rs.getString("auth"));
-                session.setStatus(rs.getInt("status"));
+                session.setStatus(rs.getShort("status"));
                 session.setInDataSize(rs.getLong("sizeIn"));
                 session.setOutDataSize(rs.getLong("sizeOut"));
                 session.setInContentEncoding(rs.getString("contentEncodingIn"));
@@ -152,7 +152,7 @@ public class CompareService {
                 request.setPath(rs.getString("path"));
                 request.setQuery(rs.getString("query"));
                 request.setMethod(rs.getString("method"));
-                request.setStatus(rs.getInt("status"));
+                request.setStatus(rs.getShort("status"));
                 request.setInDataSize(rs.getLong("sizeIn"));
                 request.setOutDataSize(rs.getLong("sizeOut"));
                 request.setInContentEncoding(rs.getString("contentEncodingIn"));

@@ -317,7 +317,7 @@ public class RequestService {
                 session.setQuery(rs.getString("query"));
                 session.setContentType((rs.getString("media")));
                 session.setAuthScheme((rs.getString("auth")));
-                session.setStatus(rs.getInt("status"));
+                session.setStatus(rs.getShort("status"));
                 session.setInDataSize(rs.getLong("sizeIn"));
                 session.setOutDataSize(rs.getLong("sizeOut"));
                 session.setInContentEncoding(rs.getString("contentEncodingIn"));
@@ -446,7 +446,7 @@ public class RequestService {
                 out.setPath(rs.getString("path"));
                 out.setQuery(rs.getString("query"));
                 out.setMethod(rs.getString("method"));
-                out.setStatus(rs.getInt("status"));
+                out.setStatus(rs.getShort("status"));
                 out.setInDataSize(rs.getLong("sizeIn"));
                 out.setOutDataSize(rs.getLong("sizeOut"));
                 out.setInContentEncoding(rs.getString("contentEncodingIn"));

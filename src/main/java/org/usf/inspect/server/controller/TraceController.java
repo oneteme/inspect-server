@@ -17,8 +17,8 @@ import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 import static org.springframework.http.ResponseEntity.*;
-import static org.usf.inspect.core.StatefulExecutionListener.SERVER_ERROR;
-import static org.usf.inspect.core.StatefulExecutionListener.SUCCESS;
+import static org.usf.inspect.core.DualEventTracer.SERVER_ERROR;
+import static org.usf.inspect.core.DualEventTracer.SUCCESS;
 import static org.usf.inspect.server.Utils.isUUID;
 import static org.usf.jquery.core.Utils.isEmpty;
 

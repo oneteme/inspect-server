@@ -173,7 +173,7 @@ public class RestSessionWrapper implements Session {
         restSession.setContentType(contentType);
     }
 
-    public void setStatus(int status) {
+    public void setStatus(short status) {
         restSession.setStatus(status);
     }
 

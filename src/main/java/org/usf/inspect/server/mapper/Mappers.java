@@ -14,6 +14,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static java.util.Optional.ofNullable;
 import static org.usf.inspect.server.JsonUtils.safeReadValue;
@@ -24,7 +25,7 @@ public class Mappers {
         return rs -> {
             if (rs.next()) {
                 var instanceEnvironment = new InstanceEnvironment(
-                        rs.getObject("id", java.util.UUID.class),
+                        rs.getObject("id", UUID.class),
                         fromNullableTimestamp(rs.getTimestamp("start")),
                         InstanceType.valueOf(rs.getString("type")),
                         rs.getString("appName"),
@@ -72,7 +73,7 @@ public class Mappers {
                         rs.getInt("pending"),
                         rs.getString("filename"),
                         fromNullableTimestamp(rs.getTimestamp("start")),
-                        rs.getObject("instanceEnv", java.util.UUID.class),
+                        rs.getObject("instanceEnv", UUID.class),
                         rs.getInt("traceCount"),
                         rs.getInt("attempts")
                 );
@@ -93,12 +94,12 @@ public class Mappers {
 
     public static RestSessionDto defaultRestSession(ResultSet rs) throws SQLException {
         var restSession = new RestSessionDto();
-        restSession.setId(rs.getObject("id", java.util.UUID.class));
+        restSession.setId(rs.getObject("id", UUID.class));
         restSession.setMethod(rs.getString("method"));
         restSession.setProtocol(rs.getString("protocol"));
         restSession.setPath(rs.getString("path"));
         restSession.setQuery(rs.getString("query"));
-        restSession.setStatus(rs.getInt("status"));
+        restSession.setStatus(rs.getShort("status"));
         restSession.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
         restSession.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
         restSession.setName(rs.getString("apiName"));
@@ -135,7 +136,7 @@ public class Mappers {
                 }
                 out.setUserAgent(rs.getString("userAgt"));
                 out.setRequestsMask(rs.getInt("mask"));
-                out.setInstanceId(rs.getObject("instanceEnv", java.util.UUID.class));
+                out.setInstanceId(rs.getObject("instanceEnv", UUID.class));
                 out.setCacheControl(rs.getString("cacheControl"));
                 out.setLinked(rs.getBoolean("linked"));
                 try {
@@ -155,7 +156,7 @@ public class Mappers {
     public static RowMapper<HttpSessionStage> restSessionStageRowMapper(){
         return (rs, row) -> {
             HttpSessionStage out = new HttpSessionStage(
-                    rs.getObject("parent", java.util.UUID.class), // ou "requestId" selon alias SQL
+                    rs.getObject("parent", UUID.class), // ou "requestId" selon alias SQL
                     rs.getInt("order")
             );
             out.setName(rs.getString("name"));
@@ -168,10 +169,10 @@ public class Mappers {
     public static RowMapper<RestSession> restSessionPulseRowMapper() {
         return (rs, row) -> {
             RestSession out = new RestSession();
-            out.setId(rs.getObject("id", java.util.UUID.class));
+            out.setId(rs.getObject("id", UUID.class));
             out.setMethod(rs.getString("method"));
             out.setPath(rs.getString("path"));
-            out.setStatus(rs.getInt("status"));
+            out.setStatus(rs.getShort("status"));
             out.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
             out.setName(rs.getString("apiName"));
@@ -184,7 +185,7 @@ public class Mappers {
 
     public static MainSessionDto defaultMainSession(ResultSet rs) throws SQLException {
         var mainSession = new MainSessionDto();
-        mainSession.setId(rs.getObject("id", java.util.UUID.class));
+        mainSession.setId(rs.getObject("id", UUID.class));
         mainSession.setType(rs.getString("type"));
         mainSession.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
         mainSession.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
@@ -216,7 +217,7 @@ public class Mappers {
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
                 }
-                out.setInstanceId(rs.getObject("instanceEnv", java.util.UUID.class));
+                out.setInstanceId(rs.getObject("instanceEnv", UUID.class));
                 out.setRequestsMask(rs.getInt("mask"));
                 return out;
             }
@@ -227,7 +228,7 @@ public class Mappers {
     public static RowMapper<MainSession> mainSessionPulseRowMapper(){
         return (rs, row) -> {
             MainSession out = new MainSession();
-            out.setId(rs.getObject("id", java.util.UUID.class)); // add value of nullable
+            out.setId(rs.getObject("id", UUID.class)); // add value of nullable
             out.setName(rs.getString("name"));
             out.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
@@ -240,14 +241,14 @@ public class Mappers {
 
     public static RestRequestDto defaultRestRequest(ResultSet rs) throws SQLException {
         RestRequestDto out = new RestRequestDto();
-        out.setId(rs.getObject("id", java.util.UUID.class));
-        out.setSessionId(rs.getObject("parent", java.util.UUID.class));
+        out.setId(rs.getObject("id", UUID.class));
+        out.setSessionId(rs.getObject("parent", UUID.class));
         out.setProtocol(rs.getString("protocol"));
         out.setHost(rs.getString("host"));
         out.setPath(rs.getString("path"));
         out.setQuery(rs.getString("query"));
         out.setMethod(rs.getString("method"));
-        out.setStatus(rs.getInt("status"));
+        out.setStatus(rs.getShort("status"));
         out.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
         out.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
         out.setThreadName(rs.getString("thread"));
@@ -267,7 +268,7 @@ public class Mappers {
                 out.setInContentEncoding(rs.getString("contentEncodingIn"));
                 out.setOutContentEncoding(rs.getString("contentEncodingOut"));
                 out.setAuthScheme(rs.getString("auth"));
-                out.setInstanceId(rs.getObject("instanceEnv", java.util.UUID.class));
+                out.setInstanceId(rs.getObject("instanceEnv", UUID.class));
                 return out;
             }
             return null;
@@ -281,7 +282,7 @@ public class Mappers {
     public static RowMapper<HttpRequestStage> restRequestStageRowMapper(ObjectMapper mapper) {
         return (rs, row) -> {
             HttpRequestStage out = new HttpRequestStage(
-                    rs.getObject("parent", java.util.UUID.class), // adapte au vrai alias SQL
+                    rs.getObject("parent", UUID.class), // adapte au vrai alias SQL
                     rs.getInt("order")
             );
             out.setName(rs.getString("name"));
@@ -305,7 +306,7 @@ public class Mappers {
     public static RowMapper<LocalRequest> localRequestRowMapper(){
         return (rs, row) -> {
             LocalRequest out = new LocalRequest();
-            out.setId(rs.getObject("id", java.util.UUID.class));
+            out.setId(rs.getObject("id", UUID.class));
             out.setName(rs.getString("name"));
             out.setLocation(rs.getString("location"));
             out.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
@@ -320,8 +321,8 @@ public class Mappers {
 
     private static DatabaseRequestDto defaultDatabaseRequest(ResultSet rs) throws SQLException {
         DatabaseRequestDto out = new DatabaseRequestDto();
-        out.setId(rs.getObject("id", java.util.UUID.class));
-        out.setSessionId(rs.getObject("parent", java.util.UUID.class));
+        out.setId(rs.getObject("id", UUID.class));
+        out.setSessionId(rs.getObject("parent", UUID.class));
         out.setHost(rs.getString("host"));
         out.setName(rs.getString("db"));
         out.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
@@ -346,7 +347,7 @@ public class Mappers {
                 out.setDriverVersion(rs.getString("driver"));
                 out.setProductVersion(rs.getString("dbVersion"));
                 out.setPort(rs.getInt("port"));
-                out.setInstanceId(rs.getObject("instanceEnv", java.util.UUID.class));
+                out.setInstanceId(rs.getObject("instanceEnv", UUID.class));
                 return out;
             }
             return null;
@@ -356,7 +357,7 @@ public class Mappers {
     public static RowMapper<DatabaseRequestStage> databaseRequestStageRowMapper(ObjectMapper mapper){
         return (rs, row) -> {
             DatabaseRequestStage out = new DatabaseRequestStage(
-                    rs.getObject("parent", java.util.UUID.class), // adapte au vrai alias SQL
+                    rs.getObject("parent", UUID.class), // adapte au vrai alias SQL
                     rs.getInt("order")
             );
             out.setName(rs.getString("name"));
@@ -386,8 +387,8 @@ public class Mappers {
 
     private static FtpRequestDto defaultFtpRequest(ResultSet rs) throws SQLException {
         FtpRequestDto out = new FtpRequestDto();
-        out.setId(rs.getObject("id", java.util.UUID.class));
-        out.setSessionId(rs.getObject("parent", java.util.UUID.class));
+        out.setId(rs.getObject("id", UUID.class));
+        out.setSessionId(rs.getObject("parent", UUID.class));
         out.setHost(rs.getString("host"));
         out.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
         out.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
@@ -410,7 +411,7 @@ public class Mappers {
                 out.setProtocol(rs.getString("protocol"));
                 out.setServerVersion(rs.getString("serverVersion"));
                 out.setClientVersion(rs.getString("clientVersion"));
-                out.setInstanceId(rs.getObject("instanceEnv", java.util.UUID.class));
+                out.setInstanceId(rs.getObject("instanceEnv", UUID.class));
                 return out;
             }
             return null;
@@ -420,7 +421,7 @@ public class Mappers {
     public static RowMapper<FtpRequestStage> ftpRequestStageRowMapper(ObjectMapper mapper){
         return (rs, row) -> {
             FtpRequestStage out = new FtpRequestStage(
-                    rs.getObject("parent", java.util.UUID.class), // adapte au vrai alias SQL
+                    rs.getObject("parent", UUID.class), // adapte au vrai alias SQL
                     rs.getInt("order")
             );
             out.setName(rs.getString("name"));
@@ -447,8 +448,8 @@ public class Mappers {
 
     private static MailRequestDto defaultSmtpRequest(ResultSet rs) throws SQLException{
         MailRequestDto out = new MailRequestDto();
-        out.setId(rs.getObject("id", java.util.UUID.class));
-        out.setSessionId(rs.getObject("parent", java.util.UUID.class));
+        out.setId(rs.getObject("id", UUID.class));
+        out.setSessionId(rs.getObject("parent", UUID.class));
         out.setHost(rs.getString("host"));
         out.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
         out.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
@@ -468,7 +469,7 @@ public class Mappers {
             if (rs.next()) {
                 MailRequest out = defaultSmtpRequest(rs);
                 out.setPort(rs.getInt("port"));
-                out.setInstanceId(rs.getObject("instanceEnv", java.util.UUID.class));
+                out.setInstanceId(rs.getObject("instanceEnv", UUID.class));
                 return out;
             }
             return null;
@@ -478,7 +479,7 @@ public class Mappers {
     public static RowMapper<MailRequestStage> smtpRequestStageRowMapper(ObjectMapper mapper){
         return (rs, row) -> {
             MailRequestStage out = new MailRequestStage(
-                    rs.getObject("parent", java.util.UUID.class),
+                    rs.getObject("parent", UUID.class),
                     rs.getInt("order")
             );
             out.setName(rs.getString("name"));
@@ -515,7 +516,7 @@ public class Mappers {
 
     private static DirectoryRequestDto defaultLdapRequest(ResultSet rs) throws SQLException{
         DirectoryRequestDto out = new DirectoryRequestDto();
-        out.setId(rs.getObject("id", java.util.UUID.class));
+        out.setId(rs.getObject("id", UUID.class));
         out.setHost(rs.getString("host"));
         out.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
         out.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
@@ -534,10 +535,10 @@ public class Mappers {
         return rs -> {
             if (rs.next()) {
                 DirectoryRequest out = defaultLdapRequest(rs);
-                out.setSessionId(rs.getObject("parent", java.util.UUID.class));
+                out.setSessionId(rs.getObject("parent", UUID.class));
                 out.setPort(rs.getInt("port"));
                 out.setProtocol(rs.getString("protocol"));
-                out.setInstanceId(rs.getObject("instanceEnv", java.util.UUID.class));
+                out.setInstanceId(rs.getObject("instanceEnv", UUID.class));
                 return out;
             }
             return null;
@@ -548,7 +549,7 @@ public class Mappers {
     public static RowMapper<DirectoryRequestStage> ldapRequestStageRowMapper(ObjectMapper mapper){
         return (rs, row) -> {
             var out = new DirectoryRequestStage(
-                    rs.getObject("parent", java.util.UUID.class), // adapte au vrai alias SQL
+                    rs.getObject("parent", UUID.class), // adapte au vrai alias SQL
                     rs.getInt("order")
             );
             out.setName(rs.getString("name"));
