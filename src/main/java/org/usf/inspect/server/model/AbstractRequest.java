@@ -28,7 +28,9 @@ public abstract class AbstractRequest implements EventTrace {
 	private UUID sessionId;
 	private UUID instanceId;
 
+	@Deprecated(forRemoval = true)
     public abstract TraceSignal toRequest();
 
+	@Deprecated(forRemoval = true)
     public abstract TraceUpdate toCallback();
 }
