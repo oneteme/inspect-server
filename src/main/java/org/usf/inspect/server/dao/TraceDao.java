@@ -693,7 +693,8 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
         //saveStageExceptions(stages, JDBC);
     }
 
-    @Deprecated
+
+    @Deprecated(forRemoval = true)
     private void saveStageExceptions(List<? extends AbstractStage> stages, RequestMask mask) {
         var exceptions = stages.stream()
                 .filter(e -> nonNull(e.getException())).toList();
@@ -718,6 +719,7 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
         });
     }
 
+    @Deprecated(forRemoval = true)
     private void saveLocalRequestExceptions(List<LocalRequestUpdate> stages) {
         executeBatch("insert into e_exc_inf(va_typ,va_err_typ,va_err_msg,va_stk,cd_ord,cd_rqt) values(?,?,?,?,?,?)", stages, (ps, exp) -> {
             ps.setString(1, LOCAL.name());
