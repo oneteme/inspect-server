@@ -23,6 +23,7 @@ public class DirectoryRequest extends AbstractRequest {
 
     @JsonCreator public DirectoryRequest() { }
 
+	@Deprecated(forRemoval = true)
     public DirectoryRequestSignal toRequest() {
         DirectoryRequestSignal dr = new DirectoryRequestSignal(getId(), getSessionId(), getStart(), getThreadName());
         dr.setInstanceId(getInstanceId());
@@ -33,6 +34,7 @@ public class DirectoryRequest extends AbstractRequest {
         return dr;
     }
 
+	@Deprecated(forRemoval = true)
     public DirectoryRequestUpdate toCallback() {
         DirectoryRequestUpdate drc = new DirectoryRequestUpdate(getId());
         drc.setEnd(getEnd());

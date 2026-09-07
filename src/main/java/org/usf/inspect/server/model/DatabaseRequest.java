@@ -28,6 +28,7 @@ public class DatabaseRequest extends AbstractRequest {
 
     @JsonCreator public DatabaseRequest() { }
 
+	@Deprecated(forRemoval = true)
     public DatabaseRequestSignal toRequest(){
         DatabaseRequestSignal req = new DatabaseRequestSignal(getId(), getSessionId(), getStart(), getThreadName());
         req.setSchema(getSchema());
@@ -43,6 +44,7 @@ public class DatabaseRequest extends AbstractRequest {
         return req;
     }
 
+	@Deprecated(forRemoval = true)
     public DatabaseRequestUpdate toCallback(){
         DatabaseRequestUpdate cb = new DatabaseRequestUpdate(getId());
         cb.setFailed(isFailed());

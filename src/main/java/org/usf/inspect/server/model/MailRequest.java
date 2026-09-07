@@ -29,6 +29,7 @@ public class MailRequest extends AbstractRequest {
         // empty
     }
 
+	@Deprecated(forRemoval = true)
     public MailRequestSignal toRequest() {
         MailRequestSignal req = new MailRequestSignal(getId(), getSessionId(), getStart(), getThreadName());
         req.setInstanceId(getInstanceId());
@@ -39,6 +40,7 @@ public class MailRequest extends AbstractRequest {
         return req;
     }
 
+	@Deprecated(forRemoval = true)
     public MailRequestUpdate toCallback() {
         MailRequestUpdate cb = new MailRequestUpdate(getId());
         cb.setEnd(getEnd());

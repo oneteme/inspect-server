@@ -31,6 +31,7 @@ public class RestSession extends AbstractSession {
 		this.rest = new RestRequest();
 	}
 
+	@Deprecated(forRemoval = true)
     public HttpSessionSignal toSession() {
         HttpSessionSignal ses = new HttpSessionSignal(getId(), getStart(), getThreadName());
         ses.setMethod(getMethod());
@@ -51,6 +52,7 @@ public class RestSession extends AbstractSession {
         return ses;
     }
 
+	@Deprecated(forRemoval = true)
     public HttpSessionUpdate toCallback() {
         HttpSessionUpdate cb = new HttpSessionUpdate(getId());
         cb.setEnd(getEnd());

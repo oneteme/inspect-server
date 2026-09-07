@@ -36,6 +36,7 @@ public class RestRequest extends AbstractRequest { //APiRequest
 	
 	@JsonCreator public RestRequest() { }
 
+	@Deprecated(forRemoval = true)
     public HttpRequestSignal toRequest() {
         HttpRequestSignal req = new HttpRequestSignal(getId(), getSessionId(), getStart(), getThreadName());
         req.setProtocol(getProtocol());
@@ -52,6 +53,7 @@ public class RestRequest extends AbstractRequest { //APiRequest
         return req;
     }
 
+	@Deprecated(forRemoval = true)
     public HttpRequestUpdate toCallback() {
         HttpRequestUpdate cb = new HttpRequestUpdate(getId());
         cb.setStatus(getStatus());

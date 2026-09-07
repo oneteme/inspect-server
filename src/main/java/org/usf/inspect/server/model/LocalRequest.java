@@ -23,6 +23,7 @@ public class LocalRequest extends AbstractRequest {
 	
 	@JsonCreator public LocalRequest() { }
 
+	@Deprecated(forRemoval = true)
     public LocalRequestSignal toRequest() {
         var req = new LocalRequestSignal(getId(), getSessionId(), getStart(), getThreadName());
         req.setLocation(getLocation());
@@ -33,6 +34,7 @@ public class LocalRequest extends AbstractRequest {
         return req;
     }
 
+	@Deprecated(forRemoval = true)
     public LocalRequestUpdate toCallback() {
         var callback = new LocalRequestUpdate(getId());
         callback.setEnd(getEnd());
