@@ -598,7 +598,7 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
             ps.setString(1, stg.getName());
             ps.setTimestamp(2, fromNullableInstant(stg.getStart()));
             ps.setTimestamp(3, fromNullableInstant(stg.getEnd()));
-            ps.setLong(4, stg.getOrder());
+            ps.setInt(4, stg.getOrder());
             ps.setObject(5, stg.getRequestId());
         });
       //  saveStageExceptions(stages, REST);
@@ -610,7 +610,7 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
             ps.setString(1, stg.getName());
             ps.setTimestamp(2, fromNullableInstant(stg.getStart()));
             ps.setTimestamp(3, fromNullableInstant(stg.getEnd()));
-            ps.setLong(4, stg.getOrder());
+            ps.setInt(4, stg.getOrder());
             ps.setObject(5, stg.getRequestId());
         });
     }
@@ -622,7 +622,7 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
             ps.setTimestamp(2, fromNullableInstant(stg.getStart()));
             ps.setTimestamp(3, fromNullableInstant(stg.getEnd()));
             ps.setString(4, stg.getCommand());
-            ps.setLong(5, stg.getOrder());
+            ps.setInt(5, stg.getOrder());
             ps.setObject(6, stg.getRequestId());
         });
         saveMailRequestMails(stages);
@@ -658,7 +658,7 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
             ps.setTimestamp(3, fromNullableInstant(stg.getEnd()));
             ps.setString(4, stg.getCommand());
             ps.setString(5, joinValuesOrNull(stg.getArgs()));
-            ps.setLong(6, stg.getOrder());
+            ps.setInt(6, stg.getOrder());
             ps.setObject(7, stg.getRequestId());
         });
         //saveStageExceptions(stages, FTP);
@@ -672,7 +672,7 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
             ps.setTimestamp(3, fromNullableInstant(stg.getEnd()));
             ps.setString(4, stg.getCommand());
             ps.setString(5, joinValuesOrNull(stg.getArgs()));
-            ps.setLong(6, stg.getOrder());
+            ps.setInt(6, stg.getOrder());
             ps.setObject(7, stg.getRequestId());
         });
        // saveStageExceptions(stages, LDAP);
@@ -687,7 +687,7 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
             ps.setString(4, valueOfNullableArray(stg.getCount()));
             ps.setString(5, stg.getCommand());
             ps.setString(6, joinValuesOrNull(stg.getArgs()));
-            ps.setLong(7, stg.getOrder());
+            ps.setInt(7, stg.getOrder());
             ps.setObject(8, stg.getRequestId());
         });
         //saveStageExceptions(stages, JDBC);
@@ -703,7 +703,7 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
             ps.setString(2, exp.getException().getType());
             ps.setString(3, exp.getException().getMessage());
             ps.setObject(4, safeWriteValue(exp.getException().getStackTraceRows(), mapper), OTHER);
-            ps.setLong(5, exp.getOrder());
+            ps.setInt(5, exp.getOrder());
             ps.setObject(6, exp.getRequestId());//.toString() ?
         });
     }
