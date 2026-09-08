@@ -25,7 +25,6 @@ public class RestSession extends AbstractSession {
 	private String userAgent; //Mozilla, Chrome, curl, Postman,..
 	private String cacheControl; //max-age, no-cache
 	private ExceptionTrace exception;
-    //private String[] forwardedAddresses;
 
 	@JsonCreator public RestSession() {
 		this.rest = new RestRequest();
@@ -48,7 +47,6 @@ public class RestSession extends AbstractSession {
         ses.setInstanceId(getInstanceId());
         ses.setLinked(isLinked());
         ses.setUserAgent(getUserAgent());
-        //ses.setForwardedAddresses(getForwardedAddresses());
         return ses;
     }
 
