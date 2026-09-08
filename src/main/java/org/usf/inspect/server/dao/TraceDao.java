@@ -74,6 +74,7 @@ public class TraceDao {
     private final JdbcTemplate template;
     private final ObjectMapper mapper;
     private final ApplicationEventPublisher publisher;
+    @Deprecated(forRemoval = true) //not used 
     private final RetentionAdapter retentionAdapter = new RetentionAdapter(Duration.ofDays(30));
 
     private final boolean supportsSavePoints;
@@ -240,12 +241,12 @@ where id_ses = ?""", sessions, (ps, ses) -> {
         executeBatch("""
 insert into e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str,va_msk)
 values(?::uuid,?::uuid,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
-            mainSessionSetter(ps, ses);
-            ps.setString(5, ses.getLocation());
-            ps.setString(6, ses.getName());
-            ps.setString(7, ses.getUser());
-            ps.setTimestamp(8, fromNullableInstant(ses.getStart()));
-            ps.setInt(9, 0);
+            var idx = mainSessionSetter(ps, ses);
+            ps.setString(++idx, ses.getLocation());
+            ps.setString(++idx, ses.getName());
+            ps.setString(++idx, ses.getUser());
+            ps.setTimestamp(++idx, fromNullableInstant(ses.getStart()));
+            ps.setInt(++idx, 0); //Unnecessary 
         });
     }
 
@@ -256,21 +257,23 @@ insert into e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str,d
 values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
             var session = ses.signal();
             var callback = ses.update();
-            mainSessionSetter(ps, session);
-            ps.setString(5, nonNull(callback.getLocation()) ? callback.getLocation() : session.getLocation());
-            ps.setString(6, nonNull(callback.getName()) ? callback.getName() : session.getName());
-            ps.setString(7, nonNull(callback.getUser()) ? callback.getUser() : session.getUser());
-            ps.setTimestamp(8, fromNullableInstant(nonNull(callback.getStart()) ? callback.getStart() : session.getStart()));
-            ps.setTimestamp(9, fromNullableInstant(callback.getEnd()));
-            ps.setInt(13, callback.getRequestMask().get());
+            var idx = mainSessionSetter(ps, session);
+            ps.setString(++idx, nonNull(callback.getLocation()) ? callback.getLocation() : session.getLocation());
+            ps.setString(++idx, nonNull(callback.getName()) ? callback.getName() : session.getName());
+            ps.setString(++idx, nonNull(callback.getUser()) ? callback.getUser() : session.getUser());
+            ps.setTimestamp(++idx, fromNullableInstant(nonNull(callback.getStart()) ? callback.getStart() : session.getStart()));
+            ps.setTimestamp(++idx, fromNullableInstant(callback.getEnd()));
+            ps.setInt(++idx, callback.getRequestMask().get());
         });
     }
 
-    static void mainSessionSetter(PreparedStatement ps, MainSessionSignal ses) throws SQLException {
-        ps.setObject(1, ses.getId());
-        ps.setObject(2, ses.getInstanceId());
-        ps.setString(3, valueOfNullable(ses.getType()));
-        ps.setString(4, ses.getThreadName());
+    static int mainSessionSetter(PreparedStatement ps, MainSessionSignal ses) throws SQLException {
+    	var idx=0;
+        ps.setObject(++idx, ses.getId());
+        ps.setObject(++idx, ses.getInstanceId());
+        ps.setString(++idx, valueOfNullable(ses.getType()));
+        ps.setString(++idx, ses.getThreadName());
+        return idx;
     }
 
     @Transactional(rollbackFor = Throwable.class)

@@ -330,7 +330,7 @@ public class PurgeDao {
             var env = rs.getString(instance.environement().toString());
             var type = InstanceType.valueOf(rs.getString(instance.type().toString()));
             var raw = rs.getString(instance.configuration().toString());
-
+            
             var config = deserializeRetentionConfig(raw);
             var diagnostic = retentionAdapter.resolve(config, true);
             var audit = retentionAdapter.resolve(config, false);
