@@ -9,20 +9,23 @@ import org.usf.inspect.core.*;
 import org.usf.inspect.server.event.UnsavedEventTraceEvent;
 import org.usf.inspect.server.exception.DispatchProcessingException;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
-import org.usf.inspect.server.model.InstanceTrace;
+import org.usf.inspect.server.model.TracePacket;
 import org.usf.inspect.core.TraceDispatcherHub;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
+import static java.lang.Thread.currentThread;
 import static java.time.Instant.now;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static org.usf.inspect.core.LogEntry.Level.REPORT;
 import static org.usf.inspect.server.Utils.assertUUID;
 import static org.usf.inspect.server.model.TraceBatchResolver.resolve;
+import static org.usf.inspect.server.model.TracePacket.newTracePacket;
 import static org.usf.inspect.server.service.TracePersistenceService.filterAndApply;
 
 @Slf4j
@@ -47,20 +50,17 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
         return dispatcher.dispatch(instance);
     }
 
-    public boolean addTraces(List<EventTrace> traces, UUID id, Integer attempts, String filename, Instant end) throws DispatchProcessingException {
+    public boolean addTraces(UUID id, int seq, int attempts, Instant end, List<EventTrace> traces) throws DispatchProcessingException {
         var now = now();
         var emitted = false;
+        if(isNull(traces)) {
+            traces = new ArrayList<>();
+        }
+        traces.add(newTracePacket(now, seq, attempts, id, traces));
+        if(nonNull(end)){
+            traces.add(new InstanceEnvironmentUpdate(id, end));
+        }
         try {
-            if(isNull(traces)) {
-                traces = new ArrayList<>();
-            }
-            InstanceTrace instanceTrace = new InstanceTrace(attempts, filename, now, id);
-            resolve(traces, instanceTrace);
-            filterAndApply(traces, AbstractStage.class, t -> instanceTrace.addTraceCount(t.size()));
-            traces.add(instanceTrace);
-            if(nonNull(end)){
-                traces.add(new InstanceEnvironmentUpdate(id, end));
-            }
             for(var e : traces) {
                 if(e instanceof AbstractRequestSignal req) {
                     req.setInstanceId(id);
@@ -112,8 +112,25 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
         dispatcher.setState(state);
     }
 
-    public DispatchState getState() {
+    public DispatchState getDispatcherState() {
         return dispatcher.getState();
+    }
+    
+    public boolean hasBeenTraced(UUID id, int seq) {
+		try {
+			var found = dispatcher.peekAsync(q->{
+				return q.stream().anyMatch(t-> t instanceof TracePacket pck 
+						&& pck.getInstanceId().equals(id) 
+						&& pck.getSequence() == seq);
+			}).get();
+			//TODO select existing trace packet from db and emit it to dispatcher
+	    	return found;
+		} catch (InterruptedException e) {
+	        currentThread().interrupt();
+	        throw new IllegalStateException("Interrupted while checking trace sequence " + seq + " for instance " + id, e);
+	    } catch (ExecutionException e) {
+	        throw new IllegalStateException("Failed to inspect trace queue for instance " + id, e.getCause());
+	    }
     }
 
     @Override

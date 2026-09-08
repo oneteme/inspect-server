@@ -67,15 +67,16 @@ public class Mappers {
         };
     }
 
-    public static RowMapper<InstanceTrace> instanceTraceRowMapper() {
+    public static RowMapper<TracePacket> instanceTraceRowMapper() {
         return (rs, row) ->
-                new InstanceTrace(
-                        rs.getInt("pending"),
-                        rs.getString("filename"),
-                        fromNullableTimestamp(rs.getTimestamp("start")),
+                new TracePacket(
+                		fromNullableTimestamp(rs.getTimestamp("start")),
+                		rs.getInt("attempts"),
+//                        rs.getString("filename"),
                         rs.getObject("instanceEnv", UUID.class),
                         rs.getInt("traceCount"),
-                        rs.getInt("attempts")
+                        rs.getInt("pending"),
+                        0
                 );
     }
 

@@ -42,7 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.*;
 import org.usf.inspect.server.event.UnsavedEventTraceEvent;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
-import org.usf.inspect.server.model.InstanceTrace;
+import org.usf.inspect.server.model.TracePacket;
 import org.usf.inspect.server.model.Pair;
 import org.usf.inspect.server.retention.RetentionAdapter;
 import org.usf.inspect.server.retention.RetentionModels.RetentionConfig;
@@ -116,7 +116,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveInstanceTraces(List<InstanceTrace> instanceTraces) {
+    public void saveInstanceTraces(List<TracePacket> instanceTraces) {
         executeBatch("insert into e_ins_trc (va_pnd, va_atp, va_trc_cnt, dh_str, va_fln, cd_ins) values (?, ?, ?, ?, ?, ?)",
                 instanceTraces, (ps, trc) -> {
                     ps.setObject(1, trc.getPending(), INTEGER);
@@ -124,6 +124,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
                     ps.setInt(3, trc.getTraceCount());
                     ps.setTimestamp(4, fromNullableInstant(trc.getInstant()));
                     ps.setString(5, trc.getFileName());
+                    //TODO save sequence & delete filename
                     ps.setObject(6, trc.getInstanceId());
                 });
     }

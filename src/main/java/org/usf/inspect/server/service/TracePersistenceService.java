@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import org.usf.inspect.core.*;
 import org.usf.inspect.server.dao.TraceDao;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
-import org.usf.inspect.server.model.InstanceTrace;
+import org.usf.inspect.server.model.TracePacket;
 
 import java.io.File;
 import java.io.IOException;
@@ -99,7 +99,7 @@ public class TracePersistenceService implements TraceExporter {
         cf.add(supplyAsync(()-> filterAndApply(traces, MachineResourceUsage.class, dao::saveMachineResourceUsages), executor));
         cf.add(supplyAsync(()-> filterAndApply(traces, LogEntry.class, dao::saveLogEntries), executor));
         cf.add(supplyAsync(()-> filterAndApply(traces, InstanceEnvironmentUpdate.class, dao::updateInstanceEnvironments), executor));
-        cf.add(supplyAsync(()-> filterAndApply(traces, InstanceTrace.class, dao::saveInstanceTraces), executor));
+        cf.add(supplyAsync(()-> filterAndApply(traces, TracePacket.class, dao::saveInstanceTraces), executor));
 
 
         return allOf(cf.toArray(CompletableFuture[]::new)).thenApply(v-> cf.stream()

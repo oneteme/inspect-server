@@ -96,14 +96,14 @@ public class RequestController {
             dataset = "instance_trace",
             view = INSTANCE_TRACE_ROW_MAPPER,
             select = "pending,attempts,size_session,filename,start,instance_env")
-    public Collection<InstanceTrace> fetchInstanceTraces(
+    public Collection<TracePacket> fetchInstanceTraces(
             MvcRequest mvc,
             @PathVariable String instanceId
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.instanceTrace().instanceEnv().eq(fromString(instanceId))); // UUID
 
-        return (Collection<InstanceTrace>) mvc.execute();
+        return (Collection<TracePacket>) mvc.execute();
     }
 
     @GetMapping(value = "instance/{instanceId}/resource/usage", produces = APPLICATION_JSON_VALUE)
