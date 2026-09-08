@@ -357,8 +357,8 @@ where id_rst_rqt = ?::uuid""", requests, (ps, req) -> {
         executeBatch("""
 insert into e_lcl_rqt(id_lcl_rqt,cd_prn_ses,cd_ins,va_typ,va_nam,va_lct,va_usr,va_thr,dh_str)
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests, (ps, req) -> {
-            localRequestSetter(ps, req);
-            ps.setTimestamp(9, fromNullableInstant(req.getStart()));
+            var idx = localRequestSetter(ps, req);
+            ps.setTimestamp(++idx, fromNullableInstant(req.getStart()));
         });
     }
 
@@ -369,23 +369,25 @@ insert into e_lcl_rqt(id_lcl_rqt,cd_prn_ses,cd_ins,va_typ,va_nam,va_lct,va_usr,v
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             var req = pair.signal();
             var callback = pair.update();
-            localRequestSetter(ps, req);
-            ps.setTimestamp(9, fromNullableInstant(nonNull(callback.getStart()) ? callback.getStart() : req.getStart()));
-            ps.setTimestamp(10, fromNullableInstant(callback.getEnd()));
-            ps.setShort(11, callback.getStatus());
+          var idx=  localRequestSetter(ps, req);
+            ps.setTimestamp(++idx, fromNullableInstant(nonNull(callback.getStart()) ? callback.getStart() : req.getStart()));
+            ps.setTimestamp(++idx, fromNullableInstant(callback.getEnd()));
+            ps.setShort(++idx, callback.getStatus());
         });
 
     }
 
-    static void localRequestSetter(PreparedStatement ps, LocalRequestSignal req) throws SQLException {
-        ps.setObject(1, req.getId());
-        ps.setObject(2, req.getSessionId());
-        ps.setObject(3, req.getInstanceId()); //instance id
-        ps.setString(4, req.getType());
-        ps.setString(5, req.getName());
-        ps.setString(6, req.getLocation());
-        ps.setString(7, req.getUser());
-        ps.setString(8, req.getThreadName());
+    static int localRequestSetter(PreparedStatement ps, LocalRequestSignal req) throws SQLException {
+        var idx=0;
+        ps.setObject(++idx, req.getId());
+        ps.setObject(++idx, req.getSessionId());
+        ps.setObject(++idx, req.getInstanceId()); //instance id
+        ps.setString(++idx, req.getType());
+        ps.setString(++idx, req.getName());
+        ps.setString(++idx, req.getLocation());
+        ps.setString(++idx, req.getUser());
+        ps.setString(++idx, req.getThreadName());
+        return idx;
     }
 
     @Transactional(rollbackFor = Throwable.class)
