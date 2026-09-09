@@ -693,7 +693,6 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
             ps.setInt(++idx, stg.getOrder());
             ps.setObject(++idx, stg.getRequestId());
         });
-
     }
 
     @Transactional(rollbackFor = Throwable.class)
