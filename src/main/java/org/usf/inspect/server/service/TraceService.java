@@ -94,12 +94,12 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
     
     public boolean hasBeenTraced(UUID id, int seq) {
 		try {
-			var ext = dispatcher.peekAsync(q-> q.stream()
+			return dispatcher.peekAsync(q-> q.stream()
 					.anyMatch(t-> t instanceof TracePacket pck 
 						&& pck.getInstanceId().equals(id) 
-						&& pck.getSequence() == seq)).get();
-	    	return ext || template.queryForObject("SELECT COUNT(*) FROM e_ins_trc WHERE cd_ins=? AND va_seq=?", 
-	    			ResultSet::getInt, id, seq) > 0;
+						&& pck.getSequence() == seq)).get() || 
+					template.queryForObject("SELECT COUNT(*) FROM e_ins_trc WHERE cd_ins=? AND va_seq=?", 
+							ResultSet::getInt, id, seq) > 0;
 		} catch (InterruptedException e) {
 	        currentThread().interrupt();
 	        throw new IllegalStateException("Interrupted while checking trace sequence " + seq + " for instance " + id, e);
