@@ -5,7 +5,8 @@ import lombok.Getter;
 @Getter
 @SuppressWarnings("serial")
 public class DispatchProcessingException extends Exception {
-    private final boolean retryable;
+    
+	private final boolean retryable;
 
     public DispatchProcessingException(boolean retryable, Throwable cause) {
         super(cause);

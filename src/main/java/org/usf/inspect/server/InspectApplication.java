@@ -1,9 +1,7 @@
 package org.usf.inspect.server;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -35,7 +33,6 @@ import static org.usf.inspect.core.InspectConfiguration.coreModule;
 import static org.usf.inspect.core.TraceDispatcherHub.createHub;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.util.Properties;
 
 @SpringBootApplication
@@ -105,8 +102,4 @@ public class InspectApplication {
 
 		defaultMapper = mapper;
 	}
-
-
-
 }
-

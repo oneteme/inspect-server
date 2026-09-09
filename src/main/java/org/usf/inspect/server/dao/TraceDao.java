@@ -1,6 +1,5 @@
 package org.usf.inspect.server.dao;
 
-
 import static java.sql.Types.INTEGER;
 import static java.sql.Types.OTHER;
 import static java.sql.Types.VARCHAR;
@@ -8,12 +7,7 @@ import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static org.springframework.jdbc.datasource.DataSourceUtils.getConnection;
 import static org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection;
-import static org.usf.inspect.core.RequestMask.FTP;
-import static org.usf.inspect.core.RequestMask.JDBC;
-import static org.usf.inspect.core.RequestMask.LDAP;
 import static org.usf.inspect.core.RequestMask.LOCAL;
-import static org.usf.inspect.core.RequestMask.REST;
-import static org.usf.inspect.core.RequestMask.SMTP;
 import static org.usf.inspect.server.JsonUtils.safeWriteValue;
 import static org.usf.inspect.server.Utils.contentTypeExtract;
 import static org.usf.inspect.server.Utils.fromNullableInstant;
@@ -50,10 +44,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 
-
-
-
-
 /**
  * Using Types.OTHER with JSON serialization to ensure portability:
  * - In PostgreSQL: Types.OTHER is interpreted as native JSONB type
@@ -66,8 +56,6 @@ import lombok.extern.slf4j.Slf4j;
 public class TraceDao {
 
     private static final int BATCH_SIZE = 1_000;
-
-
 
     private final JdbcTemplate template;
     private final ObjectMapper mapper;
@@ -102,7 +90,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             ps.setObject(++idx, safeWriteValue(instance.getConfiguration(), mapper), OTHER);
             ps.setObject(++idx, safeWriteValue(instance.getResource(), mapper), OTHER);
             ps.setObject(++idx, safeWriteValue(instance.getAdditionalProperties(), mapper), OTHER);
-            ps.setString(++idx, instance.getNamespace()); // null autorisé
+            ps.setString(++idx, instance.getNamespace());
         });
     }
 
@@ -142,7 +130,6 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
                     ps.setTimestamp(++idx, fromNullableInstant(o.getInstant()));
                     ps.setObject(++idx, o.getSessionId());
                     ps.setObject(++idx, o.getInstanceId());
-
                 });
     }
 
@@ -155,6 +142,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             ps.setInt(++idx, o.getCommitedHeap());
             ps.setInt(++idx, o.getUsedDiskSpace());
             ps.setObject(++idx, o.getInstanceId());
+            //TODO add column + save  activeThreadCount, startedThreadCount, cpuUsage
         });
     }
 
@@ -415,7 +403,7 @@ where id_lcl_rqt = ?""", requests, (ps, req) -> {
             var idx = 0;
             ps.setTimestamp(++idx, fromNullableInstant(req.getStart()));
             ps.setTimestamp(++idx, fromNullableInstant(req.getEnd()));
-            ps.setBoolean(++idx, nonNull(req.getException()));
+            ps.setBoolean(++idx, nonNull(req.getException())); //TODO req.status !!??
             ps.setObject(++idx, req.getId());
         });
     }
@@ -716,7 +704,6 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
                     stg.getArgs() != null && stg.getArgs().length > 0 ? safeWriteValue(stg.getArgs(), mapper) : null,
                     java.sql.Types.OTHER);
         });
-
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -764,7 +751,8 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
             ps.setString(++idx, exp.getMessage());
             ps.setObject(++idx, safeWriteValue(exp.getStackTraceRows(), mapper), OTHER);
             ps.setLong(++idx, exp.getOffset());
-            ps.setObject(++idx, exp.getTraceId() != null ? exp.getTraceId() : null);
+            ps.setObject(++idx, exp.getTraceId()); //getTraceId can
+            //TODO add cause exception as json !
         });
     }
 

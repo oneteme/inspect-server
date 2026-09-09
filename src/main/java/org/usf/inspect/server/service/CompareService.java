@@ -10,7 +10,6 @@ import org.usf.jquery.mvc.StoreManager;
 
 import java.util.*;
 
-import static java.util.UUID.*;
 import static org.usf.inspect.server.Utils.fromNullableTimestamp;
 import static org.usf.inspect.server.Utils.requireSingle;
 import static org.usf.inspect.server.mapper.Mappers.getExceptionInfoIfNotNull;
@@ -20,7 +19,7 @@ import static org.usf.jquery.core.Join.innerJoin;
 @Service
 public class CompareService {
 
-    public Map<String, Object> getComparedSession(String id) {
+    public Map<String, Object> getComparedSession(UUID id) {
         var request = getRestRequestById(id);
         var result = new HashMap<String, Object>();
         if (request != null) {
@@ -41,7 +40,7 @@ public class CompareService {
         return result;
     }
 
-    private String getApiNameById(String id) {
+    private String getApiNameById(UUID id) {
         var r = getApiNameRestSessionById(id);
         if (r != null) {
             return r;
@@ -49,29 +48,29 @@ public class CompareService {
         return getApiNameMainSessionById(id);
     }
 
-    private String getApiNameRestSessionById(String id) {
+    private String getApiNameRestSessionById(UUID id) {
         InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
         RestSessionCatalog restSession = store.restSession();
         RestRequestCatalog restRequest = store.restRequest();
         var v = new QueryComposer()
                 .columns(restSession.apiName())
                 .joins(restSession.restRequest().getJoins())
-                .criterias(restRequest.id().eq(fromString(id)));
+                .criterias(restRequest.id().eq(id));
         return store.execute(v.compose(store), rs -> rs.next() ? rs.getString("apiName") : null);
     }
 
-    private String getApiNameMainSessionById(String id) {
+    private String getApiNameMainSessionById(UUID id) {
         InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
         MainSessionCatalog mainSession = store.mainSession();
         RestRequestCatalog restRequest = store.restRequest();
         var v = new QueryComposer()
                 .columns(mainSession.name())
                 .joins(mainSession.restRequest().getJoins())
-                .criterias(restRequest.id().eq(fromString(id)));
+                .criterias(restRequest.id().eq(id));
         return store.execute(v.compose(store), rs -> rs.next() ? rs.getString("name") : null);
     }
 
-    private RestSessionWrapper getRestSessionById(String id) {
+    private RestSessionWrapper getRestSessionById(UUID id) {
         InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
         RestSessionCatalog restSession = store.restSession();
         InstanceCatalog instance = store.instance();
@@ -83,7 +82,7 @@ public class CompareService {
                         restSession.errType(), restSession.errMsg(), restSession.mask(), restSession.user(), restSession.cacheControl(), restSession.userAgt(), restSession.instanceEnv(),
                         instance.appName(), instance.os(), instance.re(), instance.address(), instance.branch(), instance.hash(), instance.environement(), instance.version())
                 .joins(innerJoin(instance.getView(), restSession.instanceEnv().eq(instance.id()).and(restSession.start().ge(instance.start()))))
-                .criterias(restSession.id().eq(fromString(id)));
+                .criterias(restSession.id().eq(id));
         return requireSingle(store.execute(v.compose(store), rs -> {
             var sessions = new ArrayList<RestSessionWrapper>();
             while (rs.next()) {
@@ -126,7 +125,7 @@ public class CompareService {
         }));
     }
 
-    private RestRequestWrapper getRestRequestById(String id) {
+    private RestRequestWrapper getRestRequestById(UUID id) {
         InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
         RestRequestCatalog restRequest = store.restRequest();
         InstanceCatalog instance = store.instance();
@@ -140,7 +139,7 @@ public class CompareService {
                         exception.errType(), exception.errMsg())
                 .joins(restRequest.exception().getJoins())
                 .join(innerJoin(instance.getView(), restRequest.instanceEnv().eq(instance.id()).and(restRequest.start().ge(instance.start()))))
-                .criterias(restRequest.id().eq(fromString(id)));
+                .criterias(restRequest.id().eq(id));
         return store.execute(v.compose(store), rs -> {
             if(rs.next()) {
                 var request = new RestRequestWrapper();
