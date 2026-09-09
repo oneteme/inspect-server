@@ -152,7 +152,8 @@ CREATE TABLE IF NOT EXISTS e_ftp_stg (
     va_cmd varchar,
     va_arg varchar,
     cd_ord int,
-    cd_ftp_rqt UUID -- index
+    cd_ftp_rqt UUID -- index,
+    va_pld json
 )
 PARTITION BY RANGE (dh_str);
 
@@ -179,7 +180,8 @@ CREATE TABLE IF NOT EXISTS e_ldap_stg (
     va_cmd varchar,
     va_arg varchar,
     cd_ord int,
-    cd_ldap_rqt UUID
+    cd_ldap_rqt UUID,
+    va_pld json
 )
 PARTITION BY RANGE (dh_str);
 
@@ -212,7 +214,8 @@ CREATE TABLE IF NOT EXISTS e_dtb_stg (
     va_cmd varchar,
     va_arg varchar,
     cd_ord int,
-    cd_dtb_rqt UUID
+    cd_dtb_rqt UUID,
+    va_pld json
 )
 PARTITION BY RANGE (dh_str);
 
@@ -271,6 +274,7 @@ CREATE TABLE IF NOT EXISTS e_usr_acn (
 create table if not exists e_ins_trc (
     va_pnd int,
     va_atp int,
+    va_seq int,
     va_trc_cnt int,
     dh_str timestamp(6),
     va_fln varchar,
@@ -300,6 +304,8 @@ CREATE TABLE IF NOT EXISTS e_nsp_ins (
 		va_nam varchar NOT NULL UNIQUE,
 		va_enc_tkn varchar NOT NULL
 );
+
+
 
 -- Ajouter les index du cd instance dans les requests
 CREATE UNIQUE INDEX IF NOT EXISTS idx_main_ses_id_ses_dh_str ON e_main_ses(id_ses, dh_str DESC);

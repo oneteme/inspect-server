@@ -29,6 +29,7 @@ import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import javax.sql.DataSource;
@@ -115,15 +116,17 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveInstanceTraces(List<TracePacket> instanceTraces) {
-        executeBatch("insert into e_ins_trc (va_pnd, va_atp, va_trc_cnt, dh_str, cd_ins) values (?, ?, ?, ?, ?, ?)",
+        executeBatch("insert into e_ins_trc (va_pnd, va_atp,va_seq, va_trc_cnt, dh_str, cd_ins) values (?, ?, ?, ?, ?, ?)",
                 instanceTraces, (ps, trc) -> {
                     var idx=0;
                     ps.setObject(++idx, trc.getPending(), INTEGER);
                     ps.setObject(++idx, trc.getAttempts(), INTEGER);
+                    //ToDo cherche valeur de sequence pour V4
+                    ps.setObject(++idx, trc.getSequence(), INTEGER);
                     ps.setInt(++idx, trc.getTraceCount());
                     ps.setTimestamp(++idx, fromNullableInstant(trc.getInstant()));
 //                    ps.setString(++idx, trc.getFileName());
-                    //TODO save sequence & delete filename column
+                    //TODO  delete filename column
                     ps.setObject(++idx, trc.getInstanceId());
                 });
     }
@@ -680,46 +683,60 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveFtpRequestStages(List<FtpRequestStage> stages) {
-        executeBatch("insert into e_ftp_stg(va_nam,dh_str,dh_end,va_cmd,va_arg,cd_ord,cd_ftp_rqt) values(?,?,?,?,?,?,?)", stages, (ps, stg)-> {
+        executeBatch("insert into e_ftp_stg(va_nam,dh_str,dh_end,va_cmd,cd_ord,cd_ftp_rqt,va_pld) values(?,?,?,?,?,?,?)", stages, (ps, stg)-> {
             var idx=0;
             ps.setString(++idx, stg.getName());
             ps.setTimestamp(++idx, fromNullableInstant(stg.getStart()));
             ps.setTimestamp(++idx, fromNullableInstant(stg.getEnd()));
             ps.setString(++idx, stg.getCommand());
-            ps.setString(++idx, joinValuesOrNull(stg.getArgs()));
+           // @Deprecated(forRemoval = true, since = "1.3")
+            //ps.setString(++idx, joinValuesOrNull(stg.getArgs()));
             ps.setInt(++idx, stg.getOrder());
             ps.setObject(++idx, stg.getRequestId());
+            ps.setObject(++idx,
+                    stg.getArgs() != null && stg.getArgs().length > 0 ? safeWriteValue(stg.getArgs(), mapper) : null,
+                    java.sql.Types.OTHER);
         });
 
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveLdapRequestStages(List<DirectoryRequestStage> stages) {
-        executeBatch("insert into e_ldap_stg(va_nam,dh_str,dh_end,va_cmd,va_arg,cd_ord,cd_ldap_rqt) values(?,?,?,?,?,?,?)", stages, (ps, stg)-> {
+        executeBatch("insert into e_ldap_stg(va_nam,dh_str,dh_end,va_cmd,cd_ord,cd_ldap_rqt,va_pld) values(?,?,?,?,?,?,?)", stages, (ps, stg)-> {
             var idx=0;
             ps.setString(++idx, stg.getName());
             ps.setTimestamp(++idx, fromNullableInstant(stg.getStart()));
             ps.setTimestamp(++idx, fromNullableInstant(stg.getEnd()));
             ps.setString(++idx, stg.getCommand());
-            ps.setString(++idx, joinValuesOrNull(stg.getArgs()));
+            //TODO: remove deprecated args
+           // ps.setString(++idx, joinValuesOrNull(stg.getArgs()));
             ps.setInt(++idx, stg.getOrder());
             ps.setObject(++idx, stg.getRequestId());
+            ps.setObject(++idx,
+                    stg.getArgs() != null && stg.getArgs().length > 0 ? safeWriteValue(stg.getArgs(), mapper) : null,
+                    java.sql.Types.OTHER);
         });
 
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveDatabaseRequestStages(List<DatabaseRequestStage> stages) {
-        executeBatch("insert into e_dtb_stg(va_nam,dh_str,dh_end,va_cnt,va_cmd,va_arg,cd_ord,cd_dtb_rqt) values(?,?,?,?,?,?,?,?)", stages, (ps, stg)-> {
+        executeBatch("insert into e_dtb_stg(va_nam,dh_str,dh_end,va_cmd,cd_ord,cd_dtb_rqt,va_pld) values(?,?,?,?,?,?,?)", stages, (ps, stg)-> {
             var idx=0;
             ps.setString(++idx, stg.getName());
             ps.setTimestamp(++idx, fromNullableInstant(stg.getStart()));
             ps.setTimestamp(++idx, fromNullableInstant(stg.getEnd()));
-            ps.setString(++idx, valueOfNullableArray(stg.getCount()));
+            //ps.setString(++idx, valueOfNullableArray(stg.getCount()));
             ps.setString(++idx, stg.getCommand());
-            ps.setString(++idx, joinValuesOrNull(stg.getArgs()));
+            //ps.setString(++idx, joinValuesOrNull(stg.getArgs()));
             ps.setInt(++idx, stg.getOrder());
             ps.setObject(++idx, stg.getRequestId());
+            ps.setObject(++idx,
+                    (stg.getCount() != null && stg.getCount().length > 0)
+                            || (stg.getArgs() != null && stg.getArgs().length > 0)
+                            ? safeWriteValue(Map.of("count", stg.getCount(), "args", stg.getArgs()), mapper)
+                            : null,
+                    java.sql.Types.OTHER);
         });
     }
 
