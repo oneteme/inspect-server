@@ -17,7 +17,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Savepoint;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -171,9 +170,9 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", signals, (ps, sgn) -> {
             var idx = restSessionSginalSetter(ps, sgn);
             ps.setString(++idx, sgn.getName());
             ps.setString(++idx, sgn.getUser());
-            ps.setString(++idx, userAgentExtract(sgn.getUserAgent()));
-            ps.setInt(++idx, 0);
-            ps.setString(++idx, toStringOrNull(sgn.getForwardedAddresses()));
+            ps.setString(++idx, userAgentExtract(sgn.getUserAgent())); //TODO -> restSessionSginalSetter
+            ps.setInt(++idx, 0); //Unnecessary 
+            ps.setString(++idx, joinValuesOrNull(sgn.getForwardedAddresses())); //TODO -> restSessionSginalSetter
         });
     }
 
@@ -181,21 +180,21 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", signals, (ps, sgn) -> {
     public void saveRestSessions(List<Pair<HttpSessionSignal, HttpSessionUpdate>> session) {
     	executeBatchPair("""
 insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,dh_end,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_cnt_typ,cd_stt,va_o_sze,va_o_cnt_enc,va_msk,va_fwd_add)
-values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", session, (ps, pr) -> {
+values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", session, (ps, pr) -> {
             var sgn = pr.signal();
             var upd = pr.update();
             var idx = restSessionSginalSetter(ps, sgn);
             ps.setTimestamp(++idx, fromNullableInstant(upd.getEnd()));
             ps.setString(++idx, nonNull(upd.getName()) ? upd.getName() : sgn.getName());
             ps.setString(++idx, nonNull(upd.getUser()) ? upd.getUser() : sgn.getUser());
-            ps.setString(++idx, userAgentExtract(sgn.getUserAgent()));
+            ps.setString(++idx, userAgentExtract(sgn.getUserAgent()));  //TODO -> restSessionSginalSetter
             ps.setString(++idx, upd.getCacheControl());
             ps.setString(++idx, contentTypeExtract(upd.getContentType()));
             ps.setShort(++idx, upd.getStatus());
             ps.setLong(++idx, upd.getDataSize());
             ps.setString(++idx, upd.getContentEncoding());
             ps.setInt(++idx, upd.getRequestMask().get());
-            ps.setString(++idx, toStringOrNull(sgn.getForwardedAddresses()));
+            ps.setString(++idx, joinValuesOrNull(sgn.getForwardedAddresses())); //TODO -> restSessionSginalSetter
         });
     }
 
@@ -261,7 +260,7 @@ where id_ses=?""", updates, (ps, upd) -> {
     public void saveMainSessions(List<Pair<MainSessionSignal, MainSessionUpdate>> sessions) {
     	executeBatchPair("""
 insert into e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str,dh_end,va_msk)
-values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", sessions, (ps, pr) -> {
+values(?,?,?,?,?,?,?,?,?,?,?)""", sessions, (ps, pr) -> {
             var sgn = pr.signal();
             var upd = pr.update();
             var idx = mainSessionSignalSetter(ps, sgn);
@@ -355,9 +354,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateRestRequests(List<HttpRequestUpdate> updates) {
-        executeBatch("""
-update e_rst_rqt set va_cnt_typ = ?, cd_stt = ?, va_i_sze = ?, va_i_cnt_enc = ?, dh_end = ?, va_bdy_cnt = ?, va_lnk = ?
-where id_rst_rqt = ?::uuid""", updates, (ps, upd) -> {
+        executeBatch("update e_rst_rqt set va_cnt_typ=?, cd_stt=?, va_i_sze=?, va_i_cnt_enc=?, dh_end=?, va_bdy_cnt=?, va_lnk=? where id_rst_rqt=?", updates, (ps, upd) -> {
             var idx = 0;
             ps.setString(++idx, contentTypeExtract(upd.getContentType()));
             ps.setShort(++idx, upd.getStatus());
@@ -372,9 +369,7 @@ where id_rst_rqt = ?::uuid""", updates, (ps, upd) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveLocalRequestSignals(List<LocalRequestSignal> signals) {
-        executeBatch("""
-insert into e_lcl_rqt(id_lcl_rqt,cd_prn_ses,cd_ins,va_typ,va_nam,va_lct,va_usr,va_thr,dh_str)
-values(?,?,?,?,?,?,?,?,?)""", signals, (ps, req) -> {
+        executeBatch("insert into e_lcl_rqt(id_lcl_rqt,cd_prn_ses,cd_ins,va_typ,va_nam,va_lct,va_usr,va_thr,dh_str) values(?,?,?,?,?,?,?,?,?)", signals, (ps, req) -> {
             var idx = localRequestSignalSetter(ps, req);
             ps.setTimestamp(++idx, fromNullableInstant(req.getStart()));
         });
@@ -468,7 +463,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
     public void saveFtpRequestSignals(List<FtpRequestSignal> signals) {
         executeBatch("""
 insert into e_ftp_rqt(id_ftp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_srv_vrs,va_clt_vrs,va_usr,va_thr,dh_str)
-values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", signals, TraceDao::ftpRequestSignalSetter);
+values(?,?,?,?,?,?,?,?,?,?,?)""", signals, TraceDao::ftpRequestSignalSetter);
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -715,6 +710,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             ps.setObject(++idx, toJson(exp.getCause()), OTHER); //TODO add column va_cas 
             ps.setLong(++idx, exp.getOffset());
             ps.setObject(++idx, exp.getTraceId());
+            //TODO delete va_typ column
         });
     }
 
@@ -824,8 +820,4 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
     static String toStringOrNull(Enum<?> e) {
     	return nonNull(e) ? e.name() : null;
 	}
-    
-    static <T> String toStringOrNull(T[] arr) {
-    	return nonNull(arr) ? Arrays.toString(arr) : null;
-    }
 }
