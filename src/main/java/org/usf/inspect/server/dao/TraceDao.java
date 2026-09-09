@@ -44,15 +44,12 @@ import org.usf.inspect.server.event.UnsavedEventTraceEvent;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.InstanceTrace;
 import org.usf.inspect.server.model.Pair;
-import org.usf.inspect.server.retention.RetentionAdapter;
-import org.usf.inspect.server.retention.RetentionModels.RetentionConfig;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
-import org.usf.inspect.server.retention.RetentionModels;
 
-import java.time.Duration;
+
 
 
 
@@ -87,23 +84,24 @@ public class TraceDao {
         template.update("""
 insert into e_env_ins(id_ins,va_typ,dh_str,va_app,va_vrs,va_adr,va_env,va_os,va_re,va_usr,va_clr,va_brch,va_hsh,va_cnf,va_rsr,va_add_prp,cd_nsp)
 values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
-            ps.setObject(1, instance.getId());
-            ps.setString(2, ofNullable(instance.getType()).map(InstanceType::name).orElse(null));
-            ps.setTimestamp(3, fromNullableInstant(instance.getInstant()));
-            ps.setString(4, instance.getName());
-            ps.setString(5, instance.getVersion());
-            ps.setString(6, instance.getAddress());
-            ps.setString(7, instance.getEnv());
-            ps.setString(8, instance.getOs());
-            ps.setString(9, instance.getRe());
-            ps.setString(10, instance.getUser());
-            ps.setString(11, instance.getCollector());
-            ps.setString(12, instance.getBranch());
-            ps.setString(13, instance.getHash());
-            ps.setObject(14, safeWriteValue(instance.getConfiguration(), mapper), OTHER);
-            ps.setObject(15, safeWriteValue(instance.getResource(), mapper), OTHER);
-            ps.setObject(16, safeWriteValue(instance.getAdditionalProperties(), mapper), OTHER);
-            ps.setString(17, instance.getNamespace()); // null autorisé
+            var idx=0;
+            ps.setObject(++idx, instance.getId());
+            ps.setString(++idx, ofNullable(instance.getType()).map(InstanceType::name).orElse(null));
+            ps.setTimestamp(++idx, fromNullableInstant(instance.getInstant()));
+            ps.setString(++idx, instance.getName());
+            ps.setString(++idx, instance.getVersion());
+            ps.setString(++idx, instance.getAddress());
+            ps.setString(++idx, instance.getEnv());
+            ps.setString(++idx, instance.getOs());
+            ps.setString(++idx, instance.getRe());
+            ps.setString(++idx, instance.getUser());
+            ps.setString(++idx, instance.getCollector());
+            ps.setString(++idx, instance.getBranch());
+            ps.setString(++idx, instance.getHash());
+            ps.setObject(++idx, safeWriteValue(instance.getConfiguration(), mapper), OTHER);
+            ps.setObject(++idx, safeWriteValue(instance.getResource(), mapper), OTHER);
+            ps.setObject(++idx, safeWriteValue(instance.getAdditionalProperties(), mapper), OTHER);
+            ps.setString(++idx, instance.getNamespace()); // null autorisé
         });
     }
 
@@ -119,33 +117,40 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     public void saveInstanceTraces(List<InstanceTrace> instanceTraces) {
         executeBatch("insert into e_ins_trc (va_pnd, va_atp, va_trc_cnt, dh_str, va_fln, cd_ins) values (?, ?, ?, ?, ?, ?)",
                 instanceTraces, (ps, trc) -> {
-                    ps.setObject(1, trc.getPending(), INTEGER);
-                    ps.setObject(2, trc.getAttempts(), INTEGER);
-                    ps.setInt(3, trc.getTraceCount());
-                    ps.setTimestamp(4, fromNullableInstant(trc.getInstant()));
-                    ps.setString(5, trc.getFileName());
-                    ps.setObject(6, trc.getInstanceId());
+                    var idx=0;
+                    ps.setObject(++idx, trc.getPending(), INTEGER);
+                    ps.setObject(++idx, trc.getAttempts(), INTEGER);
+                    ps.setInt(++idx, trc.getTraceCount());
+                    ps.setTimestamp(++idx, fromNullableInstant(trc.getInstant()));
+                    ps.setString(++idx, trc.getFileName());
+                    ps.setObject(++idx, trc.getInstanceId());
                 });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveLogEntries(List<LogEntry> logEntries) {
-        executeBatch("insert into e_log_ent(dh_str,cd_prn_ses,cd_ins) values (?,?,?)",
+        executeBatch("insert into e_log_ent(va_lvl,va_msg,va_stk,dh_str,cd_prn_ses,cd_ins) values (?,?,?,?,?,?)",
                 logEntries, (ps, o)-> {
-                    ps.setTimestamp(1, fromNullableInstant(o.getInstant()));
-                    ps.setObject(2, o.getSessionId());
-                    ps.setObject(3, o.getInstanceId());
+                    var idx=0;
+                    ps.setString(++idx, String.valueOf(o.getLevel()));
+                    ps.setString(++idx, o.getMessage());
+                    ps.setObject(++idx, safeWriteValue(o.getStackRows(), mapper), OTHER);
+                    ps.setTimestamp(++idx, fromNullableInstant(o.getInstant()));
+                    ps.setObject(++idx, o.getSessionId());
+                    ps.setObject(++idx, o.getInstanceId());
+
                 });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveMachineResourceUsages(List<MachineResourceUsage> usages) {
         executeBatch("insert into e_rsc_usg(dh_str,va_usd_hep,va_cmt_hep,va_usd_dsk,cd_ins) values (?,?,?,?,?,?)", usages, (ps, o)-> {
-            ps.setTimestamp(1, fromNullableInstant(o.getInstant()));
-            ps.setInt(2, o.getUsedHeap());
-            ps.setInt(3, o.getCommitedHeap());
-            ps.setInt(4, o.getUsedDiskSpace());
-            ps.setObject(5, o.getInstanceId());
+            var idx=0;
+            ps.setTimestamp(++idx, fromNullableInstant(o.getInstant()));
+            ps.setInt(++idx, o.getUsedHeap());
+            ps.setInt(++idx, o.getCommitedHeap());
+            ps.setInt(++idx, o.getUsedDiskSpace());
+            ps.setObject(++idx, o.getInstanceId());
         });
     }
 
@@ -155,12 +160,12 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
         executeBatch("""
 insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,va_lnk,dh_str,va_nam,va_usr,va_usr_agt,va_msk,va_fwd_add)
 values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
-            restSessionSetter(ps, ses);
-            ps.setString(15, ses.getName());
-            ps.setString(16, ses.getUser());
-            ps.setString(17, userAgentExtract(ses.getUserAgent()));
-            ps.setInt(18, 0);
-            ps.setString(19, Arrays.toString(ses.getForwardedAddresses()));
+            var idx = restSessionSetter(ps, ses);
+            ps.setString(++idx, ses.getName());
+            ps.setString(++idx, ses.getUser());
+            ps.setString(++idx, userAgentExtract(ses.getUserAgent()));
+            ps.setInt(++idx, 0);
+            ps.setString(++idx, Arrays.toString(ses.getForwardedAddresses()));
         });
     }
 
@@ -171,37 +176,38 @@ insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va
 values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
             var session = ses.signal();
             var callback = ses.update();
-           // var exp = callback.getException();
-            restSessionSetter(ps, session);
-            ps.setTimestamp(15, fromNullableInstant(callback.getEnd()));
-            ps.setString(16, nonNull(callback.getName()) ? callback.getName() : session.getName());
-            ps.setString(17, nonNull(callback.getUser()) ? callback.getUser() : session.getUser());
-            ps.setString(18, userAgentExtract(session.getUserAgent()));
-            ps.setString(19, callback.getCacheControl());
-            ps.setString(20, contentTypeExtract(callback.getContentType()));
-            ps.setShort(21, callback.getStatus());
-            ps.setLong(22, callback.getDataSize());
-            ps.setString(23, callback.getContentEncoding());
-            ps.setInt(24, callback.getRequestMask().get());
-            ps.setString(25, Arrays.toString(session.getForwardedAddresses()));
+            var idx = restSessionSetter(ps, session);
+            ps.setTimestamp(++idx, fromNullableInstant(callback.getEnd()));
+            ps.setString(++idx, nonNull(callback.getName()) ? callback.getName() : session.getName());
+            ps.setString(++idx, nonNull(callback.getUser()) ? callback.getUser() : session.getUser());
+            ps.setString(++idx, userAgentExtract(session.getUserAgent()));
+            ps.setString(++idx, callback.getCacheControl());
+            ps.setString(++idx, contentTypeExtract(callback.getContentType()));
+            ps.setShort(++idx, callback.getStatus());
+            ps.setLong(++idx, callback.getDataSize());
+            ps.setString(++idx, callback.getContentEncoding());
+            ps.setInt(++idx, callback.getRequestMask().get());
+            ps.setString(++idx, Arrays.toString(session.getForwardedAddresses()));
         });
     }
 
-    static void restSessionSetter(PreparedStatement ps, HttpSessionSignal ses) throws SQLException {
-        ps.setObject(1, ses.getId());
-        ps.setObject(2, ses.getInstanceId());
-        ps.setString(3, ses.getMethod());
-        ps.setString(4, ses.getProtocol());
-        ps.setString(5, ses.getHost());
-        ps.setInt(6, ses.getPort());
-        ps.setString(7, ses.getPath());
-        ps.setString(8, ses.getQuery());
-        ps.setString(9, ses.getAuthScheme());
-        ps.setLong(10, ses.getDataSize());
-        ps.setString(11, ses.getContentEncoding());
-        ps.setString(12, ses.getThreadName());
-        ps.setBoolean(13, ses.isLinked());
-        ps.setTimestamp(14, fromNullableInstant(ses.getStart()));
+    static int restSessionSetter(PreparedStatement ps, HttpSessionSignal ses) throws SQLException {
+        var idx=0;
+        ps.setObject(++idx, ses.getId());
+        ps.setObject(++idx, ses.getInstanceId());
+        ps.setString(++idx, ses.getMethod());
+        ps.setString(++idx, ses.getProtocol());
+        ps.setString(++idx, ses.getHost());
+        ps.setInt(++idx, ses.getPort());
+        ps.setString(++idx, ses.getPath());
+        ps.setString(++idx, ses.getQuery());
+        ps.setString(++idx, ses.getAuthScheme());
+        ps.setLong(++idx, ses.getDataSize());
+        ps.setString(++idx, ses.getContentEncoding());
+        ps.setString(++idx, ses.getThreadName());
+        ps.setBoolean(++idx, ses.isLinked());
+        ps.setTimestamp(++idx, fromNullableInstant(ses.getStart()));
+        return idx;
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -209,16 +215,17 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions
         executeBatch("""
 update e_rst_ses set  va_nam = coalesce(?, va_nam), va_usr = coalesce(?, va_usr), va_cch_ctr = coalesce(?, va_cch_ctr), va_cnt_typ = ?, cd_stt = ?, va_o_sze = ?, va_o_cnt_enc = ?, dh_end = ?, va_msk = ?
 where id_ses = ?""", sessions, (ps, ses) -> {
-            ps.setString(1, ses.getName());
-            ps.setString(2, ses.getUser());
-            ps.setString(3, ses.getCacheControl());
-            ps.setString(4, contentTypeExtract(ses.getContentType()));
-            ps.setShort(5, ses.getStatus());
-            ps.setLong(6, ses.getDataSize());
-            ps.setString(7, ses.getContentEncoding());
-            ps.setTimestamp(8, fromNullableInstant(ses.getEnd()));
-            ps.setInt(9, ses.getRequestMask().get());
-            ps.setObject(10, ses.getId());
+            var idx = 0;
+            ps.setString(++idx, ses.getName());
+            ps.setString(++idx, ses.getUser());
+            ps.setString(++idx, ses.getCacheControl());
+            ps.setString(++idx, contentTypeExtract(ses.getContentType()));
+            ps.setShort(++idx, ses.getStatus());
+            ps.setLong(++idx, ses.getDataSize());
+            ps.setString(++idx, ses.getContentEncoding());
+            ps.setTimestamp(++idx, fromNullableInstant(ses.getEnd()));
+            ps.setInt(++idx, ses.getRequestMask().get());
+            ps.setObject(++idx, ses.getId());
         });
     }
 
@@ -240,7 +247,7 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
             ps.setString(++idx, ses.getName());
             ps.setString(++idx, ses.getUser());
             ps.setTimestamp(++idx, fromNullableInstant(ses.getStart()));
-            ps.setInt(++idx, 0); //Unnecessary 
+          //  ps.setInt(++idx, 0); //Unnecessary
         });
     }
 
@@ -275,21 +282,23 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
         executeBatch("""
 update e_main_ses set va_lct = coalesce(?, va_lct), va_nam = coalesce(?, va_nam), va_usr = coalesce(?, va_usr), dh_str = coalesce(?, dh_str), dh_end = ?, va_msk = ?
 where id_ses = ?""", sessions, (ps, ses) -> {
-            ps.setString(1, ses.getLocation());
-            ps.setString(2, ses.getName());
-            ps.setString(3, ses.getUser());
-            ps.setTimestamp(4, fromNullableInstant(ses.getStart()));
-            ps.setTimestamp(5, fromNullableInstant(ses.getEnd()));
-            ps.setInt(9, ses.getRequestMask().get());
-            ps.setObject(10, ses.getId());
+            var idx = 0;
+            ps.setString(++idx, ses.getLocation());
+            ps.setString(++idx, ses.getName());
+            ps.setString(++idx, ses.getUser());
+            ps.setTimestamp(++idx, fromNullableInstant(ses.getStart()));
+            ps.setTimestamp(++idx, fromNullableInstant(ses.getEnd()));
+            ps.setInt(++idx, ses.getRequestMask().get());
+            ps.setObject(++idx, ses.getId());
         });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateMaskMainSessions(List<SessionMaskUpdate> sessions) {
         executeBatch("update e_main_ses set va_msk = ? where id_ses = ?", sessions, (ps, ses) -> {
-            ps.setInt(1, ses.getMask());
-            ps.setObject(2, ses.getId());
+            var idx = 0;
+            ps.setInt(++idx, ses.getMask());
+            ps.setObject(++idx, ses.getId());
         });
     }
 
@@ -307,33 +316,35 @@ insert into e_rst_rqt(id_rst_rqt,cd_prn_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,v
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, ses) -> {
             var request = ses.signal();
             var callback = ses.update();
-            restRequestSetter(ps, request);
-            ps.setTimestamp(16, fromNullableInstant(callback.getEnd()));
-            ps.setString(17, contentTypeExtract(callback.getContentType()));
-            ps.setShort(18, callback.getStatus());
-            ps.setLong(19, callback.getDataSize());
-            ps.setString(20, callback.getContentEncoding());
-            ps.setString(21, callback.getBodyContent());
-            ps.setBoolean(22, callback.isLinked());
+            var idx = restRequestSetter(ps, request);
+            ps.setTimestamp(++idx, fromNullableInstant(callback.getEnd()));
+            ps.setString(++idx, contentTypeExtract(callback.getContentType()));
+            ps.setShort(++idx, callback.getStatus());
+            ps.setLong(++idx, callback.getDataSize());
+            ps.setString(++idx, callback.getContentEncoding());
+            ps.setString(++idx, callback.getBodyContent());
+            ps.setBoolean(++idx, callback.isLinked());
         });
     }
 
-    static void restRequestSetter(PreparedStatement ps, HttpRequestSignal req) throws SQLException {
-        ps.setObject(1, req.getId());
-        ps.setObject(2, req.getSessionId());
-        ps.setObject(3, req.getInstanceId());
-        ps.setString(4, req.getMethod());
-        ps.setString(5, req.getProtocol());
-        ps.setString(6, req.getHost());
-        ps.setInt(7, req.getPort());
-        ps.setString(8, req.getPath());
-        ps.setString(9, req.getQuery());
-        ps.setString(10, req.getAuthScheme());
-        ps.setLong(11, req.getDataSize());
-        ps.setString(12, req.getContentEncoding());
-        ps.setString(13, req.getThreadName());
-        ps.setString(14, req.getUser());
-        ps.setTimestamp(15, fromNullableInstant(req.getStart()));
+    static int restRequestSetter(PreparedStatement ps, HttpRequestSignal req) throws SQLException {
+        var idx = 0;
+        ps.setObject(++idx, req.getId());
+        ps.setObject(++idx, req.getSessionId());
+        ps.setObject(++idx, req.getInstanceId());
+        ps.setString(++idx, req.getMethod());
+        ps.setString(++idx, req.getProtocol());
+        ps.setString(++idx, req.getHost());
+        ps.setInt(++idx, req.getPort());
+        ps.setString(++idx, req.getPath());
+        ps.setString(++idx, req.getQuery());
+        ps.setString(++idx, req.getAuthScheme());
+        ps.setLong(++idx, req.getDataSize());
+        ps.setString(++idx, req.getContentEncoding());
+        ps.setString(++idx, req.getThreadName());
+        ps.setString(++idx, req.getUser());
+        ps.setTimestamp(++idx, fromNullableInstant(req.getStart()));
+        return idx;
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -341,14 +352,16 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", reques
         executeBatch("""
 update e_rst_rqt set va_cnt_typ = ?, cd_stt = ?, va_i_sze = ?, va_i_cnt_enc = ?, dh_end = ?, va_bdy_cnt = ?, va_lnk = ?
 where id_rst_rqt = ?::uuid""", requests, (ps, req) -> {
-            ps.setString(1, contentTypeExtract(req.getContentType()));
-            ps.setShort(2, req.getStatus());
-            ps.setLong(3, req.getDataSize());
-            ps.setString(4, req.getContentEncoding());
-            ps.setTimestamp(5, fromNullableInstant(req.getEnd()));
-            ps.setString(6, req.getBodyContent());
-            ps.setBoolean(7, req.isLinked());
-            ps.setObject(8, req.getId());
+
+            var idx = 0;
+            ps.setString(++idx, contentTypeExtract(req.getContentType()));
+            ps.setShort(++idx, req.getStatus());
+            ps.setLong(++idx, req.getDataSize());
+            ps.setString(++idx, req.getContentEncoding());
+            ps.setTimestamp(++idx, fromNullableInstant(req.getEnd()));
+            ps.setString(++idx, req.getBodyContent());
+            ps.setBoolean(++idx, req.isLinked());
+            ps.setObject(++idx, req.getId());
         });
     }
 
@@ -395,10 +408,11 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
         executeBatch("""
 update e_lcl_rqt set dh_str = coalesce(?, dh_str), dh_end = ?, status = ?
 where id_lcl_rqt = ?""", requests, (ps, req) -> {
-            ps.setTimestamp(1, fromNullableInstant(req.getStart()));
-            ps.setTimestamp(2, fromNullableInstant(req.getEnd()));
-            ps.setBoolean(3, nonNull(req.getException()));
-            ps.setObject(4, req.getId());
+            var idx = 0;
+            ps.setTimestamp(++idx, fromNullableInstant(req.getStart()));
+            ps.setTimestamp(++idx, fromNullableInstant(req.getEnd()));
+            ps.setBoolean(++idx, nonNull(req.getException()));
+            ps.setObject(++idx, req.getId());
         });
     }
 
@@ -416,24 +430,25 @@ insert into e_smtp_rqt(id_smtp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             var req = pair.signal();
             var callback = pair.update();
-            mailRequestSetter(ps, req);
-            ps.setTimestamp(10, fromNullableInstant(callback.getEnd()));
-            ps.setString(11, callback.getCommand());
-            ps.setShort(12, callback.getStatus());
+            var idx=mailRequestSetter(ps, req);
+            ps.setTimestamp(++idx, fromNullableInstant(callback.getEnd()));
+            ps.setString(++idx, callback.getCommand());
+            ps.setShort(++idx, callback.getStatus());
         });
     }
 
-    static void mailRequestSetter(PreparedStatement ps, MailRequestSignal req) throws SQLException {
-        ps.setObject(1, req.getId());
-        ps.setObject(2, req.getSessionId());
-        ps.setObject(3, req.getInstanceId()); //instance id
-        ps.setString(4, req.getHost());
-        ps.setInt(5, req.getPort());
-        ps.setString(6, req.getProtocol());
-        ps.setString(7, req.getUser());
-        ps.setString(8, req.getThreadName());
-        ps.setTimestamp(9, fromNullableInstant(req.getStart()));
-
+    static int mailRequestSetter(PreparedStatement ps, MailRequestSignal req) throws SQLException {
+        var idx = 0;
+        ps.setObject(++idx, req.getId());
+        ps.setObject(++idx, req.getSessionId());
+        ps.setObject(++idx, req.getInstanceId()); //instance id
+        ps.setString(++idx, req.getHost());
+        ps.setInt(++idx, req.getPort());
+        ps.setString(++idx, req.getProtocol());
+        ps.setString(++idx, req.getUser());
+        ps.setString(++idx, req.getThreadName());
+        ps.setTimestamp(++idx, fromNullableInstant(req.getStart()));
+        return idx;
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -441,10 +456,11 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
         executeBatch("""
 update e_smtp_rqt set dh_end = ?, va_cmd = ?, status = ?
 where id_smtp_rqt = ?""", requests, (ps, req) -> {
-            ps.setTimestamp(1, fromNullableInstant(req.getEnd()));
-            ps.setString(2, req.getCommand());
-            ps.setShort(3, req.getStatus());
-            ps.setObject(4, req.getId());
+            var idx = 0;
+            ps.setTimestamp(++idx, fromNullableInstant(req.getEnd()));
+            ps.setString(++idx, req.getCommand());
+            ps.setShort(++idx, req.getStatus());
+            ps.setObject(++idx, req.getId());
         });
     }
 
@@ -462,25 +478,27 @@ insert into e_ftp_rqt(id_ftp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_srv_v
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             var req = pair.signal();
             var callback = pair.update();
-            ftpRequestSetter(ps, req);
-            ps.setTimestamp(12, fromNullableInstant(callback.getEnd()));
-            ps.setString(13, callback.getCommand());
-            ps.setShort(14, callback.getStatus());
+            var idx = ftpRequestSetter(ps, req);
+            ps.setTimestamp(++idx, fromNullableInstant(callback.getEnd()));
+            ps.setString(++idx, callback.getCommand());
+            ps.setShort(++idx, callback.getStatus());
         });
     }
 
-    static void ftpRequestSetter(PreparedStatement ps, FtpRequestSignal req) throws SQLException {
-        ps.setObject(1, req.getId());
-        ps.setObject(2, req.getSessionId());
-        ps.setObject(3, req.getInstanceId());
-        ps.setString(4, req.getHost());
-        ps.setInt(5, req.getPort());
-        ps.setString(6, req.getProtocol());
-        ps.setString(7, req.getServerVersion());
-        ps.setString(8, req.getClientVersion());
-        ps.setString(9, req.getUser());
-        ps.setString(10, req.getThreadName());
-        ps.setTimestamp(11, fromNullableInstant(req.getStart()));
+    static int ftpRequestSetter(PreparedStatement ps, FtpRequestSignal req) throws SQLException {
+      var idx = 0;
+        ps.setObject(++idx, req.getId());
+        ps.setObject(++idx, req.getSessionId());
+        ps.setObject(++idx, req.getInstanceId());
+        ps.setString(++idx, req.getHost());
+        ps.setInt(++idx, req.getPort());
+        ps.setString(++idx, req.getProtocol());
+        ps.setString(++idx, req.getServerVersion());
+        ps.setString(++idx, req.getClientVersion());
+        ps.setString(++idx, req.getUser());
+        ps.setString(++idx, req.getThreadName());
+        ps.setTimestamp(++idx, fromNullableInstant(req.getStart()));
+        return idx;
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -488,10 +506,11 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -
         executeBatch("""
 update e_ftp_rqt set dh_end = ?, va_cmd = ?, status = ?
 where id_ftp_rqt = ?""", requests, (ps, req) -> {
-            ps.setTimestamp(1, fromNullableInstant(req.getEnd()));
-            ps.setString(2, req.getCommand());
-            ps.setShort(3, req.getStatus());
-            ps.setObject(4, req.getId());
+            var idx = 0;
+            ps.setTimestamp(++idx, fromNullableInstant(req.getEnd()));
+            ps.setString(++idx, req.getCommand());
+            ps.setShort(++idx, req.getStatus());
+            ps.setObject(++idx, req.getId());
         });
     }
 
@@ -509,23 +528,25 @@ insert into e_ldap_rqt(id_ldap_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             var req = pair.signal();
             var callback = pair.update();
-            ldapRequestSetter(ps, req);
-            ps.setTimestamp(10, fromNullableInstant(callback.getEnd()));
-            ps.setString(11, callback.getCommand());
-            ps.setShort(12, callback.getStatus());
+            var idx = ldapRequestSetter(ps, req);
+            ps.setTimestamp(++idx, fromNullableInstant(callback.getEnd()));
+            ps.setString(++idx, callback.getCommand());
+            ps.setShort(++idx, callback.getStatus());
         });
     }
 
-    static void ldapRequestSetter(PreparedStatement ps, DirectoryRequestSignal req) throws SQLException {
-        ps.setObject(1, req.getId());
-        ps.setObject(2, req.getSessionId());
-        ps.setObject(3, req.getInstanceId());
-        ps.setString(4, req.getHost());
-        ps.setInt(5, req.getPort());
-        ps.setString(6, req.getProtocol());
-        ps.setString(7, req.getUser());
-        ps.setString(8, req.getThreadName());
-        ps.setTimestamp(9, fromNullableInstant(req.getStart()));
+    static int ldapRequestSetter(PreparedStatement ps, DirectoryRequestSignal req) throws SQLException {
+            var idx = 0;
+       ps.setObject(++idx, req.getId());
+        ps.setObject(++idx, req.getSessionId());
+        ps.setObject(++idx, req.getInstanceId());
+        ps.setString(++idx, req.getHost());
+        ps.setInt(++idx, req.getPort());
+        ps.setString(++idx, req.getProtocol());
+        ps.setString(++idx, req.getUser());
+        ps.setString(++idx, req.getThreadName());
+        ps.setTimestamp(++idx, fromNullableInstant(req.getStart()));
+        return idx;
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -533,10 +554,11 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> 
         executeBatch("""
 update e_ldap_rqt set dh_end = ?, va_cmd = ?, status = ?
 where id_ldap_rqt = ?::uuid""", requests, (ps, req) -> {
-            ps.setTimestamp(1, fromNullableInstant(req.getEnd()));
-            ps.setString(2, req.getCommand());
-            ps.setShort(3, req.getStatus());
-            ps.setObject(4, req.getId());
+            var idx = 0;
+            ps.setTimestamp(++idx, fromNullableInstant(req.getEnd()));
+            ps.setString(++idx, req.getCommand());
+            ps.setShort(++idx, req.getStatus());
+            ps.setObject(++idx, req.getId());
         });
     }
 
@@ -554,28 +576,30 @@ insert into e_dtb_rqt(id_dtb_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_she,va_nam,v
 values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             var req = pair.signal();
             var callback = pair.update();
-            databaseRequestSetter(ps, req);
-            ps.setTimestamp(15, fromNullableInstant(callback.getEnd()));
-            ps.setString(16, callback.getCommand());
-            ps.setShort(17, callback.getStatus());
+            var idx = databaseRequestSetter(ps, req);
+            ps.setTimestamp(++idx, fromNullableInstant(callback.getEnd()));
+            ps.setString(++idx, callback.getCommand());
+            ps.setShort(++idx, callback.getStatus());
         });
     }
 
-    static void databaseRequestSetter(PreparedStatement ps, DatabaseRequestSignal req) throws SQLException {
-        ps.setObject(1, req.getId());
-        ps.setObject(2, req.getSessionId());
-        ps.setObject(3, req.getInstanceId());
-        ps.setString(4, req.getHost());
-        ps.setInt(5, req.getPort());
-        ps.setString(6, req.getSchema());
-        ps.setString(7, req.getName());
-        ps.setString(8, req.getSchema());
-        ps.setString(9, req.getUser());
-        ps.setString(10, req.getThreadName());
-        ps.setString(11, req.getDriverVersion());
-        ps.setString(12, req.getProductName());
-        ps.setString(13, req.getProductVersion());
-        ps.setTimestamp(14, fromNullableInstant(req.getStart()));
+    static int databaseRequestSetter(PreparedStatement ps, DatabaseRequestSignal req) throws SQLException {
+        var idx = 0;
+        ps.setObject(++idx, req.getId());
+        ps.setObject(++idx, req.getSessionId());
+        ps.setObject(++idx, req.getInstanceId());
+        ps.setString(++idx, req.getHost());
+        ps.setInt(++idx, req.getPort());
+        ps.setString(++idx, req.getSchema());
+        ps.setString(++idx, req.getName());
+        ps.setString(++idx, req.getSchema());
+        ps.setString(++idx, req.getUser());
+        ps.setString(++idx, req.getThreadName());
+        ps.setString(++idx, req.getDriverVersion());
+        ps.setString(++idx, req.getProductName());
+        ps.setString(++idx, req.getProductVersion());
+        ps.setTimestamp(++idx, fromNullableInstant(req.getStart()));
+        return idx;
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -583,21 +607,23 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, p
         executeBatch("""
 update e_dtb_rqt set dh_end = ?, va_cmd = ?, status = ?
 where id_dtb_rqt = ?""", requests, (ps, req) -> {
-            ps.setTimestamp(1, fromNullableInstant(req.getEnd()));
-            ps.setString(2, req.getCommand());
-            ps.setShort(3, req.getStatus());
-            ps.setObject(4, req.getId());
+           var idx=0;
+            ps.setTimestamp(++idx, fromNullableInstant(req.getEnd()));
+            ps.setString(++idx, req.getCommand());
+            ps.setShort(++idx, req.getStatus());
+            ps.setObject(++idx, req.getId());
         });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveHttpRequestStages(List<HttpRequestStage> stages) {
         executeBatch("insert into e_rst_rqt_stg(va_nam,dh_str,dh_end,cd_ord,cd_rst_rqt) values(?,?,?,?,?)", stages, (ps, stg)-> {
-            ps.setString(1, stg.getName());
-            ps.setTimestamp(2, fromNullableInstant(stg.getStart()));
-            ps.setTimestamp(3, fromNullableInstant(stg.getEnd()));
-            ps.setLong(4, stg.getOrder());
-            ps.setObject(5, stg.getRequestId());
+            var idx=0;
+            ps.setString(++idx, stg.getName());
+            ps.setTimestamp(++idx, fromNullableInstant(stg.getStart()));
+            ps.setTimestamp(++idx, fromNullableInstant(stg.getEnd()));
+            ps.setInt(++idx, stg.getOrder());
+            ps.setObject(++idx, stg.getRequestId());
         });
       //  saveStageExceptions(stages, REST);
     }
@@ -605,23 +631,25 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
     @Transactional(rollbackFor = Throwable.class)
     public void saveHttpSessionStages(List<HttpSessionStage> stages) {
         executeBatch("insert into e_rst_ses_stg(va_nam,dh_str,dh_end,cd_ord,cd_prn_ses) values(?,?,?,?,?)", stages, (ps, stg)-> {
-            ps.setString(1, stg.getName());
-            ps.setTimestamp(2, fromNullableInstant(stg.getStart()));
-            ps.setTimestamp(3, fromNullableInstant(stg.getEnd()));
-            ps.setLong(4, stg.getOrder());
-            ps.setObject(5, stg.getRequestId());
+            var idx=0;
+            ps.setString(++idx, stg.getName());
+            ps.setTimestamp(++idx, fromNullableInstant(stg.getStart()));
+            ps.setTimestamp(++idx, fromNullableInstant(stg.getEnd()));
+            ps.setInt(++idx, stg.getOrder());
+            ps.setObject(++idx, stg.getRequestId());
         });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveMailRequestStages(List<MailRequestStage> stages) {
         executeBatch("insert into e_smtp_stg(va_nam,dh_str,dh_end,va_cmd,cd_ord,cd_smtp_rqt) values(?,?,?,?,?,?)", stages, (ps, stg)-> {
-            ps.setString(1, stg.getName());
-            ps.setTimestamp(2, fromNullableInstant(stg.getStart()));
-            ps.setTimestamp(3, fromNullableInstant(stg.getEnd()));
-            ps.setString(4, stg.getCommand());
-            ps.setLong(5, stg.getOrder());
-            ps.setObject(6, stg.getRequestId());
+            var idx=0;
+            ps.setString(++idx, stg.getName());
+            ps.setTimestamp(++idx, fromNullableInstant(stg.getStart()));
+            ps.setTimestamp(++idx, fromNullableInstant(stg.getEnd()));
+            ps.setString(++idx, stg.getCommand());
+            ps.setInt(++idx, stg.getOrder());
+            ps.setObject(++idx, stg.getRequestId());
         });
         saveMailRequestMails(stages);
        // saveStageExceptions(stages, SMTP);
@@ -630,65 +658,68 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
     private void saveMailRequestMails(List<MailRequestStage> mails) {
         executeBatch("insert into e_smtp_mail(va_sbj,va_cnt_typ,va_frm,va_rcp,va_rpl,va_sze,cd_smtp_rqt) values(?,?,?,?,?,?,?)",
                 mails.stream().filter(m -> nonNull(m.getMail())).toList(), (ps, stg)-> {
-                    ps.setString(1, stg.getMail().getSubject());
-                    ps.setString(2, stg.getMail().getContentType());
+                    var idx=0;
+                    ps.setString(++idx, stg.getMail().getSubject());
+                    ps.setString(++idx, stg.getMail().getContentType());
                     if(nonNull(stg.getMail())) { //
                         var mail = stg.getMail();
-                        ps.setString(3, joinValuesOrNull(mail.getFrom()));
-                        ps.setString(4, joinValuesOrNull(mail.getRecipients()));
-                        ps.setString(5, joinValuesOrNull(mail.getReplyTo()));
+                        ps.setString(++idx, joinValuesOrNull(mail.getFrom()));
+                        ps.setString(++idx, joinValuesOrNull(mail.getRecipients()));
+                        ps.setString(++idx, joinValuesOrNull(mail.getReplyTo()));
                     }
                     else {
-                        ps.setNull(3, VARCHAR);
-                        ps.setNull(4, VARCHAR);
-                        ps.setNull(5, VARCHAR);
+                        ps.setNull(++idx, VARCHAR);
+                        ps.setNull(++idx, VARCHAR);
+                        ps.setNull(++idx, VARCHAR);
                     }
-                    ps.setInt(6,stg.getMail().getSize());
-                    ps.setObject(7, stg.getRequestId());
+                    ps.setInt(++idx,stg.getMail().getSize());
+                    ps.setObject(++idx, stg.getRequestId());
                 });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveFtpRequestStages(List<FtpRequestStage> stages) {
         executeBatch("insert into e_ftp_stg(va_nam,dh_str,dh_end,va_cmd,va_arg,cd_ord,cd_ftp_rqt) values(?,?,?,?,?,?,?)", stages, (ps, stg)-> {
-            ps.setString(1, stg.getName());
-            ps.setTimestamp(2, fromNullableInstant(stg.getStart()));
-            ps.setTimestamp(3, fromNullableInstant(stg.getEnd()));
-            ps.setString(4, stg.getCommand());
-            ps.setString(5, joinValuesOrNull(stg.getArgs()));
-            ps.setLong(6, stg.getOrder());
-            ps.setObject(7, stg.getRequestId());
+            var idx=0;
+            ps.setString(++idx, stg.getName());
+            ps.setTimestamp(++idx, fromNullableInstant(stg.getStart()));
+            ps.setTimestamp(++idx, fromNullableInstant(stg.getEnd()));
+            ps.setString(++idx, stg.getCommand());
+            ps.setString(++idx, joinValuesOrNull(stg.getArgs()));
+            ps.setInt(++idx, stg.getOrder());
+            ps.setObject(++idx, stg.getRequestId());
         });
-        //saveStageExceptions(stages, FTP);
+
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveLdapRequestStages(List<DirectoryRequestStage> stages) {
         executeBatch("insert into e_ldap_stg(va_nam,dh_str,dh_end,va_cmd,va_arg,cd_ord,cd_ldap_rqt) values(?,?,?,?,?,?,?)", stages, (ps, stg)-> {
-            ps.setString(1, stg.getName());
-            ps.setTimestamp(2, fromNullableInstant(stg.getStart()));
-            ps.setTimestamp(3, fromNullableInstant(stg.getEnd()));
-            ps.setString(4, stg.getCommand());
-            ps.setString(5, joinValuesOrNull(stg.getArgs()));
-            ps.setLong(6, stg.getOrder());
-            ps.setObject(7, stg.getRequestId());
+            var idx=0;
+            ps.setString(++idx, stg.getName());
+            ps.setTimestamp(++idx, fromNullableInstant(stg.getStart()));
+            ps.setTimestamp(++idx, fromNullableInstant(stg.getEnd()));
+            ps.setString(++idx, stg.getCommand());
+            ps.setString(++idx, joinValuesOrNull(stg.getArgs()));
+            ps.setInt(++idx, stg.getOrder());
+            ps.setObject(++idx, stg.getRequestId());
         });
-       // saveStageExceptions(stages, LDAP);
+
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveDatabaseRequestStages(List<DatabaseRequestStage> stages) {
         executeBatch("insert into e_dtb_stg(va_nam,dh_str,dh_end,va_cnt,va_cmd,va_arg,cd_ord,cd_dtb_rqt) values(?,?,?,?,?,?,?,?)", stages, (ps, stg)-> {
-            ps.setString(1, stg.getName());
-            ps.setTimestamp(2, fromNullableInstant(stg.getStart()));
-            ps.setTimestamp(3, fromNullableInstant(stg.getEnd()));
-            ps.setString(4, valueOfNullableArray(stg.getCount()));
-            ps.setString(5, stg.getCommand());
-            ps.setString(6, joinValuesOrNull(stg.getArgs()));
-            ps.setLong(7, stg.getOrder());
-            ps.setObject(8, stg.getRequestId());
+            var idx=0;
+            ps.setString(++idx, stg.getName());
+            ps.setTimestamp(++idx, fromNullableInstant(stg.getStart()));
+            ps.setTimestamp(++idx, fromNullableInstant(stg.getEnd()));
+            ps.setString(++idx, valueOfNullableArray(stg.getCount()));
+            ps.setString(++idx, stg.getCommand());
+            ps.setString(++idx, joinValuesOrNull(stg.getArgs()));
+            ps.setInt(++idx, stg.getOrder());
+            ps.setObject(++idx, stg.getRequestId());
         });
-        //saveStageExceptions(stages, JDBC);
     }
 
 
@@ -697,35 +728,38 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
         var exceptions = stages.stream()
                 .filter(e -> nonNull(e.getException())).toList();
         executeBatch("insert into e_exc_inf(va_typ,va_err_typ,va_err_msg,va_stk,cd_ord,cd_rqt) values(?,?,?,?,?,?)", exceptions, (ps, exp) -> {
-            ps.setString(1, mask.name());
-            ps.setString(2, exp.getException().getType());
-            ps.setString(3, exp.getException().getMessage());
-            ps.setObject(4, safeWriteValue(exp.getException().getStackTraceRows(), mapper), OTHER);
-            ps.setLong(5, exp.getOrder());
-            ps.setObject(6, exp.getRequestId());//.toString() ?
+            var idx=0;
+            ps.setString(++idx, mask.name());
+            ps.setString(++idx, exp.getException().getType());
+            ps.setString(++idx, exp.getException().getMessage());
+            ps.setObject(++idx, safeWriteValue(exp.getException().getStackTraceRows(), mapper), OTHER);
+            ps.setInt(++idx, exp.getOrder());
+            ps.setObject(++idx, exp.getRequestId());//.toString() ?
         });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveExceptionTraces(List<ExceptionTrace> exceptions) {
         executeBatch("insert into e_exc_inf(va_err_typ,va_err_msg,va_stk,cd_ord,cd_rqt) values(?,?,?,?,?,?)", exceptions, (ps, exp) -> {
-             ps.setString(2, exp.getType());
-            ps.setString(3, exp.getMessage());
-            ps.setObject(4, safeWriteValue(exp.getStackTraceRows(), mapper), OTHER);
-            ps.setLong(5, exp.getOffset());
-            ps.setObject(6, exp.getTraceId() != null ? exp.getTraceId() : null);
+            var idx=0;
+            ps.setString(++idx, exp.getType());
+            ps.setString(++idx, exp.getMessage());
+            ps.setObject(++idx, safeWriteValue(exp.getStackTraceRows(), mapper), OTHER);
+            ps.setLong(++idx, exp.getOffset());
+            ps.setObject(++idx, exp.getTraceId() != null ? exp.getTraceId() : null);
         });
     }
 
     @Deprecated(forRemoval = true)
     private void saveLocalRequestExceptions(List<LocalRequestUpdate> stages) {
         executeBatch("insert into e_exc_inf(va_typ,va_err_typ,va_err_msg,va_stk,cd_ord,cd_rqt) values(?,?,?,?,?,?)", stages, (ps, exp) -> {
-            ps.setString(1, LOCAL.name());
-            ps.setString(2, exp.getException().getType());
-            ps.setString(3, exp.getException().getMessage());
-            ps.setObject(4, safeWriteValue(exp.getException().getStackTraceRows(), mapper), OTHER);
-            ps.setInt(5, 0);
-            ps.setObject(6, exp.getId());
+            var idx=0;
+            ps.setString(++idx, LOCAL.name());
+            ps.setString(++idx, exp.getException().getType());
+            ps.setString(++idx, exp.getException().getMessage());
+            ps.setObject(++idx, safeWriteValue(exp.getException().getStackTraceRows(), mapper), OTHER);
+            ps.setInt(++idx, 0);
+            ps.setObject(++idx, exp.getId());
         });
     }
 

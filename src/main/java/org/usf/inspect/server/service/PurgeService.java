@@ -46,8 +46,8 @@ public class PurgeService {
 
             var tasks = new ArrayList<CompletableFuture<Void>>(scopes.size());
             for (PurgeScope scope : scopes) {
-                var beforeTechnical = from(now.minus(scope.diagnosticRetention()));
-                var beforeFunctional = from(now.minus(scope.auditRetention()));
+                var beforeTechnical = from(now.minus(scope.retention().getDiagnostic()));
+                var beforeFunctional = from(now.minus(scope.retention().getAudit()));
 
                 var idsBefore = beforeTechnical.after(beforeFunctional) ? beforeTechnical : beforeFunctional;
                 var ids = purgeDao.selectInstanceIds(idsBefore, scope.env(), scope.app(), scope.type());
