@@ -1,6 +1,7 @@
 package org.usf.inspect.server.controller;
 
 import static java.util.Objects.nonNull;
+import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
@@ -11,7 +12,6 @@ import static org.springframework.http.ResponseEntity.internalServerError;
 import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.http.ResponseEntity.status;
 import static org.usf.inspect.core.DispatchState.DISABLE;
-import static org.usf.inspect.server.Utils.isUUID;
 import static org.usf.jquery.core.Utils.isEmpty;
 
 import java.security.Principal;
@@ -19,7 +19,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,7 +32,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.usf.inspect.core.DispatchState;
 import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.core.InstanceEnvironment;
-import org.usf.inspect.core.TraceFail;
 import org.usf.inspect.server.exception.DispatchProcessingException;
 import org.usf.inspect.server.service.TraceService;
 
@@ -48,9 +46,21 @@ import lombok.extern.slf4j.Slf4j;
 public class TraceV5Controller {
 
     private final TraceService service;
+    
+    private static final String RETRY_AFTER_VAL = "10";
+    private static final String NOT_RETRY_VAL = "-1";
 
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
-    public ResponseEntity<Object> addInstanceEnvironment(@RequestBody InstanceEnvironment instance, Principal principal){ //check
+    public ResponseEntity<Object> addInstanceEnvironment(
+            @RequestParam int atm, //TODO check non null !?
+    		@RequestBody InstanceEnvironment instance, 
+    		Principal principal){ //check
+    	
+    	if(service.getDispatcherState() == DISABLE) {
+        	return status(SERVICE_UNAVAILABLE)
+        			.header(RETRY_AFTER, RETRY_AFTER_VAL)
+        			.body("dispatch.state=DISABLE");
+    	}
         if(isEmpty(instance.getName())) {
             return status(BAD_REQUEST).body("invalid instance.name="+instance.getName());
         }
@@ -64,32 +74,38 @@ public class TraceV5Controller {
                     : status(SERVICE_UNAVAILABLE).body("dispatcher.state=" + service.getDispatcherState());
         } catch(Exception e) {
             log.error("post instance", e);
-            return internalServerError().body(new TraceFail(true, e.getMessage()));
+            return internalServerError().body(e.getMessage());
         }
     }
 
     @PutMapping(value = "instance/{id}/session", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> addSessions(
+    public ResponseEntity<Object> addTraces(
             @PathVariable UUID id,
             @RequestParam int seq, //24*60*4 * 365*10 < Integer.MAX_VALUE
-            @RequestParam int attempts, //TODO check non null !?
+            @RequestParam int atm, //TODO check non null !?
             @RequestParam(required = false) Instant end,
             @RequestBody List<EventTrace> traces){
     	
     	if(service.getDispatcherState() == DISABLE) {
-        	return internalServerError().body(new TraceFail(true, "dispatch.state=DISABLE"));
+        	return status(SERVICE_UNAVAILABLE)
+        			.header(RETRY_AFTER, RETRY_AFTER_VAL)
+        			.body("dispatch.state=DISABLE");
     	}
         try {
-        	if(attempts > 1 && service.hasBeenTraced(id, seq)) {
-        		return status(CONFLICT).build(); 
+        	if(atm > 1 && service.hasBeenTraced(id, seq)) {
+        		return status(CONFLICT).body("packet instanceId=" + id + ", seq=" + seq + " already processed"); 
         	}
-            return service.addTraces(id, seq, attempts, end, traces)
+            return service.addTraces(id, seq, atm, end, traces)
                     ? accepted().build()
-                    : internalServerError().body(new TraceFail(true, "dispatch.state=" + service.getDispatcherState()));
+                    : internalServerError()
+        			.header(RETRY_AFTER, RETRY_AFTER_VAL)
+        			.body("dispatch.state="+service.getDispatcherState());
         } catch (Exception e) {
             log.error("put sessions", e);
-            var retry = e instanceof DispatchProcessingException dpe && dpe.isRetryable();
-            return internalServerError().body(new TraceFail(retry, e.getMessage()));
+            var retry = e instanceof DispatchProcessingException dpe && dpe.isRetryable()
+            		? RETRY_AFTER_VAL 
+            		: NOT_RETRY_VAL;
+            return internalServerError().header(RETRY_AFTER, retry).body(e.getMessage());
         }
     }
 
