@@ -12,13 +12,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static java.util.Objects.nonNull;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
-import static org.springframework.http.ResponseEntity.*;
 import static org.usf.inspect.core.DualEventTracer.SERVER_ERROR;
 import static org.usf.inspect.core.DualEventTracer.SUCCESS;
-import static org.usf.jquery.core.Utils.isEmpty;
 
 @Slf4j
 @CrossOrigin
@@ -35,9 +33,8 @@ public class TraceV4Controller {
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<Object> addInstanceEnvironment(
             @RequestBody InstanceEnvironment instance){
-       return controller.addInstanceEnvironment(1, instance, null);
+       return controller.addInstanceEnvironment(1, instance, null); //auto retention conversion
     }
-
 
     @PutMapping(value = "instance/{id}/session", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> addSessions(
@@ -46,59 +43,47 @@ public class TraceV4Controller {
             @RequestParam(required = false) String filename,
             @RequestParam(required = false) Instant end,
             @RequestBody List<EventTrace> traces){
-        UUID instanceId;
-        try {
-            instanceId = id;
-        } catch (IllegalArgumentException e) {
-            return status(BAD_REQUEST).body("invalid instance ID");
-        }
-        try {
-            var extractedExceptions = new ArrayList<EventTrace>();
-            for (var t : traces) {
-                if (t instanceof AbstractRequestUpdate req ) {
-                    if (req instanceof MailRequestUpdate mailReq ) {
-                        mailReq.setStatus(mailReq.isFailed() ? SERVER_ERROR : SUCCESS);
+        var extractedExceptions = new ArrayList<EventTrace>();
+        for (var t : traces) {
+            if (t instanceof AbstractRequestUpdate req ) {
+                if (req instanceof MailRequestUpdate mailReq ) {
+                    mailReq.setStatus(mailReq.isFailed() ? SERVER_ERROR : SUCCESS);
 
-                    }
-                    else if (req instanceof FtpRequestUpdate ftpReq ) {
-                        ftpReq.setStatus(ftpReq.isFailed() ? SERVER_ERROR : SUCCESS);
-                        }
-                    else if (req instanceof DatabaseRequestUpdate dbReq ) {
-                        dbReq.setStatus(dbReq.isFailed() ? SERVER_ERROR : SUCCESS);
-                    }
-                    else if (req instanceof DirectoryRequestUpdate dirReq ) {
-                        dirReq.setStatus(dirReq.isFailed() ? SERVER_ERROR : SUCCESS);
-                    }
-                    else if (req instanceof LocalRequestUpdate localReq ) {
-                        localReq.setStatus(localReq.getException() != null ? SERVER_ERROR : SUCCESS);
-                    }
                 }
-                if (t instanceof AbstractStage stg && stg.getException() != null) {
-                    var ex = stg.getException();
-                    ex.setTraceId(stg.getRequestId());
-                    ex.setOffset(stg.getOrder());
-                    extractedExceptions.add(ex);
-                } else if (t instanceof AbstractSessionUpdate ses && ses.getException() != null) {
-                    var ex = ses.getException();
-                    ex.setTraceId(ses.getId());
-                    ex.setOffset(0);
-                    extractedExceptions.add(ex);
-                }else if (t instanceof LocalRequestUpdate req && req.getException() != null) {
-                    var ex = req.getException();
-                    ex.setTraceId(req.getId());
-                    ex.setOffset(0);
-                    extractedExceptions.add(ex);
+                else if (req instanceof FtpRequestUpdate ftpReq ) {
+                    ftpReq.setStatus(ftpReq.isFailed() ? SERVER_ERROR : SUCCESS);
+                    }
+                else if (req instanceof DatabaseRequestUpdate dbReq ) {
+                    dbReq.setStatus(dbReq.isFailed() ? SERVER_ERROR : SUCCESS);
+                }
+                else if (req instanceof DirectoryRequestUpdate dirReq ) {
+                    dirReq.setStatus(dirReq.isFailed() ? SERVER_ERROR : SUCCESS);
+                }
+                else if (req instanceof LocalRequestUpdate localReq ) {
+                    localReq.setStatus(localReq.getException() != null ? SERVER_ERROR : SUCCESS);
                 }
             }
-            if (!extractedExceptions.isEmpty()) {
-                traces.addAll(extractedExceptions);
+            if (t instanceof AbstractStage stg && stg.getException() != null) {
+                var ex = stg.getException();
+                ex.setTraceId(stg.getRequestId());
+                ex.setOffset(stg.getOrder());
+                extractedExceptions.add(ex);
+            } else if (t instanceof AbstractSessionUpdate ses && ses.getException() != null) {
+                var ex = ses.getException();
+                ex.setTraceId(ses.getId());
+                ex.setOffset(nonNull(ses.getEnd()) ? end.toEpochMilli() : 1);
+                extractedExceptions.add(ex);
+            }else if (t instanceof LocalRequestUpdate req && req.getException() != null) {
+                var ex = req.getException();
+                ex.setTraceId(req.getId());
+                ex.setOffset(nonNull(req.getEnd()) ? end.toEpochMilli() : 1);
+                extractedExceptions.add(ex);
             }
-            return controller.addTraces(instanceId, 1, attempts, end, traces);
         }
-        catch (Exception e) {
-            log.error("put sessions", e);
-            return internalServerError().body("internal server error {}");
+        if (!extractedExceptions.isEmpty()) {
+            traces.addAll(extractedExceptions);
         }
+        return controller.addTraces(id, 1, attempts, end, traces); //TODO check seq value
     }
 
     @GetMapping(value = "queue", produces = APPLICATION_JSON_VALUE)
