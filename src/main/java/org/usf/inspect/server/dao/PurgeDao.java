@@ -330,7 +330,7 @@ public class PurgeDao {
             var type = InstanceType.valueOf(rs.getString(instance.type().toString()));
             var raw = rs.getString(instance.configuration().toString());
 
-            var config = safeReadValue(raw, mapper, InspectCollectorConfiguration.class);
+            var config = safeReadValue(raw, InspectCollectorConfiguration.class, mapper);
             var rtt = config == null ? DEFAULT_RETENTION_CONFIG : config.getTracing().getRemote().getRetentionMaxAge();
             // On extrait directement les durées depuis l'objet Retention
             out.add(new PurgeScope(type, env, app, rtt));

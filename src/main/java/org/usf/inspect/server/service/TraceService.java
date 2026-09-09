@@ -23,10 +23,7 @@ import static java.time.Instant.now;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static org.usf.inspect.core.LogEntry.Level.REPORT;
-import static org.usf.inspect.server.Utils.assertUUID;
-import static org.usf.inspect.server.model.TraceBatchResolver.resolve;
 import static org.usf.inspect.server.model.TracePacket.newTracePacket;
-import static org.usf.inspect.server.service.TracePersistenceService.filterAndApply;
 
 @Slf4j
 @Service

@@ -1,28 +1,36 @@
 package org.usf.inspect.server;
 
+import static java.util.Objects.nonNull;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class JsonUtils {
-    public static <T> T safeReadValue(String json, ObjectMapper mapper, Class<T> valueType) {
-        T result = null;
-        try {
-            result = json != null ? mapper.readValue(json, valueType) : null;
-        } catch (JsonProcessingException e) {
-            log.warn("error while reading value " + valueType, e);
-        }
-        return result;
+@NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
+public final class JsonUtils {
+    
+	public static <T> T safeReadValue(String json, Class<T> valueType, ObjectMapper mapper) {
+        if(nonNull(json)) {
+            try {
+                return mapper.readValue(json, valueType);
+            } catch (JsonProcessingException e) {
+                log.warn("error while reading value " + valueType, e);
+            }
+		}
+        return null;
     }
 
     public static String safeWriteValue(Object object, ObjectMapper mapper) {
-        String result = null;
-        try {
-            result = object != null ? mapper.writeValueAsString(object) : null;
-        } catch (JsonProcessingException e) {
-            log.warn("error while writing value as string", e);
+        if(nonNull(object)) {
+            try {
+                return mapper.writeValueAsString(object);
+            } catch (JsonProcessingException e) {
+                log.warn("error while writing value as string", e);
+            }
         }
-        return result;
+        return null;
     }
 }

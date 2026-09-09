@@ -28,7 +28,6 @@ import static java.util.UUID.fromString;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static org.usf.inspect.core.ExecutorServiceWrapper.wrap;
-import org.usf.inspect.core.ExceptionTrace;
 import static org.usf.inspect.server.Utils.*;
 import static org.usf.jquery.core.Join.innerJoin;
 import static org.usf.jquery.core.Mappers.toListMapper;
@@ -41,7 +40,7 @@ public class RequestService {
     private final RequestDao dao;
     private final ExecutorService executorService = wrap(virtualThreadExecutor("inspect-tree", 10));
 
-    public Session getMainTree(String id)  {
+    public Session getMainTree(UUID id)  {
         var session = requireSingle(getMainSessions(id));
         if(session != null) {
             updateSessionsForTree(dao.selectChildsById(id, session.getStart()), session);
@@ -50,7 +49,7 @@ public class RequestService {
         throw new NoSuchElementException("no main session found");
     }
 
-    public Session getRestTree(String id)  {
+    public Session getRestTree(UUID id)  {
         var session = requireSingle(getRestSessions(Collections.singletonList(id),null));
         if(session != null) {
             updateSessionsForTree(dao.selectChildsById(id, session.getStart()), session);
@@ -251,7 +250,7 @@ public class RequestService {
     }
 
 
-    private void updateSessionsForTree(Collection<String> ids, Session parent)  {
+    private void updateSessionsForTree(Collection<UUID> ids, Session parent)  {
         var start = parent.getStart();
         var sessions = Utils.isEmpty(ids) ? new ArrayList<Session>() : getRestSessions(ids, start);
         sessions.add(parent);
@@ -284,7 +283,7 @@ public class RequestService {
         CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
     }
 
-    private List<Session> getRestSessions(Collection<String> ids, Instant start)  { // remove if possible after optimizing tree
+    private List<Session> getRestSessions(Collection<UUID> ids, Instant start)  { // remove if possible after optimizing tree
         if (ids.isEmpty()) {
             return new ArrayList<>();
         }
@@ -360,7 +359,7 @@ public class RequestService {
         });
     }
 
-    private List<Session> getMainSessions(String id) {
+    private List<Session> getMainSessions(UUID id) {
         InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
         MainSessionCatalog mainSession = store.mainSession();
         InstanceCatalog instance =  store.instance();
@@ -371,7 +370,7 @@ public class RequestService {
                         instance.appName(), instance.os(), instance.re(), instance.address()
                 )
                 .joins(mainSession.instance().getJoins())
-                .criteria(mainSession.id().eq(fromString(id))).compose(store);
+                .criteria(mainSession.id().eq(id)).compose(store);
 
         return store.execute(v, rs -> {
             List<Session> sessions = new ArrayList<>();

@@ -39,11 +39,11 @@ public class Mappers {
                         rs.getString("hash"),
                         rs.getString("collector"),
                         null,
-                        safeReadValue(rs.getString("configuration"), mapper, InspectCollectorConfiguration.class)
+                        safeReadValue(rs.getString("configuration"), InspectCollectorConfiguration.class, mapper)
                         //rs.getString(ADDITIONAL_PROPERTIES.reference()) != null ? mapper.readValue(rs.getString(ADDITIONAL_PROPERTIES.reference()), new TypeReference<Map<String, String>>() {}) : null,
                         //rs.getString(CONFIGURATION.reference()) != null ? mapper.readValue(rs.getString(CONFIGURATION.reference()), InspectCollectorConfiguration.class) : null
                 );
-                instanceEnvironment.setResource(safeReadValue(rs.getString("resource"), mapper, MachineResource.class));
+                instanceEnvironment.setResource(safeReadValue(rs.getString("resource"), MachineResource.class, mapper));
                 instanceEnvironment.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
                 return instanceEnvironment;
             }
