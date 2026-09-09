@@ -148,7 +148,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveMachineResourceUsages(List<MachineResourceUsage> usages) {
-        executeBatch("insert into e_rsc_usg(dh_str,va_usd_hep,va_cmt_hep,va_usd_dsk,nb_act_thr,nb_str_thr,va_cpu_usg,cd_ins) values(?,?,?,?,?,?)", usages, (ps, usg)-> {
+        executeBatch("insert into e_rsc_usg(dh_str,va_usd_hep,va_cmt_hep,va_usd_dsk,nb_act_thr,nb_str_thr,va_cpu_usg,cd_ins) values(?,?,?,?,?,?,?,?)", usages, (ps, usg)-> {
             var idx=0;
             ps.setTimestamp(++idx, fromNullableInstant(usg.getInstant()));
             ps.setInt(++idx, usg.getUsedHeap());
@@ -166,7 +166,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     public void saveRestSessionSignals(List<HttpSessionSignal> signals) {
         executeBatch("""
 insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,va_lnk,dh_str,va_nam,va_usr,va_usr_agt,va_msk,va_fwd_add)
-values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", signals, (ps, sgn) -> {
+values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", signals, (ps, sgn) -> {
             var idx = restSessionSginalSetter(ps, sgn);
             ps.setString(++idx, sgn.getName());
             ps.setString(++idx, sgn.getUser());
@@ -180,7 +180,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", signals, (ps, sgn) -> {
     public void saveRestSessions(List<Pair<HttpSessionSignal, HttpSessionUpdate>> session) {
     	executeBatchPair("""
 insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,dh_end,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_cnt_typ,cd_stt,va_o_sze,va_o_cnt_enc,va_msk,va_fwd_add)
-values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", session, (ps, pr) -> {
+values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", session, (ps, pr) -> {
             var sgn = pr.signal();
             var upd = pr.update();
             var idx = restSessionSginalSetter(ps, sgn);
@@ -246,7 +246,7 @@ where id_ses=?""", updates, (ps, upd) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveMainSessionSignals(List<MainSessionSignal> signals) {
-        executeBatch("insert into e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str,va_msk) values(?,?,?,?,?,?,?,?,?)", signals, (ps, sgn) -> {
+        executeBatch("insert into e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str) values(?,?,?,?,?,?,?,?)", signals, (ps, sgn) -> {
             var idx = mainSessionSignalSetter(ps, sgn);
             ps.setString(++idx, sgn.getLocation());
             ps.setString(++idx, sgn.getName());
@@ -258,9 +258,7 @@ where id_ses=?""", updates, (ps, upd) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveMainSessions(List<Pair<MainSessionSignal, MainSessionUpdate>> sessions) {
-    	executeBatchPair("""
-insert into e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str,dh_end,va_msk)
-values(?,?,?,?,?,?,?,?,?,?,?)""", sessions, (ps, pr) -> {
+    	executeBatchPair("insert into e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str,dh_end,va_msk) values(?,?,?,?,?,?,?,?,?,?)", sessions, (ps, pr) -> {
             var sgn = pr.signal();
             var upd = pr.update();
             var idx = mainSessionSignalSetter(ps, sgn);
@@ -285,8 +283,8 @@ values(?,?,?,?,?,?,?,?,?,?,?)""", sessions, (ps, pr) -> {
     @Transactional(rollbackFor = Throwable.class)
     public void updateMainSessions(List<MainSessionUpdate> updates) {
         executeBatch("""
-update e_main_ses set va_lct = coalesce(?, va_lct), va_nam = coalesce(?, va_nam), va_usr = coalesce(?, va_usr), dh_str = coalesce(?, dh_str), dh_end = ?, va_msk = ?
-where id_ses = ?""", updates, (ps, upd) -> {
+update e_main_ses set va_lct=coalesce(?, va_lct), va_nam=coalesce(?, va_nam), va_usr=coalesce(?, va_usr), dh_str=coalesce(?, dh_str), dh_end=?, va_msk=?
+where id_ses=?""", updates, (ps, upd) -> {
             var idx = 0;
             ps.setString(++idx, upd.getLocation());
             ps.setString(++idx, upd.getName());

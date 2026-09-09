@@ -52,7 +52,6 @@ public class TraceController {
 
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<Object> addInstanceEnvironment(
-            @RequestParam int atm, //TODO check non null !?
     		@RequestBody InstanceEnvironment instance, 
     		Principal principal){ //check
     	

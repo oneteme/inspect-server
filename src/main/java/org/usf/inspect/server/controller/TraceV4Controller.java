@@ -33,7 +33,7 @@ public class TraceV4Controller {
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<Object> addInstanceEnvironment(
             @RequestBody InstanceEnvironment instance){
-       return controller.addInstanceEnvironment(1, instance, null); //auto retention conversion
+       return controller.addInstanceEnvironment(instance, null); //auto retention conversion
     }
 
     @PutMapping(value = "instance/{id}/session", produces = APPLICATION_JSON_VALUE)
