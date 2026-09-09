@@ -91,18 +91,6 @@ public class TraceBatchResolver<T extends TraceSignal, U extends TraceUpdate>  {
     public static <T extends TraceSignal, U extends TraceUpdate> List<EventTrace> resolve(Collection<EventTrace> c, Class<T> initClazz, Class<U> callClazz, Consumer<List<T>> insertPartialBatchExecutor, Consumer<List<U>> updateBatchExecutor, Consumer<List<Pair<T, U>>> insertCompleteBatchExecutor) {
         return new TraceBatchResolver<>(initClazz, callClazz, insertPartialBatchExecutor, updateBatchExecutor, insertCompleteBatchExecutor).resolve(c);
     }
-
-
-    public static void resolve(Collection<EventTrace> c, InstanceTrace instanceTrace) {
-        resolve(c, TraceSignal.class, TraceUpdate.class,
-            sessions -> {
-                instanceTrace.addPending(sessions.size());
-                instanceTrace.addTraceCount(sessions.size());
-            },
-            sessions -> instanceTrace.removePending(sessions.size()),
-            sessions -> instanceTrace.addTraceCount(sessions.size())
-        );
-    }
 }
 
 

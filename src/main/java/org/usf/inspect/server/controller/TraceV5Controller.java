@@ -2,6 +2,7 @@ package org.usf.inspect.server.controller;
 
 import static java.util.Objects.nonNull;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
@@ -9,6 +10,7 @@ import static org.springframework.http.ResponseEntity.accepted;
 import static org.springframework.http.ResponseEntity.internalServerError;
 import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.http.ResponseEntity.status;
+import static org.usf.inspect.core.DispatchState.DISABLE;
 import static org.usf.inspect.server.Utils.isUUID;
 import static org.usf.jquery.core.Utils.isEmpty;
 
@@ -17,6 +19,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,7 +50,7 @@ public class TraceV5Controller {
     private final TraceService service;
 
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
-    public ResponseEntity<String> addInstanceEnvironment(@RequestBody InstanceEnvironment instance, Principal principal){ //check
+    public ResponseEntity<Object> addInstanceEnvironment(@RequestBody InstanceEnvironment instance, Principal principal){ //check
         if(isEmpty(instance.getName())) {
             return status(BAD_REQUEST).body("invalid instance.name="+instance.getName());
         }
@@ -58,30 +61,35 @@ public class TraceV5Controller {
             var nsp = nonNull(principal) ? principal.getName() : ""; //disabled spring security
             return service.addInstance(instance, nsp)
                     ? ok(instance.getId().toString())
-                    : status(SERVICE_UNAVAILABLE).body("dispatcher.state=" + service.getState());
+                    : status(SERVICE_UNAVAILABLE).body("dispatcher.state=" + service.getDispatcherState());
         } catch(Exception e) {
             log.error("post instance", e);
-            return internalServerError().body("unexpected exception " + e.getClass().getSimpleName());
+            return internalServerError().body(new TraceFail(true, e.getMessage()));
         }
     }
 
     @PutMapping(value = "instance/{id}/session", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> addSessions(
             @PathVariable UUID id,
-            @RequestParam(required = false) Integer attempts,
-            @RequestParam(required = false) String filename,
+            @RequestParam int seq, //24*60*4 * 365*10 < Integer.MAX_VALUE
+            @RequestParam int attempts, //TODO check non null !?
             @RequestParam(required = false) Instant end,
             @RequestBody List<EventTrace> traces){
-        if(!isUUID(String.valueOf(id))) {
-            return status(BAD_REQUEST).body("invalid instance ID");
-        }
+    	
+    	if(service.getDispatcherState() == DISABLE) {
+        	return internalServerError().body(new TraceFail(true, "dispatch.state=DISABLE"));
+    	}
         try {
-            return service.addTraces(traces, id, attempts, filename, end)
+        	if(attempts > 1 && service.hasBeenTraced(id, seq)) {
+        		return status(CONFLICT).build(); 
+        	}
+            return service.addTraces(id, seq, attempts, end, traces)
                     ? accepted().build()
-                    : status(SERVICE_UNAVAILABLE).body(new TraceFail(service.getState().toString(), true));
-        } catch (DispatchProcessingException e) {
+                    : internalServerError().body(new TraceFail(true, "dispatch.state=" + service.getDispatcherState()));
+        } catch (Exception e) {
             log.error("put sessions", e);
-            return internalServerError().body(new TraceFail(service.getState().toString(), e.isRetryable()));
+            var retry = e instanceof DispatchProcessingException dpe && dpe.isRetryable();
+            return internalServerError().body(new TraceFail(retry, e.getMessage()));
         }
     }
 

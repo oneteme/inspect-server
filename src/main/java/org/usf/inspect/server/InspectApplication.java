@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.usf.inspect.core.*;
 import org.usf.inspect.server.config.ApplicationInspectPropertiesProvider;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
-import org.usf.inspect.server.model.InstanceTrace;
+import org.usf.inspect.server.model.TracePacket;
 import org.usf.inspect.server.model.wrapper.MainSessionWrapper;
 import org.usf.inspect.server.model.wrapper.RestSessionWrapper;
 
@@ -89,7 +89,7 @@ public class InspectApplication {
 	static {
 		var mapper = json()
 				.modules(new JavaTimeModule(), new ParameterNamesModule(), coreModule().registerSubtypes(
-						new NamedType(InstanceTrace.class, "inst-trc"), 
+						new NamedType(TracePacket.class, "inst-trc"), 
 						new NamedType(InstanceEnvironmentUpdate.class, "inst-updt")))
 				.build()
 			    .setSerializationInclusion(JsonInclude.Include.NON_EMPTY); // !null & !empty
