@@ -1,13 +1,9 @@
 package org.usf.inspect.server.mapper;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.usf.inspect.core.*;
-import org.usf.inspect.server.dto.*;
-import org.usf.inspect.server.model.*;
-import org.usf.jquery.core.ResultSetMapper;
-import org.usf.jquery.core.RowMapper;
+import static java.util.Optional.ofNullable;
+import static org.usf.inspect.server.JsonUtils.defaultMapper;
+import static org.usf.inspect.server.JsonUtils.fromJson;
+import static org.usf.inspect.server.Utils.fromNullableTimestamp;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -16,12 +12,46 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static java.util.Optional.ofNullable;
-import static org.usf.inspect.server.JsonUtils.safeReadValue;
-import static org.usf.inspect.server.Utils.fromNullableTimestamp;
+import org.usf.inspect.core.DatabaseRequestStage;
+import org.usf.inspect.core.DirectoryRequestStage;
+import org.usf.inspect.core.ExceptionTrace;
+import org.usf.inspect.core.FtpRequestStage;
+import org.usf.inspect.core.HttpRequestStage;
+import org.usf.inspect.core.HttpSessionStage;
+import org.usf.inspect.core.InspectCollectorConfiguration;
+import org.usf.inspect.core.InstanceEnvironment;
+import org.usf.inspect.core.InstanceType;
+import org.usf.inspect.core.LogEntry;
+import org.usf.inspect.core.MachineResource;
+import org.usf.inspect.core.MachineResourceUsage;
+import org.usf.inspect.core.Mail;
+import org.usf.inspect.core.MailRequestStage;
+import org.usf.inspect.core.StackTraceRow;
+import org.usf.inspect.server.dto.DatabaseRequestDto;
+import org.usf.inspect.server.dto.DirectoryRequestDto;
+import org.usf.inspect.server.dto.FtpRequestDto;
+import org.usf.inspect.server.dto.MailRequestDto;
+import org.usf.inspect.server.dto.MainSessionDto;
+import org.usf.inspect.server.dto.RestRequestDto;
+import org.usf.inspect.server.dto.RestSessionDto;
+import org.usf.inspect.server.model.DatabaseRequest;
+import org.usf.inspect.server.model.DirectoryRequest;
+import org.usf.inspect.server.model.FtpRequest;
+import org.usf.inspect.server.model.LocalRequest;
+import org.usf.inspect.server.model.MailRequest;
+import org.usf.inspect.server.model.MainSession;
+import org.usf.inspect.server.model.RestRequest;
+import org.usf.inspect.server.model.RestSession;
+import org.usf.inspect.server.model.TracePacket;
+import org.usf.inspect.server.model.UserAction;
+import org.usf.jquery.core.ResultSetMapper;
+import org.usf.jquery.core.RowMapper;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 public class Mappers {
-    public static ResultSetMapper<InstanceEnvironment> instanceEnvironmentResultSetMapper(ObjectMapper mapper) {
+    public static ResultSetMapper<InstanceEnvironment> instanceEnvironmentResultSetMapper() {
         return rs -> {
             if (rs.next()) {
                 var instanceEnvironment = new InstanceEnvironment(
@@ -39,11 +69,11 @@ public class Mappers {
                         rs.getString("hash"),
                         rs.getString("collector"),
                         null,
-                        safeReadValue(rs.getString("configuration"), InspectCollectorConfiguration.class, mapper)
+                        fromJson(rs.getString("configuration"), InspectCollectorConfiguration.class)
                         //rs.getString(ADDITIONAL_PROPERTIES.reference()) != null ? mapper.readValue(rs.getString(ADDITIONAL_PROPERTIES.reference()), new TypeReference<Map<String, String>>() {}) : null,
                         //rs.getString(CONFIGURATION.reference()) != null ? mapper.readValue(rs.getString(CONFIGURATION.reference()), InspectCollectorConfiguration.class) : null
                 );
-                instanceEnvironment.setResource(safeReadValue(rs.getString("resource"), MachineResource.class, mapper));
+                instanceEnvironment.setResource(fromJson(rs.getString("resource"), MachineResource.class));
                 instanceEnvironment.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
                 return instanceEnvironment;
             }
@@ -51,14 +81,14 @@ public class Mappers {
         };
     }
 
-    public static RowMapper<LogEntry> logEntryRowMapper(ObjectMapper mapper) {
+    public static RowMapper<LogEntry> logEntryRowMapper() {
         return (rs, row) -> {
             try {
                 return new LogEntry(
                         fromNullableTimestamp(rs.getTimestamp("start")),
                         LogEntry.Level.valueOf(rs.getString("logLevel")),
                         rs.getString("logMessage"),
-                        rs.getString("stacktrace") != null ? mapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {
+                        rs.getString("stacktrace") != null ? defaultMapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {
                         }) : null
                 );
             } catch (JsonProcessingException e) {
@@ -89,7 +119,7 @@ public class Mappers {
                         rs.getInt("usedDiskSpace"),
                         0, // activeThreadCount
                         0, // startedThreadCount
-                        0  // cpuUsage
+                        (byte)0  // cpuUsage
                 );
     }
 
@@ -116,7 +146,7 @@ public class Mappers {
         };
     }
 
-    public static ResultSetMapper<RestSession> restSessionResultSetMapper(ObjectMapper mapper) {
+    public static ResultSetMapper<RestSession> restSessionResultSetMapper() {
         return rs->{
             if (rs.next()) {
                 RestSession out = defaultRestSession(rs);
@@ -130,7 +160,7 @@ public class Mappers {
                 out.setOutContentEncoding(rs.getString("contentEncodingOut"));
                 out.setThreadName(rs.getString("thread"));
                 try {
-                    out.setException(getExceptionInfoIfNotNull(rs.getString("errType"), rs.getString("errMsg"), rs.getString("stacktrace") != null ? mapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {
+                    out.setException(getExceptionInfoIfNotNull(rs.getString("errType"), rs.getString("errMsg"), rs.getString("stacktrace") != null ? defaultMapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {
                     }) : null));
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
@@ -143,7 +173,7 @@ public class Mappers {
                 try {
                     String intermediateNodesStr = rs.getString("intermediateNodes");
                     if (intermediateNodesStr != null) { //TODO String[] => split(',')
-                        out.setIntermediateNodes(mapper.readValue(intermediateNodesStr, new TypeReference<java.util.List<String>>() {}));
+                        out.setIntermediateNodes(defaultMapper.readValue(intermediateNodesStr, new TypeReference<java.util.List<String>>() {}));
                     }
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
@@ -206,14 +236,14 @@ public class Mappers {
         };
     }
 
-    public static ResultSetMapper<MainSession> mainSessionResultSetMapper(ObjectMapper mapper) {
+    public static ResultSetMapper<MainSession> mainSessionResultSetMapper() {
         return rs -> {
             if (rs.next()) {
                 MainSession out = defaultMainSession(rs);
                 out.setType(rs.getString("type"));
                 out.setThreadName(rs.getString("thread"));
                 try {
-                    out.setException(getExceptionInfoIfNotNull(rs.getString("errType"), rs.getString("errMsg"), rs.getString("stacktrace") != null ? mapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {
+                    out.setException(getExceptionInfoIfNotNull(rs.getString("errType"), rs.getString("errMsg"), rs.getString("stacktrace") != null ? defaultMapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {
                     }) : null));
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
@@ -280,7 +310,7 @@ public class Mappers {
         return (rs, row) -> defaultRestRequest(rs);
     }
 
-    public static RowMapper<HttpRequestStage> restRequestStageRowMapper(ObjectMapper mapper) {
+    public static RowMapper<HttpRequestStage> restRequestStageRowMapper() {
         return (rs, row) -> {
             HttpRequestStage out = new HttpRequestStage(
                     rs.getObject("parent", UUID.class), // adapte au vrai alias SQL
@@ -294,7 +324,7 @@ public class Mappers {
                         rs.getString("errType"),
                         rs.getString("errMsg"),
                         rs.getString("stacktrace") != null
-                                ? mapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {})
+                                ? defaultMapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {})
                                 : null
                 ));
             } catch (JsonProcessingException e) {
@@ -355,7 +385,7 @@ public class Mappers {
         };
     }
 
-    public static RowMapper<DatabaseRequestStage> databaseRequestStageRowMapper(ObjectMapper mapper){
+    public static RowMapper<DatabaseRequestStage> databaseRequestStageRowMapper(){
         return (rs, row) -> {
             DatabaseRequestStage out = new DatabaseRequestStage(
                     rs.getObject("parent", UUID.class), // adapte au vrai alias SQL
@@ -376,7 +406,7 @@ public class Mappers {
                         rs.getString("errType"),
                         rs.getString("errMsg"),
                         rs.getString("stacktrace") != null
-                                ? mapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {})
+                                ? defaultMapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {})
                                 : null
                 ));
             } catch (JsonProcessingException e) {
@@ -419,7 +449,7 @@ public class Mappers {
         };
     }
 
-    public static RowMapper<FtpRequestStage> ftpRequestStageRowMapper(ObjectMapper mapper){
+    public static RowMapper<FtpRequestStage> ftpRequestStageRowMapper(){
         return (rs, row) -> {
             FtpRequestStage out = new FtpRequestStage(
                     rs.getObject("parent", UUID.class), // adapte au vrai alias SQL
@@ -437,7 +467,7 @@ public class Mappers {
                         rs.getString("errType"),
                         rs.getString("errMsg"),
                         rs.getString("stacktrace") != null
-                                ? mapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {})
+                                ? defaultMapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {})
                                 : null
                 ));
             } catch (JsonProcessingException e) {
@@ -477,7 +507,7 @@ public class Mappers {
         };
     }
 
-    public static RowMapper<MailRequestStage> smtpRequestStageRowMapper(ObjectMapper mapper){
+    public static RowMapper<MailRequestStage> smtpRequestStageRowMapper(){
         return (rs, row) -> {
             MailRequestStage out = new MailRequestStage(
                     rs.getObject("parent", UUID.class),
@@ -492,7 +522,7 @@ public class Mappers {
                         rs.getString("errType"),
                         rs.getString("errMsg"),
                         rs.getString("stacktrace") != null
-                                ? mapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {})
+                                ? defaultMapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {})
                                 : null
                 ));
             } catch (JsonProcessingException e) {
@@ -547,7 +577,7 @@ public class Mappers {
 
     }
 
-    public static RowMapper<DirectoryRequestStage> ldapRequestStageRowMapper(ObjectMapper mapper){
+    public static RowMapper<DirectoryRequestStage> ldapRequestStageRowMapper(){
         return (rs, row) -> {
             var out = new DirectoryRequestStage(
                     rs.getObject("parent", UUID.class), // adapte au vrai alias SQL
@@ -562,7 +592,7 @@ public class Mappers {
                         rs.getString("errType"),
                         rs.getString("errMsg"),
                         rs.getString("stacktrace") != null
-                                ? mapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {})
+                                ? defaultMapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {})
                                 : null
                 ));
             } catch (JsonProcessingException e) {

@@ -28,8 +28,8 @@ import static java.util.Arrays.stream;
 import static java.util.Objects.nonNull;
 import static org.usf.inspect.core.RequestMask.*;
 import static org.usf.inspect.core.SessionContextManager.emitError;
-import static org.usf.inspect.server.JsonUtils.safeReadValue;
-import static org.usf.inspect.server.JsonUtils.safeWriteValue;
+import static org.usf.inspect.server.JsonUtils.fromJson;
+import static org.usf.inspect.server.JsonUtils.toJson;
 import static org.usf.jquery.core.Column.ctimestamp;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -330,9 +330,9 @@ public class PurgeDao {
             var type = InstanceType.valueOf(rs.getString(instance.type().toString()));
             var raw = rs.getString(instance.configuration().toString());
 
-            var config = safeReadValue(raw, InspectCollectorConfiguration.class, mapper);
+            var config = fromJson(raw, InspectCollectorConfiguration.class);
             var rtt = config == null ? DEFAULT_RETENTION_CONFIG : config.getTracing().getRemote().getRetentionMaxAge();
-            // On extrait directement les durées depuis l'objet Retention
+            // On extrait directement les durées depuis l'objet Retention //TODO English
             out.add(new PurgeScope(type, env, app, rtt));
         }
         return out;

@@ -4,11 +4,10 @@ import static java.sql.Types.INTEGER;
 import static java.sql.Types.OTHER;
 import static java.sql.Types.VARCHAR;
 import static java.util.Objects.nonNull;
-import static java.util.Optional.ofNullable;
 import static org.springframework.jdbc.datasource.DataSourceUtils.getConnection;
 import static org.springframework.jdbc.datasource.DataSourceUtils.releaseConnection;
 import static org.usf.inspect.core.RequestMask.LOCAL;
-import static org.usf.inspect.server.JsonUtils.safeWriteValue;
+import static org.usf.inspect.server.JsonUtils.toJson;
 import static org.usf.inspect.server.Utils.contentTypeExtract;
 import static org.usf.inspect.server.Utils.fromNullableInstant;
 import static org.usf.inspect.server.Utils.joinValuesOrNull;
@@ -39,8 +38,6 @@ import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.TracePacket;
 import org.usf.inspect.server.model.Pair;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -57,13 +54,11 @@ public class TraceDao {
     private static final int BATCH_SIZE = 1_000;
 
     private final JdbcTemplate template;
-    private final ObjectMapper mapper;
     private final ApplicationEventPublisher publisher;
     private final boolean supportsSavePoints;
 
-	public TraceDao(JdbcTemplate template, ObjectMapper mapper, ApplicationEventPublisher publisher) {
+	public TraceDao(JdbcTemplate template, ApplicationEventPublisher publisher) {
 		this.template = template;
-		this.mapper = mapper;
 		this.publisher = publisher;
 		this.supportsSavePoints = supportsSavePoints(template.getDataSource());
 	}
@@ -74,7 +69,7 @@ insert into e_env_ins(id_ins,va_typ,dh_str,va_app,va_vrs,va_adr,va_env,va_os,va_
 values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             var idx=0;
             ps.setObject(++idx, instance.getId());
-            ps.setString(++idx, ofNullable(instance.getType()).map(InstanceType::name).orElse(null));
+            ps.setString(++idx, toStringOrNull(instance.getType()));
             ps.setTimestamp(++idx, fromNullableInstant(instance.getInstant()));
             ps.setString(++idx, instance.getName());
             ps.setString(++idx, instance.getVersion());
@@ -86,16 +81,16 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             ps.setString(++idx, instance.getCollector());
             ps.setString(++idx, instance.getBranch());
             ps.setString(++idx, instance.getHash());
-            ps.setObject(++idx, safeWriteValue(instance.getConfiguration(), mapper), OTHER);
-            ps.setObject(++idx, safeWriteValue(instance.getResource(), mapper), OTHER);
-            ps.setObject(++idx, safeWriteValue(instance.getAdditionalProperties(), mapper), OTHER);
+            ps.setObject(++idx, toJson(instance.getConfiguration()), OTHER);
+            ps.setObject(++idx, toJson(instance.getResource()), OTHER);
+            ps.setObject(++idx, toJson(instance.getAdditionalProperties()), OTHER);
             ps.setString(++idx, instance.getNamespace());
         });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateInstanceEnvironments(List<InstanceEnvironmentUpdate> instances){
-        executeBatch("update e_env_ins set dh_end = ? where id_ins = ?::uuid", instances, (ps, ins) -> {
+        executeBatch("update e_env_ins set dh_end=? where id_ins=?", instances, (ps, ins) -> {
             ps.setTimestamp(1, fromNullableInstant(ins.getEnd()));
             ps.setObject(2, ins.getId());
         });
@@ -103,7 +98,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveInstanceTraces(List<TracePacket> instanceTraces) {
-        executeBatch("insert into e_ins_trc (va_pnd, va_atp, va_trc_cnt, dh_str, cd_ins) values (?, ?, ?, ?, ?, ?)",
+        executeBatch("insert into e_ins_trc(va_pnd, va_atp, va_trc_cnt, dh_str, cd_ins) values(?,?,?,?,?,?)",
                 instanceTraces, (ps, trc) -> {
                     var idx=0;
                     ps.setObject(++idx, trc.getPending(), INTEGER);
@@ -121,9 +116,9 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
         executeBatch("insert into e_log_ent(va_lvl,va_msg,va_stk,dh_str,cd_prn_ses,cd_ins) values (?,?,?,?,?,?)",
                 logEntries, (ps, o)-> {
                     var idx=0;
-                    ps.setString(++idx, String.valueOf(o.getLevel()));
+                    ps.setString(++idx, toStringOrNull(o.getLevel()));
                     ps.setString(++idx, o.getMessage());
-                    ps.setObject(++idx, safeWriteValue(o.getStackRows(), mapper), OTHER);
+                    ps.setObject(++idx, toJson(o.getStackRows()), OTHER);
                     ps.setTimestamp(++idx, fromNullableInstant(o.getInstant()));
                     ps.setObject(++idx, o.getSessionId());
                     ps.setObject(++idx, o.getInstanceId());
@@ -132,7 +127,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveMachineResourceUsages(List<MachineResourceUsage> usages) {
-        executeBatch("insert into e_rsc_usg(dh_str,va_usd_hep,va_cmt_hep,va_usd_dsk,cd_ins) values (?,?,?,?,?,?)", usages, (ps, o)-> {
+        executeBatch("insert into e_rsc_usg(dh_str,va_usd_hep,va_cmt_hep,va_usd_dsk,cd_ins) values(?,?,?,?,?,?)", usages, (ps, o)-> {
             var idx=0;
             ps.setTimestamp(++idx, fromNullableInstant(o.getInstant()));
             ps.setInt(++idx, o.getUsedHeap());
@@ -176,7 +171,7 @@ values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions
             ps.setLong(++idx, callback.getDataSize());
             ps.setString(++idx, callback.getContentEncoding());
             ps.setInt(++idx, callback.getRequestMask().get());
-            ps.setString(++idx, Arrays.toString(session.getForwardedAddresses()));
+            ps.setString(++idx, toStringOrNull(session.getForwardedAddresses()));
         });
     }
 
@@ -376,7 +371,6 @@ values(?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             ps.setTimestamp(++idx, fromNullableInstant(callback.getEnd()));
             ps.setShort(++idx, callback.getStatus());
         });
-
     }
 
     static int localRequestSetter(PreparedStatement ps, LocalRequestSignal req) throws SQLException {
@@ -678,7 +672,6 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
             ps.setInt(++idx, stg.getOrder());
             ps.setObject(++idx, stg.getRequestId());
         });
-
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -720,7 +713,7 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
             ps.setString(++idx, mask.name());
             ps.setString(++idx, exp.getException().getType());
             ps.setString(++idx, exp.getException().getMessage());
-            ps.setObject(++idx, safeWriteValue(exp.getException().getStackTraceRows(), mapper), OTHER);
+            ps.setObject(++idx, toJson(exp.getException().getStackTraceRows()), OTHER);
             ps.setInt(++idx, exp.getOrder());
             ps.setObject(++idx, exp.getRequestId());//.toString() ?
         });
@@ -732,7 +725,7 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
             var idx=0;
             ps.setString(++idx, exp.getType());
             ps.setString(++idx, exp.getMessage());
-            ps.setObject(++idx, safeWriteValue(exp.getStackTraceRows(), mapper), OTHER);
+            ps.setObject(++idx, toJson(exp.getStackTraceRows()), OTHER);
             ps.setLong(++idx, exp.getOffset());
             ps.setObject(++idx, exp.getTraceId()); //getTraceId can
             //TODO add cause exception as json !
@@ -746,7 +739,7 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
             ps.setString(++idx, LOCAL.name());
             ps.setString(++idx, exp.getException().getType());
             ps.setString(++idx, exp.getException().getMessage());
-            ps.setObject(++idx, safeWriteValue(exp.getException().getStackTraceRows(), mapper), OTHER);
+            ps.setObject(++idx, toJson(exp.getException().getStackTraceRows()), OTHER);
             ps.setInt(++idx, 0);
             ps.setObject(++idx, exp.getId());
         });
@@ -854,5 +847,12 @@ where id_dtb_rqt = ?""", requests, (ps, req) -> {
     	}
     	return false;
     }
-
+    
+    static String toStringOrNull(Enum<?> e) {
+    	return nonNull(e) ? e.name() : null;
+	}
+    
+    static <T> String toStringOrNull(T[] arr) {
+    	return nonNull(arr) ? Arrays.toString(arr) : null;
+    }
 }
