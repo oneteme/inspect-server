@@ -1,9 +1,9 @@
 package org.usf.inspect.server.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationListener;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.usf.inspect.core.*;
 import org.usf.inspect.server.event.UnsavedEventTraceEvent;
@@ -12,6 +12,7 @@ import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.TracePacket;
 import org.usf.inspect.core.TraceDispatcherHub;
 
+import java.sql.ResultSet;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +24,7 @@ import static java.time.Instant.now;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static org.usf.inspect.core.LogEntry.Level.REPORT;
+import static org.usf.inspect.server.JsonUtils.defaultMapper;
 import static org.usf.inspect.server.model.TracePacket.newTracePacket;
 
 @Slf4j
@@ -30,11 +32,11 @@ import static org.usf.inspect.server.model.TracePacket.newTracePacket;
 public class TraceService implements ApplicationListener<UnsavedEventTraceEvent> {
 
     private final TraceDispatcherHub dispatcher;
-    private final ObjectMapper mapper;
+    private final JdbcTemplate template;
 
-    TraceService(@Qualifier("inspectServerContext") TraceDispatcherHub dispatcher, ObjectMapper mapper) {
+    TraceService(@Qualifier("inspectServerContext") TraceDispatcherHub dispatcher, JdbcTemplate template) {
         this.dispatcher = dispatcher;
-        this.mapper = mapper;
+        this.template = template;
     }
 
     @Deprecated(forRemoval = true, since = "1.2")
@@ -61,10 +63,8 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
             for(var e : traces) {
                 if(e instanceof AbstractRequestSignal req) {
                     req.setInstanceId(id);
-                   // assertUUID(req.getId(), "req.id");
                 } else if(e instanceof AbstractSessionSignal ses) {
                     ses.setInstanceId(id);
-                   // assertUUID(ses.getId(), "ses.id");
                 } else if(e instanceof MachineResourceUsage usg) {
                     usg.setInstanceId(id);
                 } else if(e instanceof LogEntry ent) {
@@ -78,6 +78,7 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
         }
     }
 
+    @Deprecated(forRemoval = true, since = "v1.2")
     public List<EventTrace> peekQueue() {
         return dispatcher.peek();
     }
@@ -93,13 +94,12 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
     
     public boolean hasBeenTraced(UUID id, int seq) {
 		try {
-			var found = dispatcher.peekAsync(q->{
-				return q.stream().anyMatch(t-> t instanceof TracePacket pck 
+			var ext = dispatcher.peekAsync(q-> q.stream()
+					.anyMatch(t-> t instanceof TracePacket pck 
 						&& pck.getInstanceId().equals(id) 
-						&& pck.getSequence() == seq);
-			}).get();
-			//TODO select existing trace packet from db and emit it to dispatcher
-	    	return found;
+						&& pck.getSequence() == seq)).get();
+	    	return ext || template.queryForObject("SELECT COUNT(*) FROM e_ins_trc WHERE cd_ins=? AND va_seq=?", 
+	    			ResultSet::getInt, id, seq) > 0;
 		} catch (InterruptedException e) {
 	        currentThread().interrupt();
 	        throw new IllegalStateException("Interrupted while checking trace sequence " + seq + " for instance " + id, e);
@@ -124,7 +124,7 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
             }
             if(nonNull(id)) {
                 try {
-                    var report = new LogEntry(now(), REPORT, mapper.writeValueAsString(trace), null);
+                    var report = new LogEntry(now(), REPORT, defaultMapper.writeValueAsString(trace), null);
                     report.setInstanceId(id);
                     dispatcher.emitTrace(report);
                 }
