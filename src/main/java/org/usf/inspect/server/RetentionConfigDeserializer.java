@@ -2,7 +2,6 @@ package org.usf.inspect.server;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.deser.ContextualDeserializer;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import org.usf.inspect.core.Retention;
 
@@ -53,11 +52,7 @@ public final class RetentionConfigDeserializer extends StdDeserializer<Retention
             try {
                 return Duration.parse(value);
             } catch (java.time.format.DateTimeParseException e) {
-                try {
-                    return Duration.ofSeconds(Long.parseLong(value));
-                } catch (NumberFormatException ignored) {
-                    return Duration.ZERO;
-                }
+                throw new IllegalArgumentException("Invalid duration value: " + value, e);
             }
         }
 

@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS e_rst_ses_stg (
     va_nam varchar,
     dh_str timestamp(6),
     dh_end timestamp(6),
-    cd_ord bigint,
+    cd_ord int,
     cd_prn_ses UUID
 )
 PARTITION BY RANGE (dh_str);
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS e_rst_rqt_stg (
     va_nam varchar,
     dh_str timestamp(6),
     dh_end timestamp(6),
-    cd_ord bigint,
+    cd_ord int,
     cd_rst_rqt UUID
 )
 PARTITION BY RANGE (dh_str);
@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS e_smtp_rqt (
     dh_end timestamp(6),
     va_thr varchar,
     va_cmd varchar,
-    status int,
+    status SMALLINT,
     cd_prn_ses UUID,
     cd_ins UUID
 )
@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS e_smtp_stg (
     dh_str timestamp(6),
     dh_end timestamp(6),
     va_cmd varchar,
-    cd_ord bigint,
+    cd_ord int,
     cd_smtp_rqt UUID
 )
 PARTITION BY RANGE (dh_str);
@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS e_ftp_rqt (
     dh_end timestamp(6),
     va_thr varchar,
     va_cmd varchar,
-      status int,
+    status SMALLINT,
     cd_prn_ses UUID, -- index
     cd_ins UUID
 )
@@ -151,7 +151,7 @@ CREATE TABLE IF NOT EXISTS e_ftp_stg (
     dh_end timestamp(6),
     va_cmd varchar,
     va_arg varchar,
-    cd_ord bigint,
+    cd_ord int,
     cd_ftp_rqt UUID -- index
 )
 PARTITION BY RANGE (dh_str);
@@ -166,7 +166,7 @@ CREATE TABLE IF NOT EXISTS e_ldap_rqt (
     dh_end timestamp(6),
     va_thr varchar,
     va_cmd varchar,
-      status int,
+    status SMALLINT,
     cd_prn_ses UUID, -- index
     cd_ins UUID
 )
@@ -178,7 +178,7 @@ CREATE TABLE IF NOT EXISTS e_ldap_stg (
     dh_end timestamp(6),
     va_cmd varchar,
     va_arg varchar,
-    cd_ord bigint,
+    cd_ord int,
     cd_ldap_rqt UUID
 )
 PARTITION BY RANGE (dh_str);
@@ -198,7 +198,7 @@ CREATE TABLE IF NOT EXISTS e_dtb_rqt (
     va_prd_nam varchar, 
     va_prd_vrs varchar, 
     va_cmd varchar,
-      status int,
+    status SMALLINT,
     cd_prn_ses UUID,
     cd_ins UUID
 )
@@ -211,7 +211,7 @@ CREATE TABLE IF NOT EXISTS e_dtb_stg (
     va_cnt varchar,
     va_cmd varchar,
     va_arg varchar,
-    cd_ord bigint,
+    cd_ord int,
     cd_dtb_rqt UUID
 )
 PARTITION BY RANGE (dh_str);
@@ -225,7 +225,6 @@ CREATE TABLE IF NOT EXISTS e_lcl_rqt (
     dh_end timestamp(6), 
     va_usr varchar,
     va_thr varchar,
-    va_fail boolean,
     cd_prn_ses UUID,
     cd_ins UUID
 )

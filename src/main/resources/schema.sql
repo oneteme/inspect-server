@@ -204,15 +204,14 @@ CREATE TABLE IF NOT EXISTS e_dtb_stg (
     );
 
 CREATE TABLE IF NOT EXISTS e_lcl_rqt (
-                                         id_lcl_rqt UUID,
-                                         va_typ varchar,
-                                         va_nam varchar,
-                                         va_lct varchar,
-                                         dh_str timestamp(6),
+    id_lcl_rqt UUID,
+    va_typ varchar,
+    va_nam varchar,
+    va_lct varchar,
+    dh_str timestamp(6),
     dh_end timestamp(6),
     va_usr varchar,
     va_thr varchar,
-    va_fail boolean,
     cd_prn_ses UUID,
     cd_ins UUID
     );

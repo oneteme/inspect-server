@@ -160,7 +160,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     public void savePartialRestSessions(List<HttpSessionSignal> sessions) {
         executeBatch("""
 insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,va_lnk,dh_str,va_nam,va_usr,va_usr_agt,va_msk,va_fwd_add)
-values(?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
+values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
             var idx = restSessionSetter(ps, ses);
             ps.setString(++idx, ses.getName());
             ps.setString(++idx, ses.getUser());
@@ -242,7 +242,7 @@ where id_ses = ?""", sessions, (ps, ses) -> {
     public void savePartialMainSessions(List<MainSessionSignal> sessions) {
         executeBatch("""
 insert into e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str,va_msk)
-values(?::uuid,?::uuid,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
+values(?,?,?,?,?,?,?,?,?)""", sessions, (ps, ses) -> {
             var idx = mainSessionSetter(ps, ses);
             ps.setString(++idx, ses.getLocation());
             ps.setString(++idx, ses.getName());
@@ -307,14 +307,14 @@ where id_ses = ?""", sessions, (ps, ses) -> {
     public void savePartialRestRequests(List<HttpRequestSignal> requests) {
         executeBatch("""
 insert into e_rst_rqt(id_rst_rqt,cd_prn_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,va_usr,dh_str)
-values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, TraceDao::restRequestSetter);
+values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, TraceDao::restRequestSetter);
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteRestRequests(List<Pair<HttpRequestSignal, HttpRequestUpdate>> requests) {
     	executeBatchPair("""
 insert into e_rst_rqt(id_rst_rqt,cd_prn_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,va_usr,dh_str,dh_end,va_cnt_typ,cd_stt,va_i_sze,va_i_cnt_enc,va_bdy_cnt,va_lnk)
-values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, ses) -> {
+values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, ses) -> {
             var request = ses.signal();
             var callback = ses.update();
             var idx = restRequestSetter(ps, request);
@@ -370,7 +370,7 @@ where id_rst_rqt = ?::uuid""", requests, (ps, req) -> {
     public void savePartialLocalRequests(List<LocalRequestSignal> requests) {
         executeBatch("""
 insert into e_lcl_rqt(id_lcl_rqt,cd_prn_ses,cd_ins,va_typ,va_nam,va_lct,va_usr,va_thr,dh_str)
-values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests, (ps, req) -> {
+values(?,?,?,?,?,?,?,?,?)""", requests, (ps, req) -> {
             var idx = localRequestSetter(ps, req);
             ps.setTimestamp(++idx, fromNullableInstant(req.getStart()));
         });
@@ -380,7 +380,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests, (ps, req) -> {
     public void saveCompleteLocalRequests(List<Pair<LocalRequestSignal, LocalRequestUpdate>> requests) {
     	executeBatchPair("""
 insert into e_lcl_rqt(id_lcl_rqt,cd_prn_ses,cd_ins,va_typ,va_nam,va_lct,va_usr,va_thr,dh_str,dh_end,status)
-values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
+values(?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             var req = pair.signal();
             var callback = pair.update();
           var idx=  localRequestSetter(ps, req);
@@ -421,14 +421,14 @@ where id_lcl_rqt = ?""", requests, (ps, req) -> {
     public void savePartialMailRequests(List<MailRequestSignal> requests) {
         executeBatch("""
 insert into e_smtp_rqt(id_smtp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str)
-values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests, TraceDao::mailRequestSetter);
+values(?,?,?,?,?,?,?,?,?)""", requests, TraceDao::mailRequestSetter);
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteMailRequests(List<Pair<MailRequestSignal, MailRequestUpdate>> requests) {
         executeBatchPair("""
 insert into e_smtp_rqt(id_smtp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str,dh_end,va_cmd,status)
-values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
+values(?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             var req = pair.signal();
             var callback = pair.update();
             var idx=mailRequestSetter(ps, req);
@@ -476,7 +476,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?)""", requests, TraceDao::ftpReque
     public void saveCompleteFtpRequests(List<Pair<FtpRequestSignal, FtpRequestUpdate>> requests) {
         executeBatchPair("""
 insert into e_ftp_rqt(id_ftp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_srv_vrs,va_clt_vrs,va_usr,va_thr,dh_str,dh_end,va_cmd,status)
-values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
+values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             var req = pair.signal();
             var callback = pair.update();
             var idx = ftpRequestSetter(ps, req);
@@ -519,14 +519,14 @@ where id_ftp_rqt = ?""", requests, (ps, req) -> {
     public void savePartialLdapRequests(List<DirectoryRequestSignal> requests) {
         executeBatch("""
 insert into e_ldap_rqt(id_ldap_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str)
-values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?)""", requests, TraceDao::ldapRequestSetter);
+values(?,?,?,?,?,?,?,?,?)""", requests, TraceDao::ldapRequestSetter);
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteLdapRequests(List<Pair<DirectoryRequestSignal, DirectoryRequestUpdate>> requests) {
         executeBatchPair("""
 insert into e_ldap_rqt(id_ldap_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str,dh_end,va_cmd,status)
-values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
+values(?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             var req = pair.signal();
             var callback = pair.update();
             var idx = ldapRequestSetter(ps, req);
@@ -554,7 +554,7 @@ values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> 
     public void updateLdapRequests(List<DirectoryRequestUpdate> requests) {
         executeBatch("""
 update e_ldap_rqt set dh_end = ?, va_cmd = ?, status = ?
-where id_ldap_rqt = ?::uuid""", requests, (ps, req) -> {
+where id_ldap_rqt = ?""", requests, (ps, req) -> {
             var idx = 0;
             ps.setTimestamp(++idx, fromNullableInstant(req.getEnd()));
             ps.setString(++idx, req.getCommand());
@@ -567,14 +567,14 @@ where id_ldap_rqt = ?::uuid""", requests, (ps, req) -> {
     public void savePartialDatabaseRequests(List<DatabaseRequestSignal> requests) {
         executeBatch("""
 insert into e_dtb_rqt(id_dtb_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_she,va_nam,va_sha,va_usr,va_thr,va_drv,va_prd_nam,va_prd_vrs,dh_str)
-values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?)""", requests, TraceDao::databaseRequestSetter);
+values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, TraceDao::databaseRequestSetter);
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveCompleteDatabaseRequests(List<Pair<DatabaseRequestSignal, DatabaseRequestUpdate>> requests) {
         executeBatchPair("""
 insert into e_dtb_rqt(id_dtb_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_she,va_nam,va_sha,va_usr,va_thr,va_drv,va_prd_nam,va_prd_vrs,dh_str,dh_end,va_cmd,status)
-values(?::uuid,?::uuid,?::uuid,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
+values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             var req = pair.signal();
             var callback = pair.update();
             var idx = databaseRequestSetter(ps, req);

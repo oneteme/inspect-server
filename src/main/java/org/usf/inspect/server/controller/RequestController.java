@@ -393,7 +393,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "database_request",
             view = DATABASE_REQUEST_ROW_MAPPER,
-            select = "id,host,db,db_name,start,end,user,thread,command,schema,failed,parent",
+            select = "id,host,db,db_name,start,end,user,thread,command,schema,parent",
             order = "start")
     public Collection<DatabaseRequestDto> fetchDatabaseRequestsBySession(
             MvcRequest mvc,
@@ -408,7 +408,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ftp_request",
             view = FTP_REQUEST_ROW_MAPPER,
-            select = "id,host,start,end,thread,user,command,failed,parent",
+            select = "id,host,start,end,thread,user,command,parent",
             order = "start")
     public Collection<FtpRequestDto> fetchFtpRequestsBySession(
             MvcRequest mvc,
@@ -423,7 +423,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "smtp_request",
             view = SMTP_REQUEST_ROW_MAPPER,
-            select = "id,host,start,end,thread,user,command,failed,parent",
+            select = "id,host,start,end,thread,user,command,parent",
             order = "start")
     public Collection<MailRequestDto> fetchSmtpRequestsBySession(
             MvcRequest mvc,
@@ -438,7 +438,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ldap_request",
             view = LDAP_REQUEST_ROW_MAPPER,
-            select = "id,host,start,end,thread,user,command,failed,parent",
+            select = "id,host,start,end,thread,user,command,parent",
             order = "start")
     public Collection<DirectoryRequestDto> fetchLdapRequestsBySession(
             MvcRequest mvc,
@@ -516,7 +516,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "database_request",
             view = DATABASE_REQUEST_ROW_MAPPER,
-            select = "id,host,db,db_name,status,start,end,user,thread,command,schema,failed,parent",
+            select = "id,host,db,db_name,status,start,end,user,thread,command,schema,parent",
             join = "instance",
             order = "start",
             ignore = "env")
@@ -534,7 +534,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "database_request",
             view = DATABASE_REQUEST_RESULTSET_MAPPER,
-            select = "id,host,port,db,start,end,user,thread,driver,db_name,db_version,command,schema,failed,instance_env,parent")
+            select = "id,host,port,db,start,end,user,thread,driver,db_name,db_version,command,schema,instance_env,parent")
     public ResponseEntity<DatabaseRequest> fetchDatabaseRequest(
             MvcRequest mvc,
             @PathVariable String requestId) {
@@ -571,7 +571,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ftp_request",
             view = FTP_REQUEST_ROW_MAPPER,
-            select = "id,host,status,start,end,thread,user,command,failed,parent",
+            select = "id,host,status,start,end,thread,user,command,parent",
             join = "instance",
             order = "start",
             ignore = "env")
@@ -589,7 +589,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ftp_request",
             view = FTP_REQUEST_RESULTSET_MAPPER,
-            select = "id,host,port,protocol,server_version,client_version,start,end,user,thread,command,failed,instance_env,parent")
+            select = "id,host,port,protocol,server_version,client_version,start,end,user,thread,command,instance_env,parent")
     public ResponseEntity<FtpRequest> fetchFtpRequest(
             MvcRequest mvc,
             @PathVariable String requestId){
@@ -626,7 +626,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "smtp_request",
             view = SMTP_REQUEST_ROW_MAPPER,
-            select = "id,host,status,start,end,thread,user,command,failed,parent",
+            select = "id,host,status,start,end,thread,user,command,parent",
             join = "instance",
             order = "start",
             ignore = "env")
@@ -644,7 +644,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "smtp_request",
             view = SMTP_REQUEST_RESULTSET_MAPPER,
-            select = "id,host,port,start,end,user,thread,command,failed,instance_env,parent")
+            select = "id,host,port,start,end,user,thread,command,instance_env,parent")
     public ResponseEntity<MailRequest> fetchSmtpRequest(
             MvcRequest mvc,
             @PathVariable String requestId){
@@ -695,7 +695,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ldap_request",
             view = LDAP_REQUEST_ROW_MAPPER,
-            select = "id,host,status,start,end,thread,user,command,failed,parent",
+            select = "id,host,status,start,end,thread,user,command,parent",
             join = "instance",
             order = "start",
             ignore = "env")
@@ -713,7 +713,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ldap_request",
             view = LDAP_REQUEST_RESULTSET_MAPPER,
-            select = "id,host,port,protocol,start,end,user,command,thread,failed,instance_env,parent")
+            select = "id,host,port,protocol,start,end,user,command,thread,instance_env,parent")
     public ResponseEntity<DirectoryRequest> fetchLdapRequest(
             MvcRequest mvc,
             @PathVariable String requestId){

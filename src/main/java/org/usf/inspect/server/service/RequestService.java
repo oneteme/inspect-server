@@ -438,8 +438,8 @@ public class RequestService {
             List<RestRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
                 RestRequestWrapper out = new RestRequestWrapper();
-                out.setSessionId(UUID.fromString(rs.getString("parent")));
-                out.setId(UUID.fromString(rs.getString("id")));
+                out.setSessionId(rs.getObject("parent", UUID.class));
+                out.setId(rs.getObject("id", UUID.class));
                 out.setProtocol(rs.getString("protocol"));
                 out.setHost(rs.getString("host"));
                 out.setPort(rs.getInt("port"));
@@ -482,8 +482,8 @@ public class RequestService {
             List<DatabaseRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
                 DatabaseRequestWrapper out = new DatabaseRequestWrapper();
-                out.setSessionId(UUID.fromString(rs.getString("parent")));
-                out.setId(UUID.fromString(rs.getString("id")));
+                out.setSessionId(rs.getObject("parent", UUID.class));
+                out.setId(rs.getObject("id", UUID.class));
                 out.setHost(rs.getString("host"));
                 out.setPort(rs.getInt("port"));
                 out.setName(rs.getString("db"));
@@ -522,8 +522,8 @@ public class RequestService {
             List<FtpRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
                 FtpRequestWrapper out = new FtpRequestWrapper();
-                out.setSessionId(UUID.fromString(rs.getString("parent")));
-                out.setId(UUID.fromString(rs.getString("id")));
+                out.setSessionId(rs.getObject("parent", UUID.class));
+                out.setId(rs.getObject("id", UUID.class));
                 out.setHost(rs.getString("host"));
                 out.setPort(rs.getInt("port"));
                 out.setProtocol(rs.getString("protocol"));
@@ -559,8 +559,8 @@ public class RequestService {
             List<MailRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
                 MailRequestWrapper out = new MailRequestWrapper();
-                out.setSessionId(UUID.fromString(rs.getString("parent")));
-                out.setId(UUID.fromString(rs.getString("id")));
+                out.setSessionId(rs.getObject("parent", UUID.class));
+                out.setId(rs.getObject("id", UUID.class));
                 out.setHost(rs.getString("host"));
                 out.setPort(rs.getInt("port"));
                 out.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
@@ -593,8 +593,8 @@ public class RequestService {
             List<DirectoryRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
                 DirectoryRequestWrapper out = new DirectoryRequestWrapper();
-                out.setSessionId(UUID.fromString(rs.getString("parent")));
-                out.setId(UUID.fromString(rs.getString("id")));
+                out.setSessionId(rs.getObject("parent", UUID.class));
+                out.setId(rs.getObject("id", UUID.class));
                 out.setHost(rs.getString("host"));
                 out.setPort(rs.getInt("port"));
                 out.setProtocol(rs.getString("protocol"));
