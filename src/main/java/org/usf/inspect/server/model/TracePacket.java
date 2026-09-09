@@ -32,7 +32,7 @@ public class TracePacket implements EventTrace {
 				++pnd;
 			}
 			else if(trc instanceof TraceUpdate) {
-				++pnd;
+				--pnd;
 				++nbr;
 			}
 			else if(trc instanceof AbstractStage) {
