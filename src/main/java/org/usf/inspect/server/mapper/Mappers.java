@@ -142,7 +142,7 @@ public class Mappers {
                 out.setLinked(rs.getBoolean("linked"));
                 try {
                     String intermediateNodesStr = rs.getString("intermediateNodes");
-                    if (intermediateNodesStr != null) {
+                    if (intermediateNodesStr != null) { //TODO String[] => split(',')
                         out.setIntermediateNodes(mapper.readValue(intermediateNodesStr, new TypeReference<java.util.List<String>>() {}));
                     }
                 } catch (JsonProcessingException e) {
