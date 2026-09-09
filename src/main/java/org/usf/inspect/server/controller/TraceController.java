@@ -1,106 +1,111 @@
 package org.usf.inspect.server.controller;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.usf.inspect.core.*;
-import org.usf.inspect.server.exception.DispatchProcessingException;
-import org.usf.inspect.server.service.TraceService;
-
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
+import static java.util.Objects.nonNull;
+import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
-import static org.springframework.http.ResponseEntity.*;
-import static org.usf.inspect.core.DualEventTracer.SERVER_ERROR;
-import static org.usf.inspect.core.DualEventTracer.SUCCESS;
-import static org.usf.inspect.server.Utils.isUUID;
+import static org.springframework.http.ResponseEntity.accepted;
+import static org.springframework.http.ResponseEntity.internalServerError;
+import static org.springframework.http.ResponseEntity.ok;
+import static org.springframework.http.ResponseEntity.status;
+import static org.usf.inspect.core.DispatchState.DISABLE;
 import static org.usf.jquery.core.Utils.isEmpty;
+
+import java.security.Principal;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.usf.inspect.core.DispatchState;
+import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.core.InstanceEnvironment;
+import org.usf.inspect.server.exception.DispatchProcessingException;
+import org.usf.inspect.server.service.TraceService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @CrossOrigin
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(value = "v4/trace", produces = APPLICATION_JSON_VALUE)
-public class TraceController{
-
+@RequestMapping(value = "/v5/trace", produces = APPLICATION_JSON_VALUE)
+public class TraceController {
 
     private final TraceService service;
-    private final TraceV5Controller controller;
-
+    
+    private static final String RETRY_AFTER_VAL = "10";
+    private static final String NOT_RETRY_VAL = "-1";
 
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<Object> addInstanceEnvironment(
-            @RequestBody InstanceEnvironment instance){
-       return controller.addInstanceEnvironment(instance, null);
-    }
-
-
-    @PutMapping(value = "instance/{id}/session", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> addSessions(
-            @PathVariable UUID id,
-            @RequestParam(required = false) Integer attempts,
-            @RequestParam(required = false) String filename,
-            @RequestParam(required = false) Instant end,
-            @RequestBody List<EventTrace> traces){
-        UUID instanceId;
-        try {
-            instanceId = id;
-        } catch (IllegalArgumentException e) {
-            return status(BAD_REQUEST).body("invalid instance ID");
+            @RequestParam int atm, //TODO check non null !?
+    		@RequestBody InstanceEnvironment instance, 
+    		Principal principal){ //check
+    	
+    	if(service.getDispatcherState() == DISABLE) {
+        	return status(SERVICE_UNAVAILABLE)
+        			.header(RETRY_AFTER, RETRY_AFTER_VAL)
+        			.body("dispatch.state=DISABLE");
+    	}
+        if(isEmpty(instance.getName())) {
+            return status(BAD_REQUEST).body("invalid instance.name="+instance.getName());
+        }
+        if (instance.getId() == null){
+            return status(BAD_REQUEST).body("invalid instance.id="+instance.getId());
         }
         try {
-            var extractedExceptions = new ArrayList<EventTrace>();
-            for (var t : traces) {
-                if (t instanceof AbstractRequestUpdate req ) {
-                    if (req instanceof MailRequestUpdate mailReq ) {
-                        mailReq.setStatus(mailReq.isFailed() ? SERVER_ERROR : SUCCESS);
+            var nsp = nonNull(principal) ? principal.getName() : ""; //disabled spring security
+            return service.addInstance(instance, nsp)
+                    ? ok(instance.getId().toString())
+                    : status(SERVICE_UNAVAILABLE).body("dispatcher.state=" + service.getDispatcherState());
+        } catch(Exception e) {
+            log.error("post instance", e);
+            return internalServerError().body(e.getMessage());
+        }
+    }
 
-                    }
-                    else if (req instanceof FtpRequestUpdate ftpReq ) {
-                        ftpReq.setStatus(ftpReq.isFailed() ? SERVER_ERROR : SUCCESS);
-                        }
-                    else if (req instanceof DatabaseRequestUpdate dbReq ) {
-                        dbReq.setStatus(dbReq.isFailed() ? SERVER_ERROR : SUCCESS);
-                    }
-                    else if (req instanceof DirectoryRequestUpdate dirReq ) {
-                        dirReq.setStatus(dirReq.isFailed() ? SERVER_ERROR : SUCCESS);
-                    }
-                    else if (req instanceof LocalRequestUpdate localReq ) {
-                        localReq.setStatus(localReq.getException() != null ? SERVER_ERROR : SUCCESS);
-                    }
-                }
-                if (t instanceof AbstractStage stg && stg.getException() != null) {
-                    var ex = stg.getException();
-                    if (ex.getTraceId() == null) {
-                        ex.setTraceId(stg.getRequestId());
-                    }
-                    ex.setOffset(stg.getOrder());
-                    extractedExceptions.add(ex);
-                } else if (t instanceof AbstractSessionUpdate ses && ses.getException() != null) {
-                    var ex = ses.getException();
-                    if (ex.getTraceId() == null) {
-                        ex.setTraceId(ses.getId());
-                    }
-                    ex.setOffset(0);
-                    extractedExceptions.add(ex);
-                }
-            }
-            if (!extractedExceptions.isEmpty()) {
-                traces.addAll(extractedExceptions);
-            }
-            return service.addTraces(instanceId, 1, attempts, end, traces)
+    @PutMapping(value = "instance/{id}/session", produces = APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> addTraces(
+            @PathVariable UUID id,
+            @RequestParam int seq, //24*60*4 * 365*10 < Integer.MAX_VALUE
+            @RequestParam int atm, //TODO check non null !?
+            @RequestParam(required = false) Instant end,
+            @RequestBody List<EventTrace> traces){
+    	
+    	if(service.getDispatcherState() == DISABLE) {
+        	return status(SERVICE_UNAVAILABLE)
+        			.header(RETRY_AFTER, RETRY_AFTER_VAL)
+        			.body("dispatch.state=DISABLE");
+    	}
+        try {
+        	if(atm > 1 && service.hasBeenTraced(id, seq)) {
+        		return status(CONFLICT).body("packet instanceId=" + id + ", seq=" + seq + " already processed"); 
+        	}
+            return service.addTraces(id, seq, atm, end, traces)
                     ? accepted().build()
-                    : status(SERVICE_UNAVAILABLE).body(new TraceFail(true, service.getDispatcherState().toString()));
-        } catch (DispatchProcessingException e) {
+                    : internalServerError()
+        			.header(RETRY_AFTER, RETRY_AFTER_VAL)
+        			.body("dispatch.state="+service.getDispatcherState());
+        } catch (Exception e) {
             log.error("put sessions", e);
-            return internalServerError().body(new TraceFail(e.isRetryable(), service.getDispatcherState().toString()));
+            var retry = e instanceof DispatchProcessingException dpe && dpe.isRetryable()
+            		? RETRY_AFTER_VAL 
+            		: NOT_RETRY_VAL;
+            return internalServerError().header(RETRY_AFTER, retry).body(e.getMessage());
         }
     }
 
