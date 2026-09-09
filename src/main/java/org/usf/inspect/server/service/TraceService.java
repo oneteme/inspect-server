@@ -74,28 +74,6 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
                     ent.setInstanceId(id);
                 }
             }
-            // extraction manuelle des exceptions
-            var extractedExceptions = new ArrayList<EventTrace>();
-            for (var e : traces) {
-                if (e instanceof AbstractStage stg && stg.getException() != null) {
-                    var ex = stg.getException();
-                    if (ex.getTraceId() == null) {
-                        ex.setTraceId(stg.getRequestId());
-                    }
-                    ex.setOffset(stg.getOrder());
-                    extractedExceptions.add(ex);
-                } else if (e instanceof AbstractSessionUpdate ses && ses.getException() != null) {
-                    var ex = ses.getException();
-                    if (ex.getTraceId() == null) {
-                        ex.setTraceId(ses.getId());
-                    }
-                    ex.setOffset(0);
-                    extractedExceptions.add(ex);
-                }
-            }
-            if (!extractedExceptions.isEmpty()) {
-                traces.addAll(extractedExceptions);
-            }
             emitted = true;
             return dispatcher.emitTraces(traces);
         } catch(Throwable e) { //OutOfMem

@@ -9,6 +9,7 @@ import org.usf.inspect.server.exception.DispatchProcessingException;
 import org.usf.inspect.server.service.TraceService;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -55,6 +56,7 @@ public class TraceController{
             return status(BAD_REQUEST).body("invalid instance ID");
         }
         try {
+            var extractedExceptions = new ArrayList<EventTrace>();
             for (var t : traces) {
                 if (t instanceof AbstractRequestUpdate req ) {
                     if (req instanceof MailRequestUpdate mailReq ) {
@@ -74,6 +76,24 @@ public class TraceController{
                         localReq.setStatus(localReq.getException() != null ? SERVER_ERROR : SUCCESS);
                     }
                 }
+                if (t instanceof AbstractStage stg && stg.getException() != null) {
+                    var ex = stg.getException();
+                    if (ex.getTraceId() == null) {
+                        ex.setTraceId(stg.getRequestId());
+                    }
+                    ex.setOffset(stg.getOrder());
+                    extractedExceptions.add(ex);
+                } else if (t instanceof AbstractSessionUpdate ses && ses.getException() != null) {
+                    var ex = ses.getException();
+                    if (ex.getTraceId() == null) {
+                        ex.setTraceId(ses.getId());
+                    }
+                    ex.setOffset(0);
+                    extractedExceptions.add(ex);
+                }
+            }
+            if (!extractedExceptions.isEmpty()) {
+                traces.addAll(extractedExceptions);
             }
             return service.addTraces(traces, instanceId, attempts, filename, end)
                     ? accepted().build()
