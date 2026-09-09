@@ -77,7 +77,7 @@ public class TraceV5Controller {
             @RequestBody List<EventTrace> traces){
     	
     	if(service.getDispatcherState() == DISABLE) {
-        	return status(SERVICE_UNAVAILABLE).body(new TraceFail(true, "dispatch.state=DISABLE"));
+        	return internalServerError().body(new TraceFail(true, "dispatch.state=DISABLE"));
     	}
         try {
         	if(attempts > 1 && service.hasBeenTraced(id, seq)) {

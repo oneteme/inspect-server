@@ -35,7 +35,7 @@ public class TraceController{
 
 
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
-    public ResponseEntity<String> addInstanceEnvironment(
+    public ResponseEntity<Object> addInstanceEnvironment(
             @RequestBody InstanceEnvironment instance){
        return controller.addInstanceEnvironment(instance, null);
     }
@@ -75,12 +75,12 @@ public class TraceController{
                     }
                 }
             }
-            return service.addTraces(traces, instanceId, attempts, filename, end)
+            return service.addTraces(instanceId, 1, attempts, end, traces)
                     ? accepted().build()
-                    : status(SERVICE_UNAVAILABLE).body(new TraceFail(service.getDispatcherState().toString(), true));
+                    : status(SERVICE_UNAVAILABLE).body(new TraceFail(true, service.getDispatcherState().toString()));
         } catch (DispatchProcessingException e) {
             log.error("put sessions", e);
-            return internalServerError().body(new TraceFail(service.getDispatcherState().toString(), e.isRetryable()));
+            return internalServerError().body(new TraceFail(e.isRetryable(), service.getDispatcherState().toString()));
         }
     }
 

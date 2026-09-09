@@ -1,9 +1,11 @@
 package org.usf.inspect.server;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 
@@ -33,6 +35,7 @@ import static org.usf.inspect.core.InspectConfiguration.coreModule;
 import static org.usf.inspect.core.TraceDispatcherHub.createHub;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Properties;
 
 @SpringBootApplication
@@ -93,8 +96,17 @@ public class InspectApplication {
 		mapper.configure(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL, true);
 		// Deprecated(since = "v1.1", forRemoval = true)
 		mapper.registerSubtypes(
-				new NamedType(MainSessionWrapper.class, "main"), 
+				new NamedType(MainSessionWrapper.class, "main"),
 				new NamedType(RestSessionWrapper.class, "rest"));
+		//Deprecated(since = "v1.3", forRemoval = true)
+		SimpleModule retentionModule = new SimpleModule();
+		retentionModule.addDeserializer(Retention.class, new RetentionConfigDeserializer());
+		mapper.registerModule(retentionModule);//register RetentionConfigDeserializer
+
 		defaultMapper = mapper;
 	}
+
+
+
 }
+
