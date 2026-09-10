@@ -99,7 +99,7 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
 						&& pck.getInstanceId().equals(id) 
 						&& pck.getSequence() == seq)).get() || 
 					template.queryForObject("SELECT COUNT(*) FROM e_ins_trc WHERE cd_ins=? AND va_seq=?", 
-							ResultSet::getInt, id, seq) > 0;
+							(rs,idx)-> rs.getInt(1), id, seq) > 0;
 		} catch (InterruptedException e) {
 	        currentThread().interrupt();
 	        throw new IllegalStateException("Interrupted while checking trace sequence " + seq + " for instance " + id, e);
