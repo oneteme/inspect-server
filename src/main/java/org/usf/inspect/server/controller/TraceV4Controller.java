@@ -38,7 +38,7 @@ public class TraceV4Controller {
             @RequestBody InstanceEnvironment instance){
         //Rétrocompatibilité namespace
         if (instance != null && instance.getEnv() != null) {
-            instance.setNamespace(namespacePrefix + instance.getEnv());
+            instance.setNamespace((namespacePrefix +"-"+ instance.getEnv()).toUpperCase());
         }
        return controller.addInstanceEnvironment(instance, null); //auto retention conversion
     }
