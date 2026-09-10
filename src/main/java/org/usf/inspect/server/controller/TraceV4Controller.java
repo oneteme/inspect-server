@@ -2,6 +2,7 @@ package org.usf.inspect.server.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.usf.inspect.core.*;
@@ -29,10 +30,17 @@ public class TraceV4Controller {
     private final TraceService service;
     private final TraceController controller;
 
+    @Value("${inspect.server.migration.namespacePrefix}")
+    private String namespacePrefix;
+
 
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<Object> addInstanceEnvironment(
             @RequestBody InstanceEnvironment instance){
+        //Rétrocompatibilité namespace
+        if (instance != null && instance.getEnv() != null) {
+            instance.setNamespace((namespacePrefix +"-"+ instance.getEnv()).toUpperCase());
+        }
        return controller.addInstanceEnvironment(instance, null); //auto retention conversion
     }
 
@@ -63,6 +71,19 @@ public class TraceV4Controller {
                     localReq.setStatus(localReq.getException() != null ? SERVER_ERROR : SUCCESS);
                 }
             }
+            //Payload extraction
+            if (t instanceof DatabaseRequestStage dbstg) {
+                if( dbstg.getArgs() != null || dbstg.getCount() != null) {
+                    dbstg.setPayload(new StagePayload(dbstg.getArgs(), dbstg.getCount()));
+                }
+            }
+            else if (t instanceof DirectoryRequestStage drstg && drstg.getArgs() != null) {
+                    drstg.setPayload(new StagePayload(drstg.getArgs(), null));
+            }
+            else if (t instanceof FtpRequestStage frstg && frstg.getArgs() != null) {
+                frstg.setPayload(new StagePayload(frstg.getArgs(), null));
+            }
+            //Exception extraction
             if (t instanceof AbstractStage stg && stg.getException() != null) {
                 var ex = stg.getException();
                 ex.setTraceId(stg.getRequestId());
@@ -79,6 +100,7 @@ public class TraceV4Controller {
                 ex.setOffset(nonNull(req.getEnd()) ? end.toEpochMilli() : 1);
                 extractedExceptions.add(ex);
             }
+
         }
         if (!extractedExceptions.isEmpty()) {
             traces.addAll(extractedExceptions);

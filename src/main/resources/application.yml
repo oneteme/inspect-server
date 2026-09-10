@@ -78,5 +78,7 @@ inspect:
       jdbc-request: DAY
     purge:
       enabled: false
+    migration:
+      namespacePrefix: Jarvis
 
 

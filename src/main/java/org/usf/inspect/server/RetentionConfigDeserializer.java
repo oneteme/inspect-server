@@ -19,7 +19,7 @@ public final class RetentionConfigDeserializer extends StdDeserializer<Retention
         JsonNode node = jp.getCodec().readTree(jp);
 
         if (node != null && !node.isNull()) {
-            if (node.isInt() || node.isTextual()) {
+            if (node.isNumber() || node.isTextual()) {
                 Duration retentionMaxAge = toDuration(node);
                 return new Retention(retentionMaxAge, retentionMaxAge);
             } else if (node.isObject()) {

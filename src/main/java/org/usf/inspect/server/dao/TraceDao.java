@@ -114,8 +114,9 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     @Transactional(rollbackFor = Throwable.class)
     public void updateInstanceEnvironments(List<InstanceEnvironmentUpdate> updates){
         executeBatch("update e_env_ins set dh_end=? where id_ins=?", updates, (ps, ins) -> {
-            ps.setTimestamp(1, fromNullableInstant(ins.getEnd()));
-            ps.setObject(2, ins.getId());
+            var idx=0;
+            ps.setTimestamp(++idx, fromNullableInstant(ins.getEnd()));
+            ps.setObject(++idx, ins.getId());
         });
     }
 
