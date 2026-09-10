@@ -45,6 +45,14 @@ public interface LdapRequestCatalog extends RequestCatalog {
 		return failed().toCase().when(eq(true), failed()).compose().count();
 	}
 
+	default Column status() {
+		return Column.beginCase()
+				.when(end().isNull(), null)
+				.when(failed().eq(true), 500)
+				.when(failed().eq(false), 200)
+				.compose().as("status");
+	}
+
 	@Expose(identity = "performance_tranche")
 	default Column performanceTranche1() {
 		return elapsedTime().toCase()
