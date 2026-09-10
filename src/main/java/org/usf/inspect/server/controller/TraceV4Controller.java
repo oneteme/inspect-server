@@ -89,6 +89,20 @@ public class TraceV4Controller {
                     ex.setOffset(0);
                     extractedExceptions.add(ex);
                 }
+                if (t instanceof DatabaseRequestStage dbstg) {
+                        if( dbstg.getArgs() != null || dbstg.getCount() != null)
+                            dbstg.setPayload(new StagePayload(dbstg.getArgs(), dbstg.getCount()));;
+                }
+                else if (t instanceof DirectoryRequestStage drstg) {
+                        if (drstg.getArgs() != null)
+                            drstg.setPayload(new StagePayload(drstg.getArgs(), null));
+                }
+                else if (t instanceof FtpRequestStage frstg) {
+                        if (frstg.getArgs() != null)
+                            frstg.setPayload(new StagePayload(frstg.getArgs(), null));
+                }
+
+
             }
             if (!extractedExceptions.isEmpty()) {
                 traces.addAll(extractedExceptions);
