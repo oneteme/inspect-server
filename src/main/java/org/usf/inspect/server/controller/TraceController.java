@@ -44,15 +44,14 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @RequestMapping(value = "/v5/trace", produces = APPLICATION_JSON_VALUE)
 public class TraceController {
-
-    private final TraceService service;
     
     private static final String RETRY_AFTER_VAL = "10";
     private static final String NOT_RETRY_VAL = "-1";
 
+    private final TraceService service;
+
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<Object> addInstanceEnvironment(
-            @RequestParam int atm, //TODO check non null !?
     		@RequestBody InstanceEnvironment instance, 
     		Principal principal){ //check
     	
@@ -78,7 +77,7 @@ public class TraceController {
         }
     }
 
-    @PutMapping(value = "instance/{id}/session", produces = APPLICATION_JSON_VALUE)
+    @PutMapping("instance/{id}/session")
     public ResponseEntity<Object> addTraces(
             @PathVariable UUID id,
             @RequestParam int seq, //24*60*4 * 365*10 < Integer.MAX_VALUE
@@ -109,7 +108,7 @@ public class TraceController {
         }
     }
 
-    @GetMapping(value = "queue", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("queue")
     public List<EventTrace> peekQueue(){
         return service.peekQueue();
     }

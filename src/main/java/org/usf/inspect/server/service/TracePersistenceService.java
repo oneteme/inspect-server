@@ -60,7 +60,7 @@ public class TracePersistenceService implements TraceExporter {
 	public List<EventTrace> addTraces(List<EventTrace> traces) {
         var cf = new ArrayList<CompletableFuture<Collection<EventTrace>>>();
         cf.add(supplyAsync(()-> {
-            var unsaved = resolve(traces, MainSessionSignal.class, MainSessionUpdate.class, dao::savePartialMainSessions, dao::updateMainSessions, dao::saveCompleteMainSessions);
+            var unsaved = resolve(traces, MainSessionSignal.class, MainSessionUpdate.class, dao::saveMainSessionSignals, dao::updateMainSessions, dao::saveMainSessions);
             if(unsaved.isEmpty()){
                 unsaved.addAll(filterAndApply(traces, (e, consumer) -> {
                     if(e instanceof SessionMaskUpdate smu && smu.isMain()) {
@@ -71,7 +71,7 @@ public class TracePersistenceService implements TraceExporter {
             return unsaved;
         }, executor));
         cf.add(supplyAsync(()-> {
-            var unsaved = resolve(traces, HttpSessionSignal.class, HttpSessionUpdate.class, dao::savePartialRestSessions, dao::updateRestSessions, dao::saveCompleteRestSessions);
+            var unsaved = resolve(traces, HttpSessionSignal.class, HttpSessionUpdate.class, dao::saveRestSessionSignals, dao::updateRestSessions, dao::saveRestSessions);
             if(unsaved.isEmpty()){
                 unsaved.addAll(filterAndApply(traces, (e, consumer) -> {
                     if(e instanceof SessionMaskUpdate smu && !smu.isMain()) {
@@ -81,12 +81,12 @@ public class TracePersistenceService implements TraceExporter {
             }
             return unsaved;
         }, executor));
-        cf.add(supplyAsync(()-> resolve(traces, HttpRequestSignal.class, HttpRequestUpdate.class, dao::savePartialRestRequests, dao::updateRestRequests, dao::saveCompleteRestRequests), executor));
-        cf.add(supplyAsync(()-> resolve(traces, LocalRequestSignal.class, LocalRequestUpdate.class, dao::savePartialLocalRequests, dao::updateLocalRequests, dao::saveCompleteLocalRequests), executor));
-        cf.add(supplyAsync(()-> resolve(traces, MailRequestSignal.class, MailRequestUpdate.class, dao::savePartialMailRequests, dao::updateMailRequests, dao::saveCompleteMailRequests), executor));
-        cf.add(supplyAsync(()-> resolve(traces, FtpRequestSignal.class, FtpRequestUpdate.class, dao::savePartialFtpRequests, dao::updateFtpRequests, dao::saveCompleteFtpRequests), executor));
-        cf.add(supplyAsync(()-> resolve(traces, DirectoryRequestSignal.class, DirectoryRequestUpdate.class, dao::savePartialLdapRequests, dao::updateLdapRequests, dao::saveCompleteLdapRequests), executor));
-        cf.add(supplyAsync(()-> resolve(traces, DatabaseRequestSignal.class, DatabaseRequestUpdate.class, dao::savePartialDatabaseRequests, dao::updateDatabaseRequests, dao::saveCompleteDatabaseRequests), executor));
+        cf.add(supplyAsync(()-> resolve(traces, HttpRequestSignal.class, HttpRequestUpdate.class, dao::saveRestRequestSignals, dao::updateRestRequests, dao::saveRestRequests), executor));
+        cf.add(supplyAsync(()-> resolve(traces, LocalRequestSignal.class, LocalRequestUpdate.class, dao::saveLocalRequestSignals, dao::updateLocalRequests, dao::saveLocalRequests), executor));
+        cf.add(supplyAsync(()-> resolve(traces, MailRequestSignal.class, MailRequestUpdate.class, dao::saveMailRequestSignals, dao::updateMailRequests, dao::saveMailRequests), executor));
+        cf.add(supplyAsync(()-> resolve(traces, FtpRequestSignal.class, FtpRequestUpdate.class, dao::saveFtpRequestSignals, dao::updateFtpRequests, dao::saveFtpRequests), executor));
+        cf.add(supplyAsync(()-> resolve(traces, DirectoryRequestSignal.class, DirectoryRequestUpdate.class, dao::saveLdapRequestSignals, dao::updateLdapRequests, dao::saveLdapRequests), executor));
+        cf.add(supplyAsync(()-> resolve(traces, DatabaseRequestSignal.class, DatabaseRequestUpdate.class, dao::saveDatabaseRequestSignals, dao::updateDatabaseRequests, dao::saveDatabaseRequests), executor));
         cf.add(supplyAsync(()-> filterAndApply(traces, HttpRequestStage.class, dao::saveHttpRequestStages), executor));
         cf.add(supplyAsync(()-> filterAndApply(traces, HttpSessionStage.class, dao::saveHttpSessionStages), executor));
         cf.add(supplyAsync(()-> filterAndApply(traces, MailRequestStage.class, dao::saveMailRequestStages), executor));
@@ -99,7 +99,7 @@ public class TracePersistenceService implements TraceExporter {
         cf.add(supplyAsync(()-> filterAndApply(traces, MachineResourceUsage.class, dao::saveMachineResourceUsages), executor));
         cf.add(supplyAsync(()-> filterAndApply(traces, LogEntry.class, dao::saveLogEntries), executor));
         cf.add(supplyAsync(()-> filterAndApply(traces, InstanceEnvironmentUpdate.class, dao::updateInstanceEnvironments), executor));
-        cf.add(supplyAsync(()-> filterAndApply(traces, TracePacket.class, dao::saveInstanceTraces), executor));
+        cf.add(supplyAsync(()-> filterAndApply(traces, TracePacket.class, dao::saveTracePackets), executor));
 
 
         return allOf(cf.toArray(CompletableFuture[]::new)).thenApply(v-> cf.stream()
