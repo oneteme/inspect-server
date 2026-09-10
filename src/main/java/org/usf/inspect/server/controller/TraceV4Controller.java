@@ -29,6 +29,7 @@ public class TraceV4Controller {
 
     private final TraceService service;
     private final TraceController controller;
+
     @Value("${inspect.server.migration.namespacePrefix}")
     private String namespacePrefix;
 
