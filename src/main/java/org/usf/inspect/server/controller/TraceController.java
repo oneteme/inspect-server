@@ -67,7 +67,7 @@ public class TraceController {
             return status(BAD_REQUEST).body("invalid instance.id="+instance.getId());
         }
         try {
-            var nsp = nonNull(principal) ? principal.getName() : ""; //disabled spring security
+           var nsp = nonNull(principal) ? principal.getName() : instance.getNamespace(); //disabled spring security
             return service.addInstance(instance, nsp)
                     ? ok(instance.getId().toString())
                     : status(SERVICE_UNAVAILABLE).body("dispatcher.state=" + service.getDispatcherState());
