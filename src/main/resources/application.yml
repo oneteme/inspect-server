@@ -37,11 +37,11 @@ spring:
 
 logging:
   level:
-    org.usf.jquery: DEBUG
+#    org.usf.jquery: DEBUG
     org.usf.inspect: DEBUG
-    org.springframework.jdbc.core: DEBUG
-    org.springframework.security: DEBUG
-    org.springframework.web: DEBUG
+#    org.springframework.jdbc.core: DEBUG
+#    org.springframework.security: DEBUG
+#    org.springframework.web: DEBUG
 
 inspect:
   collector: 

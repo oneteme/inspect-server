@@ -12,7 +12,6 @@ import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.TracePacket;
 import org.usf.inspect.core.TraceDispatcherHub;
 
-import java.sql.ResultSet;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -94,6 +93,7 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
     
     public boolean hasBeenTraced(UUID id, int seq) {
 		try {
+			//make sure that the trace has been processed by the dispatcher before checking the database
 			return dispatcher.peekAsync(q-> q.stream()
 					.anyMatch(t-> t instanceof TracePacket pck 
 						&& pck.getInstanceId().equals(id) 

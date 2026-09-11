@@ -1,6 +1,6 @@
 package org.usf.inspect.server.erm;
 
-import static org.usf.inspect.core.RequestMask.JDBC;
+import static org.usf.inspect.core.SessionMask.JDBC;
 import static org.usf.inspect.server.config.constant.FieldConstant.CD_DTB_RQT;
 import static org.usf.inspect.server.config.constant.FieldConstant.CD_ORD;
 import static org.usf.inspect.server.config.constant.FieldConstant.DH_END;
@@ -14,7 +14,7 @@ import static org.usf.jquery.core.Join.leftJoin;
 import static org.usf.jquery.core.JoinGroup.joins;
 import static org.usf.jquery.mvc.StoreManager.getInstance;
 
-import org.usf.inspect.core.RequestMask;
+import org.usf.inspect.core.SessionMask;
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.JoinGroup;
 import org.usf.jquery.core.ViewColumn;
@@ -50,7 +50,7 @@ public interface DatabaseStageCatalog extends StageCatalog {
 	}
 
 	@Override
-	default RequestMask getRequestType() {
+	default SessionMask getRequestType() {
 		return JDBC;
 	}
 }

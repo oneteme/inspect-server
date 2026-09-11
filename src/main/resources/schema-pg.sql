@@ -310,7 +310,13 @@ CREATE TABLE IF NOT EXISTS e_nsp_ins (
 		va_enc_tkn varchar NOT NULL
 );
 
-
+CREATE TABLE IF NOT EXISTS e_ses_evt (
+	dh_str timestamp(6),
+    va_typ varchar,
+    va_cnt varchar,
+    va_lct varchar,
+    cd_ins uuid
+);
 
 -- Ajouter les index du cd instance dans les requests
 CREATE UNIQUE INDEX IF NOT EXISTS idx_main_ses_id_ses_dh_str ON e_main_ses(id_ses, dh_str DESC);

@@ -26,7 +26,7 @@ import static java.sql.Types.OTHER;
 import static java.time.Duration.ofDays;
 import static java.util.Arrays.stream;
 import static java.util.Objects.nonNull;
-import static org.usf.inspect.core.RequestMask.*;
+import static org.usf.inspect.core.SessionMask.*;
 import static org.usf.inspect.core.SessionContextManager.emitError;
 import static org.usf.inspect.server.JsonUtils.fromJson;
 import static org.usf.inspect.server.JsonUtils.toJson;

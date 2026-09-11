@@ -1,7 +1,6 @@
 package org.usf.inspect.server.controller;
 
 import static java.util.Objects.nonNull;
-import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
@@ -12,6 +11,7 @@ import static org.springframework.http.ResponseEntity.internalServerError;
 import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.http.ResponseEntity.status;
 import static org.usf.inspect.core.DispatchState.DISABLE;
+import static org.usf.inspect.http.WebUtils.TRACE_RETRY_HEADER;
 import static org.usf.jquery.core.Utils.isEmpty;
 
 import java.security.Principal;
@@ -39,14 +39,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@CrossOrigin
 @RestController
 @RequiredArgsConstructor
+@CrossOrigin(exposedHeaders = TRACE_RETRY_HEADER)
 @RequestMapping(value = "/v5/trace", produces = APPLICATION_JSON_VALUE)
 public class TraceController {
     
-    private static final String RETRY_AFTER_VAL = "10";
-    private static final String NOT_RETRY_VAL = "-1";
+    private static final String DO_RETRY = "1";
+    private static final String DO_NOT_RETRY = "0";
 
     private final TraceService service;
 
@@ -57,22 +57,23 @@ public class TraceController {
     	
     	if(service.getDispatcherState() == DISABLE) {
         	return status(SERVICE_UNAVAILABLE)
-        			.header(RETRY_AFTER, RETRY_AFTER_VAL)
         			.body("dispatch.state=DISABLE");
     	}
         if(isEmpty(instance.getName())) {
-            return status(BAD_REQUEST).body("invalid instance.name="+instance.getName());
+            return status(BAD_REQUEST).body("invalid name="+instance.getName());
         }
         if (instance.getId() == null){
-            return status(BAD_REQUEST).body("invalid instance.id="+instance.getId());
+            return status(BAD_REQUEST).body("invalid id="+instance.getId());
         }
         try {
-           var nsp = nonNull(principal) ? principal.getName() : instance.getNamespace(); //disabled spring security
+           var nsp = nonNull(principal) 
+        		   ? principal.getName()
+        		   : instance.getNamespace(); //disabled spring security
             return service.addInstance(instance, nsp)
                     ? ok(instance.getId().toString())
                     : status(SERVICE_UNAVAILABLE).body("dispatcher.state=" + service.getDispatcherState());
         } catch(Exception e) {
-            log.error("post instance", e);
+            log.error("failed to add instance environment", e);
             return internalServerError().body(e.getMessage());
         }
     }
@@ -87,24 +88,24 @@ public class TraceController {
     	
     	if(service.getDispatcherState() == DISABLE) {
         	return status(SERVICE_UNAVAILABLE)
-        			.header(RETRY_AFTER, RETRY_AFTER_VAL)
+        			.header(TRACE_RETRY_HEADER, DO_RETRY)
         			.body("dispatch.state=DISABLE");
     	}
         try {
         	if(atm > 1 && service.hasBeenTraced(id, seq)) {
-        		return status(CONFLICT).body("packet instanceId=" + id + ", seq=" + seq + " already processed"); 
+        		return status(CONFLICT).body("seq="+seq+" has already been traced");
         	}
             return service.addTraces(id, seq, atm, end, traces)
                     ? accepted().build()
                     : internalServerError()
-        			.header(RETRY_AFTER, RETRY_AFTER_VAL)
+        			.header(TRACE_RETRY_HEADER, DO_RETRY)
         			.body("dispatch.state="+service.getDispatcherState());
         } catch (Exception e) {
-            log.error("put sessions", e);
+            log.error("failed to add traces for instanceId=" + id + ", seq=" + seq, e);
             var retry = e instanceof DispatchProcessingException dpe && dpe.isRetryable()
-            		? RETRY_AFTER_VAL 
-            		: NOT_RETRY_VAL;
-            return internalServerError().header(RETRY_AFTER, retry).body(e.getMessage());
+            		? DO_RETRY 
+            		: DO_NOT_RETRY;
+            return internalServerError().header(TRACE_RETRY_HEADER, retry).body(e.getMessage());
         }
     }
 

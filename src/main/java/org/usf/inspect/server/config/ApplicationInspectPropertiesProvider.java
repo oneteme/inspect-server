@@ -9,7 +9,7 @@ import lombok.NonNull;
 
 public final class ApplicationInspectPropertiesProvider extends DefaultApplicationPropertiesProvider {
 
-	private final Properties properties; //git.properties
+	private final Properties properties; // git.properties
 
 	public ApplicationInspectPropertiesProvider(@NonNull Environment env, Properties properties) {
 		super(env);
@@ -17,10 +17,14 @@ public final class ApplicationInspectPropertiesProvider extends DefaultApplicati
 	}
 
 	@Override
-	public String getVersion() { return properties.getProperty("git.build.version"); }
+	public String getVersion() {
+		return properties.getProperty("git.build.version");
+	}
 
 	@Override
-	public String getBranch() { return properties.getProperty("git.branch"); }
+	public String getBranch() {
+		return properties.getProperty("git.branch");
+	}
 
 	@Override
 	public String getCommitHash() {
