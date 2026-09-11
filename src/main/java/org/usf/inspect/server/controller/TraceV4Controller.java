@@ -60,6 +60,7 @@ public class TraceV4Controller {
             detachException(t, addTraces::add);
             convertToSessionEvent(t, addTraces::add);
         }
+        traces.removeIf(UserAction.class::isInstance); //remove user action traces
         if (!addTraces.isEmpty()) {
             traces.addAll(addTraces);
         }
@@ -67,20 +68,24 @@ public class TraceV4Controller {
     }
     
     static void resolveTraceUpdateStatus(EventTrace trc) {
-    	if (trc instanceof MailRequestUpdate upd ) {
+    	if (trc instanceof LocalRequestUpdate upd ) {
+            upd.setStatus(upd.getException() != null ? SERVER_ERROR : SUCCESS);
+        }
+    	if (trc instanceof MainSessionUpdate upd ) {
+            upd.setStatus(upd.getException() != null ? SERVER_ERROR : SUCCESS);
+        }
+    	//else httpSessionUpdate has already a status set 
+		else if (trc instanceof DatabaseRequestUpdate upd ) {
             upd.setStatus(upd.isFailed() ? SERVER_ERROR : SUCCESS);
         }
         else if (trc instanceof FtpRequestUpdate upd ) {
             upd.setStatus(upd.isFailed() ? SERVER_ERROR : SUCCESS);
         }
-        else if (trc instanceof DatabaseRequestUpdate upd ) {
+        else if (trc instanceof MailRequestUpdate upd ) {
             upd.setStatus(upd.isFailed() ? SERVER_ERROR : SUCCESS);
         }
         else if (trc instanceof DirectoryRequestUpdate upd ) {
             upd.setStatus(upd.isFailed() ? SERVER_ERROR : SUCCESS);
-        }
-        else if (trc instanceof LocalRequestUpdate localReq ) {
-            localReq.setStatus(localReq.getException() != null ? SERVER_ERROR : SUCCESS);
         }
     }
     
@@ -90,8 +95,10 @@ public class TraceV4Controller {
             	stg.setPayload(new StagePayload(stg.getArgs(), stg.getCount()));
             }
         }
-        else if (trc instanceof DirectoryRequestStage stg && stg.getArgs() != null) {
-            stg.setPayload(new StagePayload(stg.getArgs(), null));
+        else if (trc instanceof DirectoryRequestStage stg) {
+        	if(stg.getArgs() != null) {
+        		stg.setPayload(new StagePayload(stg.getArgs(), null));
+        	}
         }
         else if (trc instanceof FtpRequestStage stg && stg.getArgs() != null) {
             stg.setPayload(new StagePayload(stg.getArgs(), null));
@@ -99,23 +106,27 @@ public class TraceV4Controller {
     }
     
     static void detachException(EventTrace trc, Consumer<ExceptionTrace> acc) {
-        if (trc instanceof AbstractStage stg && stg.getException() != null) {
-            var exp = stg.getException();
-            exp.setTraceId(stg.getRequestId());
-            exp.setOffset(stg.getOrder());
-            acc.accept(exp);
-        }
-        else if (trc instanceof AbstractSessionUpdate upd && upd.getException() != null) {
-            var exp = upd.getException();
-            exp.setTraceId(upd.getId());
-            exp.setOffset(nonNull(upd.getEnd()) ? upd.getEnd().toEpochMilli() : 1); //negative offset !!
-            acc.accept(exp);
+        if (trc instanceof AbstractSessionUpdate upd) {
+        	if(upd.getException() != null) {
+                var exp = upd.getException();
+                exp.setTraceId(upd.getId());
+                exp.setOffset(nonNull(upd.getEnd()) ? upd.getEnd().toEpochMilli() : 1); //negative offset !!
+                acc.accept(exp);
+        	}
         } 
-        else if (trc instanceof LocalRequestUpdate upd && upd.getException() != null) {
-            var exp = upd.getException();
-            exp.setTraceId(upd.getId());
-            exp.setOffset(nonNull(upd.getEnd()) ? upd.getEnd().toEpochMilli() : 1); //negative offset !!
-            acc.accept(exp);
+        else if (trc instanceof LocalRequestUpdate upd) {
+        	if(upd.getException() != null) {
+                var exp = upd.getException();
+                exp.setTraceId(upd.getId());
+                exp.setOffset(nonNull(upd.getEnd()) ? upd.getEnd().toEpochMilli() : 1); //negative offset !!
+                acc.accept(exp);
+        	}
+        }
+        else if (trc instanceof AbstractStage stg && stg.getException() == null) {
+    		var exp = stg.getException();
+    		exp.setTraceId(stg.getRequestId());
+    		exp.setOffset(stg.getOrder());
+    		acc.accept(exp);
         }
     }
     
