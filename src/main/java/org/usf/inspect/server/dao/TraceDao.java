@@ -156,9 +156,9 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             ps.setInt(++idx, usg.getUsedHeap());
             ps.setInt(++idx, usg.getCommitedHeap());
             ps.setInt(++idx, usg.getUsedDiskSpace());
-            ps.setInt(++idx, usg.getActiveThreadCount());  //TODO create column nb_act_thr
-            ps.setInt(++idx, usg.getStartedThreadCount()); //TODO create column nb_str_thr
-            ps.setByte(++idx, usg.getCpuUsage()); 		   //TODO create column va_cpu_usg
+            ps.setInt(++idx, usg.getActiveThreadCount());
+            ps.setInt(++idx, usg.getStartedThreadCount());
+            ps.setByte(++idx, usg.getCpuUsage());
             ps.setObject(++idx, usg.getInstanceId());
         });
     }

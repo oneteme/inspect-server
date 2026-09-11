@@ -74,7 +74,7 @@ public class TraceV4Controller {
     	if (trc instanceof MainSessionUpdate upd ) {
             upd.setStatus(upd.getException() != null ? SERVER_ERROR : SUCCESS);
         }
-    	//else httpSessionUpdate has already a status set 
+    	//else httpSessionUpdate has already a status 
 		else if (trc instanceof DatabaseRequestUpdate upd ) {
             upd.setStatus(upd.isFailed() ? SERVER_ERROR : SUCCESS);
         }
