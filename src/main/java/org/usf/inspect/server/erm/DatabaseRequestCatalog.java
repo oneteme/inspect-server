@@ -1,12 +1,12 @@
 package org.usf.inspect.server.erm;
 
-import static org.usf.inspect.core.RequestMask.JDBC;
+import static org.usf.inspect.core.SessionMask.JDBC;
 import static org.usf.inspect.server.config.constant.FieldConstant.*;
 import static org.usf.jquery.core.JDBCType.UUID;
 import static org.usf.jquery.core.Predicate.*;
 import static org.usf.jquery.core.Predicate.lt;
 
-import org.usf.inspect.core.RequestMask;
+import org.usf.inspect.core.SessionMask;
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
@@ -50,7 +50,7 @@ public interface DatabaseRequestCatalog extends RequestCatalog {
 	ViewColumn parent();
 	
 	@Override
-	default RequestMask getRequestType() {
+	default SessionMask getRequestType() {
 		return JDBC;
 	}
 

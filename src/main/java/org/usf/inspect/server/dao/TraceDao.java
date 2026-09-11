@@ -55,6 +55,7 @@ import org.usf.inspect.core.MailRequestStage;
 import org.usf.inspect.core.MailRequestUpdate;
 import org.usf.inspect.core.MainSessionSignal;
 import org.usf.inspect.core.MainSessionUpdate;
+import org.usf.inspect.core.SessionEvent;
 import org.usf.inspect.core.SessionMaskUpdate;
 import org.usf.inspect.server.event.UnsavedEventTraceEvent;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
@@ -706,10 +707,21 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             ps.setString(++idx, exp.getType());
             ps.setString(++idx, exp.getMessage());
             ps.setObject(++idx, toJson(exp.getStackTraceRows()), OTHER);
-            ps.setObject(++idx, toJson(exp.getCause()), OTHER); //TODO add column va_cas 
+            ps.setObject(++idx, toJson(exp.getCause()), OTHER);
             ps.setLong(++idx, exp.getOffset());
             ps.setObject(++idx, exp.getTraceId());
-            //TODO delete va_typ column
+        });
+    }
+    
+    @Transactional(rollbackFor = Throwable.class)
+    public void saveSessionEvents(List<SessionEvent> exceptions) {
+        executeBatch("insert into e_ses_evt(dh_str,va_typ,va_cnt,va_lct,cd_ins) values(?,?,?,?,?,?)", exceptions, (ps, exp) -> {
+            var idx=0;
+            ps.setTimestamp(++idx, fromNullableInstant(exp.getInstant()));
+            ps.setString(++idx, exp.getType());
+            ps.setString(++idx, exp.getValue());
+            ps.setString(++idx, exp.getLocation());
+            ps.setObject(++idx, exp.getSessionId(), OTHER);
         });
     }
 

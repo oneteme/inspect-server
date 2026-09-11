@@ -1,6 +1,6 @@
 package org.usf.inspect.server.erm;
 
-import org.usf.inspect.core.RequestMask;
+import org.usf.inspect.core.SessionMask;
 import org.usf.jquery.core.JoinGroup;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
@@ -26,5 +26,5 @@ public interface StageCatalog extends DatasetCatalog<InspectStore> {
         return joins(leftJoin(exception.getView(), parent().eq(exception.parent()), exception.type().eq(getRequestType().name())));
     }
 
-    RequestMask getRequestType();
+    SessionMask getRequestType();
 }

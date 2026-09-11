@@ -27,6 +27,9 @@ import org.usf.inspect.server.config.ApplicationInspectPropertiesProvider;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @SpringBootApplication
 @EnableTransactionManagement
 @EnableScheduling
@@ -62,12 +65,17 @@ public class InspectApplication {
 
     @Bean //used by inspect-core to get application properties and git info
     @Lazy //only if inspect-core is used
-    public static ApplicationPropertiesProvider applicationPropertiesProvider(Environment env) throws IOException {
-        var props = new Properties();
-        var resource = new ClassPathResource("git.properties");
-        if(resource.exists()){
-            props.load(resource.getInputStream());
+    static ApplicationPropertiesProvider applicationPropertiesProvider(Environment env) {
+        var rsr = new ClassPathResource("git.properties");
+        var prp = new Properties();
+        if(rsr.exists()){
+        	try {
+        		prp.load(rsr.getInputStream());
+        	}
+        	catch (IOException e) {
+        		log.warn("Failed to load git.properties", e);
+			}
         }
-        return new ApplicationInspectPropertiesProvider(env, props);
+        return new ApplicationInspectPropertiesProvider(env, prp);
     }
 }
