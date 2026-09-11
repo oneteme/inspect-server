@@ -615,12 +615,12 @@ public class Mappers {
     public static RowMapper<UserAction> userActionRowMapper(){
         return (rs, row) -> {
             UserAction out = new UserAction(
-                    rs.getString("name"),
-                    rs.getString("nodeName"),
+                    fromNullableTimestamp(rs.getTimestamp("start")),
                     rs.getString("type"),
-                    fromNullableTimestamp(rs.getTimestamp("start"))
+                    rs.getString("name"),
+                    rs.getString("nodeName")
             );
-            out.setCdSession(rs.getString("parent"));
+            out.setCdSession(rs.getObject("parent", UUID.class));
             return out;
         };
     }

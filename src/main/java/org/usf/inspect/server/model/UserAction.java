@@ -9,7 +9,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Deprecated(forRemoval = true)
+@Deprecated(forRemoval = true, since = "v1.2")
 @RequiredArgsConstructor
 public class UserAction {
 	
@@ -17,6 +17,6 @@ public class UserAction {
 	private final String type; //web events, log 
     private final String name; //TODO value
     private final String nodeName; 
-    private String cdSession; //TODO UUID sessionId;
+    private UUID cdSession; //TODO UUID sessionId;
 
 }

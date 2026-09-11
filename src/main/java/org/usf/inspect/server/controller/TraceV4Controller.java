@@ -108,7 +108,7 @@ public class TraceV4Controller {
             ex.setTraceId(upd.getId());
             ex.setOffset(nonNull(upd.getEnd()) ? upd.getEnd().toEpochMilli() : 1); //negative offset !!
             acc.accept(ex);
-        }else if (trc instanceof LocalRequestUpdate upd && upd.getException() != null) {
+        } else if (trc instanceof LocalRequestUpdate upd && upd.getException() != null) {
             var ex = upd.getException();
             ex.setTraceId(upd.getId());
             ex.setOffset(nonNull(upd.getEnd()) ? upd.getEnd().toEpochMilli() : 1); //negative offset !!

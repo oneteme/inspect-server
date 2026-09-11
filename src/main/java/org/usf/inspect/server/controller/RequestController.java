@@ -801,12 +801,12 @@ public class RequestController {
             List<AnalyticDto> sessions = new ArrayList<>();
             while (rs.next()) {
                 var userAction =  new UserAction(
-                        rs.getString("action_name"),
-                        rs.getString("nodeName"),
+                        fromNullableTimestamp(rs.getTimestamp("action_start")),
                         rs.getString("type"),
-                        fromNullableTimestamp(rs.getTimestamp("action_start"))
+                        rs.getString("action_name"),
+                        rs.getString("nodeName")
                 );
-                var cdSession = rs.getString("id");
+                var cdSession = rs.getObject("id", UUID.class);
                 var session = sessions.stream().filter(s -> s.getId().equals(cdSession)).findFirst().orElse(null);
                 if(session == null) {
                     session = new AnalyticDto();
