@@ -38,7 +38,7 @@ public class TraceV4Controller {
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<Object> addInstanceEnvironment(
             @RequestBody InstanceEnvironment instance){
-        //Rétrocompatibilité namespace
+        //Rétrocompatibilité namespace //TODO to English 
         if (instance != null && instance.getEnv() != null) {
             instance.setNamespace((namespacePrefix +"-"+ instance.getEnv()).toUpperCase());
         }
