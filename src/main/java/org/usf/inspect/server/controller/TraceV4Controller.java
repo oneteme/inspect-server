@@ -92,12 +92,12 @@ public class TraceV4Controller {
             } else if (t instanceof AbstractSessionUpdate ses && ses.getException() != null) {
                 var ex = ses.getException();
                 ex.setTraceId(ses.getId());
-                ex.setOffset(nonNull(ses.getEnd()) ? end.toEpochMilli() : 1);
+                ex.setOffset(nonNull(ses.getEnd()) ? ses.getEnd().toEpochMilli() : 1);
                 extractedExceptions.add(ex);
             }else if (t instanceof LocalRequestUpdate req && req.getException() != null) {
                 var ex = req.getException();
                 ex.setTraceId(req.getId());
-                ex.setOffset(nonNull(req.getEnd()) ? end.toEpochMilli() : 1);
+                ex.setOffset(nonNull(req.getEnd()) ? req.getEnd().toEpochMilli() : 1);
                 extractedExceptions.add(ex);
             }
 
