@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;
-import org.usf.inspect.core.ExceptionInfo;
+import org.usf.inspect.core.ExceptionTrace;
 import org.usf.inspect.core.HttpSessionSignal;
 import org.usf.inspect.core.HttpSessionUpdate;
 
@@ -24,12 +24,13 @@ public class RestSession extends AbstractSession {
 	private String name; //api name
 	private String userAgent; //Mozilla, Chrome, curl, Postman,..
 	private String cacheControl; //max-age, no-cache
-	private ExceptionInfo exception;
+	private ExceptionTrace exception;
 
 	@JsonCreator public RestSession() {
 		this.rest = new RestRequest();
 	}
 
+	@Deprecated(forRemoval = true)
     public HttpSessionSignal toSession() {
         HttpSessionSignal ses = new HttpSessionSignal(getId(), getStart(), getThreadName());
         ses.setMethod(getMethod());
@@ -49,6 +50,7 @@ public class RestSession extends AbstractSession {
         return ses;
     }
 
+	@Deprecated(forRemoval = true)
     public HttpSessionUpdate toCallback() {
         HttpSessionUpdate cb = new HttpSessionUpdate(getId());
         cb.setEnd(getEnd());

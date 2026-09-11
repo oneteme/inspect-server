@@ -7,7 +7,7 @@ import org.usf.inspect.core.MailRequestSignal;
 import org.usf.inspect.core.MailRequestUpdate;
 
 /**
- * 
+ *
  * @author u$f
  *
  */
@@ -15,16 +15,22 @@ import org.usf.inspect.core.MailRequestUpdate;
 @Getter
 public class MailRequest extends AbstractRequest {
 
-	private String protocol; //smtp(s), imap, pop3
-	private String host;
-	private int port;
-	private boolean failed;
+    private String protocol; //smtp(s), imap, pop3
+    private String host;
+    private int port;
+    /**
+     * @deprecated As of version v5, replaced by status .
+     * Will be removed in a future release.
+     */
+    @Deprecated
+    private boolean failed;
 
-	@JsonCreator public MailRequest() {
+    @JsonCreator public MailRequest() {
         // empty
     }
 
-	public MailRequestSignal toRequest() {
+	@Deprecated(forRemoval = true)
+    public MailRequestSignal toRequest() {
         MailRequestSignal req = new MailRequestSignal(getId(), getSessionId(), getStart(), getThreadName());
         req.setInstanceId(getInstanceId());
         req.setUser(getUser());
@@ -34,6 +40,7 @@ public class MailRequest extends AbstractRequest {
         return req;
     }
 
+	@Deprecated(forRemoval = true)
     public MailRequestUpdate toCallback() {
         MailRequestUpdate cb = new MailRequestUpdate(getId());
         cb.setEnd(getEnd());

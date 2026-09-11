@@ -6,6 +6,8 @@ import lombok.Setter;
 import org.usf.inspect.core.HttpRequestSignal;
 import org.usf.inspect.core.HttpRequestUpdate;
 
+import java.util.List;
+
 /**
  * 
  * @author u$f
@@ -23,16 +25,18 @@ public class RestRequest extends AbstractRequest { //APiRequest
 	private String query; //request parameters
 	private String contentType; //text/html, application/json, application/xml,.. in/out ?
 	private String authScheme; //Basic, Bearer, Digest, OAuth,..
-	private int status; //2xx, 4xx, 5xx, 0 otherwise
+	private short status; //2xx, 4xx, 5xx, 0 otherwise
 	private long inDataSize; //in bytes, -1 unknown
 	private long outDataSize; //in bytes, -1 unknown
 	private String inContentEncoding; //gzip, compress, identity,..
 	private String outContentEncoding; //gzip, compress, identity,..
 	private String bodyContent; //incoming content, //4xx, 5xx only
 	private boolean linked;
+    private List<String> intermediateNodes; //intermediate nodes
 	
 	@JsonCreator public RestRequest() { }
 
+	@Deprecated(forRemoval = true)
     public HttpRequestSignal toRequest() {
         HttpRequestSignal req = new HttpRequestSignal(getId(), getSessionId(), getStart(), getThreadName());
         req.setProtocol(getProtocol());
@@ -49,6 +53,7 @@ public class RestRequest extends AbstractRequest { //APiRequest
         return req;
     }
 
+	@Deprecated(forRemoval = true)
     public HttpRequestUpdate toCallback() {
         HttpRequestUpdate cb = new HttpRequestUpdate(getId());
         cb.setStatus(getStatus());

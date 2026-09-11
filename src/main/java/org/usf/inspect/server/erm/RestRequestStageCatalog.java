@@ -1,12 +1,12 @@
 package org.usf.inspect.server.erm;
 
-import org.usf.inspect.core.RequestMask;
+import org.usf.inspect.core.SessionMask;
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.Typed;
 
-import static org.usf.inspect.core.RequestMask.REST;
+import static org.usf.inspect.core.SessionMask.REST;
 import static org.usf.inspect.server.config.constant.FieldConstant.*;
 import static org.usf.jquery.core.JDBCType.UUID;
 
@@ -23,7 +23,7 @@ public interface RestRequestStageCatalog extends StageCatalog {
 	ViewColumn parent();
 
 	@Override
-	default RequestMask getRequestType() {
+	default SessionMask getRequestType() {
 		return REST;
 	}
 

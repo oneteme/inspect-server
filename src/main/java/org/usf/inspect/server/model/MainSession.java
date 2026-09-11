@@ -24,6 +24,7 @@ public class MainSession extends AbstractSession {
 		this.local = new LocalRequest();
 	}
 
+	@Deprecated(forRemoval = true)
     public MainSessionSignal toSession() {
         var session = new MainSessionSignal(getId(), getStart(), getThreadName(), getType());
         session.setLocation(getLocation());
@@ -33,6 +34,7 @@ public class MainSession extends AbstractSession {
         return session;
     }
 
+	@Deprecated(forRemoval = true)
     public MainSessionUpdate toCallback() {
         var callback = new MainSessionUpdate(getId());
         callback.setStart(getStart());

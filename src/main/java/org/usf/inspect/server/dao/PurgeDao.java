@@ -1,16 +1,13 @@
 package org.usf.inspect.server.dao;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import org.usf.inspect.core.InspectCollectorConfiguration;
-import org.usf.inspect.core.InstanceEnvironment;
-import org.usf.inspect.core.InstanceType;
-import org.usf.inspect.core.RestRemoteServerProperties;
+import org.usf.inspect.core.*;
+import org.usf.inspect.server.InspectApplication;
 import org.usf.inspect.server.erm.InspectStore;
 import org.usf.inspect.server.erm.InstanceCatalog;
 import org.usf.jquery.core.Column;
@@ -20,27 +17,45 @@ import org.usf.jquery.mvc.StoreManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static java.sql.Types.OTHER;
 import static java.time.Duration.ofDays;
 import static java.util.Arrays.stream;
 import static java.util.Objects.nonNull;
-import static java.util.Objects.requireNonNullElseGet;
-import static org.usf.inspect.core.RequestMask.*;
+import static org.usf.inspect.core.SessionMask.*;
 import static org.usf.inspect.core.SessionContextManager.emitError;
+import static org.usf.inspect.server.JsonUtils.fromJson;
+import static org.usf.inspect.server.JsonUtils.toJson;
 import static org.usf.jquery.core.Column.ctimestamp;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Slf4j
 @Repository
 @RequiredArgsConstructor
 public class PurgeDao {
 
+    private static final Duration DEFAULT_RETENTION = ofDays(30);
+   // InspectApplication app = InspectApplication.defaultInstance;
+
+    private static final Retention DEFAULT_RETENTION_CONFIG = new Retention(DEFAULT_RETENTION, DEFAULT_RETENTION);
+
     private final ObjectMapper mapper;
     private final JdbcTemplate template;
+    public record PurgeScope(
+            InstanceType type,
+            String env,
+            String app,
+            Retention retention
+    ) {}
 
-    public List<InstanceEnvironment> selectInstances() {
+
+
+    public List<PurgeScope> selectInstances() {
         InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
         InstanceCatalog instance = store.instance();
         return store.execute(store.newQuery(v ->
@@ -55,7 +70,8 @@ public class PurgeDao {
                                 new Order[] {instance.end().coalesce(ctimestamp()).desc(), instance.start().desc()}
                         ).eq(1)
                 )
-        ), this::mapInstances);
+        ),  rs -> mapScopes(rs, instance));
+
     }
 
     public List<String> selectInstanceIds(Timestamp before, String env, String app, InstanceType type) {
@@ -231,24 +247,24 @@ public class PurgeDao {
     }
 
     public Stream<Runnable> vacuumTables(){
-    	return Stream.of(
-    		//instance !?
-			()-> vacuum("e_rst_ses"),
-			()-> vacuum("e_main_ses"),
-			()-> vacuum("e_rst_rqt"),
-			()-> vacuum("e_dtb_rqt"),
-			()-> vacuum("e_ftp_rqt"),
-			()-> vacuum("e_smtp_rqt"),
-			()-> vacuum("e_ldap_rqt"),
-			()-> vacuum("e_lcl_rqt"),
-			()-> vacuum("e_rst_ses_stg"),
-			()-> vacuum("e_rst_rqt_stg"),
-			()-> vacuum("e_smtp_stg"),
-			()-> vacuum("e_ftp_stg"),
-			()-> vacuum("e_ldap_stg"),
-			()-> vacuum("e_dtb_stg"),
-			()-> vacuum("e_ins_trc"),
-			()-> vacuum("e_rsc_usg"));
+        return Stream.of(
+                //instance !?
+                ()-> vacuum("e_rst_ses"),
+                ()-> vacuum("e_main_ses"),
+                ()-> vacuum("e_rst_rqt"),
+                ()-> vacuum("e_dtb_rqt"),
+                ()-> vacuum("e_ftp_rqt"),
+                ()-> vacuum("e_smtp_rqt"),
+                ()-> vacuum("e_ldap_rqt"),
+                ()-> vacuum("e_lcl_rqt"),
+                ()-> vacuum("e_rst_ses_stg"),
+                ()-> vacuum("e_rst_rqt_stg"),
+                ()-> vacuum("e_smtp_stg"),
+                ()-> vacuum("e_ftp_stg"),
+                ()-> vacuum("e_ldap_stg"),
+                ()-> vacuum("e_dtb_stg"),
+                ()-> vacuum("e_ins_trc"),
+                ()-> vacuum("e_rsc_usg"));
     }
 
     private int purgeRequest(String tableSuffix, String ids, Timestamp before, boolean withEnd) {
@@ -286,13 +302,13 @@ public class PurgeDao {
                 " AND rqt.dh_end < '" + before + "'";
 
         var stageQuery = "DELETE FROM e_" + stageTableSuffix +
-                 " WHERE cd_" + tableSuffix + " IN (" + subQuery + ") " +
-                 " AND dh_str < '" + before + "' " +
-                 " AND dh_end < '" + before + "'";
+                " WHERE cd_" + tableSuffix + " IN (" + subQuery + ") " +
+                " AND dh_str < '" + before + "' " +
+                " AND dh_end < '" + before + "'";
 
         var exceptionQuery = "DELETE FROM e_exc_inf" +
-                    " WHERE cd_rqt IN (" + subQuery + ") " +
-                    " AND va_typ = '" + type + "'";
+                " WHERE cd_rqt IN (" + subQuery + ") " +
+                " AND va_typ = '" + type + "'";
 
         return stream(template.batchUpdate(stageQuery, exceptionQuery)).sum();
     }
@@ -306,38 +322,23 @@ public class PurgeDao {
         }
     }
 
-    List<InstanceEnvironment> mapInstances(ResultSet rs) throws SQLException{
-        var envs = new ArrayList<InstanceEnvironment>();
+    List<PurgeScope> mapScopes(ResultSet rs, InstanceCatalog instance) throws SQLException {
+        var out = new ArrayList<PurgeScope>();
         while (rs.next()) {
-            InspectCollectorConfiguration conf = null;
-            try {
-                conf = rs.getString("configuration") != null
-                        ? mapper.readValue(rs.getString("configuration"), InspectCollectorConfiguration.class)
-                        : null;
-            } catch (JsonProcessingException e) {
-                emitError("Error parsing configuration for instance [" + rs.getString("environment") + "]:[" + rs.getString("appName") + "]");
-            }
-            finally {
-                envs.add(createInstanceEnvironment(
-                		rs.getString("type"),
-                        rs.getString("appName"),
-                        rs.getString("environment"),
-                        requireNonNullElseGet(conf, PurgeDao::defaultConfig)));
-            }
+            var app = rs.getString(instance.appName().toString());
+            var env = rs.getString(instance.environement().toString());
+            var type = InstanceType.valueOf(rs.getString(instance.type().toString()));
+            var raw = rs.getString(instance.configuration().toString());
+
+            var config = fromJson(raw, InspectCollectorConfiguration.class);
+            var rtt = config == null ? DEFAULT_RETENTION_CONFIG : config.getTracing().getRemote().getRetentionMaxAge();
+            // On extrait directement les durées depuis l'objet Retention //TODO English
+            out.add(new PurgeScope(type, env, app, rtt));
         }
-        return envs;
-}
-
-
-    private static InstanceEnvironment createInstanceEnvironment(String type, String env, String app, InspectCollectorConfiguration conf) {
-        return new InstanceEnvironment(null, null, InstanceType.valueOf(type), app, null, env, null, null, null, null, null, null, null, null, conf);
+        return out;
     }
 
-    private static InspectCollectorConfiguration defaultConfig() {
-        var conf = new InspectCollectorConfiguration();
-        var rmt = new RestRemoteServerProperties();
-        rmt.setRetentionMaxAge(ofDays(60));
-        conf.getTracing().setRemote(rmt);
-        return conf;
-    }
+
+
+
 }

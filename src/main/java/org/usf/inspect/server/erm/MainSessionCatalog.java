@@ -107,9 +107,9 @@ public interface MainSessionCatalog extends DatasetCatalog<InspectStore> {
 
 	default Column status() {
 		return Column.beginCase()
-				.when(end().isNull(), -1)
-				.when(errType().notNull(), 1)
-				.when(errType().isNull(), 0)
+				.when(end().isNull(), null)
+				.when(errType().notNull(), 500)
+				.when(errType().isNull(), 200)
 				.compose().as("status");
 	}
 

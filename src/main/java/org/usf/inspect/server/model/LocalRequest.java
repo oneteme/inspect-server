@@ -3,7 +3,7 @@ package org.usf.inspect.server.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Getter;
 import lombok.Setter;
-import org.usf.inspect.core.ExceptionInfo;
+import org.usf.inspect.core.ExceptionTrace;
 import org.usf.inspect.core.LocalRequestSignal;
 import org.usf.inspect.core.LocalRequestUpdate;
 
@@ -19,10 +19,11 @@ public class LocalRequest extends AbstractRequest {
 	private String name; //title, topic
 	private String type;
 	private String location; //class.method, URL
-	private ExceptionInfo exception;
+	private ExceptionTrace exception;
 	
 	@JsonCreator public LocalRequest() { }
 
+	@Deprecated(forRemoval = true)
     public LocalRequestSignal toRequest() {
         var req = new LocalRequestSignal(getId(), getSessionId(), getStart(), getThreadName());
         req.setLocation(getLocation());
@@ -33,6 +34,7 @@ public class LocalRequest extends AbstractRequest {
         return req;
     }
 
+	@Deprecated(forRemoval = true)
     public LocalRequestUpdate toCallback() {
         var callback = new LocalRequestUpdate(getId());
         callback.setEnd(getEnd());
