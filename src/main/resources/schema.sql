@@ -1,50 +1,51 @@
 CREATE TABLE IF NOT EXISTS e_main_ses (
-	id_ses UUID,
-	va_typ varchar,
-	va_nam varchar,
-	va_usr varchar,
-	dh_str timestamp(6),
-	dh_end timestamp(6),
-	va_lct varchar,
-	va_thr varchar,
-	--va_err_typ varchar, deprecated
-	--va_err_msg varchar, deprecated
-	--va_stk text, deprecated
-	va_msk int,
-	cd_ins UUID
-);
+	  id_ses UUID,
+	  va_typ varchar,
+	  va_nam varchar,
+	  va_usr varchar,
+	  dh_str timestamp(6),
+      dh_end timestamp(6),
+      va_lct varchar,
+      va_thr varchar,
+    --va_err_typ varchar, deprecated
+    --va_err_msg varchar, deprecated
+    --va_stk text, deprecated
+      va_msk int,
+      cd_ins UUID,
+      cd_stt SMALLINT
+    );
 
 CREATE TABLE IF NOT EXISTS e_rst_ses (
-	id_ses UUID,
-	va_mth varchar,
-	va_pcl varchar,
-	va_hst varchar,
-	cd_prt int,
-	va_pth varchar,
-	va_qry varchar,
-	va_cnt_typ varchar,
-	va_ath_sch varchar,
-	cd_stt int,
-	va_i_sze bigint,
-	va_o_sze bigint,
-	va_i_cnt_enc varchar,
-	va_o_cnt_enc varchar,
-	dh_str timestamp(6),
-	dh_end timestamp(6),
-	va_thr varchar,
---va_err_typ varchar, deprecated
---va_err_msg varchar,  deprecated
---va_stk text,  deprecated
-	va_nam varchar,
-	va_usr varchar,
-	va_usr_agt varchar,
-	va_cch_ctr varchar,
-	va_msk int,
-	va_lnk boolean,
-	va_int_nds text,
-	cd_ins UUID,
-	va_fwd_add varchar
-);
+     id_ses UUID,
+     va_mth varchar,
+     va_pcl varchar,
+     va_hst varchar,
+     cd_prt int,
+     va_pth varchar,
+     va_qry varchar,
+     va_cnt_typ varchar,
+     va_ath_sch varchar,
+     cd_stt SMALLINT,
+     va_i_sze bigint,
+     va_o_sze bigint,
+     va_i_cnt_enc varchar,
+     va_o_cnt_enc varchar,
+     dh_str timestamp(6),
+    dh_end timestamp(6),
+    va_thr varchar,
+    --va_err_typ varchar, deprecated
+    --va_err_msg varchar,  deprecated
+    --va_stk text,  deprecated
+    va_nam varchar,
+    va_usr varchar,
+    va_usr_agt varchar,
+    va_cch_ctr varchar,
+    va_msk int,
+    va_lnk boolean,
+    va_int_nds text,
+    cd_ins UUID,
+    va_fwd_add varchar
+    );
 
 CREATE TABLE IF NOT EXISTS e_rst_ses_stg (
 	va_nam varchar,
@@ -55,29 +56,29 @@ CREATE TABLE IF NOT EXISTS e_rst_ses_stg (
 );
 
 CREATE TABLE IF NOT EXISTS e_rst_rqt (
-	id_rst_rqt UUID,
-	va_mth varchar,
-	va_pcl varchar,
-	va_hst varchar,
-	cd_prt int,
-	va_pth varchar,
-	va_qry varchar,
-	va_cnt_typ varchar,
-	va_ath_sch varchar,
-	cd_stt int,
-	va_i_sze bigint,
-	va_o_sze bigint,
-	va_i_cnt_enc varchar,
-	va_o_cnt_enc varchar,
-	dh_str timestamp(6),
-	dh_end timestamp(6),
-	va_bdy_cnt varchar,
-	va_thr varchar,
-	va_usr varchar,
-	va_lnk boolean,
-	cd_prn_ses UUID,
-	cd_ins UUID
-);
+	 id_rst_rqt UUID,
+	 va_mth varchar,
+	 va_pcl varchar,
+	 va_hst varchar,
+	 cd_prt int,
+	 va_pth varchar,
+	 va_qry varchar,
+	 va_cnt_typ varchar,
+	 va_ath_sch varchar,
+	 cd_stt SMALLINT,
+	 va_i_sze bigint,
+	 va_o_sze bigint,
+	 va_i_cnt_enc varchar,
+	 va_o_cnt_enc varchar,
+	 dh_str timestamp(6),
+     dh_end timestamp(6),
+     va_bdy_cnt varchar,
+     va_thr varchar,
+     va_usr varchar,
+     va_lnk boolean,
+     cd_prn_ses UUID,
+     cd_ins UUID
+    );
 
 CREATE TABLE IF NOT EXISTS e_rst_rqt_stg (
 	va_nam varchar,
@@ -208,17 +209,18 @@ CREATE TABLE IF NOT EXISTS e_dtb_stg (
 );
 
 CREATE TABLE IF NOT EXISTS e_lcl_rqt (
-	id_lcl_rqt UUID,
-	va_typ varchar,
-	va_nam varchar,
-	va_lct varchar,
-	dh_str timestamp(6),
-	dh_end timestamp(6),
-	va_usr varchar,
-	va_thr varchar,
-	cd_prn_ses UUID,
-	cd_ins UUID
-);
+    id_lcl_rqt UUID,
+    va_typ varchar,
+    va_nam varchar,
+    va_lct varchar,
+    dh_str timestamp(6),
+    dh_end timestamp(6),
+    va_usr varchar,
+    va_thr varchar,
+    cd_prn_ses UUID,
+    cd_ins UUID,
+    cd_stt SMALLINT
+    );
 
 CREATE TABLE IF NOT EXISTS e_exc_inf (
 	--va_typ varchar, deprecated

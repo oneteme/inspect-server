@@ -9,7 +9,6 @@ import org.usf.inspect.core.*;
 import org.usf.inspect.core.LogEntry.Level;
 import org.usf.inspect.server.model.UserAction;
 import org.usf.inspect.server.service.TraceService;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,8 +18,7 @@ import java.util.function.Consumer;
 import static java.util.Objects.nonNull;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
-import static org.usf.inspect.core.DualEventTracer.SERVER_ERROR;
-import static org.usf.inspect.core.DualEventTracer.SUCCESS;
+import static org.usf.inspect.core.DualEventTracer.*;
 
 @Slf4j
 @CrossOrigin
@@ -39,7 +37,7 @@ public class TraceV4Controller {
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<Object> addInstanceEnvironment(
             @RequestBody InstanceEnvironment instance){
-        //Rétrocompatibilité namespace //TODO to English 
+        //Backward compatibility for namespace
         if (instance != null && instance.getEnv() != null) {
             instance.setNamespace((namespacePrefix +"-"+ instance.getEnv()).toUpperCase());
         }
@@ -74,7 +72,7 @@ public class TraceV4Controller {
     	if (trc instanceof MainSessionUpdate upd ) {
             upd.setStatus(upd.getException() != null ? SERVER_ERROR : SUCCESS);
         }
-    	//else httpSessionUpdate has already a status 
+    	//else httpSessionUpdate has already a status set
 		else if (trc instanceof DatabaseRequestUpdate upd ) {
             upd.setStatus(upd.isFailed() ? SERVER_ERROR : SUCCESS);
         }
@@ -113,7 +111,7 @@ public class TraceV4Controller {
                 exp.setOffset(nonNull(upd.getEnd()) ? upd.getEnd().toEpochMilli() : 1); //negative offset !!
                 acc.accept(exp);
         	}
-        } 
+        }
         else if (trc instanceof LocalRequestUpdate upd) {
         	if(upd.getException() != null) {
                 var exp = upd.getException();
@@ -129,7 +127,7 @@ public class TraceV4Controller {
     		acc.accept(exp);
         }
     }
-    
+
     static void convertToSessionEvent(EventTrace trc, Consumer<SessionEvent> acc) {
     	if(trc instanceof LogEntry log) {
     		if(log.getSessionId() != null && log.getLevel() != Level.REPORT) {

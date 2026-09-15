@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS e_main_ses (
     -- va_err_msg varchar,deprecated
     --  va_stk json,deprecated
     va_msk int,
-    cd_ins UUID
+    cd_ins UUID,
+    cd_stt SMALLINT
 )
 PARTITION BY RANGE (dh_str);
 
@@ -25,7 +26,7 @@ CREATE TABLE IF NOT EXISTS e_rst_ses (
     va_qry varchar,
     va_cnt_typ varchar,
     va_ath_sch varchar, 
-    cd_stt int,
+    cd_stt SMALLINT,
     va_i_sze bigint,
     va_o_sze bigint,
     va_i_cnt_enc varchar,
@@ -67,7 +68,7 @@ CREATE TABLE IF NOT EXISTS e_rst_rqt (
     va_qry varchar,
     va_cnt_typ varchar,
     va_ath_sch varchar,
-    cd_stt int,
+    cd_stt SMALLINT,
     va_i_sze bigint,
     va_o_sze bigint,
     va_i_cnt_enc varchar,
@@ -230,7 +231,8 @@ CREATE TABLE IF NOT EXISTS e_lcl_rqt (
     va_usr varchar,
     va_thr varchar,
     cd_prn_ses UUID,
-    cd_ins UUID
+    cd_ins UUID,
+    cd_stt SMALLINT
 )
 PARTITION BY RANGE (dh_str);
 
