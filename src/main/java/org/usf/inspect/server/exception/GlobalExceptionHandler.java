@@ -1,5 +1,7 @@
 package org.usf.inspect.server.exception;
 
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.PAYLOAD_TOO_LARGE;
 import static org.springframework.http.ResponseEntity.status;
 
@@ -14,11 +16,27 @@ import org.usf.jquery.core.LimitExceededException;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler //TODO choose between @ControllerAdvice and @RestControllerAdvice
-    public ResponseEntity<Map<String, String>> handlePayloadTooLargeException(LimitExceededException ex){
+    @ExceptionHandler(LimitExceededException.class)
+    public ResponseEntity<Map<String, String>> handlePayloadTooLargeException(LimitExceededException ex) {
         Map<String, String> body = new HashMap<>();
-        body.put("error","PAYLOAD_TOO_LARGE"); //TODO realy need this ? client can easily detect it from http status code
-        body.put("message","Données trop volumineuses, Veuillez affiner votre requête"); //TODO i18n
-        return status(PAYLOAD_TOO_LARGE).body(body); //TODO use Map.of
+        body.put("error", "PAYLOAD_TOO_LARGE");
+        body.put("message", "Données trop volumineuses, Veuillez affiner votre requête");
+        return status(PAYLOAD_TOO_LARGE).body(body);
+    }
+
+    @ExceptionHandler(InvalidNamespaceException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidNamespaceException(InvalidNamespaceException ex) {
+        Map<String, String> body = new HashMap<>();
+        body.put("error", "NAMESPACE_INVALID");
+        body.put("message", ex.getMessage());
+        return status(BAD_REQUEST).body(body);
+    }
+
+    @ExceptionHandler(NamespaceAlreadyExistsException.class)
+    public ResponseEntity<Map<String, String>> handleNamespaceAlreadyExistsException(NamespaceAlreadyExistsException ex) {
+        Map<String, String> body = new HashMap<>();
+        body.put("error", "NAMESPACE_ALREADY_EXIST");
+        body.put("message", ex.getMessage());
+        return status(CONFLICT).body(body);
     }
 }
