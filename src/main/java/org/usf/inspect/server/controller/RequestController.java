@@ -800,11 +800,11 @@ public class RequestController {
         return store.execute(mvc.getComposer().compose(store), rs -> {
             List<AnalyticDto> sessions = new ArrayList<>();
             while (rs.next()) {
-                var userAction =  new UserAction(
-                        rs.getString("action_name"),
-                        rs.getString("nodeName"),
+                var userAction =  new UserAction(fromNullableTimestamp(rs.getTimestamp("action_start")),
                         rs.getString("type"),
-                        fromNullableTimestamp(rs.getTimestamp("action_start"))
+                        rs.getString("action_name"),
+                        rs.getString("nodeName")
+
                 );
                 var cdSession = rs.getString("id");
                 var session = sessions.stream().filter(s -> s.getId().equals(cdSession)).findFirst().orElse(null);

@@ -7,6 +7,7 @@ import static org.usf.inspect.server.Utils.fromNullableTimestamp;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -614,11 +615,12 @@ public class Mappers {
 
     public static RowMapper<UserAction> userActionRowMapper(){
         return (rs, row) -> {
-            UserAction out = new UserAction(
-                    rs.getString("name"),
-                    rs.getString("nodeName"),
+            UserAction out = new UserAction( fromNullableTimestamp(rs.getTimestamp("start")),
                     rs.getString("type"),
-                    fromNullableTimestamp(rs.getTimestamp("start"))
+                    rs.getString("name"),
+                    rs.getString("nodeName")
+
+
             );
             out.setCdSession(rs.getString("parent"));
             return out;

@@ -28,35 +28,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import org.usf.inspect.core.DatabaseRequestSignal;
-import org.usf.inspect.core.DatabaseRequestStage;
-import org.usf.inspect.core.DatabaseRequestUpdate;
-import org.usf.inspect.core.DirectoryRequestSignal;
-import org.usf.inspect.core.DirectoryRequestStage;
-import org.usf.inspect.core.DirectoryRequestUpdate;
-import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.ExceptionTrace;
-import org.usf.inspect.core.FtpRequestSignal;
-import org.usf.inspect.core.FtpRequestStage;
-import org.usf.inspect.core.FtpRequestUpdate;
-import org.usf.inspect.core.HttpRequestSignal;
-import org.usf.inspect.core.HttpRequestStage;
-import org.usf.inspect.core.HttpRequestUpdate;
-import org.usf.inspect.core.HttpSessionSignal;
-import org.usf.inspect.core.HttpSessionStage;
-import org.usf.inspect.core.HttpSessionUpdate;
-import org.usf.inspect.core.InstanceEnvironment;
-import org.usf.inspect.core.LocalRequestSignal;
-import org.usf.inspect.core.LocalRequestUpdate;
-import org.usf.inspect.core.LogEntry;
-import org.usf.inspect.core.MachineResourceUsage;
-import org.usf.inspect.core.MailRequestSignal;
-import org.usf.inspect.core.MailRequestStage;
-import org.usf.inspect.core.MailRequestUpdate;
-import org.usf.inspect.core.MainSessionSignal;
-import org.usf.inspect.core.MainSessionUpdate;
-import org.usf.inspect.core.SessionEvent;
-import org.usf.inspect.core.SessionMaskUpdate;
+import org.usf.inspect.core.*;
 import org.usf.inspect.server.event.UnsavedEventTraceEvent;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.Pair;
@@ -260,7 +232,7 @@ where id_ses=?""", updates, (ps, upd) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveMainSessions(List<Pair<MainSessionSignal, MainSessionUpdate>> sessions) {
-    	executeBatchPair("insert into e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str,dh_end,va_msk) values(?,?,?,?,?,?,?,?,?,?)", sessions, (ps, pr) -> {
+    	executeBatchPair("insert into e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str,dh_end,va_msk,cd_stt) values(?,?,?,?,?,?,?,?,?,?,?)", sessions, (ps, pr) -> {
             var sgn = pr.signal();
             var upd = pr.update();
             var idx = mainSessionSignalSetter(ps, sgn);
@@ -270,6 +242,7 @@ where id_ses=?""", updates, (ps, upd) -> {
             ps.setTimestamp(++idx, fromNullableInstant(nonNull(upd.getStart()) ? upd.getStart() : sgn.getStart()));
             ps.setTimestamp(++idx, fromNullableInstant(upd.getEnd()));
             ps.setInt(++idx, upd.getRequestMask().get());
+            ps.setShort(++idx, upd.getStatus());
         });
     }
 
@@ -285,7 +258,7 @@ where id_ses=?""", updates, (ps, upd) -> {
     @Transactional(rollbackFor = Throwable.class)
     public void updateMainSessions(List<MainSessionUpdate> updates) {
         executeBatch("""
-update e_main_ses set va_lct=coalesce(?, va_lct), va_nam=coalesce(?, va_nam), va_usr=coalesce(?, va_usr), dh_str=coalesce(?, dh_str), dh_end=?, va_msk=?
+update e_main_ses set va_lct=coalesce(?, va_lct), va_nam=coalesce(?, va_nam), va_usr=coalesce(?, va_usr), dh_str=coalesce(?, dh_str), dh_end=?, va_msk=?, cd_stt=?
 where id_ses=?""", updates, (ps, upd) -> {
             var idx = 0;
             ps.setString(++idx, upd.getLocation());
@@ -294,6 +267,7 @@ where id_ses=?""", updates, (ps, upd) -> {
             ps.setTimestamp(++idx, fromNullableInstant(upd.getStart()));
             ps.setTimestamp(++idx, fromNullableInstant(upd.getEnd()));
             ps.setInt(++idx, upd.getRequestMask().get());
+            ps.setShort(++idx, upd.getStatus());
             ps.setObject(++idx, upd.getId());
         });
     }
@@ -404,7 +378,7 @@ values(?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateLocalRequests(List<LocalRequestUpdate> requests) {
-        executeBatch("update e_lcl_rqt set dh_str=coalesce(?, dh_str), dh_end=?, status=? where id_lcl_rqt=?", requests, (ps, upd) -> {
+        executeBatch("update e_lcl_rqt set dh_str=coalesce(?, dh_str), dh_end=?, cd_stt=? where id_lcl_rqt=?", requests, (ps, upd) -> {
             var idx = 0;
             ps.setTimestamp(++idx, fromNullableInstant(upd.getStart()));
             ps.setTimestamp(++idx, fromNullableInstant(upd.getEnd()));
@@ -450,7 +424,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateMailRequests(List<MailRequestUpdate> updates) {
-        executeBatch("update e_smtp_rqt set dh_end=?, va_cmd=?, status=? where id_smtp_rqt=?", updates, (ps, upd) -> {
+        executeBatch("update e_smtp_rqt set dh_end=?, va_cmd=?, cd_stt=? where id_smtp_rqt=?", updates, (ps, upd) -> {
             var idx = 0;
             ps.setTimestamp(++idx, fromNullableInstant(upd.getEnd()));
             ps.setString(++idx, upd.getCommand());
@@ -498,7 +472,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateFtpRequests(List<FtpRequestUpdate> updates) {
-        executeBatch("update e_ftp_rqt set dh_end=?, va_cmd=?, status=? where id_ftp_rqt=?", updates, (ps, upd) -> {
+        executeBatch("update e_ftp_rqt set dh_end=?, va_cmd=?, cd_stt=? where id_ftp_rqt=?", updates, (ps, upd) -> {
             var idx = 0;
             ps.setTimestamp(++idx, fromNullableInstant(upd.getEnd()));
             ps.setString(++idx, upd.getCommand());
@@ -544,7 +518,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateLdapRequests(List<DirectoryRequestUpdate> updates) {
-        executeBatch("update e_ldap_rqt set dh_end=?, va_cmd=?, status=? where id_ldap_rqt=?", updates, (ps, upd) -> {
+        executeBatch("update e_ldap_rqt set dh_end=?, va_cmd=?, cd_stt=? where id_ldap_rqt=?", updates, (ps, upd) -> {
             var idx = 0;
             ps.setTimestamp(++idx, fromNullableInstant(upd.getEnd()));
             ps.setString(++idx, upd.getCommand());
@@ -595,7 +569,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateDatabaseRequests(List<DatabaseRequestUpdate> updates) {
-        executeBatch("update e_dtb_rqt set dh_end=?, va_cmd=?, status=? where id_dtb_rqt=?", updates, (ps, upd) -> {
+        executeBatch("update e_dtb_rqt set dh_end=?, va_cmd=?, cd_stt=? where id_dtb_rqt=?", updates, (ps, upd) -> {
            var idx=0;
             ps.setTimestamp(++idx, fromNullableInstant(upd.getEnd()));
             ps.setString(++idx, upd.getCommand());

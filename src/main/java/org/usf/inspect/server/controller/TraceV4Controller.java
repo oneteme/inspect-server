@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.usf.inspect.core.*;
 import org.usf.inspect.server.service.TraceService;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,8 +16,7 @@ import java.util.function.Consumer;
 import static java.util.Objects.nonNull;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
-import static org.usf.inspect.core.DualEventTracer.SERVER_ERROR;
-import static org.usf.inspect.core.DualEventTracer.SUCCESS;
+import static org.usf.inspect.core.DualEventTracer.*;
 
 @Slf4j
 @CrossOrigin
@@ -34,10 +32,11 @@ public class TraceV4Controller {
     private String namespacePrefix;
 
 
+
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<Object> addInstanceEnvironment(
             @RequestBody InstanceEnvironment instance){
-        //Rétrocompatibilité namespace
+        //Backward compatibility for namespace
         if (instance != null && instance.getEnv() != null) {
             instance.setNamespace((namespacePrefix +"-"+ instance.getEnv()).toUpperCase());
         }
