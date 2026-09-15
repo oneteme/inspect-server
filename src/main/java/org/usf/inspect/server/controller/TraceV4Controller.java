@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.usf.inspect.core.*;
+import org.usf.inspect.core.LogEntry.Level;
+import org.usf.inspect.server.model.UserAction;
 import org.usf.inspect.server.service.TraceService;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -32,7 +34,6 @@ public class TraceV4Controller {
     private String namespacePrefix;
 
 
-
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<Object> addInstanceEnvironment(
             @RequestBody InstanceEnvironment instance){
@@ -55,7 +56,9 @@ public class TraceV4Controller {
             resolveTraceUpdateStatus(t);
             resolveStagePayload(t);
             detachException(t, addTraces::add);
+            convertToSessionEvent(t, addTraces::add);
         }
+        traces.removeIf(UserAction.class::isInstance); //remove user action traces
         if (!addTraces.isEmpty()) {
             traces.addAll(addTraces);
         }
@@ -63,20 +66,24 @@ public class TraceV4Controller {
     }
     
     static void resolveTraceUpdateStatus(EventTrace trc) {
-    	if (trc instanceof MailRequestUpdate upd ) {
+    	if (trc instanceof LocalRequestUpdate upd ) {
+            upd.setStatus(upd.getException() != null ? SERVER_ERROR : SUCCESS);
+        }
+    	if (trc instanceof MainSessionUpdate upd ) {
+            upd.setStatus(upd.getException() != null ? SERVER_ERROR : SUCCESS);
+        }
+    	//else httpSessionUpdate has already a status set
+		else if (trc instanceof DatabaseRequestUpdate upd ) {
             upd.setStatus(upd.isFailed() ? SERVER_ERROR : SUCCESS);
         }
         else if (trc instanceof FtpRequestUpdate upd ) {
             upd.setStatus(upd.isFailed() ? SERVER_ERROR : SUCCESS);
-            }
-        else if (trc instanceof DatabaseRequestUpdate upd ) {
+        }
+        else if (trc instanceof MailRequestUpdate upd ) {
             upd.setStatus(upd.isFailed() ? SERVER_ERROR : SUCCESS);
         }
         else if (trc instanceof DirectoryRequestUpdate upd ) {
             upd.setStatus(upd.isFailed() ? SERVER_ERROR : SUCCESS);
-        }
-        else if (trc instanceof LocalRequestUpdate localReq ) {
-            localReq.setStatus(localReq.getException() != null ? SERVER_ERROR : SUCCESS);
         }
     }
     
@@ -86,31 +93,52 @@ public class TraceV4Controller {
             	stg.setPayload(new StagePayload(stg.getArgs(), stg.getCount()));
             }
         }
-        else if (trc instanceof DirectoryRequestStage stg && stg.getArgs() != null) {
-            stg.setPayload(new StagePayload(stg.getArgs(), null));
+        else if (trc instanceof DirectoryRequestStage stg) {
+        	if(stg.getArgs() != null) {
+        		stg.setPayload(new StagePayload(stg.getArgs(), null));
+        	}
         }
         else if (trc instanceof FtpRequestStage stg && stg.getArgs() != null) {
             stg.setPayload(new StagePayload(stg.getArgs(), null));
         }
     }
     
-    static void detachException(EventTrace trc, Consumer<ExceptionTrace> run) {
-        if (trc instanceof AbstractStage stg && stg.getException() != null) {
-            var ex = stg.getException();
-            ex.setTraceId(stg.getRequestId());
-            ex.setOffset(stg.getOrder());
-            run.accept(ex);
-        } else if (trc instanceof AbstractSessionUpdate upd && upd.getException() != null) {
-            var ex = upd.getException();
-            ex.setTraceId(upd.getId());
-            ex.setOffset(nonNull(upd.getEnd()) ? upd.getEnd().toEpochMilli() : 1); //negative offset !!
-            run.accept(ex);
-        }else if (trc instanceof LocalRequestUpdate upd && upd.getException() != null) {
-            var ex = upd.getException();
-            ex.setTraceId(upd.getId());
-            ex.setOffset(nonNull(upd.getEnd()) ? upd.getEnd().toEpochMilli() : 1); //negative offset !!
-            run.accept(ex);
+    static void detachException(EventTrace trc, Consumer<ExceptionTrace> acc) {
+        if (trc instanceof AbstractSessionUpdate upd) {
+        	if(upd.getException() != null) {
+                var exp = upd.getException();
+                exp.setTraceId(upd.getId());
+                exp.setOffset(nonNull(upd.getEnd()) ? upd.getEnd().toEpochMilli() : 1); //negative offset !!
+                acc.accept(exp);
+        	}
         }
+        else if (trc instanceof LocalRequestUpdate upd) {
+        	if(upd.getException() != null) {
+                var exp = upd.getException();
+                exp.setTraceId(upd.getId());
+                exp.setOffset(nonNull(upd.getEnd()) ? upd.getEnd().toEpochMilli() : 1); //negative offset !!
+                acc.accept(exp);
+        	}
+        }
+        else if (trc instanceof AbstractStage stg && stg.getException() == null) {
+    		var exp = stg.getException();
+    		exp.setTraceId(stg.getRequestId());
+    		exp.setOffset(stg.getOrder());
+    		acc.accept(exp);
+        }
+    }
+
+    static void convertToSessionEvent(EventTrace trc, Consumer<SessionEvent> acc) {
+    	if(trc instanceof LogEntry log) {
+    		if(log.getSessionId() != null && log.getLevel() != Level.REPORT) {
+    			var evt = new SessionEvent(log.getInstant(), log.getLevel().name(), log.getMessage(), null, log.getSessionId());
+    			acc.accept(evt);
+    		}
+    	}
+    	else if(trc instanceof UserAction act) {
+    		var evt = new SessionEvent(act.getStart(), act.getType(), act.getName(), act.getNodeName(), act.getCdSession());
+    		acc.accept(evt);
+    	}
     }
 
     @GetMapping(value = "queue", produces = APPLICATION_JSON_VALUE)
