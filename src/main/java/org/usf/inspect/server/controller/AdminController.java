@@ -1,6 +1,5 @@
 package org.usf.inspect.server.controller;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +18,7 @@ public class AdminController {
     private final AdminService adminService;
 
     @PostMapping("namespace/{namespace}")
-    public ResponseEntity<Boolean> addNamespace(@PathVariable String namespace, @Valid @RequestBody NamespaceDto nsp) {
+    public ResponseEntity<Boolean> addNamespace(@PathVariable String namespace, @RequestBody NamespaceDto nsp) {
         return ResponseEntity.ok(adminService.addNamespace(namespace, nsp.password()));
     }
 }
