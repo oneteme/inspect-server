@@ -303,6 +303,19 @@ CREATE TABLE IF NOT EXISTS e_ses_evt (
 	cd_ins uuid
 );
 
+--Ajout de la table BrowserConfig
+CREATE TABLE IF NOT EXISTS e_bwr_cfg (
+                                         va_dvc_dsp_rsl varchar,
+                                         va_dvc_orn varchar,
+                                         va_dvc_cnt varchar,
+                                         va_wdw_vpt_bds varchar,
+                                         va_wdw_zom_lvl varchar,
+                                         va_usr_lng varchar,
+                                         va_usr_thm varchar,
+                                         va_nav_rfr varchar,
+                                         cd_prn_ses uuid
+);
+
 -- Ajouter les index du cd instance dans les requests
 CREATE UNIQUE INDEX IF NOT EXISTS idx_main_ses_id_ses_dh_str ON e_main_ses(id_ses, dh_str DESC);
 CREATE INDEX IF NOT EXISTS idx_main_ses_cd_ins ON e_main_ses(cd_ins);

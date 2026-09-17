@@ -18,6 +18,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import javax.sql.DataSource;
@@ -29,6 +30,7 @@ import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.usf.inspect.core.*;
+import org.usf.inspect.server.dto.BrowserConfigDto;
 import org.usf.inspect.server.event.UnsavedEventTraceEvent;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.Pair;
@@ -698,6 +700,23 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             ps.setObject(++idx, exp.getSessionId(), OTHER);
         });
     }
+
+    @Transactional(rollbackFor = Throwable.class)
+    public void saveBrowserConfigs(List<BrowserConfigDto> configs) {
+        executeBatch("insert into e_bwr_cfg(va_dvc_dsp_rsl,va_dvc_orn,va_dvc_cnt, va_wdw_vpt_bds, va_wdw_zom_lvl, va_usr_lng,va_usr_thm,va_nav_rfr,cd_prn_ses)values(?,?,?,?,?,?,?,?,?)", configs, (ps, cfg) -> {
+            var idx = 0;
+            ps.setString(++idx, cfg.getDeviceDisplayResolution());
+            ps.setString(++idx, cfg.getDeviceOrientation());
+            ps.setString(++idx, cfg.getDeviceConnectivity());
+            ps.setString(++idx, cfg.getWindowViewportBounds());
+            ps.setString(++idx, cfg.getWindowZoomLevel());
+            ps.setString(++idx, cfg.getUserLanguage());
+            ps.setString(++idx, cfg.getUserTheme());
+            ps.setString(++idx, cfg.getNavigationReferrer());
+           // ps.setObject(++idx, cfg.getSessionId());
+        });
+    }
+
 
     private <T extends EventTrace> void executeBatch(String sql, List<T> records, ParameterizedPreparedStatementSetter<T> pss) {
         updateAll(sql, records, pss, t-> publisher.publishEvent(new UnsavedEventTraceEvent(this, t, false)));

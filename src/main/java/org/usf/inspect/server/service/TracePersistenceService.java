@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.usf.inspect.core.*;
 import org.usf.inspect.server.dao.TraceDao;
+import org.usf.inspect.server.dto.BrowserConfigDto;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.TracePacket;
 
@@ -90,7 +91,8 @@ public class TracePersistenceService implements TraceExporter {
         //monitoring
         cf.add(supplyAsync(()-> filterAndApply(traces, MachineResourceUsage.class, dao::saveMachineResourceUsages), executor));
         cf.add(supplyAsync(()-> filterAndApply(traces, TracePacket.class, dao::saveTracePackets), executor));
-
+        //browser
+        cf.add(supplyAsync(() -> filterAndApply(traces, BrowserConfigDto.class, dao::saveBrowserConfigs), executor));
         return allOf(cf.toArray(CompletableFuture[]::new)).thenApply(v-> cf.stream()
         		.map(CompletableFuture::join)
                 .flatMap(Collection::stream)
