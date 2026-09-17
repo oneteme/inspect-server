@@ -691,7 +691,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
     
     @Transactional(rollbackFor = Throwable.class)
     public void saveSessionEvents(List<SessionEvent> exceptions) {
-        executeBatch("insert into e_ses_evt(dh_str,va_typ,va_cnt,va_lct,cd_ins) values(?,?,?,?,?,?)", exceptions, (ps, exp) -> {
+        executeBatch("insert into e_ses_evt(dh_str,va_typ,va_cnt,va_lct,cd_prn_ses) values(?,?,?,?,?)", exceptions, (ps, exp) -> {
             var idx=0;
             ps.setTimestamp(++idx, fromNullableInstant(exp.getInstant()));
             ps.setString(++idx, exp.getType());
@@ -703,7 +703,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveBrowserConfigs(List<BrowserConfigDto> configs) {
-        executeBatch("insert into e_bwr_cfg(va_dvc_dsp_rsl,va_dvc_orn,va_dvc_cnt, va_wdw_vpt_bds, va_wdw_zom_lvl, va_usr_lng,va_usr_thm,va_nav_rfr,cd_prn_ses)values(?,?,?,?,?,?,?,?,?)", configs, (ps, cfg) -> {
+        executeBatch("insert into e_bwr_cfg(va_dvc_dsp_rsl,va_dvc_orn,va_dvc_cnt, va_wdw_vpt_bds, va_wdw_zom_lvl, va_usr_lng,va_usr_thm,cd_prn_ses)values(?,?,?,?,?,?,?,?)", configs, (ps, cfg) -> {
             var idx = 0;
             ps.setString(++idx, cfg.getDeviceDisplayResolution());
             ps.setString(++idx, cfg.getDeviceOrientation());
@@ -712,7 +712,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             ps.setString(++idx, cfg.getWindowZoomLevel());
             ps.setString(++idx, cfg.getUserLanguage());
             ps.setString(++idx, cfg.getUserTheme());
-            ps.setString(++idx, cfg.getNavigationReferrer());
+            ps.setObject(++idx, cfg.getSessionId());
            // ps.setObject(++idx, cfg.getSessionId());
         });
     }

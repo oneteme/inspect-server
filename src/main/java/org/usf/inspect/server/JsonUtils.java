@@ -5,6 +5,8 @@ import static org.springframework.http.converter.json.Jackson2ObjectMapperBuilde
 import static org.usf.inspect.core.InspectConfiguration.coreModule;
 
 import org.usf.inspect.core.Retention;
+import org.usf.inspect.core.SessionEvent;
+import org.usf.inspect.server.dto.BrowserConfigDto;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.TracePacket;
 import org.usf.inspect.server.model.wrapper.MainSessionWrapper;
@@ -54,7 +56,8 @@ public final class JsonUtils {
 		var mapper = json()
 				.modules(new JavaTimeModule(), new ParameterNamesModule(), coreModule().registerSubtypes(
 						new NamedType(TracePacket.class, "inst-trc"), 
-						new NamedType(InstanceEnvironmentUpdate.class, "inst-updt")))
+						new NamedType(InstanceEnvironmentUpdate.class, "inst-updt"),
+						new NamedType(BrowserConfigDto.class, "400")))
 				.build()
 			    .setSerializationInclusion(JsonInclude.Include.NON_EMPTY); // !null & !empty
 		mapper.configure(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL, true);

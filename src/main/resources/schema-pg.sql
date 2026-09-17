@@ -266,14 +266,6 @@ CREATE TABLE IF NOT EXISTS e_env_ins (
     cd_nsp varchar
 );
 
-CREATE TABLE IF NOT EXISTS e_usr_acn (
-    va_typ varchar,
-    dh_str timestamp(6),
-    va_nam varchar,
-    va_nde_nam varchar,
-    cd_prn_ses uuid
-);
-
 create table if not exists e_ins_trc (
     va_pnd int,
     va_atp int,
@@ -316,7 +308,7 @@ CREATE TABLE IF NOT EXISTS e_ses_evt (
     va_typ varchar,
     va_cnt varchar,
     va_lct varchar,
-    cd_ins uuid
+    cd_prn_ses uuid
 );
 
 --Ajout de la table BrowserConfig
@@ -368,8 +360,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_lcl_rqt_id_lcl_rqt_dh_str ON e_lcl_rqt(id_
 CREATE INDEX IF NOT EXISTS idx_lcl_rqt_cd_prn_ses ON e_lcl_rqt(cd_prn_ses);
 CREATE INDEX IF NOT EXISTS idx_exc_inf_cd_rqt ON e_exc_inf(cd_rqt);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_env_ins_id_ins ON e_env_ins(id_ins);
-CREATE INDEX IF NOT EXISTS idx_env_ins_va_app_va_env ON e_env_ins(va_app, va_env);  --TODO facto
-CREATE INDEX IF NOT EXISTS idx_usr_acn_cd_prn_ses ON e_usr_acn(cd_prn_ses);
+--CREATE INDEX IF NOT EXISTS idx_env_ins_va_app_va_env ON e_env_ins(va_app, va_env);  --TODO facto
+--CREATE INDEX IF NOT EXISTS idx_usr_acn_cd_prn_ses ON e_usr_acn(cd_prn_ses);
 CREATE INDEX IF NOT EXISTS idx_ins_trc_cd_ins ON e_ins_trc(cd_ins);
 CREATE INDEX IF NOT EXISTS idx_log_ent_cd_ins ON e_log_ent(cd_ins);
 CREATE INDEX IF NOT EXISTS idx_log_ent_cd_prn_ses ON e_log_ent(cd_prn_ses);

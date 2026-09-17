@@ -158,8 +158,15 @@ CREATE TABLE IF NOT EXISTS e_bwr_cfg (
           va_wdw_zom_lvl varchar,
           va_usr_lng varchar,
           va_usr_thm varchar,
-          va_nav_rfr varchar,
+          --va_nav_rfr varchar,
           cd_prn_ses uuid
 );
 
+-- Migration des index environnement
+DROP INDEX IF EXISTS idx_env_ins_va_app_va_env;
+CREATE INDEX IF NOT EXISTS idx_env_ins_cd_nsp ON e_env_ins(cd_nsp);
+
+-- Suppression des objets legacy user action
+DROP INDEX IF EXISTS idx_usr_acn_cd_prn_ses;
+DROP TABLE IF EXISTS e_usr_acn;
 COMMIT;
