@@ -132,7 +132,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             ps.setInt(++idx, usg.getUsedDiskSpace());
             ps.setInt(++idx, usg.getActiveThreadCount());
             ps.setInt(++idx, usg.getStartedThreadCount());
-            ps.setByte(++idx, usg.getCpuUsage());
+            ps.setShort(++idx, usg.getCpuUsage());
             ps.setObject(++idx, usg.getInstanceId());
         });
     }
