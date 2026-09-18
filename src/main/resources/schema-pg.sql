@@ -7,11 +7,12 @@ CREATE TABLE IF NOT EXISTS e_main_ses (
     dh_end timestamp(6),
     va_lct varchar,
     va_thr varchar,
-    va_err_typ varchar,
-    va_err_msg varchar,
-    va_stk json,
+    --va_err_typ varchar,deprecated
+    -- va_err_msg varchar,deprecated
+    --  va_stk json,deprecated
     va_msk int,
-    cd_ins UUID
+    cd_ins UUID,
+    cd_stt SMALLINT
 )
 PARTITION BY RANGE (dh_str);
 
@@ -25,7 +26,7 @@ CREATE TABLE IF NOT EXISTS e_rst_ses (
     va_qry varchar,
     va_cnt_typ varchar,
     va_ath_sch varchar, 
-    cd_stt int,
+    cd_stt SMALLINT,
     va_i_sze bigint,
     va_o_sze bigint,
     va_i_cnt_enc varchar,
@@ -33,16 +34,17 @@ CREATE TABLE IF NOT EXISTS e_rst_ses (
     dh_str timestamp(6), 
     dh_end timestamp(6),
     va_thr varchar,
-    va_err_typ varchar,
-    va_err_msg varchar,
-    va_stk json,
+    --va_err_typ varchar,deprecated
+    --va_err_msg varchar,deprecated
+    --va_stk json,deprecated
     va_nam varchar,
     va_usr varchar,
     va_usr_agt varchar,
     va_cch_ctr varchar,
     va_msk int,
     va_lnk boolean,
-    cd_ins UUID
+    cd_ins UUID,
+    va_fwd_add varchar
 )
 PARTITION BY RANGE (dh_str);
 
@@ -50,7 +52,7 @@ CREATE TABLE IF NOT EXISTS e_rst_ses_stg (
     va_nam varchar,
     dh_str timestamp(6),
     dh_end timestamp(6),
-    cd_ord bigint,
+    cd_ord int,
     cd_prn_ses UUID
 )
 PARTITION BY RANGE (dh_str);
@@ -65,7 +67,7 @@ CREATE TABLE IF NOT EXISTS e_rst_rqt (
     va_qry varchar,
     va_cnt_typ varchar,
     va_ath_sch varchar,
-    cd_stt int,
+    cd_stt SMALLINT,
     va_i_sze bigint,
     va_o_sze bigint,
     va_i_cnt_enc varchar,
@@ -85,7 +87,7 @@ CREATE TABLE IF NOT EXISTS e_rst_rqt_stg (
     va_nam varchar,
     dh_str timestamp(6),
     dh_end timestamp(6),
-    cd_ord bigint,
+    cd_ord int,
     cd_rst_rqt UUID
 )
 PARTITION BY RANGE (dh_str);
@@ -100,7 +102,7 @@ CREATE TABLE IF NOT EXISTS e_smtp_rqt (
     dh_end timestamp(6),
     va_thr varchar,
     va_cmd varchar,
-    va_fail boolean,
+    cd_stt SMALLINT,
     cd_prn_ses UUID,
     cd_ins UUID
 )
@@ -111,7 +113,7 @@ CREATE TABLE IF NOT EXISTS e_smtp_stg (
     dh_str timestamp(6),
     dh_end timestamp(6),
     va_cmd varchar,
-    cd_ord bigint,
+    cd_ord int,
     cd_smtp_rqt UUID
 )
 PARTITION BY RANGE (dh_str);
@@ -138,7 +140,7 @@ CREATE TABLE IF NOT EXISTS e_ftp_rqt (
     dh_end timestamp(6),
     va_thr varchar,
     va_cmd varchar,
-    va_fail boolean,
+    cd_stt SMALLINT,
     cd_prn_ses UUID, -- index
     cd_ins UUID
 )
@@ -149,9 +151,10 @@ CREATE TABLE IF NOT EXISTS e_ftp_stg (
     dh_str timestamp(6),
     dh_end timestamp(6),
     va_cmd varchar,
-    va_arg varchar,
-    cd_ord bigint,
-    cd_ftp_rqt UUID -- index
+   -- va_arg varchar,deprecated
+    cd_ord int,
+    cd_ftp_rqt UUID -- index,
+    va_pld json
 )
 PARTITION BY RANGE (dh_str);
 
@@ -165,7 +168,7 @@ CREATE TABLE IF NOT EXISTS e_ldap_rqt (
     dh_end timestamp(6),
     va_thr varchar,
     va_cmd varchar,
-    va_fail boolean,
+    cd_stt SMALLINT,
     cd_prn_ses UUID, -- index
     cd_ins UUID
 )
@@ -176,9 +179,10 @@ CREATE TABLE IF NOT EXISTS e_ldap_stg (
     dh_str timestamp(6),
     dh_end timestamp(6),
     va_cmd varchar,
-    va_arg varchar,
-    cd_ord bigint,
-    cd_ldap_rqt UUID
+    --va_arg varchar,
+    cd_ord int,
+    cd_ldap_rqt UUID,
+    va_pld json
 )
 PARTITION BY RANGE (dh_str);
 
@@ -197,7 +201,7 @@ CREATE TABLE IF NOT EXISTS e_dtb_rqt (
     va_prd_nam varchar, 
     va_prd_vrs varchar, 
     va_cmd varchar,
-    va_fail boolean,
+    cd_stt SMALLINT,
     cd_prn_ses UUID,
     cd_ins UUID
 )
@@ -207,11 +211,12 @@ CREATE TABLE IF NOT EXISTS e_dtb_stg (
     va_nam varchar,
     dh_str timestamp(6),   
     dh_end timestamp(6),   
-    va_cnt varchar,
+    --va_cnt varchar,
     va_cmd varchar,
-    va_arg varchar,
-    cd_ord bigint,
-    cd_dtb_rqt UUID
+   -- va_arg varchar,
+    cd_ord int,
+    cd_dtb_rqt UUID,
+    va_pld json
 )
 PARTITION BY RANGE (dh_str);
 
@@ -224,17 +229,18 @@ CREATE TABLE IF NOT EXISTS e_lcl_rqt (
     dh_end timestamp(6), 
     va_usr varchar,
     va_thr varchar,
-    va_fail boolean,
     cd_prn_ses UUID,
-    cd_ins UUID
+    cd_ins UUID,
+    cd_stt SMALLINT
 )
 PARTITION BY RANGE (dh_str);
 
 CREATE TABLE IF NOT EXISTS e_exc_inf (
-    va_typ varchar, 
+  --  va_typ varchar,
     va_err_typ varchar,
     va_err_msg varchar,
     va_stk json,
+    va_cas json,
     cd_ord bigint,
     cd_rqt UUID
 );
@@ -260,20 +266,13 @@ CREATE TABLE IF NOT EXISTS e_env_ins (
     cd_nsp varchar
 );
 
-CREATE TABLE IF NOT EXISTS e_usr_acn (
-    va_typ varchar,
-    dh_str timestamp(6),
-    va_nam varchar,
-    va_nde_nam varchar,
-    cd_prn_ses uuid
-);
-
 create table if not exists e_ins_trc (
     va_pnd int,
     va_atp int,
+    va_seq int,
     va_trc_cnt int,
     dh_str timestamp(6),
-    va_fln varchar,
+   -- va_fln varchar,
     cd_ins uuid
 )
 PARTITION BY RANGE (dh_str);
@@ -292,6 +291,9 @@ create table if not exists e_rsc_usg (
     va_usd_hep int,
     va_cmt_hep int,
     va_usd_dsk int,
+    nb_act_thr int,
+    nb_str_thr int,
+    va_cpu_usg SMALLINT,
     cd_ins uuid
 )
 PARTITION BY RANGE (dh_str);
@@ -299,6 +301,27 @@ PARTITION BY RANGE (dh_str);
 CREATE TABLE IF NOT EXISTS e_nsp_ins (
 		va_nam varchar NOT NULL UNIQUE,
 		va_enc_tkn varchar NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS e_ses_evt (
+	dh_str timestamp(6),
+    va_typ varchar,
+    va_cnt varchar,
+    va_lct varchar,
+    cd_prn_ses uuid
+);
+
+--Ajout de la table BrowserConfig
+CREATE TABLE IF NOT EXISTS e_bwr_cfg (
+                                         va_dvc_dsp_rsl varchar,
+                                         va_dvc_orn varchar,
+                                         va_dvc_cnt varchar,
+                                         va_wdw_vpt_bds varchar,
+                                         va_wdw_zom_lvl varchar,
+                                         va_usr_lng varchar,
+                                         va_usr_thm varchar,
+                                         va_nav_rfr varchar,
+                                         cd_prn_ses uuid
 );
 
 -- Ajouter les index du cd instance dans les requests
@@ -337,8 +360,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_lcl_rqt_id_lcl_rqt_dh_str ON e_lcl_rqt(id_
 CREATE INDEX IF NOT EXISTS idx_lcl_rqt_cd_prn_ses ON e_lcl_rqt(cd_prn_ses);
 CREATE INDEX IF NOT EXISTS idx_exc_inf_cd_rqt ON e_exc_inf(cd_rqt);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_env_ins_id_ins ON e_env_ins(id_ins);
-CREATE INDEX IF NOT EXISTS idx_env_ins_va_app_va_env ON e_env_ins(va_app, va_env);  --TODO facto
-CREATE INDEX IF NOT EXISTS idx_usr_acn_cd_prn_ses ON e_usr_acn(cd_prn_ses);
+--CREATE INDEX IF NOT EXISTS idx_env_ins_va_app_va_env ON e_env_ins(va_app, va_env);  --TODO facto
+--CREATE INDEX IF NOT EXISTS idx_usr_acn_cd_prn_ses ON e_usr_acn(cd_prn_ses);
 CREATE INDEX IF NOT EXISTS idx_ins_trc_cd_ins ON e_ins_trc(cd_ins);
 CREATE INDEX IF NOT EXISTS idx_log_ent_cd_ins ON e_log_ent(cd_ins);
 CREATE INDEX IF NOT EXISTS idx_log_ent_cd_prn_ses ON e_log_ent(cd_prn_ses);

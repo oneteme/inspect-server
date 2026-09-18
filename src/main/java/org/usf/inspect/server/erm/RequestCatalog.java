@@ -14,7 +14,7 @@ import static org.usf.jquery.core.JoinGroup.joins;
 import static org.usf.jquery.core.Predicate.eq;
 import static org.usf.jquery.mvc.StoreManager.getInstance;
 
-import org.usf.inspect.core.RequestMask;
+import org.usf.inspect.core.SessionMask;
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.JoinGroup;
 import org.usf.jquery.core.ViewColumn;
@@ -65,5 +65,5 @@ public interface RequestCatalog extends DatasetCatalog<InspectStore> {
 		return joins(leftJoin(exception.getView(), id().eq(exception.parent()), exception.type().eq(getRequestType().name())));
 	}
 
-    RequestMask getRequestType();
+    SessionMask getRequestType();
 }

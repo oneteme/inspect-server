@@ -1,6 +1,6 @@
 package org.usf.inspect.server.erm;
 
-import static org.usf.inspect.core.RequestMask.REST;
+import static org.usf.inspect.core.SessionMask.REST;
 import static org.usf.inspect.server.config.constant.FieldConstant.CD_PRN_SES;
 import static org.usf.inspect.server.config.constant.FieldConstant.CD_STT;
 import static org.usf.inspect.server.config.constant.FieldConstant.ID_RST_RQT;
@@ -22,7 +22,7 @@ import static org.usf.jquery.core.Predicate.ge;
 import static org.usf.jquery.core.Predicate.lt;
 import static org.usf.jquery.mvc.StoreManager.getInstance;
 
-import org.usf.inspect.core.RequestMask;
+import org.usf.inspect.core.SessionMask;
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
@@ -84,7 +84,7 @@ public interface RestRequestCatalog extends RequestCatalog {
 	ViewColumn parent();
 	
 	@Override
-	default RequestMask getRequestType() {
+	default SessionMask getRequestType() {
 		return REST;
 	}
 	
@@ -102,6 +102,17 @@ public interface RestRequestCatalog extends RequestCatalog {
 	default Column countError() {
 		return status().toCase().when(eq(0).or(ge(400)), true).compose().count();
     }
+
+	@Expose(identity = "status_tranche")
+	default Column statusTranche() {
+		return status().toCase()
+				.when(eq(0), "1")
+				.when(ge(100).and(lt(200)), "2")
+				.when(ge(200).and(lt(300)), "3")
+				.when(ge(300).and(lt(400)), "4")
+				.when(ge(400).and(lt(500)), "5")
+				.when(ge(500), "6").compose();
+	}
 
 	@Expose(identity = "performance_tranche")
 	default Column performanceTranche1() {

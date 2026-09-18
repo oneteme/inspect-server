@@ -3,8 +3,8 @@ package org.usf.inspect.server.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.usf.inspect.core.ExceptionInfo;
-import org.usf.inspect.core.RequestMask;
+import org.usf.inspect.core.ExceptionTrace;
+import org.usf.inspect.core.SessionMask;
 import org.usf.inspect.core.StackTraceRow;
 import org.usf.inspect.server.Utils;
 import org.usf.inspect.server.dao.RequestDao;
@@ -40,7 +40,7 @@ public class RequestService {
     private final RequestDao dao;
     private final ExecutorService executorService = wrap(virtualThreadExecutor("inspect-tree", 10));
 
-    public Session getMainTree(String id)  {
+    public Session getMainTree(UUID id)  {
         var session = requireSingle(getMainSessions(id));
         if(session != null) {
             updateSessionsForTree(dao.selectChildsById(id, session.getStart()), session);
@@ -49,7 +49,7 @@ public class RequestService {
         throw new NoSuchElementException("no main session found");
     }
 
-    public Session getRestTree(String id)  {
+    public Session getRestTree(UUID id)  {
         var session = requireSingle(getRestSessions(Collections.singletonList(id),null));
         if(session != null) {
             updateSessionsForTree(dao.selectChildsById(id, session.getStart()), session);
@@ -250,7 +250,7 @@ public class RequestService {
     }
 
 
-    private void updateSessionsForTree(Collection<String> ids, Session parent)  {
+    private void updateSessionsForTree(Collection<UUID> ids, Session parent)  {
         var start = parent.getStart();
         var sessions = Utils.isEmpty(ids) ? new ArrayList<Session>() : getRestSessions(ids, start);
         sessions.add(parent);
@@ -262,28 +262,28 @@ public class RequestService {
             combinedMask |= s.getRequestsMask();
         }
         var futures = new ArrayList<CompletableFuture<?>>();
-        if (RequestMask.REST.is(combinedMask)) {
+        if (SessionMask.REST.is(combinedMask)) {
             futures.add(CompletableFuture.runAsync(() -> getRestRequestsCompleteForParent(reqMap.keySet(), start).forEach(r -> {
                 reqMap.get(r.getSessionId()).getRestRequests().add(r);
                 r.setRemoteTrace((RestSessionWrapper) reqMap.get(r.getId()));
             }), executorService));
         }
-        if (RequestMask.FTP.is(combinedMask)) {
+        if (SessionMask.FTP.is(combinedMask)) {
             futures.add(CompletableFuture.runAsync(() -> getFtpRequestsComplete(reqMap.keySet(), start).forEach(q -> reqMap.get(q.getSessionId()).getFtpRequests().add(q)), executorService));
         }
-        if (RequestMask.SMTP.is(combinedMask)) {
+        if (SessionMask.SMTP.is(combinedMask)) {
             futures.add(CompletableFuture.runAsync(() -> getSmtpRequestsComplete(reqMap.keySet(), start).forEach(q -> reqMap.get(q.getSessionId()).getMailRequests().add(q)), executorService));
         }
-        if (RequestMask.LDAP.is(combinedMask)) {
+        if (SessionMask.LDAP.is(combinedMask)) {
             futures.add(CompletableFuture.runAsync(() -> getLdapRequestsComplete(reqMap.keySet(), start).forEach(q -> reqMap.get(q.getSessionId()).getLdapRequests().add(q)), executorService));
         }
-        if (RequestMask.JDBC.is(combinedMask)) {
+        if (SessionMask.JDBC.is(combinedMask)) {
             getDatabaseRequestsComplete(reqMap.keySet(), start).forEach(q -> reqMap.get(q.getSessionId()).getDatabaseRequests().add(q));
         }
         CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
     }
 
-    private List<Session> getRestSessions(Collection<String> ids, Instant start)  { // remove if possible after optimizing tree
+    private List<Session> getRestSessions(Collection<UUID> ids, Instant start)  { // remove if possible after optimizing tree
         if (ids.isEmpty()) {
             return new ArrayList<>();
         }
@@ -299,7 +299,7 @@ public class RequestService {
                         instance.appName(), instance.os(), instance.re(), instance.address()
                 )
                 .joins(restSession.instance().getJoins())
-                .criteria(restSession.id().in(ids.stream().map(UUID::fromString).toArray()).and(restSession.start().ge(instance.start())));
+                .criteria(restSession.id().in(ids.stream().toArray(UUID[]::new)).and(restSession.start().ge(instance.start())));
         if (start != null) {
             v.criteria(restSession.start().ge(from(start)));
         }
@@ -307,7 +307,7 @@ public class RequestService {
             List<Session> sessions = new ArrayList<>();
             while (rs.next()) {
                 RestSessionWrapper session = new RestSessionWrapper();
-                session.setId(rs.getString("id"));
+                session.setId(rs.getObject("id", UUID.class));
                 session.setMethod(rs.getString("method"));
                 session.setProtocol(rs.getString("protocol"));
                 session.setHost(rs.getString("host"));
@@ -316,7 +316,7 @@ public class RequestService {
                 session.setQuery(rs.getString("query"));
                 session.setContentType((rs.getString("media")));
                 session.setAuthScheme((rs.getString("auth")));
-                session.setStatus(rs.getInt("status"));
+                session.setStatus(rs.getShort("status"));
                 session.setInDataSize(rs.getLong("sizeIn"));
                 session.setOutDataSize(rs.getLong("sizeOut"));
                 session.setInContentEncoding(rs.getString("contentEncodingIn"));
@@ -328,29 +328,29 @@ public class RequestService {
                 session.setName(rs.getString("apiName"));
                 session.setUserAgent(rs.getString("userAgt"));
                 session.setUser(rs.getString("user"));
-                session.setInstanceId(rs.getString("instanceEnv"));
+                session.setInstanceId(rs.getObject("instanceEnv", UUID.class));
                 session.setCacheControl(rs.getString("cacheControl"));
                 session.setOs(rs.getString("os"));
                 session.setRe(rs.getString("re"));
                 session.setAddress(rs.getString("address"));
                 session.setAppName(rs.getString("appName"));
                 session.setRequestsMask(rs.getInt("mask"));
-                if(RequestMask.JDBC.is(session.getRequestsMask())) {
+                if(SessionMask.JDBC.is(session.getRequestsMask())) {
                     session.setDatabaseRequests(new ArrayList<>());
                 }
-                if(RequestMask.LOCAL.is(session.getRequestsMask())) {
+                if(SessionMask.LOCAL.is(session.getRequestsMask())) {
                     session.setLocalRequests(new ArrayList<>());
                 }
-                if(RequestMask.REST.is(session.getRequestsMask())) {
+                if(SessionMask.REST.is(session.getRequestsMask())) {
                     session.setRestRequests(new ArrayList<>());
                 }
-                if(RequestMask.FTP.is(session.getRequestsMask())) {
+                if(SessionMask.FTP.is(session.getRequestsMask())) {
                     session.setFtpRequests(new ArrayList<>());
                 }
-                if(RequestMask.SMTP.is(session.getRequestsMask())) {
+                if(SessionMask.SMTP.is(session.getRequestsMask())) {
                     session.setMailRequests(new ArrayList<>());
                 }
-                if(RequestMask.LDAP.is(session.getRequestsMask())) {
+                if(SessionMask.LDAP.is(session.getRequestsMask())) {
                     session.setLdapRequests(new ArrayList<>());
                 }
                 sessions.add(session);
@@ -359,7 +359,7 @@ public class RequestService {
         });
     }
 
-    private List<Session> getMainSessions(String id) {
+    private List<Session> getMainSessions(UUID id) {
         InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
         MainSessionCatalog mainSession = store.mainSession();
         InstanceCatalog instance =  store.instance();
@@ -370,13 +370,13 @@ public class RequestService {
                         instance.appName(), instance.os(), instance.re(), instance.address()
                 )
                 .joins(mainSession.instance().getJoins())
-                .criteria(mainSession.id().eq(fromString(id))).compose(store);
+                .criteria(mainSession.id().eq(id)).compose(store);
 
         return store.execute(v, rs -> {
             List<Session> sessions = new ArrayList<>();
             while(rs.next()) {
                 MainSessionWrapper main = new MainSessionWrapper();
-                main.setId(rs.getString("id")); // add value of nullable
+                main.setId(rs.getObject("id", java.util.UUID.class));
                 main.setName(rs.getString("name"));
                 main.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
                 main.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
@@ -389,24 +389,24 @@ public class RequestService {
                 main.setRe(rs.getString("re"));
                 main.setAddress(rs.getString("address"));
                 main.setUser(rs.getString("user"));
-                main.setInstanceId(rs.getString("instanceEnv"));
+                main.setInstanceId(rs.getObject("instanceEnv", java.util.UUID.class));
                 main.setRequestsMask(rs.getInt("mask"));
-                if(RequestMask.JDBC.is(main.getRequestsMask())) {
+                if(SessionMask.JDBC.is(main.getRequestsMask())) {
                     main.setDatabaseRequests(new ArrayList<>());
                 }
-                if(RequestMask.LOCAL.is(main.getRequestsMask())) {
+                if(SessionMask.LOCAL.is(main.getRequestsMask())) {
                     main.setLocalRequests(new ArrayList<>());
                 }
-                if(RequestMask.REST.is(main.getRequestsMask())) {
+                if(SessionMask.REST.is(main.getRequestsMask())) {
                     main.setRestRequests(new ArrayList<>());
                 }
-                if(RequestMask.FTP.is(main.getRequestsMask())) {
+                if(SessionMask.FTP.is(main.getRequestsMask())) {
                     main.setFtpRequests(new ArrayList<>());
                 }
-                if(RequestMask.SMTP.is(main.getRequestsMask())) {
+                if(SessionMask.SMTP.is(main.getRequestsMask())) {
                     main.setMailRequests(new ArrayList<>());
                 }
-                if(RequestMask.LDAP.is(main.getRequestsMask())) {
+                if(SessionMask.LDAP.is(main.getRequestsMask())) {
                     main.setLdapRequests(new ArrayList<>());
                 }
                 sessions.add(main);
@@ -415,7 +415,7 @@ public class RequestService {
         });
     }
 
-    private List<RestRequestWrapper> getRestRequestsCompleteForParent(Collection<String> ids, Instant start)  { //use criteria
+    private List<RestRequestWrapper> getRestRequestsCompleteForParent(Collection<UUID> ids, Instant start)  { //use criteria
         InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
         RestRequestCatalog restRequest = store.restRequest();
         ExceptionCatalog exception =  store.exception();
@@ -428,7 +428,7 @@ public class RequestService {
                         exception.errType(), exception.errMsg()
                 )
                 .joins(restRequest.exception().getJoins())
-                .criteria(restRequest.parent().in(ids.stream().map(UUID::fromString).toArray()));
+                .criteria(restRequest.parent().in(ids.stream().map(UUID::toString).toArray()));
         if(start != null) {
             v.criteria(restRequest.start().ge(start));
         }
@@ -437,15 +437,15 @@ public class RequestService {
             List<RestRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
                 RestRequestWrapper out = new RestRequestWrapper();
-                out.setSessionId(rs.getString("parent"));
-                out.setId(rs.getString("id"));
+                out.setSessionId(rs.getObject("parent", UUID.class));
+                out.setId(rs.getObject("id", UUID.class));
                 out.setProtocol(rs.getString("protocol"));
                 out.setHost(rs.getString("host"));
                 out.setPort(rs.getInt("port"));
                 out.setPath(rs.getString("path"));
                 out.setQuery(rs.getString("query"));
                 out.setMethod(rs.getString("method"));
-                out.setStatus(rs.getInt("status"));
+                out.setStatus(rs.getShort("status"));
                 out.setInDataSize(rs.getLong("sizeIn"));
                 out.setOutDataSize(rs.getLong("sizeOut"));
                 out.setInContentEncoding(rs.getString("contentEncodingIn"));
@@ -462,7 +462,7 @@ public class RequestService {
         });
     }
 
-    private List<DatabaseRequestWrapper> getDatabaseRequestsComplete(Collection<String> ids, Instant start)  {
+    private List<DatabaseRequestWrapper> getDatabaseRequestsComplete(Collection<UUID> ids, Instant start)  {
         InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
         DatabaseRequestCatalog databaseRequest = store.databaseRequest();
 
@@ -472,7 +472,7 @@ public class RequestService {
                         databaseRequest.user(), databaseRequest.thread(), databaseRequest.driver(), databaseRequest.dbName(), databaseRequest.dbVersion(), databaseRequest.command(),
                         databaseRequest.failed(), databaseRequest.schema(), databaseRequest.parent()
                 )
-                .criteria(databaseRequest.parent().in(ids.stream().map(UUID::fromString).toArray()));
+                .criteria(databaseRequest.parent().in(ids.stream().toArray(UUID[]::new)));
         if (start != null) {
             v.criteria(databaseRequest.start().ge(from(start)));
         }
@@ -481,8 +481,8 @@ public class RequestService {
             List<DatabaseRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
                 DatabaseRequestWrapper out = new DatabaseRequestWrapper();
-                out.setSessionId(rs.getString("parent"));
-                out.setId(rs.getString("id"));
+                out.setSessionId(rs.getObject("parent", UUID.class));
+                out.setId(rs.getObject("id", UUID.class));
                 out.setHost(rs.getString("host"));
                 out.setPort(rs.getInt("port"));
                 out.setName(rs.getString("db"));
@@ -503,7 +503,7 @@ public class RequestService {
         });
     }
 
-    private List<FtpRequestWrapper> getFtpRequestsComplete(Collection<String> ids, Instant start) {
+    private List<FtpRequestWrapper> getFtpRequestsComplete(Collection<UUID> ids, Instant start) {
         InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
         FtpRequestCatalog ftpRequest = store.ftpRequest();
 
@@ -512,7 +512,7 @@ public class RequestService {
                         ftpRequest.id(), ftpRequest.host(), ftpRequest.port(), ftpRequest.protocol(), ftpRequest.serverVersion(), ftpRequest.clientVersion(),
                         ftpRequest.start(), ftpRequest.end(), ftpRequest.command(), ftpRequest.user(), ftpRequest.thread(), ftpRequest.failed(), ftpRequest.parent()
                 )
-                .criteria(ftpRequest.parent().in(ids.stream().map(UUID::fromString).toArray()));
+                .criteria(ftpRequest.parent().in(ids.stream().toArray(UUID[]::new)));
         if (start != null) {
             v.criteria(ftpRequest.start().ge(from(start)));
         }
@@ -521,8 +521,8 @@ public class RequestService {
             List<FtpRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
                 FtpRequestWrapper out = new FtpRequestWrapper();
-                out.setSessionId(rs.getString("parent"));
-                out.setId(rs.getString("id"));
+                out.setSessionId(rs.getObject("parent", UUID.class));
+                out.setId(rs.getObject("id", UUID.class));
                 out.setHost(rs.getString("host"));
                 out.setPort(rs.getInt("port"));
                 out.setProtocol(rs.getString("protocol"));
@@ -541,7 +541,7 @@ public class RequestService {
         });
     }
 
-    private List<MailRequestWrapper> getSmtpRequestsComplete(Collection<String> ids, Instant start) {
+    private List<MailRequestWrapper> getSmtpRequestsComplete(Collection<UUID> ids, Instant start) {
         InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
         SmtpRequestCatalog smtpRequest = store.smtpRequest();
 
@@ -549,7 +549,7 @@ public class RequestService {
                 .columns(
                         smtpRequest.id(), smtpRequest.host(), smtpRequest.port(), smtpRequest.start(), smtpRequest.end(), smtpRequest.command(), smtpRequest.user(), smtpRequest.thread(), smtpRequest.failed(), smtpRequest.parent()
                 )
-                .criteria(smtpRequest.parent().in(ids.stream().map(UUID::fromString).toArray()));
+                .criteria(smtpRequest.parent().in(ids.stream().toArray(UUID[]::new)));
         if (start != null) {
             v.criteria(smtpRequest.start().ge(start));
         }
@@ -558,8 +558,8 @@ public class RequestService {
             List<MailRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
                 MailRequestWrapper out = new MailRequestWrapper();
-                out.setSessionId(rs.getString("parent"));
-                out.setId(rs.getString("id"));
+                out.setSessionId(rs.getObject("parent", UUID.class));
+                out.setId(rs.getObject("id", UUID.class));
                 out.setHost(rs.getString("host"));
                 out.setPort(rs.getInt("port"));
                 out.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
@@ -575,7 +575,7 @@ public class RequestService {
         });
     }
 
-    private List<DirectoryRequestWrapper> getLdapRequestsComplete(Collection<String> ids, Instant start) {
+    private List<DirectoryRequestWrapper> getLdapRequestsComplete(Collection<UUID> ids, Instant start) {
         InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
         LdapRequestCatalog ldapRequest = store.ldapRequest();
 
@@ -583,7 +583,7 @@ public class RequestService {
                 .columns(
                         ldapRequest.id(), ldapRequest.host(), ldapRequest.port(), ldapRequest.protocol(), ldapRequest.start(), ldapRequest.end(), ldapRequest.command(), ldapRequest.user(), ldapRequest.thread(), ldapRequest.failed(), ldapRequest.parent()
                 )
-                .criteria(ldapRequest.parent().in(ids.stream().map(UUID::fromString).toArray()));
+                .criteria(ldapRequest.parent().in(ids.stream().toArray(UUID[]::new)));
         if (start != null) {
             v.criteria(ldapRequest.start().ge(start));
         }
@@ -592,8 +592,8 @@ public class RequestService {
             List<DirectoryRequestWrapper> outs = new ArrayList<>();
             while (rs.next()) {
                 DirectoryRequestWrapper out = new DirectoryRequestWrapper();
-                out.setSessionId(rs.getString("parent"));
-                out.setId(rs.getString("id"));
+                out.setSessionId(rs.getObject("parent", UUID.class));
+                out.setId(rs.getObject("id", UUID.class));
                 out.setHost(rs.getString("host"));
                 out.setPort(rs.getInt("port"));
                 out.setProtocol(rs.getString("protocol"));
@@ -642,9 +642,9 @@ public class RequestService {
         return store.execute(v.compose(store), toListMapper((rs, row) -> rs.getString("schema")));
     }
 
-    public static ExceptionInfo getExceptionInfoIfNotNull(String className, String message, StackTraceRow[] stackTraceRows) {
+    public static ExceptionTrace getExceptionInfoIfNotNull(String className, String message, StackTraceRow[] stackTraceRows) {
         if(className != null || message != null) {
-            return new ExceptionInfo(className, message, stackTraceRows, null);
+            return new ExceptionTrace(className, message, stackTraceRows, null);
         }
         return null;
     }

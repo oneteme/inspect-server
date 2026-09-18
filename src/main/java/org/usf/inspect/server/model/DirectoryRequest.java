@@ -7,21 +7,23 @@ import org.usf.inspect.core.DirectoryRequestSignal;
 import org.usf.inspect.core.DirectoryRequestUpdate;
 
 /**
- * 
+ *
  * @author u$f
  *
  */
 @Getter
 @Setter
 public class DirectoryRequest extends AbstractRequest {
-	
-	private String protocol;
-	private String host;
-	private int port;
-	private boolean failed;
 
-	@JsonCreator public DirectoryRequest() { }
+    private String protocol;
+    private String host;
+    private int port;
+    @Deprecated
+    private boolean failed;
 
+    @JsonCreator public DirectoryRequest() { }
+
+	@Deprecated(forRemoval = true)
     public DirectoryRequestSignal toRequest() {
         DirectoryRequestSignal dr = new DirectoryRequestSignal(getId(), getSessionId(), getStart(), getThreadName());
         dr.setInstanceId(getInstanceId());
@@ -32,6 +34,7 @@ public class DirectoryRequest extends AbstractRequest {
         return dr;
     }
 
+	@Deprecated(forRemoval = true)
     public DirectoryRequestUpdate toCallback() {
         DirectoryRequestUpdate drc = new DirectoryRequestUpdate(getId());
         drc.setEnd(getEnd());

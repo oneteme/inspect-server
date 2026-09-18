@@ -132,13 +132,6 @@ public final class Utils {
 		return contentType;
 	}
 
-    public static String assertUUID(String uuid, String name) {
-        if (isUUID(uuid)) {
-            return uuid;
-        }
-        throw new IllegalArgumentException(name + " is not a valid UUID: " + uuid);
-    }
-
     public static boolean isUUID(String uuid) {
         return nonNull(uuid) && isUUID.test(uuid);
     }

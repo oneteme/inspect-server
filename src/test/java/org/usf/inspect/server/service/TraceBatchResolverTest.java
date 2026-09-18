@@ -16,6 +16,7 @@ import org.usf.inspect.server.model.TraceBatchResolver;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import static java.util.Collections.*;
@@ -74,8 +75,8 @@ class TraceBatchResolverTest {
     void testResolve_WithOnlyInitializers_ShouldCallInsertPartialBatch() {
         // Given
         List<EventTrace> traces = List.of(
-                new TestInitializer("id1", Instant.now()),
-                new TestInitializer("id2", Instant.now())
+                new TestInitializer(UUID.fromString("id1"), Instant.now()),
+                new TestInitializer(UUID.fromString("id2"), Instant.now())
         );
 
         // When
@@ -92,8 +93,8 @@ class TraceBatchResolverTest {
     void testResolve_WithOnlyCallbacks_ShouldCallUpdateBatch() {
         // Given
         List<EventTrace> traces = List.of(
-                new TestCallback("id1", Instant.now()),
-                new TestCallback("id2", Instant.now())
+                new TestCallback(UUID.fromString("id1"), Instant.now()),
+                new TestCallback(UUID.fromString("id2"), Instant.now())
         );
 
         // When
@@ -114,8 +115,8 @@ class TraceBatchResolverTest {
         Instant end = start.plusSeconds(10);
 
         List<EventTrace> traces = List.of(
-                new TestInitializer(id, start),
-                new TestCallback(id, end)
+                new TestInitializer(UUID.fromString(id), start),
+                new TestCallback(UUID.fromString(id), end)
         );
 
         // When
@@ -140,10 +141,10 @@ class TraceBatchResolverTest {
         // Given
         Instant now = Instant.now();
         List<EventTrace> traces = List.of(
-                new TestInitializer("id1", now),                    // Sans callback -> partial
-                new TestInitializer("id2", now),                    // Avec callback -> complete
-                new TestCallback("id2", now.plusSeconds(5)),
-                new TestCallback("id3", now.plusSeconds(10))        // Sans initializer -> callback seul
+                new TestInitializer(UUID.fromString("id1"), now),                    // Sans callback -> partial
+                new TestInitializer(UUID.fromString("id2"), now),                    // Avec callback -> complete
+                new TestCallback(UUID.fromString("id2"), now.plusSeconds(5)),
+                new TestCallback(UUID.fromString("id3"), now.plusSeconds(10))        // Sans initializer -> callback seul
         );
 
         // When
@@ -173,8 +174,8 @@ class TraceBatchResolverTest {
         Instant late = early.plusSeconds(10);
 
         List<EventTrace> traces = List.of(
-                new TestInitializer(id, late),
-                new TestInitializer(id, early)
+                new TestInitializer(UUID.fromString(id), late),
+                new TestInitializer(UUID.fromString(id), early)
         );
 
         // When
@@ -196,8 +197,8 @@ class TraceBatchResolverTest {
         Instant late = early.plusSeconds(10);
 
         List<EventTrace> traces = List.of(
-                new TestCallback(id, early),
-                new TestCallback(id, late)
+                new TestCallback(UUID.fromString(id), early),
+                new TestCallback(UUID.fromString(id), late)
         );
 
         // When
@@ -214,7 +215,7 @@ class TraceBatchResolverTest {
     void testResolve_WhenInsertPartialThrowsException_ShouldReturnFailedTraces() {
         // Given
         List<EventTrace> traces = List.of(
-                new TestInitializer("id1", Instant.now())
+                new TestInitializer(UUID.fromString("id1"), Instant.now())
         );
         doThrow(new RuntimeException("Database error")).when(insertPartialBatchExecutor).accept(anyList());
 
@@ -230,7 +231,7 @@ class TraceBatchResolverTest {
     void testResolve_WhenUpdateBatchThrowsException_ShouldReturnFailedTraces() {
         // Given
         List<EventTrace> traces = List.of(
-                new TestCallback("id1", Instant.now())
+                new TestCallback(UUID.fromString("id1"), Instant.now())
         );
         doThrow(new RuntimeException("Database error")).when(updateBatchExecutor).accept(anyList());
 
@@ -247,8 +248,8 @@ class TraceBatchResolverTest {
         // Given
         String id = "id1";
         List<EventTrace> traces = List.of(
-                new TestInitializer(id, Instant.now()),
-                new TestCallback(id, Instant.now().plusSeconds(5))
+                new TestInitializer(UUID.fromString(id), Instant.now()),
+                new TestCallback(UUID.fromString(id), Instant.now().plusSeconds(5))
         );
         doThrow(new RuntimeException("Database error")).when(insertCompleteBatchExecutor).accept(anyList());
 
@@ -265,7 +266,7 @@ class TraceBatchResolverTest {
     void testResolve_WithNonCompletableTraces_ShouldIgnoreThem() {
         // Given
         List<EventTrace> traces = new ArrayList<>();
-        traces.add(new TestInitializer("id1", Instant.now()));
+        traces.add(new TestInitializer(UUID.fromString("id1"), Instant.now()));
         traces.add(new NonCompletableTrace()); // Trace qui n'est pas Initializer ni Callback
 
         // When
@@ -282,12 +283,12 @@ class TraceBatchResolverTest {
         // Given
         Instant now = Instant.now();
         List<EventTrace> traces = List.of(
-                new TestInitializer("id1", now),
-                new TestCallback("id1", now.plusSeconds(1)),
-                new TestInitializer("id2", now.plusSeconds(2)),
-                new TestCallback("id2", now.plusSeconds(3)),
-                new TestInitializer("id3", now.plusSeconds(4)),
-                new TestCallback("id4", now.plusSeconds(5))
+                new TestInitializer(UUID.fromString("id1"), now),
+                new TestCallback(UUID.fromString("id1"), now.plusSeconds(1)),
+                new TestInitializer(UUID.fromString("id2"), now.plusSeconds(2)),
+                new TestCallback(UUID.fromString("id2"), now.plusSeconds(3)),
+                new TestInitializer(UUID.fromString("id3"), now.plusSeconds(4)),
+                new TestCallback(UUID.fromString("id4"), now.plusSeconds(5))
         );
 
         // When
@@ -312,16 +313,16 @@ class TraceBatchResolverTest {
     // Classes de test internes
 
     static class TestInitializer implements TraceSignal {
-        private final String id;
+        private final UUID id;
         private final Instant start;
 
-        TestInitializer(String id, Instant start) {
+        TestInitializer(UUID id, Instant start) {
             this.id = id;
             this.start = start;
         }
 
         @Override
-        public String getId() {
+        public UUID getId() {
             return id;
         }
 
@@ -332,16 +333,16 @@ class TraceBatchResolverTest {
     }
 
     static class TestCallback implements TraceUpdate {
-        private final String id;
+        private final UUID id;
         private final Instant end;
 
-        TestCallback(String id, Instant end) {
+        TestCallback(UUID id, Instant end) {
             this.id = id;
             this.end = end;
         }
 
         @Override
-        public String getId() {
+        public UUID getId() {
             return id;
         }
 
@@ -354,6 +355,16 @@ class TraceBatchResolverTest {
         public void setEnd(Instant end) {
         	// TODO Auto-generated method stub
         	
+        }
+
+        @Override
+        public short getStatus() {
+            return 0;
+        }
+
+        @Override
+        public void setStatus(short status) {
+
         }
     }
 
