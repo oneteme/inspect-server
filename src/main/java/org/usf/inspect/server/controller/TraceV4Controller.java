@@ -67,10 +67,10 @@ public class TraceV4Controller {
     
     static void resolveTraceUpdateStatus(EventTrace trc) {
     	if (trc instanceof LocalRequestUpdate upd ) {
-            upd.setStatus(upd.getException() != null ? INT_ERROR : SUCCESS);
+            upd.setStatus(upd.getException() != null ? APP_ERROR : SUCCESS);
         }
     	if (trc instanceof MainSessionUpdate upd ) {
-            upd.setStatus(upd.getException() != null ? INT_ERROR : SUCCESS);
+            upd.setStatus(upd.getException() != null ? APP_ERROR : SUCCESS);
         }
     	//else httpSessionUpdate has already a status set
 		else if (trc instanceof DatabaseRequestUpdate upd ) {
