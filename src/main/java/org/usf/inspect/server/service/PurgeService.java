@@ -127,8 +127,8 @@ public class PurgeService {
         return allOf(
                 runAsync(runnablePurge(purgeDao::purgeLogEntry, "LogEntry"), functionalExecutor),
                 runAsync(runnablePurge(purgeDao::purgeLocalRequest, "LocalRequest"), functionalExecutor),
-              //  runAsync(runnablePurge(purgeDao::purgeMainSession, "MainSession"), functionalExecutor)
-                //        .thenRunAsync(runnablePurge(purgeDao::purgeMainSessionStage, ""), functionalExecutor),
+                runAsync(runnablePurge(purgeDao::purgeMainSession, "MainSession"), functionalExecutor)
+                        .thenRunAsync(runnablePurge(purgeDao::purgeMainSessionStage, "SessionEvent"), functionalExecutor),
                 runAsync(runnablePurge(purgeDao::purgeRestSession, "RestSession"), functionalExecutor)
                         .thenRunAsync(runnablePurge(purgeDao::purgeRestSessionStage, "RestSessionStage"), technicalExecutor),
                 runAsync(runnablePurge(purgeDao::purgeRestRequest, "RestRequest"), functionalExecutor)

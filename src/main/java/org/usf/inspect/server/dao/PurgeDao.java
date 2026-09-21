@@ -124,9 +124,9 @@ public class PurgeDao {
         return purgeRequest("main_ses");
     }
 
-  /*  public int purgeMainSessionStage(){
-        return purgeSessionStage("main_ses", "");
-    }*/
+    public int purgeMainSessionStage(){
+        return purgeSessionStage("main_ses", "ses_evt");
+    }
 
     public int purgeRestSession(String ids, Timestamp before){
         return purgeRequest("rst_ses", ids, before, true);
@@ -298,8 +298,6 @@ public class PurgeDao {
                 " WHERE NOT EXISTS (SELECT 1 FROM e_" + tableSuffix + " WHERE id_" + tableSuffix + " = cd_" + tableSuffix + ");";
         var queryException = "DELETE FROM e_exc_inf" +
                 " WHERE " +
-                //"va_typ = '" + type + "'" +
-                //" AND" +
                 " NOT EXISTS (SELECT 1 FROM e_" + tableSuffix + " WHERE id_" + tableSuffix + " = cd_rqt);";
         return stream(template.batchUpdate(queryStage, queryException)).sum();
     }
