@@ -279,7 +279,7 @@ create table if not exists e_rsc_usg (
 	va_usd_dsk int,
 	nb_act_thr int,
 	nb_str_thr int,
-	va_cpu_usg tinyint,
+	va_cpu_usg SMALLINT,
 	cd_ins uuid
 );
 CREATE TABLE IF NOT EXISTS e_nsp_ins (
