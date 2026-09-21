@@ -83,6 +83,19 @@ public class PurgeDao {
                 " AND va_app" + (nonNull(app) && args.add(app) ? "=?" : " IS NULL"), String.class, args.toArray());
     }
 
+
+    public int purgeAbandonedInstances(String env, String app, Timestamp dateLimit) {
+        return template.update("DELETE FROM e_env_ins" +
+                " WHERE dh_end IS NULL" +
+                " AND va_env = '" + env + "'" +
+                " AND va_app = '" + app + "'" +
+                " AND COALESCE(" +
+                "   (SELECT MAX(t.dh_str) FROM e_ins_trc t WHERE t.cd_ins = e_env_ins.id_ins)," +
+                "   e_env_ins.dh_str" +
+                " ) < '" + dateLimit + "';");
+    }
+
+
     public int purgeInstance(String env, String app, Timestamp dateLimit) {
         return template.update("DELETE FROM e_env_ins WHERE dh_end < '" + dateLimit + "' AND va_env = '" + env + "' AND va_app = '" + app + "';");
     }
@@ -111,9 +124,9 @@ public class PurgeDao {
         return purgeRequest("main_ses");
     }
 
-    public int purgeMainSessionStage(){
-        return purgeSessionStage("main_ses", "usr_acn");
-    }
+  /*  public int purgeMainSessionStage(){
+        return purgeSessionStage("main_ses", "");
+    }*/
 
     public int purgeRestSession(String ids, Timestamp before){
         return purgeRequest("rst_ses", ids, before, true);
@@ -284,8 +297,10 @@ public class PurgeDao {
         var queryStage = "DELETE FROM e_" + stageTableSuffix +
                 " WHERE NOT EXISTS (SELECT 1 FROM e_" + tableSuffix + " WHERE id_" + tableSuffix + " = cd_" + tableSuffix + ");";
         var queryException = "DELETE FROM e_exc_inf" +
-                " WHERE va_typ = '" + type + "'" +
-                " AND NOT EXISTS (SELECT 1 FROM e_" + tableSuffix + " WHERE id_" + tableSuffix + " = cd_rqt);";
+                " WHERE " +
+                //"va_typ = '" + type + "'" +
+                //" AND" +
+                " NOT EXISTS (SELECT 1 FROM e_" + tableSuffix + " WHERE id_" + tableSuffix + " = cd_rqt);";
         return stream(template.batchUpdate(queryStage, queryException)).sum();
     }
 
@@ -307,8 +322,8 @@ public class PurgeDao {
                 " AND dh_end < '" + before + "'";
 
         var exceptionQuery = "DELETE FROM e_exc_inf" +
-                " WHERE cd_rqt IN (" + subQuery + ") " +
-                " AND va_typ = '" + type + "'";
+                " WHERE cd_rqt IN (" + subQuery + ") " ;
+              //  " AND va_typ = '" + type + "'";
 
         return stream(template.batchUpdate(stageQuery, exceptionQuery)).sum();
     }

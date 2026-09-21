@@ -10,7 +10,8 @@ import static java.util.concurrent.CompletableFuture.runAsync;
 import static java.util.stream.Collectors.joining;
 import static org.usf.inspect.core.ExecutorServiceWrapper.wrap;
 import static org.usf.inspect.core.SessionContextManager.emitInfo;
-import static org.usf.inspect.server.Utils.*;
+import static org.usf.inspect.server.Utils.virtualThreadExecutor;
+//import static org.usf.inspect.server.Utils.*;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -67,6 +68,13 @@ public class PurgeService {
                     var stringIds = ids.stream().collect(joining("','", "'", "'"));
                     tasks.add(purge(stringIds, beforeTechnical, beforeFunctional, scope.env(), scope.app()));
                 }
+
+                //purge old instances that have not dh-end
+                tasks.add(runAsync(
+                        runnablePurge(() -> purgeDao.purgeAbandonedInstances(scope.env(), scope.app(), beforeFunctional),
+                                "AbandonedInstance", scope.app(), scope.env(), beforeFunctional),
+                        functionalExecutor));
+
             }
 
             allOf(tasks.toArray(new CompletableFuture[0])).join();
@@ -119,8 +127,8 @@ public class PurgeService {
         return allOf(
                 runAsync(runnablePurge(purgeDao::purgeLogEntry, "LogEntry"), functionalExecutor),
                 runAsync(runnablePurge(purgeDao::purgeLocalRequest, "LocalRequest"), functionalExecutor),
-                runAsync(runnablePurge(purgeDao::purgeMainSession, "MainSession"), functionalExecutor)
-                        .thenRunAsync(runnablePurge(purgeDao::purgeMainSessionStage, "UserAction"), functionalExecutor),
+              //  runAsync(runnablePurge(purgeDao::purgeMainSession, "MainSession"), functionalExecutor)
+                //        .thenRunAsync(runnablePurge(purgeDao::purgeMainSessionStage, ""), functionalExecutor),
                 runAsync(runnablePurge(purgeDao::purgeRestSession, "RestSession"), functionalExecutor)
                         .thenRunAsync(runnablePurge(purgeDao::purgeRestSessionStage, "RestSessionStage"), technicalExecutor),
                 runAsync(runnablePurge(purgeDao::purgeRestRequest, "RestRequest"), functionalExecutor)

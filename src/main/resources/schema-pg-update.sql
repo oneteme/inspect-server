@@ -150,10 +150,11 @@ SET cd_nsp = UPPER(<prefix> || '-' || va_env)
 --TODO add UPPER(<prefix> || '-' || va_env) + TOKEN => va_enc_tkn
 
 --Ajout de la table BrowserConfig
-CREATE TABLE IF NOT EXISTS e_bwr_cfg (
+CREATE TABLE IF NOT EXISTS o_bwr_cfg (
           va_dvc_dsp_rsl varchar,
           va_dvc_orn varchar,
           va_dvc_cnt varchar,
+          va_sav_dta boolean,
           va_wdw_vpt_bds varchar,
           va_wdw_zom_lvl varchar,
           va_usr_lng varchar,

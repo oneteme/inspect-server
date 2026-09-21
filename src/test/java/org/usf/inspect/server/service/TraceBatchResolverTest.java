@@ -75,8 +75,8 @@ class TraceBatchResolverTest {
     void testResolve_WithOnlyInitializers_ShouldCallInsertPartialBatch() {
         // Given
         List<EventTrace> traces = List.of(
-                new TestInitializer(UUID.fromString("id1"), Instant.now()),
-                new TestInitializer(UUID.fromString("id2"), Instant.now())
+                new TestInitializer(UUID.fromString("11111111-1111-1111-1111-111111111111"), Instant.now()),
+                new TestInitializer(UUID.fromString("22222222-2222-2222-2222-222222222222"), Instant.now())
         );
 
         // When
@@ -93,8 +93,8 @@ class TraceBatchResolverTest {
     void testResolve_WithOnlyCallbacks_ShouldCallUpdateBatch() {
         // Given
         List<EventTrace> traces = List.of(
-                new TestCallback(UUID.fromString("id1"), Instant.now()),
-                new TestCallback(UUID.fromString("id2"), Instant.now())
+                new TestCallback(UUID.fromString("11111111-1111-1111-1111-111111111111"), Instant.now()),
+                new TestCallback(UUID.fromString("22222222-2222-2222-2222-222222222222"), Instant.now())
         );
 
         // When
@@ -110,13 +110,13 @@ class TraceBatchResolverTest {
     @Test
     void testResolve_WithMatchingInitializerAndCallback_ShouldCallInsertCompleteBatch() {
         // Given
-        String id = "id1";
+        UUID id = UUID.fromString("11111111-1111-1111-1111-111111111111");
         Instant start = Instant.now();
         Instant end = start.plusSeconds(10);
 
         List<EventTrace> traces = List.of(
-                new TestInitializer(UUID.fromString(id), start),
-                new TestCallback(UUID.fromString(id), end)
+                new TestInitializer(id, start),
+                new TestCallback(id, end)
         );
 
         // When
@@ -139,12 +139,15 @@ class TraceBatchResolverTest {
     @Test
     void testResolve_WithMixedTraces_ShouldCallAllAppropriateExecutors() {
         // Given
+        UUID id1 = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        UUID id2 = UUID.fromString("22222222-2222-2222-2222-222222222222");
+        UUID id3 = UUID.fromString("33333333-3333-3333-3333-333333333333");
         Instant now = Instant.now();
         List<EventTrace> traces = List.of(
-                new TestInitializer(UUID.fromString("id1"), now),                    // Sans callback -> partial
-                new TestInitializer(UUID.fromString("id2"), now),                    // Avec callback -> complete
-                new TestCallback(UUID.fromString("id2"), now.plusSeconds(5)),
-                new TestCallback(UUID.fromString("id3"), now.plusSeconds(10))        // Sans initializer -> callback seul
+                new TestInitializer(id1, now),                    // Sans callback -> partial
+                new TestInitializer(id2, now),                    // Avec callback -> complete
+                new TestCallback(id2, now.plusSeconds(5)),
+                new TestCallback(id3, now.plusSeconds(10))        // Sans initializer -> callback seul
         );
 
         // When
@@ -155,27 +158,27 @@ class TraceBatchResolverTest {
 
         verify(insertPartialBatchExecutor, times(1)).accept(initializerCaptor.capture());
         assertEquals(1, initializerCaptor.getValue().size());
-        assertEquals("id1", initializerCaptor.getValue().getFirst().getId());
+        assertEquals(id1, initializerCaptor.getValue().getFirst().getId());
 
         verify(updateBatchExecutor, times(1)).accept(callbackCaptor.capture());
         assertEquals(1, callbackCaptor.getValue().size());
-        assertEquals("id3", callbackCaptor.getValue().getFirst().getId());
+        assertEquals(id3, callbackCaptor.getValue().getFirst().getId());
 
         verify(insertCompleteBatchExecutor, times(1)).accept(completeCaptor.capture());
         assertEquals(1, completeCaptor.getValue().size());
-        assertEquals("id2", completeCaptor.getValue().getFirst().signal().getId());
+        assertEquals(id2, completeCaptor.getValue().getFirst().signal().getId());
     }
 
     @Test
     void testResolve_WithMultipleInitializersSameId_ShouldSelectEarliest() {
         // Given
-        String id = "id1";
+        UUID id = UUID.fromString("11111111-1111-1111-1111-111111111111");
         Instant early = Instant.now();
         Instant late = early.plusSeconds(10);
 
         List<EventTrace> traces = List.of(
-                new TestInitializer(UUID.fromString(id), late),
-                new TestInitializer(UUID.fromString(id), early)
+                new TestInitializer(id, late),
+                new TestInitializer(id, early)
         );
 
         // When
@@ -192,13 +195,13 @@ class TraceBatchResolverTest {
     @Test
     void testResolve_WithMultipleCallbacksSameId_ShouldSelectLatest() {
         // Given
-        String id = "id1";
+        UUID id = UUID.fromString("11111111-1111-1111-1111-111111111111");
         Instant early = Instant.now();
         Instant late = early.plusSeconds(10);
 
         List<EventTrace> traces = List.of(
-                new TestCallback(UUID.fromString(id), early),
-                new TestCallback(UUID.fromString(id), late)
+                new TestCallback(id, early),
+                new TestCallback(id, late)
         );
 
         // When
@@ -215,7 +218,7 @@ class TraceBatchResolverTest {
     void testResolve_WhenInsertPartialThrowsException_ShouldReturnFailedTraces() {
         // Given
         List<EventTrace> traces = List.of(
-                new TestInitializer(UUID.fromString("id1"), Instant.now())
+                new TestInitializer(UUID.fromString("11111111-1111-1111-1111-111111111111"), Instant.now())
         );
         doThrow(new RuntimeException("Database error")).when(insertPartialBatchExecutor).accept(anyList());
 
@@ -231,7 +234,7 @@ class TraceBatchResolverTest {
     void testResolve_WhenUpdateBatchThrowsException_ShouldReturnFailedTraces() {
         // Given
         List<EventTrace> traces = List.of(
-                new TestCallback(UUID.fromString("id1"), Instant.now())
+                new TestCallback(UUID.fromString("11111111-1111-1111-1111-111111111111"), Instant.now())
         );
         doThrow(new RuntimeException("Database error")).when(updateBatchExecutor).accept(anyList());
 
@@ -246,10 +249,10 @@ class TraceBatchResolverTest {
     @Test
     void testResolve_WhenInsertCompleteThrowsException_ShouldReturnBothInitAndCallback() {
         // Given
-        String id = "id1";
+        UUID id = UUID.fromString("11111111-1111-1111-1111-111111111111");
         List<EventTrace> traces = List.of(
-                new TestInitializer(UUID.fromString(id), Instant.now()),
-                new TestCallback(UUID.fromString(id), Instant.now().plusSeconds(5))
+                new TestInitializer(id, Instant.now()),
+                new TestCallback(id, Instant.now().plusSeconds(5))
         );
         doThrow(new RuntimeException("Database error")).when(insertCompleteBatchExecutor).accept(anyList());
 
@@ -266,7 +269,7 @@ class TraceBatchResolverTest {
     void testResolve_WithNonCompletableTraces_ShouldIgnoreThem() {
         // Given
         List<EventTrace> traces = new ArrayList<>();
-        traces.add(new TestInitializer(UUID.fromString("id1"), Instant.now()));
+        traces.add(new TestInitializer(UUID.fromString("11111111-1111-1111-1111-111111111111"), Instant.now()));
         traces.add(new NonCompletableTrace()); // Trace qui n'est pas Initializer ni Callback
 
         // When
@@ -281,14 +284,18 @@ class TraceBatchResolverTest {
     @Test
     void testResolve_WithMultipleCompleteAndPartialTraces_ShouldProcessCorrectly() {
         // Given
+        UUID id1 = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        UUID id2 = UUID.fromString("22222222-2222-2222-2222-222222222222");
+        UUID id3 = UUID.fromString("33333333-3333-3333-3333-333333333333");
+        UUID id4 = UUID.fromString("44444444-4444-4444-4444-444444444444");
         Instant now = Instant.now();
         List<EventTrace> traces = List.of(
-                new TestInitializer(UUID.fromString("id1"), now),
-                new TestCallback(UUID.fromString("id1"), now.plusSeconds(1)),
-                new TestInitializer(UUID.fromString("id2"), now.plusSeconds(2)),
-                new TestCallback(UUID.fromString("id2"), now.plusSeconds(3)),
-                new TestInitializer(UUID.fromString("id3"), now.plusSeconds(4)),
-                new TestCallback(UUID.fromString("id4"), now.plusSeconds(5))
+                new TestInitializer(id1, now),
+                new TestCallback(id1, now.plusSeconds(1)),
+                new TestInitializer(id2, now.plusSeconds(2)),
+                new TestCallback(id2, now.plusSeconds(3)),
+                new TestInitializer(id3, now.plusSeconds(4)),
+                new TestCallback(id4, now.plusSeconds(5))
         );
 
         // When

@@ -132,7 +132,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             ps.setInt(++idx, usg.getUsedDiskSpace());
             ps.setInt(++idx, usg.getActiveThreadCount());
             ps.setInt(++idx, usg.getStartedThreadCount());
-            ps.setByte(++idx, usg.getCpuUsage());
+            ps.setShort(++idx, usg.getCpuUsage());
             ps.setObject(++idx, usg.getInstanceId());
         });
     }
@@ -703,11 +703,12 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveBrowserConfigs(List<BrowserConfigDto> configs) {
-        executeBatch("insert into e_bwr_cfg(va_dvc_dsp_rsl,va_dvc_orn,va_dvc_cnt, va_wdw_vpt_bds, va_wdw_zom_lvl, va_usr_lng,va_usr_thm,cd_prn_ses)values(?,?,?,?,?,?,?,?)", configs, (ps, cfg) -> {
+        executeBatch("insert into o_bwr_cfg(va_dvc_dsp_rsl,va_dvc_orn,va_dvc_cnt, va_sav_dta, va_wdw_vpt_bds, va_wdw_zom_lvl, va_usr_lng,va_usr_thm,cd_prn_ses)values(?,?,?,?,?,?,?,?,?)", configs, (ps, cfg) -> {
             var idx = 0;
             ps.setString(++idx, cfg.getDeviceDisplayResolution());
             ps.setString(++idx, cfg.getDeviceOrientation());
             ps.setString(++idx, cfg.getDeviceConnectivity());
+            ps.setObject(++idx, cfg.getSaveData());
             ps.setString(++idx, cfg.getWindowViewportBounds());
             ps.setString(++idx, cfg.getWindowZoomLevel());
             ps.setString(++idx, cfg.getUserLanguage());
