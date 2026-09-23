@@ -1,20 +1,15 @@
 package org.usf.inspect.server.erm;
 
-import static org.usf.inspect.core.SessionMask.LDAP;
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_PRN_SES;
-import static org.usf.inspect.server.config.constant.FieldConstant.ID_LDAP_RQT;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_CMD;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_FAIL;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_PCL;
-import static org.usf.jquery.core.JDBCType.UUID;
-import static org.usf.jquery.core.Predicate.*;
-
-import org.usf.inspect.core.SessionMask;
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.Expose;
 import org.usf.jquery.mvc.Typed;
+
+import static org.usf.inspect.server.config.constant.FieldConstant.*;
+import static org.usf.jquery.core.JDBCType.UUID;
+import static org.usf.jquery.core.Predicate.ge;
+import static org.usf.jquery.core.Predicate.lt;
 
 public interface LdapRequestCatalog extends RequestCatalog {
 
@@ -28,30 +23,9 @@ public interface LdapRequestCatalog extends RequestCatalog {
 	@Bind(VA_CMD)
 	ViewColumn command();
 	
-	@Bind(VA_FAIL)
-	ViewColumn failed();
-	
 	@Bind(CD_PRN_SES)
 	@Typed(UUID)
 	ViewColumn parent();
-	
-	@Override
-	default SessionMask getRequestType() {
-		return LDAP;
-	}
-
-	@Expose(identity = "count_request_error")
-	default Column countError() {
-		return failed().toCase().when(eq(true), failed()).compose().count();
-	}
-
-	default Column status() {
-		return Column.beginCase()
-				.when(end().isNull(), null)
-				.when(failed().eq(true), 500)
-				.when(failed().eq(false), 200)
-				.compose().as("status");
-	}
 
 	@Expose(identity = "performance_tranche")
 	default Column performanceTranche1() {

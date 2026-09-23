@@ -8,5 +8,5 @@ import org.usf.inspect.server.model.DirectoryRequest;
 @Getter
 @Setter
 public class DirectoryRequestDto extends DirectoryRequest {
-    private ExceptionTrace exception;
+
 }

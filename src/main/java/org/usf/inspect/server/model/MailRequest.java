@@ -18,34 +18,8 @@ public class MailRequest extends AbstractRequest {
     private String protocol; //smtp(s), imap, pop3
     private String host;
     private int port;
-    /**
-     * @deprecated As of version v5, replaced by status .
-     * Will be removed in a future release.
-     */
-    @Deprecated
-    private boolean failed;
 
     @JsonCreator public MailRequest() {
         // empty
-    }
-
-	@Deprecated(forRemoval = true)
-    public MailRequestSignal toRequest() {
-        MailRequestSignal req = new MailRequestSignal(getId(), getSessionId(), getStart(), getThreadName());
-        req.setInstanceId(getInstanceId());
-        req.setUser(getUser());
-        req.setProtocol(getProtocol());
-        req.setHost(getHost());
-        req.setPort(getPort());
-        return req;
-    }
-
-	@Deprecated(forRemoval = true)
-    public MailRequestUpdate toCallback() {
-        MailRequestUpdate cb = new MailRequestUpdate(getId());
-        cb.setEnd(getEnd());
-        cb.setCommand(getCommand());
-        cb.setFailed(isFailed());
-        return cb;
     }
 }

@@ -8,5 +8,5 @@ import org.usf.inspect.server.model.MailRequest;
 @Getter
 @Setter
 public class MailRequestDto extends MailRequest {
-    private ExceptionTrace exception;
+
 }

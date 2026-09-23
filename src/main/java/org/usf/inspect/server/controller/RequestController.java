@@ -62,7 +62,7 @@ public class RequestController {
     @GetMapping("request/{type}/hosts")
     public Collection<String> getRequestHosts(
             @PathVariable String type,
-            @RequestParam(name = "env") String environment,
+            @RequestParam(name = "namespace") String namespace,
             @RequestParam(name = "start") @Validate(Condition.INSTANT) Instant start,
             @RequestParam(name = "end") @Validate(Condition.INSTANT) Instant end)  {
         RequestType requestTable;
@@ -71,7 +71,7 @@ public class RequestController {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid request type: " + type, e);
         }
-        return requestService.getRequestHosts(requestTable, environment, start, end);
+        return requestService.getRequestHosts(requestTable, namespace, start, end);
     }
 
     @GetMapping("instance/{instanceId}")
@@ -79,7 +79,7 @@ public class RequestController {
     @QueryTemplate(
             dataset = "instance",
             view = INSTANCE_ENVIRONMENT_RESULTSET_MAPPER,
-            select = "app_name,version,address,environement,os,re,user,type,start,collector,branch,hash,end,resource,configuration,id")
+            select = "app_name,version,address,environement,os,re,user,type,start,collector,branch,hash,end,resource,configuration,id,namespace")
     public ResponseEntity<InstanceEnvironment> fetchInstance(
             MvcRequest mvc,
             @PathVariable String instanceId
@@ -160,7 +160,7 @@ public class RequestController {
             view = EXCEPTION_BY_REQUEST_RESULTSET_MAPPER,
             select = "err_type,err_msg,parent",
             ignore = "requestIds")
-    public Map<Long, ExceptionTrace> fetchExceptionByRequests(
+    public Map<Long, ExceptionTrace> fetchExceptionByRequests( //TODO with session for tree
             MvcRequest mvc,
             @RequestParam( name = "requestIds") String[] requestIds)  {
         var store = mvc.getStore().unwrap(InspectStore.class);
@@ -211,10 +211,10 @@ public class RequestController {
             ignore = "env")
     public Collection<MainSessionDto> fetchMainSessions(
             MvcRequest mvc,
-            @RequestParam(name = "env") String environment
+            @RequestParam(name = "namespace") String namespace
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+        mvc.getComposer().criteria(store.instance().namespace().eq(namespace));
 
         return (Collection<MainSessionDto>) mvc.execute();
     }
@@ -223,7 +223,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "main_session",
             view = MAIN_SESSION_RESULTSET_MAPPER,
-            select = "id,name,start,end,type,location,thread,err_type,err_msg,stacktrace,mask,user,instance_env")
+            select = "id,name,start,end,type,location,thread,status,mask,user,instance_env")
     public ResponseEntity<MainSession> fetchMainSession(
             MvcRequest mvc,
             @PathVariable String sessionId
@@ -250,7 +250,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "main_session",
             view = MAIN_SESSION_PULSE_ROW_MAPPER,
-            select = "id,name,start,end,thread,type,location",
+            select = "id,name,start,end,thread,status,type,location",
             order = "start,end")
     public Collection<MainSession> fetchMainSessionsByInstance(
             MvcRequest mvc,
@@ -291,10 +291,10 @@ public class RequestController {
             ignore = "env")
     public Collection<RestSessionDto> fetchRestSessions(
             MvcRequest mvc,
-            @RequestParam(name = "env") String environment
+            @RequestParam(name = "namespace") String namespace
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+        mvc.getComposer().criteria(store.instance().namespace().eq(namespace));
 
         return (Collection<RestSessionDto>) mvc.execute();
     }
@@ -303,7 +303,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "rest_session",
             view = REST_SESSION_RESULTSET_MAPPER,
-            select = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,err_type,err_msg,stacktrace,mask,user,user_agt,cache_control,linked,instance_env")
+            select = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,mask,user,user_agt,cache_control,linked,instance_env")
     public ResponseEntity<RestSession> fetchRestSession(
             MvcRequest mvc,
             @PathVariable String sessionId) {
@@ -375,8 +375,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "local_request",
             view = LOCAL_REQUEST_ROW_MAPPER,
-            select = "id,name,location,start,end,user,thread,type,exception.err_type,exception.err_msg",
-            join = "exception",
+            select = "id,name,location,start,end,user,thread,type,status",
             order = "start")
     public Collection<LocalRequest> fetchLocalRequests(
             MvcRequest mvc,
@@ -391,7 +390,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "database_request",
             view = DATABASE_REQUEST_ROW_MAPPER,
-            select = "id,host,db,db_name,start,end,user,thread,command,schema,parent",
+            select = "id,host,db,db_name,start,end,user,thread,command,schema,parent,status",
             order = "start")
     public Collection<DatabaseRequestDto> fetchDatabaseRequestsBySession(
             MvcRequest mvc,
@@ -406,7 +405,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ftp_request",
             view = FTP_REQUEST_ROW_MAPPER,
-            select = "id,host,start,end,thread,user,command,parent",
+            select = "id,host,start,end,thread,user,command,parent,status",
             order = "start")
     public Collection<FtpRequestDto> fetchFtpRequestsBySession(
             MvcRequest mvc,
@@ -465,10 +464,10 @@ public class RequestController {
             ignore = "env")
     public Collection<RestRequestDto> fetchRestRequests(
             MvcRequest mvc,
-            @RequestParam(name = "env") String environment
+            @RequestParam(name = "namespace") String namespace
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+        mvc.getComposer().criteria(store.instance().namespace().eq(namespace));
 
         return (Collection<RestRequestDto>) mvc.execute();
     }
@@ -520,10 +519,10 @@ public class RequestController {
             ignore = "env")
     public Collection<DatabaseRequestDto> fetchDatabaseRequests(
             MvcRequest mvc,
-            @RequestParam(name = "env") String environment
+            @RequestParam(name = "namespace") String namespace
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+        mvc.getComposer().criteria(store.instance().namespace().eq(namespace));
 
         return (Collection<DatabaseRequestDto>) mvc.execute();
     }
@@ -575,10 +574,10 @@ public class RequestController {
             ignore = "env")
     public Collection<FtpRequestDto> fetchFtpRequests(
             MvcRequest mvc,
-            @RequestParam(name = "env") String environment
+            @RequestParam(name = "namespace") String namespace
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+        mvc.getComposer().criteria(store.instance().namespace().eq(namespace));
 
         return (Collection<FtpRequestDto>) mvc.execute();
     }
@@ -630,10 +629,10 @@ public class RequestController {
             ignore = "env")
     public Collection<MailRequestDto> fetchSmtpRequests(
             MvcRequest mvc,
-            @RequestParam(name = "env") String environment
+            @RequestParam(name = "namespace") String namespace
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+        mvc.getComposer().criteria(store.instance().namespace().eq(namespace));
 
         return (Collection<MailRequestDto>) mvc.execute();
     }
@@ -699,10 +698,10 @@ public class RequestController {
             ignore = "env")
     public Collection<DirectoryRequestDto> fetchLdapRequests(
             MvcRequest mvc,
-            @RequestParam(name = "env") String environment
+            @RequestParam(name = "namespace") String namespace
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+        mvc.getComposer().criteria(store.instance().namespace().eq(namespace));
 
         return (Collection<DirectoryRequestDto>) mvc.execute();
     }
@@ -748,9 +747,9 @@ public class RequestController {
     public ResponseEntity<Collection<Architecture>> getArchitecture(
             @RequestParam(name = "start") @Validate(Condition.INSTANT) Instant start,
             @RequestParam(name = "end") @Validate(Condition.INSTANT) Instant end,
-            @RequestParam(name = "env") @Validate(Condition.NOT_EMPTY) String[] environments
+            @RequestParam(name = "namespace") @Validate(Condition.NOT_EMPTY) String[] namespaces
     )  {
-        var result = requestService.createArchitecture(start, end, environments);
+        var result = requestService.createArchitecture(start, end, namespaces);
         if (end != null && end.isBefore(Instant.now().truncatedTo(java.time.temporal.ChronoUnit.DAYS))) {
             return ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(result);
         }
@@ -760,11 +759,11 @@ public class RequestController {
     @GetMapping("request/jdbc/schema")
     public Collection<String> getRequestSchema(
             @RequestParam(name = "host") String host,
-            @RequestParam(name = "env") String environment,
+            @RequestParam(name = "namespace") String namespace,
             @RequestParam(name = "start") @Validate(Condition.INSTANT) Instant start,
             @RequestParam(name = "end") @Validate(Condition.INSTANT) Instant end)  {
 
-        return requestService.getRequestSchema(environment, start, end, host);
+        return requestService.getRequestSchema(namespace, start, end, host);
     }
 
     @GetMapping("session/{sessionId}/user/action")

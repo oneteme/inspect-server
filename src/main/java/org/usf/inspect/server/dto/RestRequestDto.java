@@ -8,5 +8,5 @@ import org.usf.inspect.server.model.RestRequest;
 @Getter
 @Setter
 public class RestRequestDto extends RestRequest {
-    private ExceptionTrace exception;
+
 }

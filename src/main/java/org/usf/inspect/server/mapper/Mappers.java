@@ -75,6 +75,7 @@ public class Mappers {
                 );
                 instanceEnvironment.setResource(fromJson(rs.getString("resource"), MachineResource.class));
                 instanceEnvironment.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
+                instanceEnvironment.setNamespace(rs.getString("namespace"));
                 return instanceEnvironment;
             }
             return null;
@@ -159,12 +160,6 @@ public class Mappers {
                 out.setInContentEncoding(rs.getString("contentEncodingIn"));
                 out.setOutContentEncoding(rs.getString("contentEncodingOut"));
                 out.setThreadName(rs.getString("thread"));
-                try {
-                    out.setException(getExceptionInfoIfNotNull(rs.getString("errType"), rs.getString("errMsg"), rs.getString("stacktrace") != null ? defaultMapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {
-                    }) : null));
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
-                }
                 out.setUserAgent(rs.getString("userAgt"));
                 out.setRequestsMask(rs.getInt("mask"));
                 out.setInstanceId(rs.getObject("instanceEnv", UUID.class));
@@ -223,6 +218,7 @@ public class Mappers {
         mainSession.setName(rs.getString("name"));
         mainSession.setUser(rs.getString("user"));
         mainSession.setLocation(rs.getString("location"));
+        mainSession.setStatus(rs.getShort("status"));
         return mainSession;
     }
 
@@ -231,7 +227,6 @@ public class Mappers {
             MainSessionDto out = defaultMainSession(rs);
             out.setAddress(rs.getString("address"));
             out.setAppName(rs.getString("appName"));
-            out.setStatus(rs.getInt("status"));
             return out;
         };
     }
@@ -242,12 +237,6 @@ public class Mappers {
                 MainSession out = defaultMainSession(rs);
                 out.setType(rs.getString("type"));
                 out.setThreadName(rs.getString("thread"));
-                try {
-                    out.setException(getExceptionInfoIfNotNull(rs.getString("errType"), rs.getString("errMsg"), rs.getString("stacktrace") != null ? defaultMapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {
-                    }) : null));
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
-                }
                 out.setInstanceId(rs.getObject("instanceEnv", UUID.class));
                 out.setRequestsMask(rs.getInt("mask"));
                 return out;
@@ -345,7 +334,6 @@ public class Mappers {
             out.setUser(rs.getString("user"));
             out.setThreadName(rs.getString("thread"));
             out.setType(rs.getString("type"));
-            out.setException(getExceptionInfoIfNotNull(rs.getString("errType"), rs.getString("errMsg"), null));
             return out;
         };
     }
@@ -363,7 +351,7 @@ public class Mappers {
         out.setCommand(rs.getString("command"));
         out.setSchema(rs.getString("schema"));
         out.setProductName(rs.getString("dbName"));
-        out.setFailed(rs.getBoolean("failed"));
+        out.setStatus(rs.getShort("status"));
         return out;
     }
 
@@ -425,7 +413,7 @@ public class Mappers {
         out.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
         out.setThreadName(rs.getString("thread"));
         out.setUser(rs.getString("user"));
-        out.setFailed(rs.getBoolean("failed"));
+        out.setStatus(rs.getShort("status"));
         out.setCommand(rs.getString("command"));
         return out;
     }
@@ -486,7 +474,7 @@ public class Mappers {
         out.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
         out.setThreadName(rs.getString("thread"));
         out.setUser(rs.getString("user"));
-        out.setFailed(rs.getBoolean("failed"));
+        out.setStatus(rs.getShort("status"));
         out.setCommand(rs.getString("command"));
         return out;
     }
@@ -553,7 +541,7 @@ public class Mappers {
         out.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
         out.setThreadName(rs.getString("thread"));
         out.setUser(rs.getString("user"));
-        out.setFailed(rs.getBoolean("failed"));
+        out.setStatus(rs.getShort("status"));
         out.setCommand(rs.getString("command"));
         return out;
     }

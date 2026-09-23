@@ -242,7 +242,7 @@ CREATE TABLE IF NOT EXISTS e_exc_inf (
     va_stk json,
     va_cas json,
     cd_ord bigint,
-    cd_rqt UUID
+    cd_trc UUID
 );
 
 CREATE TABLE IF NOT EXISTS e_env_ins (

@@ -18,28 +18,6 @@ public class DirectoryRequest extends AbstractRequest {
     private String protocol;
     private String host;
     private int port;
-    @Deprecated
-    private boolean failed;
 
     @JsonCreator public DirectoryRequest() { }
-
-	@Deprecated(forRemoval = true)
-    public DirectoryRequestSignal toRequest() {
-        DirectoryRequestSignal dr = new DirectoryRequestSignal(getId(), getSessionId(), getStart(), getThreadName());
-        dr.setInstanceId(getInstanceId());
-        dr.setUser(getUser());
-        dr.setProtocol(getProtocol());
-        dr.setHost(getHost());
-        dr.setPort(getPort());
-        return dr;
-    }
-
-	@Deprecated(forRemoval = true)
-    public DirectoryRequestUpdate toCallback() {
-        DirectoryRequestUpdate drc = new DirectoryRequestUpdate(getId());
-        drc.setEnd(getEnd());
-        drc.setFailed(isFailed());
-        drc.setCommand(getCommand());
-        return drc;
-    }
 }

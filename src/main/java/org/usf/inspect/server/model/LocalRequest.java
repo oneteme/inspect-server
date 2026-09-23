@@ -19,27 +19,6 @@ public class LocalRequest extends AbstractRequest {
 	private String name; //title, topic
 	private String type;
 	private String location; //class.method, URL
-	private ExceptionTrace exception;
 	
 	@JsonCreator public LocalRequest() { }
-
-	@Deprecated(forRemoval = true)
-    public LocalRequestSignal toRequest() {
-        var req = new LocalRequestSignal(getId(), getSessionId(), getStart(), getThreadName());
-        req.setLocation(getLocation());
-        req.setUser(getUser());
-        req.setName(getName());
-        req.setType(getType());
-        req.setInstanceId(getInstanceId());
-        return req;
-    }
-
-	@Deprecated(forRemoval = true)
-    public LocalRequestUpdate toCallback() {
-        var callback = new LocalRequestUpdate(getId());
-        callback.setEnd(getEnd());
-        callback.setCommand(getCommand());
-        callback.setException(getException());
-        return callback;
-    }
 }

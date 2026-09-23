@@ -8,5 +8,5 @@ import org.usf.inspect.server.model.FtpRequest;
 @Getter
 @Setter
 public class FtpRequestDto extends FtpRequest {
-    private ExceptionTrace exception;
+
 }
