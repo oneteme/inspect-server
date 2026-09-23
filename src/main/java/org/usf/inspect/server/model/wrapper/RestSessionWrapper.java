@@ -45,14 +45,6 @@ public class RestSessionWrapper implements Session {
         return restSession.getRequestsMask();
     }
 
-    public void setException(ExceptionTrace exception) {
-        restSession.setException(exception);
-    }
-
-    public ExceptionTrace getException() {
-        return restSession.getException();
-    }
-
     public UUID getSessionId() {
         return restSession.getSessionId();
     }

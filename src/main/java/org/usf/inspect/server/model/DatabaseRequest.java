@@ -23,33 +23,6 @@ public class DatabaseRequest extends AbstractRequest {
     private String driverVersion;
     private String productName;
     private String productVersion;
-    @Deprecated
-    private boolean failed;
 
     @JsonCreator public DatabaseRequest() { }
-
-	@Deprecated(forRemoval = true)
-    public DatabaseRequestSignal toRequest(){
-        DatabaseRequestSignal req = new DatabaseRequestSignal(getId(), getSessionId(), getStart(), getThreadName());
-        req.setSchema(getSchema());
-        req.setHost(getHost());
-        req.setPort(getPort());
-        req.setName(getName());
-        req.setSchema(getSchema());
-        req.setDriverVersion(getDriverVersion());
-        req.setProductName(getProductName());
-        req.setProductVersion(getProductVersion());
-        req.setUser(getUser());
-        req.setInstanceId(getInstanceId());
-        return req;
-    }
-
-	@Deprecated(forRemoval = true)
-    public DatabaseRequestUpdate toCallback(){
-        DatabaseRequestUpdate cb = new DatabaseRequestUpdate(getId());
-        cb.setFailed(isFailed());
-        cb.setEnd(getEnd());
-        cb.setCommand(getCommand());
-        return cb;
-    }
 }

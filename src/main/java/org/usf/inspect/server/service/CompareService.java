@@ -79,7 +79,7 @@ public class CompareService {
                         restSession.protocol(), restSession.host(), restSession.port(), restSession.path(), restSession.query(),
                         restSession.media(), restSession.auth(), restSession.status(), restSession.sizeIn(), restSession.sizeOut(),
                         restSession.contentEncodingIn(), restSession.contentEncodingOut(), restSession.start(), restSession.end(), restSession.thread(),
-                        restSession.errType(), restSession.errMsg(), restSession.mask(), restSession.user(), restSession.cacheControl(), restSession.userAgt(), restSession.instanceEnv(),
+                        restSession.mask(), restSession.user(), restSession.cacheControl(), restSession.userAgt(), restSession.instanceEnv(),
                         instance.appName(), instance.os(), instance.re(), instance.address(), instance.branch(), instance.hash(), instance.environement(), instance.version())
                 .joins(innerJoin(instance.getView(), restSession.instanceEnv().eq(instance.id()).and(restSession.start().ge(instance.start()))))
                 .criterias(restSession.id().eq(id));
@@ -104,7 +104,6 @@ public class CompareService {
                 session.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
                 session.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
                 session.setThreadName(rs.getString("thread"));
-                session.setException(getExceptionInfoIfNotNull(rs.getString("errType"), rs.getString("errMsg"), null));
                 session.setName(rs.getString("apiName"));
                 session.setUserAgent(rs.getString("userAgt"));
                 session.setUser(rs.getString("user"));

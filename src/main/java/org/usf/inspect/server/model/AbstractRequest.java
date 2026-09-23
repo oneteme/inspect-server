@@ -25,12 +25,7 @@ public abstract class AbstractRequest implements EventTrace {
 	private String user;
 	private UUID id;
 	private String command;
+	private short status; //2xx, 4xx, 5xx, 0 otherwise
 	private UUID sessionId;
 	private UUID instanceId;
-
-	@Deprecated(forRemoval = true)
-    public abstract TraceSignal toRequest();
-
-	@Deprecated(forRemoval = true)
-    public abstract TraceUpdate toCallback();
 }

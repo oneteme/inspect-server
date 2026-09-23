@@ -1,30 +1,14 @@
 package org.usf.inspect.server.erm;
 
-import static org.usf.inspect.server.config.constant.FieldConstant.DH_END;
-import static org.usf.inspect.server.config.constant.FieldConstant.DH_STR;
-import static org.usf.inspect.server.config.constant.FieldConstant.ID_INS;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_ADD_PRP;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_ADR;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_APP;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_BRCH;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_CLR;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_CNF;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_ENV;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_HSH;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_OS;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_RE;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_RSR;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_TYP;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_USR;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_VRS;
-import static org.usf.jquery.core.JDBCType.UUID;
-
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
 import org.usf.jquery.mvc.Typed;
+
+import static org.usf.inspect.server.config.constant.FieldConstant.*;
+import static org.usf.jquery.core.JDBCType.UUID;
 
 public interface InstanceCatalog extends DatasetCatalog<InspectStore> {
 
@@ -80,7 +64,10 @@ public interface InstanceCatalog extends DatasetCatalog<InspectStore> {
 	
 	@Bind(VA_ADD_PRP)
 	ViewColumn additionalProperties();
-	
+
+	@Bind("cd_nsp")
+	ViewColumn namespace();
+
 	default Column elapsedTime() {
 		return end().minus(start()).epoch();
 	}
