@@ -42,7 +42,7 @@ public class RequestController {
 
     private final RequestService requestService;
 
-    @GetMapping(value = "{type}/{id}/parent", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("{type}/{id}/parent")
     public ResponseEntity<Map<String, String>> getSessionParent(
             @PathVariable String type, //TODO change string to RequestType
             @PathVariable String id
@@ -59,10 +59,10 @@ public class RequestController {
                 .orElseGet(()-> status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping(value = "request/{type}/hosts", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("request/{type}/hosts")
     public Collection<String> getRequestHosts(
             @PathVariable String type,
-            @RequestParam(name = "env") String environment,
+            @RequestParam(name = "namespace") String namespace,
             @RequestParam(name = "start") @Validate(Condition.INSTANT) Instant start,
             @RequestParam(name = "end") @Validate(Condition.INSTANT) Instant end)  {
         RequestType requestTable;
@@ -71,15 +71,15 @@ public class RequestController {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid request type: " + type, e);
         }
-        return requestService.getRequestHosts(requestTable, environment, start, end);
+        return requestService.getRequestHosts(requestTable, namespace, start, end);
     }
 
-    @GetMapping(value = "instance/{instanceId}", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("instance/{instanceId}")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(
             dataset = "instance",
             view = INSTANCE_ENVIRONMENT_RESULTSET_MAPPER,
-            select = "app_name,version,address,environement,os,re,user,type,start,collector,branch,hash,end,resource,configuration,id")
+            select = "app_name,version,address,environement,os,re,user,type,start,collector,branch,hash,end,resource,configuration,id,namespace")
     public ResponseEntity<InstanceEnvironment> fetchInstance(
             MvcRequest mvc,
             @PathVariable String instanceId
@@ -90,23 +90,23 @@ public class RequestController {
         return ok().cacheControl(maxAge(1, HOURS)).body((InstanceEnvironment) mvc.execute());
     }
 
-    @GetMapping(value = "instance/{instanceId}/trace", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("instance/{instanceId}/trace")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(
             dataset = "instance_trace",
             view = INSTANCE_TRACE_ROW_MAPPER,
             select = "pending,attempts,size_session,filename,start,instance_env")
-    public Collection<InstanceTrace> fetchInstanceTraces(
+    public Collection<TracePacket> fetchInstanceTraces(
             MvcRequest mvc,
             @PathVariable String instanceId
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.instanceTrace().instanceEnv().eq(fromString(instanceId))); // UUID
 
-        return (Collection<InstanceTrace>) mvc.execute();
+        return (Collection<TracePacket>) mvc.execute();
     }
 
-    @GetMapping(value = "instance/{instanceId}/resource/usage", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("instance/{instanceId}/resource/usage")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(
             dataset = "resource_usage",
@@ -122,7 +122,7 @@ public class RequestController {
         return (Collection<MachineResourceUsage>) mvc.execute();
     }
 
-    @GetMapping(value = "instance/{instanceId}/log/entry", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("instance/{instanceId}/log/entry")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "log_entry",
             view = LOG_ENTRY_ROW_MAPPER,
@@ -138,7 +138,7 @@ public class RequestController {
         return (Collection<LogEntry>) mvc.execute();
     }
 
-    @GetMapping(value = "session/{sessionId}/log/entry", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("session/{sessionId}/log/entry")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "log_entry",
             view = LOG_ENTRY_ROW_MAPPER,
@@ -154,22 +154,22 @@ public class RequestController {
         return (Collection<LogEntry>) mvc.execute();
     }
 
-    @GetMapping(value = "session/request/exception", produces = APPLICATION_JSON_VALUE) // need to add exception type to front call
+    @GetMapping("session/request/exception") // need to add exception type to front call
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "exception",
             view = EXCEPTION_BY_REQUEST_RESULTSET_MAPPER,
             select = "err_type,err_msg,parent",
             ignore = "requestIds")
-    public Map<Long, ExceptionInfo> fetchExceptionByRequests(
+    public Map<Long, ExceptionTrace> fetchExceptionByRequests( //TODO with session for tree
             MvcRequest mvc,
             @RequestParam( name = "requestIds") String[] requestIds)  {
         var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.exception().parent().in(Arrays.stream(requestIds).map(UUID::fromString).toArray())); // UUID
 
-        return (Map<Long, ExceptionInfo>) mvc.execute();
+        return (Map<Long, ExceptionTrace>) mvc.execute();
     }
 
-    @GetMapping(value = "session/request/database/stages/count", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("session/request/database/stages/count")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "database_stage",
             select = "action_count,parent",
@@ -200,7 +200,7 @@ public class RequestController {
 //    @RequestParam(required = false, name = "failed") Boolean[] failed,
 //    @RequestParam(required = false, name = "lazy") boolean lazy
 
-    @GetMapping(value = "session/main", produces = APPLICATION_JSON_VALUE) // can't optimise, done
+    @GetMapping("session/main") // can't optimise, done
     @QueryGuard(maxRows = 300000)
     @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "main_session",
@@ -208,22 +208,22 @@ public class RequestController {
             select = "id,type,name,start,end,user,location,status,instance.address,instance.app_name",
             join = "instance",
             order = "start",
-            ignore = "env")
+            ignore = "namespace")
     public Collection<MainSessionDto> fetchMainSessions(
             MvcRequest mvc,
-            @RequestParam(name = "env") String environment
+            @RequestParam(name = "namespace") String namespace
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+        mvc.getComposer().criteria(store.instance().namespace().eq(namespace));
 
         return (Collection<MainSessionDto>) mvc.execute();
     }
 
-    @GetMapping(value = "session/main/{sessionId}", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("session/main/{sessionId}")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "main_session",
             view = MAIN_SESSION_RESULTSET_MAPPER,
-            select = "id,name,start,end,type,location,thread,err_type,err_msg,stacktrace,mask,user,instance_env")
+            select = "id,name,start,end,type,location,thread,status,mask,user,instance_env")
     public ResponseEntity<MainSession> fetchMainSession(
             MvcRequest mvc,
             @PathVariable String sessionId
@@ -236,8 +236,8 @@ public class RequestController {
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping(value = "session/main/{sessionId}/tree", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<Session> getMainTree(@PathVariable @Validate(Condition.UUID) String sessionId)  {
+    @GetMapping("session/main/{sessionId}/tree")
+    public ResponseEntity<Session> getMainTree(@PathVariable UUID sessionId)  {
         try {
             var result = requestService.getMainTree(sessionId);
             return result.wasCompleted() ? ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(result) : ok().body(result);
@@ -246,11 +246,11 @@ public class RequestController {
         }
     }
 
-    @GetMapping(value = "instance/{instanceId}/session/main", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("instance/{instanceId}/session/main")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "main_session",
             view = MAIN_SESSION_PULSE_ROW_MAPPER,
-            select = "id,name,start,end,thread,type,location",
+            select = "id,name,start,end,thread,status,type,location",
             order = "start,end")
     public Collection<MainSession> fetchMainSessionsByInstance(
             MvcRequest mvc,
@@ -280,7 +280,7 @@ public class RequestController {
 //    @RequestParam(required = false, name = "rangestatus") String[] rangestatus,
 //    @RequestParam(required = false, name = "lazy") boolean lazy
 
-    @GetMapping(value = "session/rest", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("session/rest")
     @QueryGuard(maxRows = 300000)
     @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "rest_session",
@@ -288,22 +288,22 @@ public class RequestController {
             select = "id,api_name,method,protocol,path,query,status,start,end,user,instance.app_name",
             join = "instance",
             order = "start",
-            ignore = "env")
+            ignore = "namespace")
     public Collection<RestSessionDto> fetchRestSessions(
             MvcRequest mvc,
-            @RequestParam(name = "env") String environment
+            @RequestParam(name = "namespace") String namespace
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+        mvc.getComposer().criteria(store.instance().namespace().eq(namespace));
 
         return (Collection<RestSessionDto>) mvc.execute();
     }
 
-    @GetMapping(value = "session/rest/{sessionId}", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("session/rest/{sessionId}")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "rest_session",
             view = REST_SESSION_RESULTSET_MAPPER,
-            select = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,err_type,err_msg,stacktrace,mask,user,user_agt,cache_control,linked,instance_env")
+            select = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,mask,user,user_agt,cache_control,linked,instance_env,intermediate_nodes")
     public ResponseEntity<RestSession> fetchRestSession(
             MvcRequest mvc,
             @PathVariable String sessionId) {
@@ -315,11 +315,11 @@ public class RequestController {
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping(value = "session/rest/{sessionId}/stage", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("session/rest/{sessionId}/stage")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "rest_session_stage",
             view = REST_SESSION_STAGE_ROW_MAPPER,
-            select = "name,order,start,end",
+            select = "name,order,start,end,parent",
             order = "order")
     public Collection<HttpSessionStage> fetchRestSessionStages (
             MvcRequest mvc,
@@ -330,10 +330,8 @@ public class RequestController {
         return (Collection<HttpSessionStage>) mvc.execute();
     }
 
-    @GetMapping(value = "session/rest/{sessionId}/tree", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<Session> getRestTree(
-            @PathVariable @Validate(Condition.UUID) String sessionId
-    )  {
+    @GetMapping("session/rest/{sessionId}/tree")
+    public ResponseEntity<Session> getRestTree(@PathVariable UUID sessionId)  {
         try {
             var result = requestService.getRestTree(sessionId);
             return result.wasCompleted() ? ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(result) : ok().body(result);
@@ -342,7 +340,7 @@ public class RequestController {
         }
     }
 
-    @GetMapping(value = "instance/{instanceId}/session/rest", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("instance/{instanceId}/session/rest")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "rest_session",
             view = REST_SESSION_PULSE_ROW_MAPPER,
@@ -358,7 +356,7 @@ public class RequestController {
         return (Collection<RestSession>) mvc.execute();
     }
 
-    @GetMapping(value = "session/{sessionId}/request/rest", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("session/{sessionId}/request/rest")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "rest_request",
             view = REST_REQUEST_ROW_MAPPER,
@@ -373,12 +371,11 @@ public class RequestController {
         return (Collection<RestRequestDto>) mvc.execute();
     }
 
-    @GetMapping(value = "session/{sessionId}/request/local", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("session/{sessionId}/request/local")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "local_request",
             view = LOCAL_REQUEST_ROW_MAPPER,
-            select = "id,name,location,start,end,user,thread,type,exception.err_type,exception.err_msg",
-            join = "exception",
+            select = "id,name,location,start,end,user,thread,type,status",
             order = "start")
     public Collection<LocalRequest> fetchLocalRequests(
             MvcRequest mvc,
@@ -389,11 +386,11 @@ public class RequestController {
         return (Collection<LocalRequest>) mvc.execute();
     }
 
-    @GetMapping(value = "session/{sessionId}/request/database", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("session/{sessionId}/request/database")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "database_request",
             view = DATABASE_REQUEST_ROW_MAPPER,
-            select = "id,host,db,db_name,start,end,user,thread,command,schema,failed,parent",
+            select = "id,host,db,db_name,start,end,user,thread,command,schema,parent,status",
             order = "start")
     public Collection<DatabaseRequestDto> fetchDatabaseRequestsBySession(
             MvcRequest mvc,
@@ -404,11 +401,11 @@ public class RequestController {
         return (Collection<DatabaseRequestDto>) mvc.execute();
     }
 
-    @GetMapping(value = "session/{sessionId}/request/ftp", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("session/{sessionId}/request/ftp")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ftp_request",
             view = FTP_REQUEST_ROW_MAPPER,
-            select = "id,host,start,end,thread,user,command,failed,parent",
+            select = "id,host,start,end,thread,user,command,parent,status",
             order = "start")
     public Collection<FtpRequestDto> fetchFtpRequestsBySession(
             MvcRequest mvc,
@@ -419,11 +416,11 @@ public class RequestController {
         return (Collection<FtpRequestDto>) mvc.execute();
     }
 
-    @GetMapping(value = "session/{sessionId}/request/smtp", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("session/{sessionId}/request/smtp")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "smtp_request",
             view = SMTP_REQUEST_ROW_MAPPER,
-            select = "id,host,start,end,thread,user,command,failed,parent",
+            select = "id,host,start,end,thread,user,command,parent,status",
             order = "start")
     public Collection<MailRequestDto> fetchSmtpRequestsBySession(
             MvcRequest mvc,
@@ -434,11 +431,11 @@ public class RequestController {
         return (Collection<MailRequestDto>) mvc.execute();
     }
 
-    @GetMapping(value = "session/{sessionId}/request/ldap", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("session/{sessionId}/request/ldap")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ldap_request",
             view = LDAP_REQUEST_ROW_MAPPER,
-            select = "id,host,start,end,thread,user,command,failed,parent",
+            select = "id,host,start,end,thread,user,command,parent,status",
             order = "start")
     public Collection<DirectoryRequestDto> fetchLdapRequestsBySession(
             MvcRequest mvc,
@@ -456,7 +453,7 @@ public class RequestController {
 //    @RequestParam(required = false, name = "rangestatus") String[] rangestatus,
 //    @RequestParam(required = false, name = "lazy") boolean lazy
 
-    @GetMapping(value = "request/rest", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("request/rest")
     @QueryGuard(maxRows = 300000)
     @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "rest_request",
@@ -464,18 +461,18 @@ public class RequestController {
             select = "id,protocol,host,path,query,method,status,start,end,thread,user,body_content,linked,parent",
             join = "instance",
             order = "start",
-            ignore = "env")
+            ignore = "namespace")
     public Collection<RestRequestDto> fetchRestRequests(
             MvcRequest mvc,
-            @RequestParam(name = "env") String environment
+            @RequestParam(name = "namespace") String namespace
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+        mvc.getComposer().criteria(store.instance().namespace().eq(namespace));
 
         return (Collection<RestRequestDto>) mvc.execute();
     }
 
-    @GetMapping(value = "request/rest/{requestId}", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("request/rest/{requestId}")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "rest_request",
             view = REST_REQUEST_RESULTSET_MAPPER,
@@ -495,11 +492,11 @@ public class RequestController {
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping(value = "request/rest/{requestId}/stage", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("request/rest/{requestId}/stage")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "rest_request_stage",
             view = REST_REQUEST_STAGE_ROW_MAPPER,
-            select = "name,order,start,end,exception.err_type,exception.err_msg,exception.stacktrace",
+            select = "name,order,start,end,parent,exception.err_type,exception.err_msg,exception.stacktrace",
             join = "exception",
             order = "order")
     public Collection<HttpRequestStage> fetchRestRequestStages (
@@ -511,30 +508,30 @@ public class RequestController {
         return (Collection<HttpRequestStage>) mvc.execute();
     }
 
-    @GetMapping(value = "request/database", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("request/database")
     @QueryGuard(maxRows = 300000)
     @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "database_request",
             view = DATABASE_REQUEST_ROW_MAPPER,
-            select = "id,host,db,db_name,start,end,user,thread,command,schema,failed,parent",
+            select = "id,host,db,db_name,status,start,end,user,thread,command,schema,parent",
             join = "instance",
             order = "start",
-            ignore = "env")
+            ignore = "namespace")
     public Collection<DatabaseRequestDto> fetchDatabaseRequests(
             MvcRequest mvc,
-            @RequestParam(name = "env") String environment
+            @RequestParam(name = "namespace") String namespace
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+        mvc.getComposer().criteria(store.instance().namespace().eq(namespace));
 
         return (Collection<DatabaseRequestDto>) mvc.execute();
     }
 
-    @GetMapping(value = "request/database/{requestId}", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("request/database/{requestId}")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "database_request",
             view = DATABASE_REQUEST_RESULTSET_MAPPER,
-            select = "id,host,port,db,start,end,user,thread,driver,db_name,db_version,command,schema,failed,instance_env,parent")
+            select = "id,host,port,db,start,end,user,thread,driver,db_name,db_version,command,schema,instance_env,parent,status")
     public ResponseEntity<DatabaseRequest> fetchDatabaseRequest(
             MvcRequest mvc,
             @PathVariable String requestId) {
@@ -550,11 +547,11 @@ public class RequestController {
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping(value = "request/database/{requestId}/stage", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("request/database/{requestId}/stage")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "database_stage",
             view = DATABASE_REQUEST_STAGE_ROW_MAPPER,
-            select = "name,order,start,end,arg,action_count,command,exception.err_type,exception.err_msg,exception.stacktrace",
+            select = "name,order,start,end,command,exception.err_type,exception.err_msg,exception.stacktrace,parent",
             join = "exception",
             order = "order")
     public Collection<DatabaseRequestStage> fetchDatabaseRequestStages(
@@ -566,30 +563,30 @@ public class RequestController {
         return (Collection<DatabaseRequestStage>) mvc.execute();
     }
 
-    @GetMapping(value = "request/ftp", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("request/ftp")
     @QueryGuard(maxRows = 300000)
     @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ftp_request",
             view = FTP_REQUEST_ROW_MAPPER,
-            select = "id,host,start,end,thread,user,command,failed,parent",
+            select = "id,host,status,start,end,thread,user,command,parent,status",
             join = "instance",
             order = "start",
-            ignore = "env")
+            ignore = "namespace")
     public Collection<FtpRequestDto> fetchFtpRequests(
             MvcRequest mvc,
-            @RequestParam(name = "env") String environment
+            @RequestParam(name = "namespace") String namespace
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+        mvc.getComposer().criteria(store.instance().namespace().eq(namespace));
 
         return (Collection<FtpRequestDto>) mvc.execute();
     }
 
-    @GetMapping(value = "request/ftp/{requestId}", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("request/ftp/{requestId}")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ftp_request",
             view = FTP_REQUEST_RESULTSET_MAPPER,
-            select = "id,host,port,protocol,server_version,client_version,start,end,user,thread,command,failed,instance_env,parent")
+            select = "id,host,port,protocol,server_version,client_version,start,end,user,thread,command,instance_env,parent,status")
     public ResponseEntity<FtpRequest> fetchFtpRequest(
             MvcRequest mvc,
             @PathVariable String requestId){
@@ -605,11 +602,11 @@ public class RequestController {
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping(value = "request/ftp/{requestId}/stage", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("request/ftp/{requestId}/stage")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ftp_stage",
             view = FTP_REQUEST_STAGE_ROW_MAPPER,
-            select = "name,order,start,end,command,arg,exception.err_type,exception.err_msg,exception.stacktrace",
+            select = "name,order,start,end,command,exception.err_type,exception.err_msg,exception.stacktrace,parent",
             join = "exception",
             order = "order")
     public Collection<FtpRequestStage> fetchFtpRequestStages(
@@ -621,30 +618,30 @@ public class RequestController {
         return (Collection<FtpRequestStage>) mvc.execute();
     }
 
-    @GetMapping(value = "request/smtp", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("request/smtp")
     @QueryGuard(maxRows = 300000)
     @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "smtp_request",
             view = SMTP_REQUEST_ROW_MAPPER,
-            select = "id,host,start,end,thread,user,command,failed,parent",
+            select = "id,host,status,start,end,thread,user,command,parent",
             join = "instance",
             order = "start",
-            ignore = "env")
+            ignore = "namespace")
     public Collection<MailRequestDto> fetchSmtpRequests(
             MvcRequest mvc,
-            @RequestParam(name = "env") String environment
+            @RequestParam(name = "namespace") String namespace
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+        mvc.getComposer().criteria(store.instance().namespace().eq(namespace));
 
         return (Collection<MailRequestDto>) mvc.execute();
     }
 
-    @GetMapping(value = "request/smtp/{requestId}", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("request/smtp/{requestId}")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "smtp_request",
             view = SMTP_REQUEST_RESULTSET_MAPPER,
-            select = "id,host,port,start,end,user,thread,command,failed,instance_env,parent")
+            select = "id,host,port,start,end,user,thread,command,instance_env,parent,status")
     public ResponseEntity<MailRequest> fetchSmtpRequest(
             MvcRequest mvc,
             @PathVariable String requestId){
@@ -660,11 +657,11 @@ public class RequestController {
                 .orElseGet(() -> status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    @GetMapping(value = "request/smtp/{requestId}/stage", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("request/smtp/{requestId}/stage")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "smtp_stage",
             view = SMTP_REQUEST_STAGE_ROW_MAPPER,
-            select = "name,order,start,command,end,exception.err_type,exception.err_msg,exception.stacktrace",
+            select = "name,order,start,command,end,exception.err_type,exception.err_msg,exception.stacktrace,parent",
             join = "exception",
             order = "order")
     public Collection<MailRequestStage> fetchSmtpRequestStages(
@@ -676,7 +673,7 @@ public class RequestController {
         return (Collection<MailRequestStage>) mvc.execute();
     }
 
-    @GetMapping(value = "request/smtp/{requestId}/mail", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("request/smtp/{requestId}/mail")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "smtp_mail",
             view = SMTP_REQUEST_MAIL_ROW_MAPPER,
@@ -690,30 +687,30 @@ public class RequestController {
         return (Collection<Mail>) mvc.execute();
     }
 
-    @GetMapping(value = "request/ldap", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("request/ldap")
     @QueryGuard(maxRows = 300000)
     @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ldap_request",
             view = LDAP_REQUEST_ROW_MAPPER,
-            select = "id,host,start,end,thread,user,command,failed,parent",
+            select = "id,host,status,start,end,thread,user,command,parent,status",
             join = "instance",
             order = "start",
-            ignore = "env")
+            ignore = "namespace")
     public Collection<DirectoryRequestDto> fetchLdapRequests(
             MvcRequest mvc,
-            @RequestParam(name = "env") String environment
+            @RequestParam(name = "namespace") String namespace
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+        mvc.getComposer().criteria(store.instance().namespace().eq(namespace));
 
         return (Collection<DirectoryRequestDto>) mvc.execute();
     }
 
-    @GetMapping(value = "request/ldap/{requestId}", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("request/ldap/{requestId}")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ldap_request",
             view = LDAP_REQUEST_RESULTSET_MAPPER,
-            select = "id,host,port,protocol,start,end,user,command,thread,failed,instance_env,parent")
+            select = "id,host,port,protocol,start,end,user,command,thread,instance_env,parent,status")
     public ResponseEntity<DirectoryRequest> fetchLdapRequest(
             MvcRequest mvc,
             @PathVariable String requestId){
@@ -730,11 +727,11 @@ public class RequestController {
     }
 
 
-    @GetMapping(value = "request/ldap/{requestId}/stage", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("request/ldap/{requestId}/stage")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ldap_stage",
             view = LDAP_REQUEST_STAGE_ROW_MAPPER,
-            select = "name,order,start,end,command,arg,exception.err_type,exception.err_msg,exception.stacktrace",
+            select = "name,order,start,end,command,exception.err_type,exception.err_msg,exception.stacktrace,parent",
             join = "exception",
             order = "order")
     public Collection<DirectoryRequestStage> fetchLdapRequestStages(
@@ -746,30 +743,30 @@ public class RequestController {
         return (Collection<DirectoryRequestStage>) mvc.execute();
     }
 
-    @GetMapping(value = "architecture", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("architecture")
     public ResponseEntity<Collection<Architecture>> getArchitecture(
             @RequestParam(name = "start") @Validate(Condition.INSTANT) Instant start,
             @RequestParam(name = "end") @Validate(Condition.INSTANT) Instant end,
-            @RequestParam(name = "env") @Validate(Condition.NOT_EMPTY) String[] environments
+            @RequestParam(name = "namespace") @Validate(Condition.NOT_EMPTY) String[] namespaces
     )  {
-        var result = requestService.createArchitecture(start, end, environments);
+        var result = requestService.createArchitecture(start, end, namespaces);
         if (end != null && end.isBefore(Instant.now().truncatedTo(java.time.temporal.ChronoUnit.DAYS))) {
             return ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(result);
         }
         return ok().body(result);
     }
 
-    @GetMapping(value = "request/jdbc/schema", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("request/jdbc/schema")
     public Collection<String> getRequestSchema(
             @RequestParam(name = "host") String host,
-            @RequestParam(name = "env") String environment,
+            @RequestParam(name = "namespace") String namespace,
             @RequestParam(name = "start") @Validate(Condition.INSTANT) Instant start,
             @RequestParam(name = "end") @Validate(Condition.INSTANT) Instant end)  {
 
-        return requestService.getRequestSchema(environment, start, end, host);
+        return requestService.getRequestSchema(namespace, start, end, host);
     }
 
-    @GetMapping(value = "session/{sessionId}/user/action", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("session/{sessionId}/user/action")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "user_action",
             view = USER_ACTION_ROW_MAPPER,
@@ -784,7 +781,7 @@ public class RequestController {
         return (Collection<UserAction>) mvc.execute();
     }
 
-    @GetMapping(value = "session/user/{user}/action", produces = APPLICATION_JSON_VALUE)
+    @GetMapping("session/user/{user}/action")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "main_session",
             view = USER_ACTION_ROW_MAPPER,
@@ -803,16 +800,16 @@ public class RequestController {
             List<AnalyticDto> sessions = new ArrayList<>();
             while (rs.next()) {
                 var userAction =  new UserAction(
-                        rs.getString("action_name"),
-                        rs.getString("nodeName"),
+                        fromNullableTimestamp(rs.getTimestamp("action_start")),
                         rs.getString("type"),
-                        fromNullableTimestamp(rs.getTimestamp("action_start"))
+                        rs.getString("action_name"),
+                        rs.getString("nodeName")
                 );
-                var cdSession = rs.getString("id");
+                var cdSession = rs.getObject("id", UUID.class);
                 var session = sessions.stream().filter(s -> s.getId().equals(cdSession)).findFirst().orElse(null);
                 if(session == null) {
                     session = new AnalyticDto();
-                    session.setId(rs.getString("id"));
+                    session.setId(rs.getObject("id", UUID.class));
                     session.setStart(fromNullableTimestamp(rs.getTimestamp("session_start")));
                     session.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
                     session.setName(rs.getString("session_name"));

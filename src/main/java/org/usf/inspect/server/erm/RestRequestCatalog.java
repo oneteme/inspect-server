@@ -1,33 +1,15 @@
 package org.usf.inspect.server.erm;
 
-import static org.usf.inspect.core.RequestMask.REST;
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_PRN_SES;
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_STT;
-import static org.usf.inspect.server.config.constant.FieldConstant.ID_RST_RQT;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_ATH_SCH;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_BODY_CONTENT;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_CNT_TYP;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_I_CNT_ENC;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_I_SZE;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_LNK;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_MTH;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_O_CNT_ENC;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_O_SZE;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_PCL;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_PTH;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_QRY;
-import static org.usf.jquery.core.JDBCType.UUID;
-import static org.usf.jquery.core.Predicate.eq;
-import static org.usf.jquery.core.Predicate.ge;
-import static org.usf.jquery.core.Predicate.lt;
-import static org.usf.jquery.mvc.StoreManager.getInstance;
-
-import org.usf.inspect.core.RequestMask;
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.Expose;
 import org.usf.jquery.mvc.Typed;
+
+import static org.usf.inspect.server.config.constant.FieldConstant.*;
+import static org.usf.jquery.core.JDBCType.UUID;
+import static org.usf.jquery.core.Predicate.*;
+import static org.usf.jquery.mvc.StoreManager.getInstance;
 
 public interface RestRequestCatalog extends RequestCatalog {
 
@@ -52,9 +34,6 @@ public interface RestRequestCatalog extends RequestCatalog {
 	
 	@Bind(VA_ATH_SCH)
 	ViewColumn auth();
-	
-	@Bind(CD_STT)
-	ViewColumn status();
 	
 	@Bind(VA_I_SZE)
 	@Expose(identity = "size_in")
@@ -83,11 +62,6 @@ public interface RestRequestCatalog extends RequestCatalog {
 	@Typed(UUID)
 	ViewColumn parent();
 	
-	@Override
-	default RequestMask getRequestType() {
-		return REST;
-	}
-	
 	@Expose(identity = "error_type")
     default Column errorTypeExpressions() {
     	var exception = getInstance().getStore(InspectStore.class).exception();
@@ -98,10 +72,16 @@ public interface RestRequestCatalog extends RequestCatalog {
                 .orElse("ServerError");
     }
 
-	@Expose(identity = "count_error")
-	default Column countError() {
-		return status().toCase().when(eq(0).or(ge(400)), true).compose().count();
-    }
+	@Expose(identity = "status_tranche")
+	default Column statusTranche() {
+		return status().toCase()
+				.when(eq(0), "1")
+				.when(ge(100).and(lt(200)), "2")
+				.when(ge(200).and(lt(300)), "3")
+				.when(ge(300).and(lt(400)), "4")
+				.when(ge(400).and(lt(500)), "5")
+				.when(ge(500), "6").compose();
+	}
 
 	@Expose(identity = "performance_tranche")
 	default Column performanceTranche1() {

@@ -5,9 +5,10 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE) //hide constructor better than throwing exception
 public final class FieldConstant {
-   
-	public static final String ID_SES = "id_ses";
+
+    public static final String ID_SES = "id_ses";
     public static final String CD_PRN_SES = "cd_prn_ses";
+    public static final String CD_TRC = "cd_trc";
     public static final String CD_DTB_RQT = "cd_dtb_rqt";
     public static final String ID_DTB_RQT = "id_dtb_rqt";
     public static final String ID_FTP_RQT = "id_ftp_rqt";
@@ -21,6 +22,7 @@ public final class FieldConstant {
     public static final String CD_RST_RQT = "cd_rst_rqt";
     public static final String ID_INS = "id_ins";
     public static final String CD_INS = "cd_ins";
+    public static final String CD_NSP = "cd_nsp";
     public static final String CD_RQT = "cd_rqt";
 
     public static final String VA_MTH = "va_mth";

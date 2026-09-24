@@ -37,11 +37,11 @@ spring:
 
 logging:
   level:
-    org.usf.jquery: DEBUG
+#    org.usf.jquery: DEBUG
     org.usf.inspect: DEBUG
-    org.springframework.jdbc.core: DEBUG
-    org.springframework.security: DEBUG
-    org.springframework.web: DEBUG
+#    org.springframework.jdbc.core: DEBUG
+#    org.springframework.security: DEBUG
+#    org.springframework.web: DEBUG
 
 inspect:
   collector: 
@@ -64,7 +64,7 @@ inspect:
       remote:
         mode: REST #default=null, trace dispatch type (e.g., REST)
         host: http://localhost:9001 #default=localhost, target dispatch host
-        retention-max-age: 10d #default=30d, maximum age of traces in days
+        #retention-max-age: 10d #default=30d, maximum age of traces in days
   server:
     scheduling:
       interval: 30s #default=60s, interval between trace dispatches
@@ -78,5 +78,7 @@ inspect:
       jdbc-request: DAY
     purge:
       enabled: false
+    migration:
+      namespacePrefix: Jarvis
 
 

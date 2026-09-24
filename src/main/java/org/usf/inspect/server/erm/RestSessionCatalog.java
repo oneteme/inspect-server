@@ -1,17 +1,18 @@
 package org.usf.inspect.server.erm;
 
+import org.usf.jquery.core.Column;
+import org.usf.jquery.core.JoinGroup;
+import org.usf.jquery.core.ViewColumn;
+import org.usf.jquery.mvc.Bind;
+import org.usf.jquery.mvc.DatasetCatalog;
+import org.usf.jquery.mvc.Expose;
+import org.usf.jquery.mvc.Typed;
+
 import static org.usf.inspect.server.config.constant.FieldConstant.*;
 import static org.usf.jquery.core.JDBCType.UUID;
 import static org.usf.jquery.core.Join.innerJoin;
 import static org.usf.jquery.core.JoinGroup.joins;
 import static org.usf.jquery.core.Predicate.*;
-import static org.usf.jquery.mvc.StoreManager.getInstance;
-
-import org.usf.jquery.core.*;
-import org.usf.jquery.mvc.Bind;
-import org.usf.jquery.mvc.DatasetCatalog;
-import org.usf.jquery.mvc.Expose;
-import org.usf.jquery.mvc.Typed;
 
 public interface RestSessionCatalog extends DatasetCatalog<InspectStore> {
 
@@ -50,17 +51,6 @@ public interface RestSessionCatalog extends DatasetCatalog<InspectStore> {
 	@Bind(VA_O_SZE)
 	@Expose(identity = "size_out")
 	ViewColumn sizeOut();
-	
-	@Bind(VA_ERR_TYP)
-	@Expose(identity = "err_type")
-	ViewColumn errType();
-	
-	@Bind(VA_ERR_MSG)
-	@Expose(identity = "err_msg")
-	ViewColumn errMsg();
-	
-	@Bind(VA_STK)
-	ViewColumn stacktrace();
 	
 	@Bind(VA_I_CNT_ENC)
 	@Expose(identity = "content_encoding_in")
@@ -102,6 +92,10 @@ public interface RestSessionCatalog extends DatasetCatalog<InspectStore> {
 
 	@Bind(CD_STT)
 	ViewColumn status();
+
+	@Bind("va_fwd_add")
+	@Expose(identity = "intermediate_nodes")
+	ViewColumn intermediateNodes();
 
 	@Bind(CD_INS)
 	@Expose(identity = "instance_env")
@@ -146,9 +140,11 @@ public interface RestSessionCatalog extends DatasetCatalog<InspectStore> {
 	@Expose(identity = "error_type_session")
     default Column errorTypeExpressionsSession() {
         return status().toCase()
-                .when(ge(200).and(lt(400)), null)
-                .when(ge(400).and(lt(500)), "ClientError")
-                .orElse(errType());
+				.when(eq(0), "CNX_ERR")
+                .when(ge(400).and(lt(500)), "APP_ERR")
+				.when(ge(500).and(lt(600)), "INT_ERR")
+				.when(ge(600), "DEV_ERR")
+                .orElse(null);
     }
     
     @Expose(identity = "count_error_server")
@@ -164,6 +160,17 @@ public interface RestSessionCatalog extends DatasetCatalog<InspectStore> {
 	@Expose(identity = "count_error")
 	default Column countError() {
 		return status().toCase().when(eq(0).or(ge(400)), status()).compose().count();
+	}
+
+	@Expose(identity = "status_tranche")
+	default Column statusTranche() {
+		return status().toCase()
+				.when(eq(0), "1")
+				.when(ge(100).and(lt(200)), "2")
+				.when(ge(200).and(lt(300)), "3")
+				.when(ge(300).and(lt(400)), "4")
+				.when(ge(400).and(lt(500)), "5")
+				.when(ge(500), "6").compose();
 	}
 
 	@Expose(identity = "performance_tranche")

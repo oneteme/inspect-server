@@ -1,6 +1,5 @@
 package org.usf.inspect.server.erm;
 
-import static org.usf.inspect.server.InspectApplication.defaultMapper;
 import static org.usf.inspect.server.erm.ViewRegistryConstant.*;
 import static org.usf.inspect.server.mapper.Mappers.*;
 import static org.usf.jquery.core.JDBCType.VARCHAR;
@@ -125,34 +124,34 @@ public interface InspectStore extends StoreCatalog {
 	}
 	
 	static ViewRegistry registry = new ViewRegistry()
-			.register(INSTANCE_ENVIRONMENT_RESULTSET_MAPPER, rsp-> defaultExecutor(instanceEnvironmentResultSetMapper(defaultMapper)))
-			.register(LOG_ENTRY_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(logEntryRowMapper(defaultMapper)) ))
+			.register(INSTANCE_ENVIRONMENT_RESULTSET_MAPPER, rsp-> defaultExecutor(instanceEnvironmentResultSetMapper()))
+			.register(LOG_ENTRY_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(logEntryRowMapper()) ))
 			.register(INSTANCE_TRACE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(instanceTraceRowMapper()) ))
 			.register(MACHINE_RESOURCE_USAGE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(machineResourceUsageRowMapper()) ))
 			.register(REST_SESSION_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(restSessionRowMapper())))
-			.register(REST_SESSION_RESULTSET_MAPPER, rsp-> defaultExecutor(restSessionResultSetMapper(defaultMapper)))
+			.register(REST_SESSION_RESULTSET_MAPPER, rsp-> defaultExecutor(restSessionResultSetMapper()))
 			.register(REST_SESSION_STAGE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(restSessionStageRowMapper())))
 			.register(REST_SESSION_PULSE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(restSessionPulseRowMapper())))
 			.register(MAIN_SESSION_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(mainSessionRowMapper())))
-			.register(MAIN_SESSION_RESULTSET_MAPPER, rsp-> defaultExecutor(mainSessionResultSetMapper(defaultMapper)))
+			.register(MAIN_SESSION_RESULTSET_MAPPER, rsp-> defaultExecutor(mainSessionResultSetMapper()))
 			.register(MAIN_SESSION_PULSE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(mainSessionPulseRowMapper())))
 			.register(REST_REQUEST_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(restRequestRowMapper())))
 			.register(REST_REQUEST_RESULTSET_MAPPER, rsp-> defaultExecutor(restRequestResultSetMapper()))
-			.register(REST_REQUEST_STAGE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(restRequestStageRowMapper(defaultMapper))))
+			.register(REST_REQUEST_STAGE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(restRequestStageRowMapper())))
 			.register(LOCAL_REQUEST_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(localRequestRowMapper())))
 			.register(DATABASE_REQUEST_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(databaseRequestRowMapper())))
 			.register(DATABASE_REQUEST_RESULTSET_MAPPER, rsp-> defaultExecutor(databaseRequestResultSetMapper()))
-			.register(DATABASE_REQUEST_STAGE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(databaseRequestStageRowMapper(defaultMapper))))
+			.register(DATABASE_REQUEST_STAGE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(databaseRequestStageRowMapper())))
 			.register(FTP_REQUEST_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(ftpRequestRowMapper())))
 			.register(FTP_REQUEST_RESULTSET_MAPPER, rsp-> defaultExecutor(ftpRequestResultSetMapper()))
-			.register(FTP_REQUEST_STAGE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(ftpRequestStageRowMapper(defaultMapper))))
+			.register(FTP_REQUEST_STAGE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(ftpRequestStageRowMapper())))
 			.register(SMTP_REQUEST_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(smtpRequestRowMapper())))
 			.register(SMTP_REQUEST_RESULTSET_MAPPER, rsp-> defaultExecutor(smtpRequestResultSetMapper()))
-			.register(SMTP_REQUEST_STAGE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(smtpRequestStageRowMapper(defaultMapper))))
+			.register(SMTP_REQUEST_STAGE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(smtpRequestStageRowMapper())))
 			.register(SMTP_REQUEST_MAIL_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(smtpRequestMailRowMapper())))
 			.register(LDAP_REQUEST_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(ldapRequestRowMapper())))
 			.register(LDAP_REQUEST_RESULTSET_MAPPER, rsp-> defaultExecutor(ldapRequestResultSetMapper()))
-			.register(LDAP_REQUEST_STAGE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(ldapRequestStageRowMapper(defaultMapper))))
+			.register(LDAP_REQUEST_STAGE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(ldapRequestStageRowMapper())))
 			.register(EXCEPTION_BY_REQUEST_RESULTSET_MAPPER, rsp-> defaultExecutor(exceptionByRequestResultSetMapper()))
 			.register(USER_ACTION_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(userActionRowMapper())));
 	
