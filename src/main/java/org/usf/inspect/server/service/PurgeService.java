@@ -138,7 +138,6 @@ public class PurgeService {
                 runAsync(runnablePurge(()-> purgeDao.purgeLdapRequest(now), "LdapRequest"), functionalExecutor),
                 runAsync(runnablePurge(()-> purgeDao.purgeDtbRequest(now), "JdbcRequest"), functionalExecutor),
                 //stage
-              //  runAsync(runnablePurge(()-> purgeDao.purgeMainSessionStage(now), "SessionEvent"), functionalExecutor),
                 runAsync(runnablePurge(()-> purgeDao.purgeRestSessionStage(now), "RestSessionStage"), technicalExecutor),
                 runAsync(runnablePurge(()-> purgeDao.purgeSmtpRequestStage(now), "SmtpRequestStage"), technicalExecutor),
                 runAsync(runnablePurge(()-> purgeDao.purgeFtpRequestStage(now), "FtpRequestStage"), technicalExecutor),

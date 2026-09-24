@@ -315,12 +315,10 @@ public class PurgeDao {
                 " WHERE  NOT EXISTS (SELECT 1 FROM e_env_ins WHERE cd_prn_ses = id_ins);");
     }
 
-
-
     private int purgeRequestStage(String tableSuffix, String stageTableSuffix, Timestamp before) {
         var queryStage = "DELETE FROM e_" + stageTableSuffix +
-                " WHERE dh_str < '\" + before + \"'\" +\n" +
-                " \" AND NOT EXISTS (SELECT 1 FROM e_" + tableSuffix + " WHERE id_" + tableSuffix + " = cd_" + tableSuffix + ");";
+                " WHERE dh_str < '" + before + "'" +
+                " AND NOT EXISTS (SELECT 1 FROM e_" + tableSuffix + " WHERE id_" + tableSuffix + " = cd_" + tableSuffix + ")";
         return stream(template.batchUpdate(queryStage)).sum();
     }
 
@@ -329,8 +327,7 @@ public class PurgeDao {
 
     }
 
-
-        private String purgeBuildException(TraceType trcType) {
+    private String purgeBuildException(TraceType trcType) {
         var tableSuffix = switch (trcType) {
             case MAIN_SES -> "main_ses";
             case HTTP_SES -> "rst_ses";
