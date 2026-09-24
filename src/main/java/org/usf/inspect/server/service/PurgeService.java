@@ -29,7 +29,6 @@ import org.usf.inspect.server.dao.PurgeDao.PurgeScope;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.usf.inspect.server.model.TraceType;
 
 @Slf4j
 @Service
@@ -139,7 +138,7 @@ public class PurgeService {
                 runAsync(runnablePurge(()-> purgeDao.purgeLdapRequest(now), "LdapRequest"), functionalExecutor),
                 runAsync(runnablePurge(()-> purgeDao.purgeDtbRequest(now), "JdbcRequest"), functionalExecutor),
                 //stage
-                runAsync(runnablePurge(()-> purgeDao.purgeMainSessionStage(now), "SessionEvent"), functionalExecutor),
+              //  runAsync(runnablePurge(()-> purgeDao.purgeMainSessionStage(now), "SessionEvent"), functionalExecutor),
                 runAsync(runnablePurge(()-> purgeDao.purgeRestSessionStage(now), "RestSessionStage"), technicalExecutor),
                 runAsync(runnablePurge(()-> purgeDao.purgeSmtpRequestStage(now), "SmtpRequestStage"), technicalExecutor),
                 runAsync(runnablePurge(()-> purgeDao.purgeFtpRequestStage(now), "FtpRequestStage"), technicalExecutor),
@@ -148,12 +147,12 @@ public class PurgeService {
                 runAsync(runnablePurge(()-> purgeDao.purgeRestRequestStage(now), "RestRequestStage"), technicalExecutor),
                 runAsync(runnablePurge(()-> purgeDao.purgeMailRequestStage(now), "MailRequestStage"), technicalExecutor),
                 //event
-                runAsync(runnablePurge(()-> purgeDao.purgeException(now), "Exception"), technicalExecutor),
-                runAsync(runnablePurge(()-> purgeDao.purgeInstanceTrace(now), "InstanceTrace"), technicalExecutor),
+                runAsync(runnablePurge(purgeDao::purgeException, "Exception"), technicalExecutor),
+                runAsync(runnablePurge(()-> purgeDao.purgeInstanceTrace(now), "InstanceTrace"), functionalExecutor),
                 runAsync(runnablePurge(()-> purgeDao.purgeResourceUsage(now), "ResourceUsage"), technicalExecutor),
                 runAsync(runnablePurge(()-> purgeDao.purgeLogEntry(now), "LogEntry"), technicalExecutor),
-                runAsync(runnablePurge(()-> purgeDao.purgeSessionEvent(now), "SessionEvent"), technicalExecutor),
-                runAsync(runnablePurge(()-> purgeDao.purgeBrowserConfig(now), "BrowserConfig"), technicalExecutor)
+                runAsync(runnablePurge(()-> purgeDao.purgeSessionEvent(now), "SessionEvent"), functionalExecutor),
+                runAsync(runnablePurge(purgeDao::purgeBrowserConfig, "BrowserConfig"), technicalExecutor)
         );
     }
 

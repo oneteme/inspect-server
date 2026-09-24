@@ -153,7 +153,7 @@ public class PurgeDao {
     }
 
     public int purgeMainSessionStage(LocalDate before){
-        return purgeSessionStage("main_ses", "ses_evt",Timestamp.valueOf(before.atStartOfDay()));
+        return purgeSessionStage("main_ses", "ses_evt",Timestamp.valueOf(before.atStartOfDay()));//TODO CHECK ses_evt
     }
 
     public int purgeRestSession(List<UUID>  ids, Timestamp before){
@@ -310,29 +310,27 @@ public class PurgeDao {
     }
 
 
-    public  int purgeBrowserConfig(LocalDate now) {
-        var before=Timestamp.valueOf(now.atStartOfDay());
+    public  int purgeBrowserConfig() {
         return template.update("DELETE FROM o_brw_cfg" +
-                " WHERE  NOT EXISTS (SELECT 1 FROM e_env_ins WHERE dh_str < '" + before + "'"
-                +" AND cd_prn_ses = id_ins);");
+                " WHERE  NOT EXISTS (SELECT 1 FROM e_env_ins WHERE cd_prn_ses = id_ins);");
     }
 
 
 
     private int purgeRequestStage(String tableSuffix, String stageTableSuffix, Timestamp before) {
         var queryStage = "DELETE FROM e_" + stageTableSuffix +
-                " WHERE NOT EXISTS (SELECT 1 FROM e_" + tableSuffix + " WHERE dh_str < '" + before + "'" +
-                " AND id_" + tableSuffix + " = cd_" + tableSuffix + ");";
+                " WHERE dh_str < '\" + before + \"'\" +\n" +
+                " \" AND NOT EXISTS (SELECT 1 FROM e_" + tableSuffix + " WHERE id_" + tableSuffix + " = cd_" + tableSuffix + ");";
         return stream(template.batchUpdate(queryStage)).sum();
     }
 
-    public int purgeException(LocalDate before) {
-      return   stream(template.batchUpdate(Arrays.stream(TraceType.values()).map(t-> purgeBuildException(t,Timestamp.valueOf(before.atStartOfDay())) ).toArray(String[]::new))).sum();
+    public int purgeException() {
+      return   stream(template.batchUpdate(Arrays.stream(TraceType.values()).map(t-> purgeBuildException(t) ).toArray(String[]::new))).sum();
 
     }
 
 
-        private String purgeBuildException(TraceType trcType, Timestamp before) {
+        private String purgeBuildException(TraceType trcType) {
         var tableSuffix = switch (trcType) {
             case MAIN_SES -> "main_ses";
             case HTTP_SES -> "rst_ses";
@@ -351,8 +349,7 @@ public class PurgeDao {
         return "DELETE FROM e_exc_inf" +
                 " WHERE va_trc_typ='" + trcType.getValue() + "'" +
         " AND  NOT EXISTS (SELECT 1 FROM e_"
-                + tableSuffix + " WHERE dh_str< '" + before + "'" +
-                " AND  id_" + idSuffix + " = cd_rqt)";
+                + tableSuffix + " WHERE  id_" + idSuffix + " = cd_rqt)";
     }
 
 
@@ -366,7 +363,6 @@ public class PurgeDao {
                 " WHERE dh_str < '" + before + "'" + " AND NOT EXISTS (SELECT 1 FROM e_rst_ses  WHERE id_ses = cd_prn_ses) AND " +
                 "NOT EXISTS (SELECT 1 FROM e_main_ses WHERE id_ses = cd_prn_ses);");
     }
-    //where not exist (select id from rst_ses) and not exist(select id from main_ses)
 
     private int purgeRequestStage(String tableSuffix, String stageTableSuffix, List<UUID> ids, Timestamp before) {
         var subQuery = "SELECT rqt.id_" + tableSuffix +
