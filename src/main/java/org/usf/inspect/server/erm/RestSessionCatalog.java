@@ -93,6 +93,10 @@ public interface RestSessionCatalog extends DatasetCatalog<InspectStore> {
 	@Bind(CD_STT)
 	ViewColumn status();
 
+	@Bind("va_fwd_add")
+	@Expose(identity = "intermediate_nodes")
+	ViewColumn intermediateNodes();
+
 	@Bind(CD_INS)
 	@Expose(identity = "instance_env")
 	@Typed(UUID)

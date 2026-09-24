@@ -17,13 +17,6 @@ public interface DatabaseStageCatalog extends StageCatalog {
 	@Bind(DH_END)
 	ViewColumn end();
 	
-	@Bind(VA_CNT)
-	@Expose(identity = "action_count")
-	ViewColumn actionCount();
-	
-	@Bind(VA_ARG)
-	ViewColumn arg();
-	
 	@Bind(VA_CMD)
 	ViewColumn command();
 	

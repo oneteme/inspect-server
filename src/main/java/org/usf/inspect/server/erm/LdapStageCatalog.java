@@ -16,9 +16,6 @@ public interface LdapStageCatalog extends StageCatalog {
 	@Bind(DH_END)
 	ViewColumn end();
 	
-	@Bind(VA_ARG)
-	ViewColumn arg();
-	
 	@Bind(VA_CMD)
 	ViewColumn command();
 	

@@ -208,7 +208,7 @@ public class RequestController {
             select = "id,type,name,start,end,user,location,status,instance.address,instance.app_name",
             join = "instance",
             order = "start",
-            ignore = "env")
+            ignore = "namespace")
     public Collection<MainSessionDto> fetchMainSessions(
             MvcRequest mvc,
             @RequestParam(name = "namespace") String namespace
@@ -288,7 +288,7 @@ public class RequestController {
             select = "id,api_name,method,protocol,path,query,status,start,end,user,instance.app_name",
             join = "instance",
             order = "start",
-            ignore = "env")
+            ignore = "namespace")
     public Collection<RestSessionDto> fetchRestSessions(
             MvcRequest mvc,
             @RequestParam(name = "namespace") String namespace
@@ -303,7 +303,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "rest_session",
             view = REST_SESSION_RESULTSET_MAPPER,
-            select = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,mask,user,user_agt,cache_control,linked,instance_env")
+            select = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,mask,user,user_agt,cache_control,linked,instance_env,intermediate_nodes")
     public ResponseEntity<RestSession> fetchRestSession(
             MvcRequest mvc,
             @PathVariable String sessionId) {
@@ -319,7 +319,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "rest_session_stage",
             view = REST_SESSION_STAGE_ROW_MAPPER,
-            select = "name,order,start,end",
+            select = "name,order,start,end,parent",
             order = "order")
     public Collection<HttpSessionStage> fetchRestSessionStages (
             MvcRequest mvc,
@@ -420,7 +420,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "smtp_request",
             view = SMTP_REQUEST_ROW_MAPPER,
-            select = "id,host,start,end,thread,user,command,parent",
+            select = "id,host,start,end,thread,user,command,parent,status",
             order = "start")
     public Collection<MailRequestDto> fetchSmtpRequestsBySession(
             MvcRequest mvc,
@@ -435,7 +435,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ldap_request",
             view = LDAP_REQUEST_ROW_MAPPER,
-            select = "id,host,start,end,thread,user,command,parent",
+            select = "id,host,start,end,thread,user,command,parent,status",
             order = "start")
     public Collection<DirectoryRequestDto> fetchLdapRequestsBySession(
             MvcRequest mvc,
@@ -461,7 +461,7 @@ public class RequestController {
             select = "id,protocol,host,path,query,method,status,start,end,thread,user,body_content,linked,parent",
             join = "instance",
             order = "start",
-            ignore = "env")
+            ignore = "namespace")
     public Collection<RestRequestDto> fetchRestRequests(
             MvcRequest mvc,
             @RequestParam(name = "namespace") String namespace
@@ -496,7 +496,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "rest_request_stage",
             view = REST_REQUEST_STAGE_ROW_MAPPER,
-            select = "name,order,start,end,exception.err_type,exception.err_msg,exception.stacktrace",
+            select = "name,order,start,end,parent,exception.err_type,exception.err_msg,exception.stacktrace",
             join = "exception",
             order = "order")
     public Collection<HttpRequestStage> fetchRestRequestStages (
@@ -516,7 +516,7 @@ public class RequestController {
             select = "id,host,db,db_name,status,start,end,user,thread,command,schema,parent",
             join = "instance",
             order = "start",
-            ignore = "env")
+            ignore = "namespace")
     public Collection<DatabaseRequestDto> fetchDatabaseRequests(
             MvcRequest mvc,
             @RequestParam(name = "namespace") String namespace
@@ -531,7 +531,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "database_request",
             view = DATABASE_REQUEST_RESULTSET_MAPPER,
-            select = "id,host,port,db,start,end,user,thread,driver,db_name,db_version,command,schema,instance_env,parent")
+            select = "id,host,port,db,start,end,user,thread,driver,db_name,db_version,command,schema,instance_env,parent,status")
     public ResponseEntity<DatabaseRequest> fetchDatabaseRequest(
             MvcRequest mvc,
             @PathVariable String requestId) {
@@ -551,7 +551,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "database_stage",
             view = DATABASE_REQUEST_STAGE_ROW_MAPPER,
-            select = "name,order,start,end,arg,action_count,command,exception.err_type,exception.err_msg,exception.stacktrace",
+            select = "name,order,start,end,command,exception.err_type,exception.err_msg,exception.stacktrace,parent",
             join = "exception",
             order = "order")
     public Collection<DatabaseRequestStage> fetchDatabaseRequestStages(
@@ -568,10 +568,10 @@ public class RequestController {
     @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ftp_request",
             view = FTP_REQUEST_ROW_MAPPER,
-            select = "id,host,status,start,end,thread,user,command,parent",
+            select = "id,host,status,start,end,thread,user,command,parent,status",
             join = "instance",
             order = "start",
-            ignore = "env")
+            ignore = "namespace")
     public Collection<FtpRequestDto> fetchFtpRequests(
             MvcRequest mvc,
             @RequestParam(name = "namespace") String namespace
@@ -586,7 +586,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ftp_request",
             view = FTP_REQUEST_RESULTSET_MAPPER,
-            select = "id,host,port,protocol,server_version,client_version,start,end,user,thread,command,instance_env,parent")
+            select = "id,host,port,protocol,server_version,client_version,start,end,user,thread,command,instance_env,parent,status")
     public ResponseEntity<FtpRequest> fetchFtpRequest(
             MvcRequest mvc,
             @PathVariable String requestId){
@@ -606,7 +606,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ftp_stage",
             view = FTP_REQUEST_STAGE_ROW_MAPPER,
-            select = "name,order,start,end,command,arg,exception.err_type,exception.err_msg,exception.stacktrace",
+            select = "name,order,start,end,command,exception.err_type,exception.err_msg,exception.stacktrace,parent",
             join = "exception",
             order = "order")
     public Collection<FtpRequestStage> fetchFtpRequestStages(
@@ -626,7 +626,7 @@ public class RequestController {
             select = "id,host,status,start,end,thread,user,command,parent",
             join = "instance",
             order = "start",
-            ignore = "env")
+            ignore = "namespace")
     public Collection<MailRequestDto> fetchSmtpRequests(
             MvcRequest mvc,
             @RequestParam(name = "namespace") String namespace
@@ -641,7 +641,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "smtp_request",
             view = SMTP_REQUEST_RESULTSET_MAPPER,
-            select = "id,host,port,start,end,user,thread,command,instance_env,parent")
+            select = "id,host,port,start,end,user,thread,command,instance_env,parent,status")
     public ResponseEntity<MailRequest> fetchSmtpRequest(
             MvcRequest mvc,
             @PathVariable String requestId){
@@ -661,7 +661,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "smtp_stage",
             view = SMTP_REQUEST_STAGE_ROW_MAPPER,
-            select = "name,order,start,command,end,exception.err_type,exception.err_msg,exception.stacktrace",
+            select = "name,order,start,command,end,exception.err_type,exception.err_msg,exception.stacktrace,parent",
             join = "exception",
             order = "order")
     public Collection<MailRequestStage> fetchSmtpRequestStages(
@@ -692,10 +692,10 @@ public class RequestController {
     @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ldap_request",
             view = LDAP_REQUEST_ROW_MAPPER,
-            select = "id,host,status,start,end,thread,user,command,parent",
+            select = "id,host,status,start,end,thread,user,command,parent,status",
             join = "instance",
             order = "start",
-            ignore = "env")
+            ignore = "namespace")
     public Collection<DirectoryRequestDto> fetchLdapRequests(
             MvcRequest mvc,
             @RequestParam(name = "namespace") String namespace
@@ -710,7 +710,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ldap_request",
             view = LDAP_REQUEST_RESULTSET_MAPPER,
-            select = "id,host,port,protocol,start,end,user,command,thread,instance_env,parent")
+            select = "id,host,port,protocol,start,end,user,command,thread,instance_env,parent,status")
     public ResponseEntity<DirectoryRequest> fetchLdapRequest(
             MvcRequest mvc,
             @PathVariable String requestId){
@@ -731,7 +731,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ldap_stage",
             view = LDAP_REQUEST_STAGE_ROW_MAPPER,
-            select = "name,order,start,end,command,arg,exception.err_type,exception.err_msg,exception.stacktrace",
+            select = "name,order,start,end,command,exception.err_type,exception.err_msg,exception.stacktrace,parent",
             join = "exception",
             order = "order")
     public Collection<DirectoryRequestStage> fetchLdapRequestStages(

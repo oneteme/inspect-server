@@ -382,13 +382,7 @@ public class Mappers {
             out.setName(rs.getString("name"));
             out.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
-            out.setCount(ofNullable(rs.getString("actionCount"))
-                    .map(str -> Arrays.stream(str.split(",")).mapToLong(Long::parseLong).toArray())
-                    .orElse(null));
             out.setCommand(rs.getString("command"));
-            out.setArgs(ofNullable(rs.getString("arg"))
-                    .map(str -> Arrays.stream(str.split(",")).toArray(String[]::new))
-                    .orElse(null));
             try {
                 out.setException(getExceptionInfoIfNotNull(
                         rs.getString("errType"),
@@ -447,9 +441,6 @@ public class Mappers {
             out.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
             out.setCommand(rs.getString("command"));
-            out.setArgs(ofNullable(rs.getString("arg"))
-                    .map(str -> Arrays.stream(str.split(",")).toArray(String[]::new))
-                    .orElse(null));
             try {
                 out.setException(getExceptionInfoIfNotNull(
                         rs.getString("errType"),

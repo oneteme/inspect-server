@@ -229,7 +229,7 @@ CREATE TABLE IF NOT EXISTS e_exc_inf (
 	va_stk text,
 	va_cas text,
 	cd_ord bigint,
-	cd_rqt UUID
+    cd_trc UUID
 );
 
 CREATE TABLE IF NOT EXISTS e_env_ins (
@@ -343,7 +343,7 @@ CREATE INDEX IF NOT EXISTS idx_dtb_rqt_cd_ins ON e_dtb_rqt(cd_ins);
 CREATE INDEX IF NOT EXISTS idx_dtb_stg_cd_dtb_rqt ON e_dtb_stg(cd_dtb_rqt);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_lcl_rqt_id_lcl_rqt_dh_str ON e_lcl_rqt(id_lcl_rqt, dh_str DESC);
 CREATE INDEX IF NOT EXISTS idx_lcl_rqt_cd_prn_ses ON e_lcl_rqt(cd_prn_ses);
-CREATE INDEX IF NOT EXISTS idx_exc_inf_cd_rqt ON e_exc_inf(cd_rqt);
+CREATE INDEX IF NOT EXISTS idx_exc_inf_cd_rqt ON e_exc_inf(cd_trc);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_env_ins_id_ins ON e_env_ins(id_ins);
 --CREATE INDEX IF NOT EXISTS idx_env_ins_va_app_va_env ON e_env_ins(va_app, va_env); --TODO facto
 --CREATE INDEX IF NOT EXISTS idx_usr_acn_cd_prn_ses ON e_usr_acn(cd_prn_ses);
