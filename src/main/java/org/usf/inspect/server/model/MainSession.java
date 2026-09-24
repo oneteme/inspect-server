@@ -23,27 +23,4 @@ public class MainSession extends AbstractSession {
 	public MainSession() {
 		this.local = new LocalRequest();
 	}
-
-	@Deprecated(forRemoval = true)
-    public MainSessionSignal toSession() {
-        var session = new MainSessionSignal(getId(), getStart(), getThreadName(), getType());
-        session.setLocation(getLocation());
-        session.setUser(getUser());
-        session.setName(getName());
-        session.setInstanceId(getInstanceId());
-        return session;
-    }
-
-	@Deprecated(forRemoval = true)
-    public MainSessionUpdate toCallback() {
-        var callback = new MainSessionUpdate(getId());
-        callback.setStart(getStart());
-        callback.setEnd(getEnd());
-        callback.setLocation(getLocation());
-        callback.setUser(getUser());
-        callback.setName(getName());
-        callback.setRequestMask(getRequestsMask());
-        callback.setException(getException());
-        return callback;
-    }
 }

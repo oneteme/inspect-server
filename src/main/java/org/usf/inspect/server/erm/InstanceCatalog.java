@@ -27,6 +27,7 @@ import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
 import org.usf.jquery.mvc.Typed;
 
+
 public interface InstanceCatalog extends DatasetCatalog<InspectStore> {
 
 	@Bind(ID_INS)
@@ -84,7 +85,7 @@ public interface InstanceCatalog extends DatasetCatalog<InspectStore> {
 	
 	@Bind(VA_ADD_PRP)
 	ViewColumn additionalProperties();
-	
+
 	default Column elapsedTime() {
 		return end().minus(start()).epoch();
 	}

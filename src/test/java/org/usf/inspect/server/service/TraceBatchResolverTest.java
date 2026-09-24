@@ -373,6 +373,11 @@ class TraceBatchResolverTest {
         public void setStatus(short status) {
 
         }
+        
+        @Override
+        public byte traceType() {
+        	return 0;
+        }
     }
 
     static class NonCompletableTrace implements EventTrace {

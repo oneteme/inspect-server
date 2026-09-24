@@ -8,5 +8,5 @@ import org.usf.inspect.server.model.DatabaseRequest;
 @Getter
 @Setter
 public class DatabaseRequestDto extends DatabaseRequest {
-    private ExceptionTrace exception;
+
 }

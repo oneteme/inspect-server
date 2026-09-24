@@ -62,7 +62,7 @@ public class RequestController {
     @GetMapping("request/{type}/hosts")
     public Collection<String> getRequestHosts(
             @PathVariable String type,
-            @RequestParam(name = "env") String environment,
+            @RequestParam(name = "namespace") String namespace,
             @RequestParam(name = "start") @Validate(Condition.INSTANT) Instant start,
             @RequestParam(name = "end") @Validate(Condition.INSTANT) Instant end)  {
         RequestType requestTable;
@@ -71,7 +71,7 @@ public class RequestController {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid request type: " + type, e);
         }
-        return requestService.getRequestHosts(requestTable, environment, start, end);
+        return requestService.getRequestHosts(requestTable, namespace, start, end);
     }
 
     @GetMapping("instance/{instanceId}")
@@ -79,7 +79,7 @@ public class RequestController {
     @QueryTemplate(
             dataset = "instance",
             view = INSTANCE_ENVIRONMENT_RESULTSET_MAPPER,
-            select = "app_name,version,address,environement,os,re,user,type,start,collector,branch,hash,end,resource,configuration,id")
+            select = "app_name,version,address,environement,os,re,user,type,start,collector,branch,hash,end,resource,configuration,id,namespace")
     public ResponseEntity<InstanceEnvironment> fetchInstance(
             MvcRequest mvc,
             @PathVariable String instanceId
@@ -160,7 +160,7 @@ public class RequestController {
             view = EXCEPTION_BY_REQUEST_RESULTSET_MAPPER,
             select = "err_type,err_msg,parent",
             ignore = "requestIds")
-    public Map<Long, ExceptionTrace> fetchExceptionByRequests(
+    public Map<Long, ExceptionTrace> fetchExceptionByRequests( //TODO with session for tree
             MvcRequest mvc,
             @RequestParam( name = "requestIds") String[] requestIds)  {
         var store = mvc.getStore().unwrap(InspectStore.class);
@@ -208,13 +208,13 @@ public class RequestController {
             select = "id,type,name,start,end,user,location,status,instance.address,instance.app_name",
             join = "instance",
             order = "start",
-            ignore = "env")
+            ignore = "namespace")
     public Collection<MainSessionDto> fetchMainSessions(
             MvcRequest mvc,
-            @RequestParam(name = "env") String environment
+            @RequestParam(name = "namespace") String namespace
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+        mvc.getComposer().criteria(store.instance().namespace().eq(namespace));
 
         return (Collection<MainSessionDto>) mvc.execute();
     }
@@ -223,7 +223,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "main_session",
             view = MAIN_SESSION_RESULTSET_MAPPER,
-            select = "id,name,start,end,type,location,thread,err_type,err_msg,stacktrace,mask,user,instance_env")
+            select = "id,name,start,end,type,location,thread,status,mask,user,instance_env")
     public ResponseEntity<MainSession> fetchMainSession(
             MvcRequest mvc,
             @PathVariable String sessionId
@@ -250,7 +250,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "main_session",
             view = MAIN_SESSION_PULSE_ROW_MAPPER,
-            select = "id,name,start,end,thread,type,location",
+            select = "id,name,start,end,thread,status,type,location",
             order = "start,end")
     public Collection<MainSession> fetchMainSessionsByInstance(
             MvcRequest mvc,
@@ -288,13 +288,13 @@ public class RequestController {
             select = "id,api_name,method,protocol,path,query,status,start,end,user,instance.app_name",
             join = "instance",
             order = "start",
-            ignore = "env")
+            ignore = "namespace")
     public Collection<RestSessionDto> fetchRestSessions(
             MvcRequest mvc,
-            @RequestParam(name = "env") String environment
+            @RequestParam(name = "namespace") String namespace
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+        mvc.getComposer().criteria(store.instance().namespace().eq(namespace));
 
         return (Collection<RestSessionDto>) mvc.execute();
     }
@@ -303,7 +303,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "rest_session",
             view = REST_SESSION_RESULTSET_MAPPER,
-            select = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,err_type,err_msg,stacktrace,mask,user,user_agt,cache_control,linked,instance_env")
+            select = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,mask,user,user_agt,cache_control,linked,instance_env,intermediate_nodes")
     public ResponseEntity<RestSession> fetchRestSession(
             MvcRequest mvc,
             @PathVariable String sessionId) {
@@ -319,7 +319,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "rest_session_stage",
             view = REST_SESSION_STAGE_ROW_MAPPER,
-            select = "name,order,start,end",
+            select = "name,order,start,end,parent",
             order = "order")
     public Collection<HttpSessionStage> fetchRestSessionStages (
             MvcRequest mvc,
@@ -375,8 +375,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "local_request",
             view = LOCAL_REQUEST_ROW_MAPPER,
-            select = "id,name,location,start,end,user,thread,type,exception.err_type,exception.err_msg",
-            join = "exception",
+            select = "id,name,location,start,end,user,thread,type,status",
             order = "start")
     public Collection<LocalRequest> fetchLocalRequests(
             MvcRequest mvc,
@@ -391,7 +390,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "database_request",
             view = DATABASE_REQUEST_ROW_MAPPER,
-            select = "id,host,db,db_name,start,end,user,thread,command,schema,parent",
+            select = "id,host,db,db_name,start,end,user,thread,command,schema,parent,status",
             order = "start")
     public Collection<DatabaseRequestDto> fetchDatabaseRequestsBySession(
             MvcRequest mvc,
@@ -406,7 +405,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ftp_request",
             view = FTP_REQUEST_ROW_MAPPER,
-            select = "id,host,start,end,thread,user,command,parent",
+            select = "id,host,start,end,thread,user,command,parent,status",
             order = "start")
     public Collection<FtpRequestDto> fetchFtpRequestsBySession(
             MvcRequest mvc,
@@ -421,7 +420,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "smtp_request",
             view = SMTP_REQUEST_ROW_MAPPER,
-            select = "id,host,start,end,thread,user,command,parent",
+            select = "id,host,start,end,thread,user,command,parent,status",
             order = "start")
     public Collection<MailRequestDto> fetchSmtpRequestsBySession(
             MvcRequest mvc,
@@ -436,7 +435,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ldap_request",
             view = LDAP_REQUEST_ROW_MAPPER,
-            select = "id,host,start,end,thread,user,command,parent",
+            select = "id,host,start,end,thread,user,command,parent,status",
             order = "start")
     public Collection<DirectoryRequestDto> fetchLdapRequestsBySession(
             MvcRequest mvc,
@@ -462,13 +461,13 @@ public class RequestController {
             select = "id,protocol,host,path,query,method,status,start,end,thread,user,body_content,linked,parent",
             join = "instance",
             order = "start",
-            ignore = "env")
+            ignore = "namespace")
     public Collection<RestRequestDto> fetchRestRequests(
             MvcRequest mvc,
-            @RequestParam(name = "env") String environment
+            @RequestParam(name = "namespace") String namespace
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+        mvc.getComposer().criteria(store.instance().namespace().eq(namespace));
 
         return (Collection<RestRequestDto>) mvc.execute();
     }
@@ -497,7 +496,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "rest_request_stage",
             view = REST_REQUEST_STAGE_ROW_MAPPER,
-            select = "name,order,start,end,exception.err_type,exception.err_msg,exception.stacktrace",
+            select = "name,order,start,end,parent,exception.err_type,exception.err_msg,exception.stacktrace",
             join = "exception",
             order = "order")
     public Collection<HttpRequestStage> fetchRestRequestStages (
@@ -517,13 +516,13 @@ public class RequestController {
             select = "id,host,db,db_name,status,start,end,user,thread,command,schema,parent",
             join = "instance",
             order = "start",
-            ignore = "env")
+            ignore = "namespace")
     public Collection<DatabaseRequestDto> fetchDatabaseRequests(
             MvcRequest mvc,
-            @RequestParam(name = "env") String environment
+            @RequestParam(name = "namespace") String namespace
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+        mvc.getComposer().criteria(store.instance().namespace().eq(namespace));
 
         return (Collection<DatabaseRequestDto>) mvc.execute();
     }
@@ -532,7 +531,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "database_request",
             view = DATABASE_REQUEST_RESULTSET_MAPPER,
-            select = "id,host,port,db,start,end,user,thread,driver,db_name,db_version,command,schema,instance_env,parent")
+            select = "id,host,port,db,start,end,user,thread,driver,db_name,db_version,command,schema,instance_env,parent,status")
     public ResponseEntity<DatabaseRequest> fetchDatabaseRequest(
             MvcRequest mvc,
             @PathVariable String requestId) {
@@ -552,7 +551,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "database_stage",
             view = DATABASE_REQUEST_STAGE_ROW_MAPPER,
-            select = "name,order,start,end,arg,action_count,command,exception.err_type,exception.err_msg,exception.stacktrace",
+            select = "name,order,start,end,command,exception.err_type,exception.err_msg,exception.stacktrace,parent",
             join = "exception",
             order = "order")
     public Collection<DatabaseRequestStage> fetchDatabaseRequestStages(
@@ -569,16 +568,16 @@ public class RequestController {
     @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ftp_request",
             view = FTP_REQUEST_ROW_MAPPER,
-            select = "id,host,status,start,end,thread,user,command,parent",
+            select = "id,host,status,start,end,thread,user,command,parent,status",
             join = "instance",
             order = "start",
-            ignore = "env")
+            ignore = "namespace")
     public Collection<FtpRequestDto> fetchFtpRequests(
             MvcRequest mvc,
-            @RequestParam(name = "env") String environment
+            @RequestParam(name = "namespace") String namespace
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+        mvc.getComposer().criteria(store.instance().namespace().eq(namespace));
 
         return (Collection<FtpRequestDto>) mvc.execute();
     }
@@ -587,7 +586,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ftp_request",
             view = FTP_REQUEST_RESULTSET_MAPPER,
-            select = "id,host,port,protocol,server_version,client_version,start,end,user,thread,command,instance_env,parent")
+            select = "id,host,port,protocol,server_version,client_version,start,end,user,thread,command,instance_env,parent,status")
     public ResponseEntity<FtpRequest> fetchFtpRequest(
             MvcRequest mvc,
             @PathVariable String requestId){
@@ -607,7 +606,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ftp_stage",
             view = FTP_REQUEST_STAGE_ROW_MAPPER,
-            select = "name,order,start,end,command,arg,exception.err_type,exception.err_msg,exception.stacktrace",
+            select = "name,order,start,end,command,exception.err_type,exception.err_msg,exception.stacktrace,parent",
             join = "exception",
             order = "order")
     public Collection<FtpRequestStage> fetchFtpRequestStages(
@@ -627,13 +626,13 @@ public class RequestController {
             select = "id,host,status,start,end,thread,user,command,parent",
             join = "instance",
             order = "start",
-            ignore = "env")
+            ignore = "namespace")
     public Collection<MailRequestDto> fetchSmtpRequests(
             MvcRequest mvc,
-            @RequestParam(name = "env") String environment
+            @RequestParam(name = "namespace") String namespace
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+        mvc.getComposer().criteria(store.instance().namespace().eq(namespace));
 
         return (Collection<MailRequestDto>) mvc.execute();
     }
@@ -642,7 +641,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "smtp_request",
             view = SMTP_REQUEST_RESULTSET_MAPPER,
-            select = "id,host,port,start,end,user,thread,command,instance_env,parent")
+            select = "id,host,port,start,end,user,thread,command,instance_env,parent,status")
     public ResponseEntity<MailRequest> fetchSmtpRequest(
             MvcRequest mvc,
             @PathVariable String requestId){
@@ -662,7 +661,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "smtp_stage",
             view = SMTP_REQUEST_STAGE_ROW_MAPPER,
-            select = "name,order,start,command,end,exception.err_type,exception.err_msg,exception.stacktrace",
+            select = "name,order,start,command,end,exception.err_type,exception.err_msg,exception.stacktrace,parent",
             join = "exception",
             order = "order")
     public Collection<MailRequestStage> fetchSmtpRequestStages(
@@ -693,16 +692,16 @@ public class RequestController {
     @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ldap_request",
             view = LDAP_REQUEST_ROW_MAPPER,
-            select = "id,host,status,start,end,thread,user,command,parent",
+            select = "id,host,status,start,end,thread,user,command,parent,status",
             join = "instance",
             order = "start",
-            ignore = "env")
+            ignore = "namespace")
     public Collection<DirectoryRequestDto> fetchLdapRequests(
             MvcRequest mvc,
-            @RequestParam(name = "env") String environment
+            @RequestParam(name = "namespace") String namespace
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.instance().environement().eq(environment));
+        mvc.getComposer().criteria(store.instance().namespace().eq(namespace));
 
         return (Collection<DirectoryRequestDto>) mvc.execute();
     }
@@ -711,7 +710,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ldap_request",
             view = LDAP_REQUEST_RESULTSET_MAPPER,
-            select = "id,host,port,protocol,start,end,user,command,thread,instance_env,parent")
+            select = "id,host,port,protocol,start,end,user,command,thread,instance_env,parent,status")
     public ResponseEntity<DirectoryRequest> fetchLdapRequest(
             MvcRequest mvc,
             @PathVariable String requestId){
@@ -732,7 +731,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ldap_stage",
             view = LDAP_REQUEST_STAGE_ROW_MAPPER,
-            select = "name,order,start,end,command,arg,exception.err_type,exception.err_msg,exception.stacktrace",
+            select = "name,order,start,end,command,exception.err_type,exception.err_msg,exception.stacktrace,parent",
             join = "exception",
             order = "order")
     public Collection<DirectoryRequestStage> fetchLdapRequestStages(
@@ -748,9 +747,9 @@ public class RequestController {
     public ResponseEntity<Collection<Architecture>> getArchitecture(
             @RequestParam(name = "start") @Validate(Condition.INSTANT) Instant start,
             @RequestParam(name = "end") @Validate(Condition.INSTANT) Instant end,
-            @RequestParam(name = "env") @Validate(Condition.NOT_EMPTY) String[] environments
+            @RequestParam(name = "namespace") @Validate(Condition.NOT_EMPTY) String[] namespaces
     )  {
-        var result = requestService.createArchitecture(start, end, environments);
+        var result = requestService.createArchitecture(start, end, namespaces);
         if (end != null && end.isBefore(Instant.now().truncatedTo(java.time.temporal.ChronoUnit.DAYS))) {
             return ok().cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS)).body(result);
         }
@@ -760,11 +759,11 @@ public class RequestController {
     @GetMapping("request/jdbc/schema")
     public Collection<String> getRequestSchema(
             @RequestParam(name = "host") String host,
-            @RequestParam(name = "env") String environment,
+            @RequestParam(name = "namespace") String namespace,
             @RequestParam(name = "start") @Validate(Condition.INSTANT) Instant start,
             @RequestParam(name = "end") @Validate(Condition.INSTANT) Instant end)  {
 
-        return requestService.getRequestSchema(environment, start, end, host);
+        return requestService.getRequestSchema(namespace, start, end, host);
     }
 
     @GetMapping("session/{sessionId}/user/action")

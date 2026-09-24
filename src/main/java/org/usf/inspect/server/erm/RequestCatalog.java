@@ -1,20 +1,5 @@
 package org.usf.inspect.server.erm;
 
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_INS;
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_PRT;
-import static org.usf.inspect.server.config.constant.FieldConstant.DH_END;
-import static org.usf.inspect.server.config.constant.FieldConstant.DH_STR;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_HST;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_THR;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_USR;
-import static org.usf.jquery.core.JDBCType.UUID;
-import static org.usf.jquery.core.Join.innerJoin;
-import static org.usf.jquery.core.Join.leftJoin;
-import static org.usf.jquery.core.JoinGroup.joins;
-import static org.usf.jquery.core.Predicate.eq;
-import static org.usf.jquery.mvc.StoreManager.getInstance;
-
-import org.usf.inspect.core.SessionMask;
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.JoinGroup;
 import org.usf.jquery.core.ViewColumn;
@@ -22,6 +7,14 @@ import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
 import org.usf.jquery.mvc.Typed;
+
+import static org.usf.inspect.server.config.constant.FieldConstant.*;
+import static org.usf.jquery.core.JDBCType.UUID;
+import static org.usf.jquery.core.Join.innerJoin;
+import static org.usf.jquery.core.Join.leftJoin;
+import static org.usf.jquery.core.JoinGroup.joins;
+import static org.usf.jquery.core.Predicate.eq;
+import static org.usf.jquery.core.Predicate.ge;
 
 public interface RequestCatalog extends DatasetCatalog<InspectStore> {
 
@@ -42,6 +35,9 @@ public interface RequestCatalog extends DatasetCatalog<InspectStore> {
     @Bind(VA_USR)
     ViewColumn user();
 
+    @Bind(CD_STT)
+    ViewColumn status();
+
     @Bind(VA_THR)
     ViewColumn thread();
 
@@ -55,6 +51,11 @@ public interface RequestCatalog extends DatasetCatalog<InspectStore> {
 		return end().minus(start()).epoch();
 	}
 
+    @Expose(identity = "count_request_error")
+    default Column countError() {
+        return status().toCase().when(eq(0).or(ge(400)), true).compose().count();
+    }
+
     default JoinGroup instance() {
         var instance = getStore().instance();
         return joins(innerJoin(instance.getView(), instanceEnv().eq(instance.id())));
@@ -62,8 +63,6 @@ public interface RequestCatalog extends DatasetCatalog<InspectStore> {
 	
 	default JoinGroup exception() { //TODO parameterized resource =>  exception(RequestMask)
 		var exception = getStore().exception();
-		return joins(leftJoin(exception.getView(), id().eq(exception.parent()), exception.type().eq(getRequestType().name())));
+		return joins(leftJoin(exception.getView(), id().eq(exception.parent())));
 	}
-
-    SessionMask getRequestType();
 }

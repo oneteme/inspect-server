@@ -14,9 +14,6 @@ import static org.usf.inspect.server.config.constant.FieldConstant.*;
 
 public interface ExceptionCatalog extends DatasetCatalog<InspectStore> {
 	
-	@Bind(VA_TYP)
-	ViewColumn type();
-	
 	@Bind(VA_ERR_TYP)
 	@Expose(identity = "err_type")
 	ViewColumn errType();
@@ -31,7 +28,7 @@ public interface ExceptionCatalog extends DatasetCatalog<InspectStore> {
 	@Bind(CD_ORD)
 	ViewColumn order();
 	
-	@Bind(CD_RQT)
+	@Bind(CD_TRC)
 	@Typed(UUID)
 	ViewColumn parent();
 

@@ -58,7 +58,7 @@ public class RequestService {
         throw new NoSuchElementException("no rest session found");
     }
 
-    public List<Architecture> createArchitecture(Instant start, Instant end, String[] env){
+    public List<Architecture> createArchitecture(Instant start, Instant end, String[] namespaces){
         InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
         MainSessionCatalog mainSession = store.mainSession();
         RestSessionCatalog restSession = store.restSession();
@@ -85,7 +85,7 @@ public class RequestService {
                         restSession.end().lt(from(end)),
                         databaseRequest.db().notNull().or(databaseRequest.schema().notNull()),
                         databaseRequest.start().ge(from(start)),
-                        instance.environement().in(env)
+                        instance.namespace().in(namespaces)
                 );
         var q2 = new QueryComposer()
                 .columns(
@@ -102,7 +102,7 @@ public class RequestService {
                         restSession.end().lt(from(end)),
                         ftpRequest.host().notNull(),
                         ftpRequest.start().ge(from(start)),
-                        instance.environement().in(env)
+                        instance.namespace().in(namespaces)
                 )
                 .compose(store).asUnion(true);
         var q3 =  new QueryComposer()
@@ -120,7 +120,7 @@ public class RequestService {
                         restSession.end().lt(from(end)),
                         smtpRequest.host().notNull(),
                         smtpRequest.start().ge(from(start)),
-                        instance.environement().in(env)
+                        instance.namespace().in(namespaces)
                 ).compose(store).asUnion(true);
         var q4 = new QueryComposer()
                 .columns(
@@ -140,7 +140,7 @@ public class RequestService {
                         restSession.end().lt(from(end)),
                         ldapRequest.host().notNull(),
                         ldapRequest.start().ge(from(start)),
-                        instance.environement().in(env)
+                        instance.namespace().in(namespaces)
                 ).compose(store).asUnion(true);
         var q5 = new QueryComposer()
                 .columns(
@@ -160,7 +160,7 @@ public class RequestService {
                         restSession.start().ge(from(start)),
                         restSession.end().lt(from(end)),
                         restRequest.start().ge(from(start)),
-                        instance.environement().in(env)
+                        instance.namespace().in(namespaces)
                 ).compose(store).asUnion(true);
         var q6 = new QueryComposer()
                 .columns(
@@ -181,7 +181,7 @@ public class RequestService {
                         mainSession.end().lt(from(end)),
                         mainSession.type().eq("VIEW"),
                         restRequest.start().ge(from(start)),
-                        instance.environement().in(env)
+                        instance.namespace().in(namespaces)
                 ).compose(store).asUnion(true);
         return store.execute(q.unions(q2, q3, q4, q5, q6).compose(store), rs -> {
             Map<String, List<Architecture>> map = new HashMap<>();
@@ -294,8 +294,7 @@ public class RequestService {
                 .columns(
                         restSession.id(), restSession.apiName(), restSession.method(), restSession.protocol(), restSession.host(), restSession.port(),
                         restSession.path(), restSession.query(), restSession.media(), restSession.auth(), restSession.status(), restSession.sizeIn(), restSession.sizeOut(),
-                        restSession.contentEncodingIn(), restSession.contentEncodingOut(), restSession.start(), restSession.end(), restSession.thread(), restSession.errType(),
-                        restSession.errMsg(), restSession.mask(), restSession.user(), restSession.userAgt(), restSession.cacheControl(), restSession.instanceEnv(),
+                        restSession.contentEncodingIn(), restSession.contentEncodingOut(), restSession.start(), restSession.end(), restSession.thread(), restSession.mask(), restSession.user(), restSession.userAgt(), restSession.cacheControl(), restSession.instanceEnv(),
                         instance.appName(), instance.os(), instance.re(), instance.address()
                 )
                 .joins(restSession.instance().getJoins())
@@ -324,7 +323,6 @@ public class RequestService {
                 session.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
                 session.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
                 session.setThreadName(rs.getString("thread"));
-                session.setException(getExceptionInfoIfNotNull(rs.getString("errType"), rs.getString("errMsg"), null));
                 session.setName(rs.getString("apiName"));
                 session.setUserAgent(rs.getString("userAgt"));
                 session.setUser(rs.getString("user"));
@@ -366,7 +364,7 @@ public class RequestService {
         var v = new QueryComposer()
                 .columns(
                         mainSession.id(), mainSession.name(), mainSession.start(), mainSession.end(), mainSession.type(), mainSession.location(), mainSession.thread(),
-                        mainSession.errType(), mainSession.errMsg(), mainSession.mask(), mainSession.user(), mainSession.instanceEnv(),
+                        mainSession.mask(), mainSession.user(), mainSession.instanceEnv(),
                         instance.appName(), instance.os(), instance.re(), instance.address()
                 )
                 .joins(mainSession.instance().getJoins())
@@ -383,7 +381,6 @@ public class RequestService {
                 main.setType(rs.getString("type"));
                 main.setLocation(rs.getString("location"));
                 main.setThreadName(rs.getString("thread"));
-                main.setException(getExceptionInfoIfNotNull(rs.getString("errType"), rs.getString("errMsg"), null));
                 main.setAppName(rs.getString("appName"));
                 main.setOs(rs.getString("os"));
                 main.setRe(rs.getString("re"));
@@ -470,7 +467,7 @@ public class RequestService {
                 .columns(
                         databaseRequest.id(), databaseRequest.host(), databaseRequest.port(), databaseRequest.db(), databaseRequest.start(), databaseRequest.end(),
                         databaseRequest.user(), databaseRequest.thread(), databaseRequest.driver(), databaseRequest.dbName(), databaseRequest.dbVersion(), databaseRequest.command(),
-                        databaseRequest.failed(), databaseRequest.schema(), databaseRequest.parent()
+                        databaseRequest.schema(), databaseRequest.parent()
                 )
                 .criteria(databaseRequest.parent().in(ids.stream().toArray(UUID[]::new)));
         if (start != null) {
@@ -495,7 +492,6 @@ public class RequestService {
                 out.setProductVersion(rs.getString("dbVersion"));
                 out.setActions(new ArrayList<>());
                 out.setCommand(rs.getString("command"));
-                out.setFailed(rs.getBoolean("failed"));
                 out.setSchema(rs.getString("schema"));
                 outs.add(out);
             }
@@ -510,7 +506,7 @@ public class RequestService {
         var v = new QueryComposer()
                 .columns(
                         ftpRequest.id(), ftpRequest.host(), ftpRequest.port(), ftpRequest.protocol(), ftpRequest.serverVersion(), ftpRequest.clientVersion(),
-                        ftpRequest.start(), ftpRequest.end(), ftpRequest.command(), ftpRequest.user(), ftpRequest.thread(), ftpRequest.failed(), ftpRequest.parent()
+                        ftpRequest.start(), ftpRequest.end(), ftpRequest.command(), ftpRequest.user(), ftpRequest.thread(), ftpRequest.parent()
                 )
                 .criteria(ftpRequest.parent().in(ids.stream().toArray(UUID[]::new)));
         if (start != null) {
@@ -534,7 +530,6 @@ public class RequestService {
                 out.setUser(rs.getString("user"));
                 out.setThreadName(rs.getString("thread"));
                 out.setActions(new ArrayList<>());
-                out.setFailed(rs.getBoolean("failed"));
                 outs.add(out);
             }
             return outs;
@@ -547,7 +542,7 @@ public class RequestService {
 
         var v = new QueryComposer()
                 .columns(
-                        smtpRequest.id(), smtpRequest.host(), smtpRequest.port(), smtpRequest.start(), smtpRequest.end(), smtpRequest.command(), smtpRequest.user(), smtpRequest.thread(), smtpRequest.failed(), smtpRequest.parent()
+                        smtpRequest.id(), smtpRequest.host(), smtpRequest.port(), smtpRequest.start(), smtpRequest.end(), smtpRequest.command(), smtpRequest.user(), smtpRequest.thread(), smtpRequest.parent()
                 )
                 .criteria(smtpRequest.parent().in(ids.stream().toArray(UUID[]::new)));
         if (start != null) {
@@ -568,7 +563,6 @@ public class RequestService {
                 out.setUser(rs.getString("user"));
                 out.setThreadName(rs.getString("thread"));
                 out.setActions(new ArrayList<>());
-                out.setFailed(rs.getBoolean("failed"));
                 outs.add(out);
             }
             return outs;
@@ -581,7 +575,7 @@ public class RequestService {
 
         var v = new QueryComposer()
                 .columns(
-                        ldapRequest.id(), ldapRequest.host(), ldapRequest.port(), ldapRequest.protocol(), ldapRequest.start(), ldapRequest.end(), ldapRequest.command(), ldapRequest.user(), ldapRequest.thread(), ldapRequest.failed(), ldapRequest.parent()
+                        ldapRequest.id(), ldapRequest.host(), ldapRequest.port(), ldapRequest.protocol(), ldapRequest.start(), ldapRequest.end(), ldapRequest.command(), ldapRequest.user(), ldapRequest.thread(), ldapRequest.parent()
                 )
                 .criteria(ldapRequest.parent().in(ids.stream().toArray(UUID[]::new)));
         if (start != null) {
@@ -603,14 +597,13 @@ public class RequestService {
                 out.setUser(rs.getString("user"));
                 out.setThreadName(rs.getString("thread"));
                 out.setActions(new ArrayList<>());
-                out.setFailed(rs.getBoolean("failed"));
                 outs.add(out);
             }
             return outs;
         });
     }
 
-    public Collection<String> getRequestHosts(RequestType requestType, String environment, Instant start, Instant end){
+    public Collection<String> getRequestHosts(RequestType requestType, String namespace, Instant start, Instant end){
         InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
         RequestCatalog request = requestType.getColFn().apply(store);
         InstanceCatalog instance = store.instance();
@@ -620,13 +613,13 @@ public class RequestService {
                 .joins(request.instance().getJoins())
                 .criterias(
                         request.start().ge(start).and(request.start().lt(end)),
-                        instance.environement().eq(environment)
+                        instance.namespace().eq(namespace)
                 )
                 .order(request.host().order());
         return store.execute(v.compose(store), toListMapper((rs, row) -> rs.getString("host")));
     }
 
-    public Collection<String> getRequestSchema(String environment, Instant start, Instant end, String host){
+    public Collection<String> getRequestSchema(String namespace, Instant start, Instant end, String host){
         InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
         DatabaseRequestCatalog databaseRequest = store.databaseRequest();
         InstanceCatalog instance = store.instance();
@@ -637,7 +630,7 @@ public class RequestService {
                 .joins(databaseRequest.instance().getJoins())
                 .criterias(
                         databaseRequest.start().ge(start).and(databaseRequest.start().lt(end)).and(databaseRequest.host().eq(host)),
-                        instance.environement().eq(environment)
+                        instance.namespace().eq(namespace)
                 );
         return store.execute(v.compose(store), toListMapper((rs, row) -> rs.getString("schema")));
     }

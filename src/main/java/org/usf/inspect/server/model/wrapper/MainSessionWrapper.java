@@ -43,13 +43,6 @@ public class MainSessionWrapper implements Session {
         return mainSession.getRequestsMask();
     }
 
-    public ExceptionTrace getException(){
-        if(exceptions != null && !exceptions.isEmpty()){
-            return exceptions.getLast();
-        }
-        return mainSession.getException();
-    }
-
     public String getName() {
         return mainSession.getName();
     }
@@ -72,10 +65,6 @@ public class MainSessionWrapper implements Session {
 
     public void setLocation(String location) {
         mainSession.setLocation(location);
-    }
-
-    public void setException(ExceptionTrace exception) {
-        mainSession.setException(exception);
     }
 
     public String getUser() {

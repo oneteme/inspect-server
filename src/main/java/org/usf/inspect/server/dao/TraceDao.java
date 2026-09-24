@@ -141,7 +141,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     @Transactional(rollbackFor = Throwable.class)
     public void saveRestSessionSignals(List<HttpSessionSignal> signals) {
         executeBatch("""
-insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,va_lnk,dh_str,va_nam,va_usr,va_usr_agt,va_msk,va_fwd_add)
+insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,va_nam,va_usr,va_usr_agt,va_msk,va_fwd_add)
 values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", signals, (ps, sgn) -> {
             var idx = restSessionSginalSetter(ps, sgn);
             ps.setString(++idx, sgn.getName());
