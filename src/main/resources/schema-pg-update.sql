@@ -123,20 +123,21 @@ ALTER TABLE e_rsc_usg ADD COLUMN IF NOT EXISTS va_cpu_usg SMALLINT;
 
 -- Creation des nouvelles tables namespace et evenements de session
 CREATE TABLE IF NOT EXISTS e_nsp_ins (
-                                         va_nam varchar NOT NULL UNIQUE,
-                                         va_enc_tkn varchar NOT NULL
+    va_nam varchar NOT NULL UNIQUE,
+    va_enc_tkn varchar NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS e_ses_evt (
-                                         dh_str timestamp(6),
+    dh_str timestamp(6),
     va_typ varchar,
     va_cnt varchar,
     va_lct varchar,
     cd_ins uuid
     );
 
--- Migration de la table e_exc_inf : ajout du champ va_cas
+-- Migration de la table e_exc_inf : ajout des champs va_cas et va_trc_typ
 ALTER TABLE e_exc_inf ADD COLUMN IF NOT EXISTS va_cas json;
+ALTER TABLE e_exc_inf ADD COLUMN IF NOT EXISTS va_trc_typ SMALLINT;
 
 
 -- Migration du namespace historique
@@ -150,7 +151,7 @@ SET cd_nsp = UPPER(<prefix> || '-' || va_env)
 --TODO add UPPER(<prefix> || '-' || va_env) + TOKEN => va_enc_tkn
 
 --Ajout de la table BrowserConfig
-CREATE TABLE IF NOT EXISTS o_bwr_cfg (
+CREATE TABLE IF NOT EXISTS o_brw_cfg (
           va_dvc_dsp_rsl varchar,
           va_dvc_orn varchar,
           va_dvc_cnt varchar,

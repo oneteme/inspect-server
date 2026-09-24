@@ -10,6 +10,7 @@ import org.usf.inspect.core.*;
 import org.usf.inspect.server.InspectApplication;
 import org.usf.inspect.server.erm.InspectStore;
 import org.usf.inspect.server.erm.InstanceCatalog;
+import org.usf.inspect.core.TraceType;
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.Order;
 import org.usf.jquery.mvc.StoreManager;
@@ -18,8 +19,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import static java.sql.Types.OTHER;
@@ -33,6 +38,10 @@ import static org.usf.inspect.server.JsonUtils.toJson;
 import static org.usf.jquery.core.Column.ctimestamp;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.usf.jquery.core.QueryComposer;
+
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 @Slf4j
 @Repository
@@ -43,56 +52,75 @@ public class PurgeDao {
    // InspectApplication app = InspectApplication.defaultInstance;
 
     private static final Retention DEFAULT_RETENTION_CONFIG = new Retention(DEFAULT_RETENTION, DEFAULT_RETENTION);
+    private final NamedParameterJdbcTemplate namedTemplate;
 
     private final ObjectMapper mapper;
     private final JdbcTemplate template;
     public record PurgeScope(
             InstanceType type,
-            String env,
             String app,
+            String namespace,
             Retention retention
     ) {}
 
 
 
     public List<PurgeScope> selectInstances() {
-        InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
-        InstanceCatalog instance = store.instance();
-        return store.execute(store.newQuery(v ->
-                v.columns(
-                        instance.type(),
-                        instance.environement(),
-                        instance.appName(),
-                        instance.configuration()
-                ).criterias(
-                        Column.rank().over(
-                                new Column[]{instance.environement(), instance.appName(), instance.type()},
-                                new Order[] {instance.end().coalesce(ctimestamp()).desc(), instance.start().desc()}
-                        ).eq(1)
-                )
-        ),  rs -> mapScopes(rs, instance));
+        InspectStore store = StoreManager.getInstance()
+                .getStore(InspectStore.class);
 
+        InstanceCatalog instance = store.instance();
+
+        var query = new QueryComposer()
+                .columns(
+                        instance.type(),
+                        instance.appName(),
+                        instance.namespace(),
+                        instance.configuration()
+                )
+                .criterias(
+                        Column.rank().over(
+                                new Column[]{
+                                        instance.namespace(),
+                                        instance.appName(),
+                                        instance.type()
+                                },
+                                new Order[]{
+                                        instance.start().desc()
+                                }
+                        ).eq(1)
+                );
+
+        return store.execute(
+                query.compose(store),
+                rs -> mapScopes(rs, instance)
+        );
     }
 
-    public List<String> selectInstanceIds(Timestamp before, String env, String app, InstanceType type) {
+    public List<UUID> selectInstanceIds(Timestamp before, String nsp, String app, InstanceType type) {
         var args = new ArrayList<>(3);
         args.add(before);
         args.add(type.name());
         return template.queryForList("SELECT id_ins FROM e_env_ins WHERE dh_str<? AND dh_end IS NULL AND va_typ = ?" +
-                " AND va_env" + (nonNull(env) && args.add(env) ? "=?" : " IS NULL") +
-                " AND va_app" + (nonNull(app) && args.add(app) ? "=?" : " IS NULL"), String.class, args.toArray());
+                " AND cd_nsp" + (nonNull(nsp) && args.add(nsp) ? "=?" : " IS NULL") +
+                " AND va_app" + (nonNull(app) && args.add(app) ? "=?" : " IS NULL"), UUID.class, args.toArray());
     }
 
 
-    public int purgeAbandonedInstances(String env, String app, Timestamp dateLimit) {
-        return template.update("DELETE FROM e_env_ins" +
-                " WHERE dh_end IS NULL" +
-                " AND va_env = '" + env + "'" +
-                " AND va_app = '" + app + "'" +
-                " AND COALESCE(" +
-                "   (SELECT MAX(t.dh_str) FROM e_ins_trc t WHERE t.cd_ins = e_env_ins.id_ins)," +
-                "   e_env_ins.dh_str" +
-                " ) < '" + dateLimit + "';");
+    public int purgeAbandonedInstances(String namespace, String app, Timestamp dateLimit) {
+        return template.update("""
+        DELETE FROM e_env_ins
+        WHERE id_ins IN (
+            SELECT i.id_ins
+            FROM e_env_ins i
+            LEFT JOIN e_ins_trc t ON t.cd_ins = i.id_ins
+            WHERE i.dh_end IS NULL
+              AND i.va_app = ?
+              AND i.cd_nsp = ?
+            GROUP BY i.id_ins, i.dh_str
+            HAVING COALESCE(MAX(t.dh_str), i.dh_str) < ?
+        )
+        """, app, namespace, dateLimit);
     }
 
 
@@ -100,164 +128,135 @@ public class PurgeDao {
         return template.update("DELETE FROM e_env_ins WHERE dh_end < '" + dateLimit + "' AND va_env = '" + env + "' AND va_app = '" + app + "';");
     }
 
-    public int purgeInstanceTrace(String ids, Timestamp before){
+    public int purgeInstanceTrace(List<UUID>  ids, Timestamp before){
         return purgeRequest("ins_trc", ids, before, false);
     }
 
-    public int purgeInstanceTrace(){
-        return purgeRequest("ins_trc");
+    public int purgeInstanceTrace(LocalDate before){
+        return purgeRequest("ins_trc",Timestamp.valueOf(before.atStartOfDay()));
     }
 
-    public int purgeResourceUsage(String ids, Timestamp before){
+    public int purgeResourceUsage(List<UUID>  ids, Timestamp before){
         return purgeRequest("rsc_usg", ids, before, false);
     }
 
-    public int purgeResourceUsage(){
-        return purgeRequest("rsc_usg");
+    public int purgeResourceUsage(LocalDate before){
+        return purgeRequest("rsc_usg",Timestamp.valueOf(before.atStartOfDay()));
     }
 
-    public int purgeMainSession(String ids, Timestamp before){
+    public int purgeMainSession(List<UUID> ids, Timestamp before){
         return purgeRequest("main_ses", ids, before, true);
     }
 
-    public int purgeMainSession(){
-        return purgeRequest("main_ses");
+    public int purgeMainSession(LocalDate before){
+        return purgeRequest("main_ses",Timestamp.valueOf(before.atStartOfDay()));
     }
 
-    public int purgeMainSessionStage(){
-        return purgeSessionStage("main_ses", "ses_evt");
+    public int purgeMainSessionStage(LocalDate before){
+        return purgeSessionStage("main_ses", "ses_evt",Timestamp.valueOf(before.atStartOfDay()));
     }
 
-    public int purgeRestSession(String ids, Timestamp before){
+    public int purgeRestSession(List<UUID>  ids, Timestamp before){
         return purgeRequest("rst_ses", ids, before, true);
     }
 
-    public int purgeRestSession(){
-        return purgeRequest("rst_ses");
+    public int purgeRestSession(LocalDate before){
+        return purgeRequest("rst_ses",Timestamp.valueOf(before.atStartOfDay()));
     }
 
-    public int purgeRestSessionStage(String ids, Timestamp before) {
-        var subQuery = "SELECT ses.id_ses" +
-                " FROM e_rst_ses ses " +
-                " WHERE ses.cd_ins IN (" + ids + ") " +
-                " AND ses.dh_str < '" + before + "' " +
-                " AND ses.dh_end < '" + before + "'";
 
-        return template.update("DELETE FROM e_rst_ses_stg" +
-                " WHERE cd_prn_ses IN (" + subQuery + ") " +
-                " AND dh_str < '" + before + "' " +
-                " AND dh_end < '" + before + "'");
+
+    public int purgeRestSessionStage(LocalDate before) {
+        return purgeSessionStage("rst_ses", "rst_ses_stg",Timestamp.valueOf(before.atStartOfDay()));
     }
 
-    public int purgeRestSessionStage() {
-        return purgeSessionStage("rst_ses", "rst_ses_stg");
-    }
-
-    public int purgeRestRequest(String ids, Timestamp before){
+    public int purgeRestRequest(List<UUID>  ids, Timestamp before){
         return purgeRequest("rst_rqt", ids, before, true);
     }
 
-    public int purgeRestRequest(){
-        return purgeRequest("rst_rqt");
+    public int purgeRestRequest(LocalDate before){
+        return purgeRequest("rst_rqt",Timestamp.valueOf(before.atStartOfDay()));
     }
 
-    @Transactional(rollbackFor = Throwable.class)
-    public int purgeRestRequestStage(String ids, Timestamp before){
-        return purgeRequestStage("rst_rqt", "rst_rqt_stg", REST.name(), ids, before);
+
+    public int purgeRestRequestStage(LocalDate before){
+        return purgeRequestStage("rst_rqt", "rst_rqt_stg",Timestamp.valueOf(before.atStartOfDay()));
     }
 
-    @Transactional(rollbackFor = Throwable.class)
-    public int purgeRestRequestStage(){
-        return purgeRequestStage("rst_rqt", "rst_rqt_stg", REST.name());
+    public int purgeMailRequestStage(LocalDate before){
+        return purgeRequestStage("smtp_rqt", "smtp_mail",Timestamp.valueOf(before.atStartOfDay()));
     }
 
-    public int purgeSmtpRequest(String ids, Timestamp before){
+    public int purgeSmtpRequest(List<UUID>  ids, Timestamp before){
         return purgeRequest("smtp_rqt", ids, before, true);
     }
 
-    public int purgeSmtpRequest(){
-        return purgeRequest("smtp_rqt");
+    public int purgeSmtpRequest(LocalDate before){
+        return purgeRequest("smtp_rqt",Timestamp.valueOf(before.atStartOfDay()));
     }
 
-    @Transactional(rollbackFor = Throwable.class)
-    public int purgeSmtpRequestStage(){
-        return purgeRequestStage("smtp_rqt", "smtp_stg", SMTP.name());
+    public int purgeSmtpRequestStage(LocalDate before){
+        return purgeRequestStage("smtp_rqt", "smtp_stg",Timestamp.valueOf(before.atStartOfDay()));
     }
 
-    @Transactional(rollbackFor = Throwable.class)
-    public int purgeSmtpRequestStage(String ids, Timestamp before){
-        return purgeRequestStage("smtp_rqt", "smtp_stg", SMTP.name(), ids, before);
-    }
 
-    public int purgeFtpRequest(String ids, Timestamp before){
+    public int purgeFtpRequest(List<UUID>  ids, Timestamp before){
         return purgeRequest("ftp_rqt", ids, before, true);
     }
 
-    public int purgeFtpRequest(){
-        return purgeRequest("ftp_rqt");
+    public int purgeFtpRequest(LocalDate before){
+        return purgeRequest("ftp_rqt", Timestamp.valueOf(before.atStartOfDay()));
     }
 
-    @Transactional(rollbackFor = Throwable.class)
-    public int purgeFtpRequestStage(String ids, Timestamp before){
-        return purgeRequestStage("ftp_rqt", "ftp_stg", FTP.name(), ids, before);
+
+    public int purgeFtpRequestStage(LocalDate before){
+        return purgeRequestStage("ftp_rqt", "ftp_stg",Timestamp.valueOf(before.atStartOfDay()));
     }
 
-    @Transactional(rollbackFor = Throwable.class)
-    public int purgeFtpRequestStage(){
-        return purgeRequestStage("ftp_rqt", "ftp_stg", FTP.name());
-    }
-
-    public int purgeLdapRequest(String ids, Timestamp before){
+    public int purgeLdapRequest(List<UUID>  ids, Timestamp before){
         return purgeRequest("ldap_rqt", ids, before, true);
     }
 
-    public int purgeLdapRequest(){
-        return purgeRequest("ldap_rqt");
+    public int purgeLdapRequest(LocalDate before ){
+        return purgeRequest("ldap_rqt",Timestamp.valueOf(before.atStartOfDay()));
     }
 
-    @Transactional(rollbackFor = Throwable.class)
-    public int purgeLdapRequestStage(String ids, Timestamp dateLimit){
-        return purgeRequestStage("ldap_rqt", "ldap_stg", LDAP.name(), ids, dateLimit);
+
+    public int purgeLdapRequestStage(LocalDate before){
+        return purgeRequestStage("ldap_rqt", "ldap_stg",Timestamp.valueOf(before.atStartOfDay()));
     }
 
-    @Transactional(rollbackFor = Throwable.class)
-    public int purgeLdapRequestStage(){
-        return purgeRequestStage("ldap_rqt", "ldap_stg", LDAP.name());
-    }
-
-    public int purgeDtbRequest(String ids, Timestamp dateLimit){
+    public int purgeDtbRequest(List<UUID>  ids, Timestamp dateLimit){
         return purgeRequest("dtb_rqt", ids, dateLimit, true);
     }
 
-    public int purgeDtbRequest(){
-        return purgeRequest("dtb_rqt");
+    public int purgeDtbRequest(LocalDate before){
+        return purgeRequest("dtb_rqt",Timestamp.valueOf(before.atStartOfDay()));
     }
 
-    @Transactional(rollbackFor = Throwable.class)
-    public int purgeDtbRequestStage(String ids, Timestamp before){
-        return purgeRequestStage("dtb_rqt", "dtb_stg", JDBC.name(), ids, before);
+
+    public int purgeDtbRequestStage(LocalDate before){
+        return purgeRequestStage("dtb_rqt", "dtb_stg",Timestamp.valueOf(before.atStartOfDay()));
     }
 
-    @Transactional(rollbackFor = Throwable.class)
-    public int purgeDtbRequestStage(){
-        return purgeRequestStage("dtb_rqt", "dtb_stg", JDBC.name());
-    }
-
-    public int purgeLocalRequest(String ids, Timestamp before){
+    public int purgeLocalRequest(List<UUID>  ids, Timestamp before){
         return purgeRequest("lcl_rqt", ids, before, true);
     }
 
-    public int purgeLocalRequest(){
-        return purgeRequest("lcl_rqt");
+    public int purgeLocalRequest(LocalDate before){
+        return purgeRequest("lcl_rqt",Timestamp.valueOf(before.atStartOfDay()));
     }
 
-    public int purgeLogEntry(String ids, Timestamp before){
+    public int purgeLogEntry(List<UUID>  ids, Timestamp before){
         return purgeRequest("log_ent", ids, before, false);
     }
 
-    public int purgeLogEntry(){
-        return purgeRequest("log_ent");
+    public int purgeLogEntry(LocalDate before){
+        return purgeRequest("log_ent",Timestamp.valueOf(before.atStartOfDay()));
     }
+
+
+
 
     public Stream<Runnable> vacuumTables(){
         return Stream.of(
@@ -280,34 +279,96 @@ public class PurgeDao {
                 ()-> vacuum("e_rsc_usg"));
     }
 
-    private int purgeRequest(String tableSuffix, String ids, Timestamp before, boolean withEnd) {
-        return template.update("DELETE FROM e_" + tableSuffix +
-                " WHERE dh_str < '" + before + "'" +
-                (withEnd ? " AND dh_end < '" + before + "'" : "") +
-                " AND cd_ins IN (" + ids + ");");
+    private int purgeRequest(String tableSuffix, List<UUID> ids, Timestamp before, boolean withEnd)
+    {
+        if (ids.isEmpty()) {
+            return 0;
+        }
+
+        String sql = "DELETE FROM e_" + tableSuffix +
+                " WHERE dh_str < :before" +
+                (withEnd ? " AND dh_end < :before" : "") +
+                " AND cd_ins IN (:ids)";
+
+        var params = new MapSqlParameterSource()
+                .addValue("before", before)
+                .addValue("ids", ids);
+
+        return namedTemplate.update(sql, params);
     }
 
-    private int purgeRequest(String tableSuffix) {
-        return template.update("DELETE FROM e_" + tableSuffix +
-                " WHERE NOT EXISTS (SELECT 1 FROM e_env_ins WHERE id_ins = cd_ins);");
+
+
+    private int purgeRequest(String tableSuffix, Timestamp before) {
+        return template.update(
+                "DELETE FROM e_" + tableSuffix +
+                        " WHERE dh_str < '" + before + "'" +
+                        " AND NOT EXISTS (" +
+                        "SELECT 1 FROM e_env_ins WHERE id_ins = cd_ins" +
+                        ");"
+        );
     }
 
 
-    private int purgeRequestStage(String tableSuffix, String stageTableSuffix, String type) {
+    public  int purgeBrowserConfig(LocalDate now) {
+        var before=Timestamp.valueOf(now.atStartOfDay());
+        return template.update("DELETE FROM o_brw_cfg" +
+                " WHERE  NOT EXISTS (SELECT 1 FROM e_env_ins WHERE dh_str < '" + before + "'"
+                +" AND cd_prn_ses = id_ins);");
+    }
+
+
+
+    private int purgeRequestStage(String tableSuffix, String stageTableSuffix, Timestamp before) {
         var queryStage = "DELETE FROM e_" + stageTableSuffix +
-                " WHERE NOT EXISTS (SELECT 1 FROM e_" + tableSuffix + " WHERE id_" + tableSuffix + " = cd_" + tableSuffix + ");";
-        var queryException = "DELETE FROM e_exc_inf" +
-                " WHERE " +
-                " NOT EXISTS (SELECT 1 FROM e_" + tableSuffix + " WHERE id_" + tableSuffix + " = cd_rqt);";
-        return stream(template.batchUpdate(queryStage, queryException)).sum();
+                " WHERE NOT EXISTS (SELECT 1 FROM e_" + tableSuffix + " WHERE dh_str < '" + before + "'" +
+                " AND id_" + tableSuffix + " = cd_" + tableSuffix + ");";
+        return stream(template.batchUpdate(queryStage)).sum();
     }
 
-    private int purgeSessionStage(String tableSuffix, String stageTableSuffix) {
+    public int purgeException(LocalDate before) {
+      return   stream(template.batchUpdate(Arrays.stream(TraceType.values()).map(t-> purgeBuildException(t,Timestamp.valueOf(before.atStartOfDay())) ).toArray(String[]::new))).sum();
+
+    }
+
+
+        private String purgeBuildException(TraceType trcType, Timestamp before) {
+        var tableSuffix = switch (trcType) {
+            case MAIN_SES -> "main_ses";
+            case HTTP_SES -> "rst_ses";
+            case FTP_REQ -> "ftp_rqt";
+            case JDBC_REQ -> "dtb_rqt";
+            case LDAP_REQ -> "ldap_rqt";
+            case LCL_REQ -> "lcl_rqt";
+            case SMTP_REQ -> "smtp_rqt";
+            case HTTP_REQ -> "rst_rqt";
+        };
+
+        var idSuffix = tableSuffix;
+        if (trcType == TraceType.MAIN_SES || trcType == TraceType.HTTP_SES) {
+            idSuffix = "ses";
+        }
+        return "DELETE FROM e_exc_inf" +
+                " WHERE va_trc_typ='" + trcType.getValue() + "'" +
+        " AND  NOT EXISTS (SELECT 1 FROM e_"
+                + tableSuffix + " WHERE dh_str< '" + before + "'" +
+                " AND  id_" + idSuffix + " = cd_rqt)";
+    }
+
+
+    private int purgeSessionStage(String tableSuffix, String stageTableSuffix, Timestamp before) {
         return template.update("DELETE FROM e_" + stageTableSuffix +
-                " WHERE NOT EXISTS (SELECT 1 FROM e_" + tableSuffix + " WHERE id_ses = cd_prn_ses);");
+                " WHERE dh_str< '" + before + "'" +" AND NOT EXISTS (SELECT 1 FROM e_" + tableSuffix + " WHERE id_ses = cd_prn_ses);");
     }
+    public int purgeSessionEvent(LocalDate now) {
+        var before=Timestamp.valueOf(now.atStartOfDay());
+        return template.update("DELETE FROM e_ses_evt"  +
+                " WHERE dh_str < '" + before + "'" + " AND NOT EXISTS (SELECT 1 FROM e_rst_ses  WHERE id_ses = cd_prn_ses) AND " +
+                "NOT EXISTS (SELECT 1 FROM e_main_ses WHERE id_ses = cd_prn_ses);");
+    }
+    //where not exist (select id from rst_ses) and not exist(select id from main_ses)
 
-    private int purgeRequestStage(String tableSuffix, String stageTableSuffix, String type, String ids, Timestamp before) {
+    private int purgeRequestStage(String tableSuffix, String stageTableSuffix, List<UUID> ids, Timestamp before) {
         var subQuery = "SELECT rqt.id_" + tableSuffix +
                 " FROM e_" + tableSuffix + " rqt " +
                 " WHERE rqt.cd_ins IN (" + ids + ") " +
@@ -339,14 +400,14 @@ public class PurgeDao {
         var out = new ArrayList<PurgeScope>();
         while (rs.next()) {
             var app = rs.getString(instance.appName().toString());
-            var env = rs.getString(instance.environement().toString());
+            var namespace = rs.getString(instance.namespace().toString());
             var type = InstanceType.valueOf(rs.getString(instance.type().toString()));
             var raw = rs.getString(instance.configuration().toString());
 
             var config = fromJson(raw, InspectCollectorConfiguration.class);
             var rtt = config == null ? DEFAULT_RETENTION_CONFIG : config.getTracing().getRemote().getRetentionMaxAge();
-            // On extrait directement les durées depuis l'objet Retention //TODO English
-            out.add(new PurgeScope(type, env, app, rtt));
+            // Extract retention durations directly from the Retention object
+            out.add(new PurgeScope(type, app, namespace, rtt));
         }
         return out;
     }

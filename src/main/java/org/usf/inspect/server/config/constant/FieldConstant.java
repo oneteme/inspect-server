@@ -21,6 +21,7 @@ public final class FieldConstant {
     public static final String CD_RST_RQT = "cd_rst_rqt";
     public static final String ID_INS = "id_ins";
     public static final String CD_INS = "cd_ins";
+    public static final String CD_NSP = "cd_nsp";
     public static final String CD_RQT = "cd_rqt";
 
     public static final String VA_MTH = "va_mth";

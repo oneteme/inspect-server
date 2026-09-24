@@ -229,7 +229,8 @@ CREATE TABLE IF NOT EXISTS e_exc_inf (
 	va_stk text,
 	va_cas text,
 	cd_ord bigint,
-	cd_rqt UUID
+	cd_rqt UUID,
+    va_trc_typ SMALLINT
 );
 
 CREATE TABLE IF NOT EXISTS e_env_ins (
@@ -296,7 +297,7 @@ CREATE TABLE IF NOT EXISTS e_ses_evt (
 );
 
 --Ajout de la table BrowserConfig
-CREATE TABLE IF NOT EXISTS o_bwr_cfg (
+CREATE TABLE IF NOT EXISTS o_brw_cfg (
                                          va_dvc_dsp_rsl varchar,
                                          va_dvc_orn varchar,
                                          va_dvc_cnt varchar,

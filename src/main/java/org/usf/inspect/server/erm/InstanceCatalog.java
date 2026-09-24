@@ -17,6 +17,7 @@ import static org.usf.inspect.server.config.constant.FieldConstant.VA_RSR;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_TYP;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_USR;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_VRS;
+import static org.usf.inspect.server.config.constant.FieldConstant.CD_NSP;
 import static org.usf.jquery.core.JDBCType.UUID;
 
 import org.usf.jquery.core.Column;
@@ -74,6 +75,9 @@ public interface InstanceCatalog extends DatasetCatalog<InspectStore> {
 	
 	@Bind(VA_CNF)
 	ViewColumn configuration();
+
+	@Bind(CD_NSP)
+	ViewColumn namespace();
 	
 	@Bind(VA_RSR)
 	ViewColumn resource();

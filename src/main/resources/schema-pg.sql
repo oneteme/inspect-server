@@ -7,9 +7,6 @@ CREATE TABLE IF NOT EXISTS e_main_ses (
     dh_end timestamp(6),
     va_lct varchar,
     va_thr varchar,
-    --va_err_typ varchar,deprecated
-    -- va_err_msg varchar,deprecated
-    --  va_stk json,deprecated
     va_msk int,
     cd_ins UUID,
     cd_stt SMALLINT
@@ -34,9 +31,6 @@ CREATE TABLE IF NOT EXISTS e_rst_ses (
     dh_str timestamp(6), 
     dh_end timestamp(6),
     va_thr varchar,
-    --va_err_typ varchar,deprecated
-    --va_err_msg varchar,deprecated
-    --va_stk json,deprecated
     va_nam varchar,
     va_usr varchar,
     va_usr_agt varchar,
@@ -151,7 +145,6 @@ CREATE TABLE IF NOT EXISTS e_ftp_stg (
     dh_str timestamp(6),
     dh_end timestamp(6),
     va_cmd varchar,
-   -- va_arg varchar,deprecated
     cd_ord int,
     cd_ftp_rqt UUID -- index,
     va_pld json
@@ -179,7 +172,6 @@ CREATE TABLE IF NOT EXISTS e_ldap_stg (
     dh_str timestamp(6),
     dh_end timestamp(6),
     va_cmd varchar,
-    --va_arg varchar,
     cd_ord int,
     cd_ldap_rqt UUID,
     va_pld json
@@ -210,10 +202,8 @@ PARTITION BY RANGE (dh_str);
 CREATE TABLE IF NOT EXISTS e_dtb_stg (
     va_nam varchar,
     dh_str timestamp(6),   
-    dh_end timestamp(6),   
-    --va_cnt varchar,
+    dh_end timestamp(6),
     va_cmd varchar,
-   -- va_arg varchar,
     cd_ord int,
     cd_dtb_rqt UUID,
     va_pld json
@@ -236,13 +226,13 @@ CREATE TABLE IF NOT EXISTS e_lcl_rqt (
 PARTITION BY RANGE (dh_str);
 
 CREATE TABLE IF NOT EXISTS e_exc_inf (
-  --  va_typ varchar,
     va_err_typ varchar,
     va_err_msg varchar,
     va_stk json,
     va_cas json,
     cd_ord bigint,
-    cd_rqt UUID
+    cd_rqt UUID,
+    va_trc_typ SMALLINT,
 );
 
 CREATE TABLE IF NOT EXISTS e_env_ins (
@@ -272,7 +262,6 @@ create table if not exists e_ins_trc (
     va_seq int,
     va_trc_cnt int,
     dh_str timestamp(6),
-   -- va_fln varchar,
     cd_ins uuid
 )
 PARTITION BY RANGE (dh_str);
@@ -299,8 +288,8 @@ create table if not exists e_rsc_usg (
 PARTITION BY RANGE (dh_str);
 
 CREATE TABLE IF NOT EXISTS e_nsp_ins (
-		va_nam varchar NOT NULL UNIQUE,
-		va_enc_tkn varchar NOT NULL
+	va_nam varchar NOT NULL UNIQUE,
+	va_enc_tkn varchar NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS e_ses_evt (
@@ -312,17 +301,17 @@ CREATE TABLE IF NOT EXISTS e_ses_evt (
 );
 
 --Ajout de la table BrowserConfig
-CREATE TABLE IF NOT EXISTS o_bwr_cfg (
-                                         va_dvc_dsp_rsl varchar,
-                                         va_dvc_orn varchar,
-                                         va_dvc_cnt varchar,
-                                         va_sav_dta boolean,
-                                         va_wdw_vpt_bds varchar,
-                                         va_wdw_zom_lvl varchar,
-                                         va_usr_lng varchar,
-                                         va_usr_thm varchar,
-                                         va_nav_rfr varchar,
-                                         cd_prn_ses uuid
+CREATE TABLE IF NOT EXISTS o_brw_cfg (
+     va_dvc_dsp_rsl varchar,
+     va_dvc_orn varchar,
+     va_dvc_cnt varchar,
+     va_sav_dta boolean,
+     va_wdw_vpt_bds varchar,
+     va_wdw_zom_lvl varchar,
+     va_usr_lng varchar,
+     va_usr_thm varchar,
+    --va_nav_rfr varchar,
+     cd_prn_ses uuid
 );
 
 -- Ajouter les index du cd instance dans les requests
@@ -361,10 +350,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_lcl_rqt_id_lcl_rqt_dh_str ON e_lcl_rqt(id_
 CREATE INDEX IF NOT EXISTS idx_lcl_rqt_cd_prn_ses ON e_lcl_rqt(cd_prn_ses);
 CREATE INDEX IF NOT EXISTS idx_exc_inf_cd_rqt ON e_exc_inf(cd_rqt);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_env_ins_id_ins ON e_env_ins(id_ins);
---CREATE INDEX IF NOT EXISTS idx_env_ins_va_app_va_env ON e_env_ins(va_app, va_env);  --TODO facto
---CREATE INDEX IF NOT EXISTS idx_usr_acn_cd_prn_ses ON e_usr_acn(cd_prn_ses);
 CREATE INDEX IF NOT EXISTS idx_ins_trc_cd_ins ON e_ins_trc(cd_ins);
 CREATE INDEX IF NOT EXISTS idx_log_ent_cd_ins ON e_log_ent(cd_ins);
 CREATE INDEX IF NOT EXISTS idx_log_ent_cd_prn_ses ON e_log_ent(cd_prn_ses);
 CREATE INDEX IF NOT EXISTS idx_nsp_ins_va_nam ON e_nsp_ins(va_nam);
-CREATE INDEX IF NOT EXISTS idx_env_ins_cd_nsp ON e_env_ins(cd_nsp); --TODO facto
+CREATE INDEX IF NOT EXISTS idx_env_ins_cd_nsp ON e_env_ins(cd_nsp);
