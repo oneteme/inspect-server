@@ -93,7 +93,7 @@ public class PurgeDao {
 
         return store.execute(
                 query.compose(store),
-                rs -> mapScopes(rs, instance)
+                this::mapScopes
         );
     }
 
@@ -124,8 +124,8 @@ public class PurgeDao {
     }
 
 
-    public int purgeInstance(String env, String app, Timestamp dateLimit) {
-        return template.update("DELETE FROM e_env_ins WHERE dh_end < '" + dateLimit + "' AND va_env = '" + env + "' AND va_app = '" + app + "';");
+    public int purgeInstance(String nsp, String app, Timestamp dateLimit) {
+        return template.update("DELETE FROM e_env_ins WHERE dh_end < '" + dateLimit + "' AND cd_nsp = '" + nsp + "' AND va_app = '" + app + "';");
     }
 
     public int purgeInstanceTrace(List<UUID>  ids, Timestamp before){
@@ -184,7 +184,7 @@ public class PurgeDao {
     }
 
     public int purgeMailRequestStage(LocalDate before){
-        return purgeRequestStage("smtp_rqt", "smtp_mail",Timestamp.valueOf(before.atStartOfDay()));
+        return purgeRequestStage("smtp_rqt", "smtp_mail");
     }
 
     public int purgeSmtpRequest(List<UUID>  ids, Timestamp before){
@@ -322,6 +322,12 @@ public class PurgeDao {
         return stream(template.batchUpdate(queryStage)).sum();
     }
 
+    private int purgeRequestStage(String tableSuffix, String stageTableSuffix) {
+        var queryStage = "DELETE FROM e_" + stageTableSuffix +
+                " WHERE NOT EXISTS (SELECT 1 FROM e_" + tableSuffix + " WHERE id_" + tableSuffix + " = cd_" + tableSuffix + ")";
+        return stream(template.batchUpdate(queryStage)).sum();
+    }
+
     public int purgeException() {
       return   stream(template.batchUpdate(Arrays.stream(TraceType.values()).map(t-> purgeBuildException(t) ).toArray(String[]::new))).sum();
 
@@ -389,13 +395,13 @@ public class PurgeDao {
         }
     }
 
-    List<PurgeScope> mapScopes(ResultSet rs, InstanceCatalog instance) throws SQLException {
+    List<PurgeScope> mapScopes(ResultSet rs) throws SQLException {
         var out = new ArrayList<PurgeScope>();
         while (rs.next()) {
-            var app = rs.getString(instance.appName().toString());
-            var namespace = rs.getString(instance.namespace().toString());
-            var type = InstanceType.valueOf(rs.getString(instance.type().toString()));
-            var raw = rs.getString(instance.configuration().toString());
+            var app = rs.getString("appName");
+            var namespace = rs.getString("namespace");
+            var type = InstanceType.valueOf(rs.getString("type"));
+            var raw = rs.getString("configuration");
 
             var config = fromJson(raw, InspectCollectorConfiguration.class);
             var rtt = config == null ? DEFAULT_RETENTION_CONFIG : config.getTracing().getRemote().getRetentionMaxAge();

@@ -73,6 +73,7 @@ public class PurgeService {
                 }
 
                 //purge old instances that have not dh-end
+                log.info("------ Purge ------ method=purgeAbandonedInstances----------namespace={}, app={}, date={}", scope.namespace(), scope.app(), beforeFunctional);
                 tasks.add(runAsync(
                         runnablePurge(() -> purgeDao.purgeAbandonedInstances(scope.namespace(), scope.app(), beforeFunctional),
                                 "AbandonedInstance", scope.app(), scope.namespace(), beforeFunctional),
