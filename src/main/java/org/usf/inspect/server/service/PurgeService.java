@@ -127,31 +127,29 @@ public class PurgeService {
     private CompletableFuture<Void> purge() {
         var now = LocalDate.now();
         return allOf(
-
                 //session
-                runAsync( runnablePurge(() -> purgeDao.purgeMainSession(now), "MainSession"), functionalExecutor),
-                runAsync(runnablePurge(()-> purgeDao.purgeRestSession(now), "RestSession"), functionalExecutor),
-                //request
-                runAsync(runnablePurge(()-> purgeDao.purgeLocalRequest(now), "LocalRequest"), functionalExecutor),
-                runAsync(runnablePurge(()-> purgeDao.purgeRestRequest(now), "RestRequest"), functionalExecutor),
-                runAsync(runnablePurge(()-> purgeDao.purgeSmtpRequest(now), "SmtpRequest"), functionalExecutor),
-                runAsync(runnablePurge(()-> purgeDao.purgeFtpRequest(now), "FtpRequest"), functionalExecutor),
-                runAsync(runnablePurge(()-> purgeDao.purgeLdapRequest(now), "LdapRequest"), functionalExecutor),
-                runAsync(runnablePurge(()-> purgeDao.purgeDtbRequest(now), "JdbcRequest"), functionalExecutor),
-                //stage
-                runAsync(runnablePurge(()-> purgeDao.purgeRestSessionStage(now), "RestSessionStage"), technicalExecutor),
-                runAsync(runnablePurge(()-> purgeDao.purgeSmtpRequestStage(now), "SmtpRequestStage"), technicalExecutor),
-                runAsync(runnablePurge(()-> purgeDao.purgeFtpRequestStage(now), "FtpRequestStage"), technicalExecutor),
-                runAsync(runnablePurge(()-> purgeDao.purgeLdapRequestStage(now), "LdapRequestStage"), technicalExecutor),
-                runAsync(runnablePurge(()-> purgeDao.purgeDtbRequestStage(now), "JdbcRequestStage"), technicalExecutor),
-                runAsync(runnablePurge(()-> purgeDao.purgeRestRequestStage(now), "RestRequestStage"), technicalExecutor),
-                runAsync(runnablePurge(()-> purgeDao.purgeMailRequestStage(now), "MailRequestStage"), technicalExecutor),
-                //event
+                runAsync(runnablePurge(() -> purgeDao.purgeMainSession(now), "MainSession"), functionalExecutor),
+                runAsync(runnablePurge(() -> purgeDao.purgeRestSession(now), "RestSession"), functionalExecutor)
+                        .thenRunAsync(runnablePurge(() -> purgeDao.purgeRestSessionStage(now), "RestSessionStage"), technicalExecutor),
+                //request and stage
+                runAsync(runnablePurge(() -> purgeDao.purgeLocalRequest(now), "LocalRequest"), functionalExecutor),
+                runAsync(runnablePurge(() -> purgeDao.purgeRestRequest(now), "RestRequest"), functionalExecutor)
+                        .thenRunAsync(runnablePurge(() -> purgeDao.purgeRestRequestStage(now), "RestRequestStage"), technicalExecutor),
+                runAsync(runnablePurge(() -> purgeDao.purgeSmtpRequest(now), "SmtpRequest"), functionalExecutor)
+                        .thenRunAsync(runnablePurge(() -> purgeDao.purgeSmtpRequestStage(now), "SmtpRequestStage"), technicalExecutor)
+                        .thenRunAsync(runnablePurge(() -> purgeDao.purgeMailRequestStage(now), "MailRequestStage"), technicalExecutor),
+                runAsync(runnablePurge(() -> purgeDao.purgeFtpRequest(now), "FtpRequest"), functionalExecutor)
+                        .thenRunAsync(runnablePurge(() -> purgeDao.purgeFtpRequestStage(now), "FtpRequestStage"), technicalExecutor),
+                runAsync(runnablePurge(() -> purgeDao.purgeLdapRequest(now), "LdapRequest"), functionalExecutor)
+                        .thenRunAsync(runnablePurge(() -> purgeDao.purgeLdapRequestStage(now), "LdapRequestStage"), technicalExecutor),
+                runAsync(runnablePurge(() -> purgeDao.purgeDtbRequest(now), "JdbcRequest"), functionalExecutor)
+                        .thenRunAsync(runnablePurge(() -> purgeDao.purgeDtbRequestStage(now), "JdbcRequestStage"), technicalExecutor),
                 runAsync(runnablePurge(purgeDao::purgeException, "Exception"), technicalExecutor),
-                runAsync(runnablePurge(()-> purgeDao.purgeInstanceTrace(now), "InstanceTrace"), functionalExecutor),
-                runAsync(runnablePurge(()-> purgeDao.purgeResourceUsage(now), "ResourceUsage"), technicalExecutor),
-                runAsync(runnablePurge(()-> purgeDao.purgeLogEntry(now), "LogEntry"), technicalExecutor),
-                runAsync(runnablePurge(()-> purgeDao.purgeSessionEvent(now), "SessionEvent"), functionalExecutor),
+                //event
+                runAsync(runnablePurge(() -> purgeDao.purgeInstanceTrace(now), "InstanceTrace"), functionalExecutor),
+                runAsync(runnablePurge(() -> purgeDao.purgeResourceUsage(now), "ResourceUsage"), technicalExecutor),
+                runAsync(runnablePurge(() -> purgeDao.purgeLogEntry(now), "LogEntry"), technicalExecutor),
+                runAsync(runnablePurge(() -> purgeDao.purgeSessionEvent(now), "SessionEvent"), functionalExecutor),
                 runAsync(runnablePurge(purgeDao::purgeBrowserConfig, "BrowserConfig"), technicalExecutor)
         );
     }
