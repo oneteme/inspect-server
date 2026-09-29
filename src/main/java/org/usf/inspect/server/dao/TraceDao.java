@@ -678,7 +678,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveExceptionTraces(List<ExceptionTrace> exceptions) {
-        executeBatch("insert into e_exc_inf(va_err_typ,va_err_msg,va_stk,va_cas,cd_ord,cd_rqt) values(?,?,?,?,?,?)", exceptions, (ps, exp) -> {
+        executeBatch("insert into e_exc_inf(va_err_typ,va_err_msg,va_stk,va_cas,cd_ord,cd_rqt,va_trc_typ) values(?,?,?,?,?,?,?)", exceptions, (ps, exp) -> {
             var idx=0;
             ps.setString(++idx, exp.getType());
             ps.setString(++idx, exp.getMessage());
@@ -686,6 +686,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             ps.setObject(++idx, toJson(exp.getCause()), OTHER);
             ps.setLong(++idx, exp.getOffset());
             ps.setObject(++idx, exp.getTraceId());
+            ps.setByte(++idx, exp.getTraceType());
         });
     }
     
@@ -703,7 +704,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveBrowserConfigs(List<BrowserConfigDto> configs) {
-        executeBatch("insert into o_bwr_cfg(va_dvc_dsp_rsl,va_dvc_orn,va_dvc_cnt, va_sav_dta, va_wdw_vpt_bds, va_wdw_zom_lvl, va_usr_lng,va_usr_thm,cd_prn_ses)values(?,?,?,?,?,?,?,?,?)", configs, (ps, cfg) -> {
+        executeBatch("insert into o_brw_cfg(va_dvc_dsp_rsl,va_dvc_orn,va_dvc_cnt, va_sav_dta, va_wdw_vpt_bds, va_wdw_zom_lvl, va_usr_lng,va_usr_thm,cd_prn_ses)values(?,?,?,?,?,?,?,?,?)", configs, (ps, cfg) -> {
             var idx = 0;
             ps.setString(++idx, cfg.getDeviceDisplayResolution());
             ps.setString(++idx, cfg.getDeviceOrientation());
