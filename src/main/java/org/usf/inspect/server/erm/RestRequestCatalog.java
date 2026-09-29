@@ -58,10 +58,6 @@ public interface RestRequestCatalog extends RequestCatalog {
 	@Bind(VA_LNK)
 	ViewColumn linked();
 	
-	@Bind(CD_PRN_SES)
-	@Typed(UUID)
-	ViewColumn parent();
-	
 	@Expose(identity = "error_type")
     default Column errorTypeExpressions() {
     	var exception = getInstance().getStore(InspectStore.class).exception();
@@ -71,35 +67,6 @@ public interface RestRequestCatalog extends RequestCatalog {
                 .when(ge(400).and(lt(500)), "ClientError")
                 .orElse("ServerError");
     }
-
-	@Expose(identity = "status_tranche")
-	default Column statusTranche() {
-		return status().toCase()
-				.when(eq(0), "1")
-				.when(ge(100).and(lt(200)), "2")
-				.when(ge(200).and(lt(300)), "3")
-				.when(ge(300).and(lt(400)), "4")
-				.when(ge(400).and(lt(500)), "5")
-				.when(ge(500), "6").compose();
-	}
-
-	@Expose(identity = "performance_tranche")
-	default Column performanceTranche1() {
-		return elapsedTime().toCase()
-				.when(lt(1), "1")
-				.when(ge(1).and(lt(3)), "2")
-				.when(ge(3).and(lt(5)), "3")
-				.when(ge(5).and(lt(10)), "4")
-				.when(ge(10), "5").compose();
-	}
-
-	@Expose(identity = "performance_tranche2")
-	default Column performanceTranche2() {
-		return elapsedTime().toCase()
-				.when(lt(5), "1")
-				.when(ge(5).and(lt(10)), "2")
-				.when(ge(10), "3").compose();
-	}
 
 	@Expose(identity = "size_in_tranche")
 	default Column sizeInTranche() {
