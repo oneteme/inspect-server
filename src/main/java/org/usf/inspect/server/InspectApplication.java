@@ -1,13 +1,10 @@
 package org.usf.inspect.server;
 
-import static org.usf.inspect.core.DispatchState.DISABLE;
-import static org.usf.inspect.core.TraceDispatcherHub.createHub;
 import static org.usf.inspect.server.JsonUtils.defaultMapper;
 
 import java.io.IOException;
 import java.util.Properties;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -52,15 +49,13 @@ public class InspectApplication {
 	}
 
 	@Bean
-	TraceDispatcherHub inspectServerContext(InspectServerConfiguration conf, TraceExporter agent, ObjectMapper mapper) {
-		var ctx = (TraceDispatcherHub) createHub(conf, agent, mapper);
-		ctx.setState(DISABLE); //until ready state
-		return ctx;
+	TraceDispatcherHub inspectServerContext() {
+		return new TraceDispatcherHub(); //disable by default
 	}
 	
 	@Bean
-	ApplicationListener<ApplicationReadyEvent> enableDispatcherOnReady(@Qualifier("inspectServerContext") TraceDispatcherHub ctx){
-		return e-> ctx.setState(ctx.getConfiguration().getScheduling().getState()); //wait for server startup before activate dispatcher
+	ApplicationListener<ApplicationReadyEvent> enableDispatcherOnReady(TraceDispatcherHub ctx, InspectServerConfiguration conf, TraceExporter agent) {
+		return e-> ctx.configure(conf, agent).start(); //wait for server startup before start dispatcher
 	}
 
     @Bean //used by inspect-core to get application properties and git info

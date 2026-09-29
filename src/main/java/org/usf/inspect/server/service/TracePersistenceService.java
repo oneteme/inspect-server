@@ -37,8 +37,8 @@ public class TracePersistenceService implements TraceExporter {
         dao.saveInstanceEnvironment(instance);
 	}
 
-	@TraceableStage
 	@Override
+	@TraceableStage
 	public List<EventTrace> dispatch(boolean complete, List<EventTrace> traces) {
 		return traces.isEmpty() ? emptyList() : addTraces(traces);
 	}

@@ -46,7 +46,7 @@ public class NamespaceAuthenticationCacheProvider implements AuthenticationProvi
             		return getEncryptedToken(namespace);
             	}
             	catch (EmptyResultDataAccessException e) {
-                    return saveNamespace(namespace, token);
+                    return saveNamespace(namespace, token); //TODO delete this
             	}
             });
             if ((isNull(token) && nonNull(expected)) || !passwordEncoder.matches(token, expected)) {
