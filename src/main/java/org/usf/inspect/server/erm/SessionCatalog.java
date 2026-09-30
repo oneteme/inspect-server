@@ -11,19 +11,14 @@ import org.usf.jquery.mvc.Typed;
 import static org.usf.inspect.server.config.constant.FieldConstant.*;
 import static org.usf.jquery.core.JDBCType.UUID;
 import static org.usf.jquery.core.Join.innerJoin;
-import static org.usf.jquery.core.Join.leftJoin;
 import static org.usf.jquery.core.JoinGroup.joins;
 import static org.usf.jquery.core.Predicate.*;
+import static org.usf.jquery.core.Predicate.ge;
 
-public interface RequestCatalog extends DatasetCatalog<InspectStore> {
-
+public interface SessionCatalog extends DatasetCatalog<InspectStore> {
+    @Bind(ID_SES)
+    @Typed(UUID)
     ViewColumn id();
-
-    @Bind(VA_HST)
-    ViewColumn host();
-
-    @Bind(CD_PRT)
-    ViewColumn port();
 
     @Bind(DH_STR)
     ViewColumn start();
@@ -37,12 +32,11 @@ public interface RequestCatalog extends DatasetCatalog<InspectStore> {
     @Bind(CD_STT)
     ViewColumn status();
 
+    @Bind(VA_MSK)
+    ViewColumn mask();
+
     @Bind(VA_THR)
     ViewColumn thread();
-
-    @Bind(CD_PRN_SES)
-    @Typed(UUID)
-    ViewColumn parent();
 
     @Bind(CD_INS)
     @Expose(identity = "instance_env")
@@ -50,23 +44,23 @@ public interface RequestCatalog extends DatasetCatalog<InspectStore> {
     ViewColumn instanceEnv();
 
     @Expose(identity = "elapsed_time")
-	default Column elapsedTime() {
-		return end().minus(start()).epoch();
-	}
-
-    @Expose(identity = "count_error")
-    default Column countError() {
-        return status().toCase().when(eq(0).or(ge(400)), true).compose().count();
+    default Column elapsedTime() {
+        return end().minus(start()).epoch();
     }
 
     @Expose(identity = "count_error_server")
-    default Column countErrorServer() {
-        return status().toCase().when(ge(500), true).compose().count();
+    default Column countErrorServerStatus() {
+        return status().toCase().when(ge(500), status()).compose().count();
     }
 
     @Expose(identity = "count_error_client")
-    default Column countErrorClient() {
-        return status().toCase().when(ge(400).and(lt(500)), true).compose().count();
+    default Column countClientErrorStatus() {
+        return status().toCase().when(ge(400).and(lt(500)), status()).compose().count();
+    }
+
+    @Expose(identity = "count_error")
+    default Column countError() {
+        return status().toCase().when(eq(0).or(ge(400)), status()).compose().count();
     }
 
     @Expose(identity = "status_tranche")
@@ -101,5 +95,10 @@ public interface RequestCatalog extends DatasetCatalog<InspectStore> {
     default JoinGroup instance() {
         var instance = getStore().instance();
         return joins(innerJoin(instance.getView(), instanceEnv().eq(instance.id())));
+    }
+
+    default JoinGroup restRequest() {
+        var restRequest = getStore().restRequest();
+        return joins(innerJoin(restRequest.getView(), id().eq(restRequest.parent())));
     }
 }

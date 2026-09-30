@@ -14,23 +14,10 @@ import static org.usf.jquery.core.Join.innerJoin;
 import static org.usf.jquery.core.JoinGroup.joins;
 import static org.usf.jquery.core.Predicate.*;
 
-public interface MainSessionCatalog extends DatasetCatalog<InspectStore> {
-
-	@Bind(ID_SES)
-	@Typed(UUID)
-	ViewColumn id();
-
-	@Bind(VA_USR)
-	ViewColumn user();
+public interface MainSessionCatalog extends SessionCatalog {
 
 	@Bind(VA_NAM)
 	ViewColumn name();
-
-	@Bind(DH_STR)
-	ViewColumn start();
-
-	@Bind(DH_END)
-	ViewColumn end();
 
 	@Bind(VA_TYP)
 	ViewColumn type();
@@ -66,38 +53,5 @@ public interface MainSessionCatalog extends DatasetCatalog<InspectStore> {
 	default JoinGroup sessionEvent() {
 		var sessionEvent = getStore().sessionEvent();
 		return joins(innerJoin(sessionEvent.getView(), id().eq(sessionEvent.sessionId())));
-	}
-
-	@Expose(identity = "elapsed_time")
-	default Column elapsedTime() {
-		return end().minus(start()).epoch();
-	}
-	
-	@Expose(identity = "count_exception")
-	default Column countExceptions() {
-		return status().toCase().when(eq(0).or(ge(400)), true).compose().count(); //TODO errType().count exclude null
-	}
-	
-	@Expose(identity = "status_main_tranche")
-    default Column statusMainTranche() {
-        return status().toCase().when(eq(0).or(ge(400)), true).orElse(false); //TODO errType().notNull()
-    }
-
-	@Expose(identity = "performance_tranche")
-	default Column performanceTranche1() {
-		return elapsedTime().toCase()
-				.when(lt(1), "1")
-				.when(ge(1).and(lt(3)), "2")
-				.when(ge(3).and(lt(5)), "3")
-				.when(ge(5).and(lt(10)), "4")
-				.when(ge(10), "5").compose();
-	}
-
-	@Expose(identity = "performance_tranche2")
-	default Column performanceTranche2() {
-		return elapsedTime().toCase()
-				.when(lt(5), "1")
-				.when(ge(5).and(lt(10)), "2")
-				.when(ge(10), "3").compose();
 	}
 }

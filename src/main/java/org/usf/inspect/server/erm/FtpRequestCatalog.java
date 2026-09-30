@@ -1,6 +1,5 @@
 package org.usf.inspect.server.erm;
 
-import org.usf.jquery.core.Column;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.Expose;
@@ -8,8 +7,6 @@ import org.usf.jquery.mvc.Typed;
 
 import static org.usf.inspect.server.config.constant.FieldConstant.*;
 import static org.usf.jquery.core.JDBCType.UUID;
-import static org.usf.jquery.core.Predicate.ge;
-import static org.usf.jquery.core.Predicate.lt;
 
 public interface FtpRequestCatalog extends RequestCatalog {
 
@@ -30,26 +27,4 @@ public interface FtpRequestCatalog extends RequestCatalog {
 	
 	@Bind(VA_CMD)
 	ViewColumn command();
-	
-	@Bind(CD_PRN_SES)
-	@Typed(UUID)
-	ViewColumn parent();
-
-	@Expose(identity = "performance_tranche")
-	default Column performanceTranche1() {
-		return elapsedTime().toCase()
-				.when(lt(1), "1")
-				.when(ge(1).and(lt(3)), "2")
-				.when(ge(3).and(lt(5)), "3")
-				.when(ge(5).and(lt(10)), "4")
-				.when(ge(10), "5").compose();
-	}
-
-	@Expose(identity = "performance_tranche2")
-	default Column performanceTranche2() {
-		return elapsedTime().toCase()
-				.when(lt(5), "1")
-				.when(ge(5).and(lt(10)), "2")
-				.when(ge(10), "3").compose();
-	}
 }

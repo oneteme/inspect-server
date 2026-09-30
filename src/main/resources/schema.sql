@@ -220,7 +220,7 @@ CREATE TABLE IF NOT EXISTS e_lcl_rqt (
     cd_prn_ses UUID,
     cd_ins UUID,
     cd_stt SMALLINT
-    );
+);
 
 CREATE TABLE IF NOT EXISTS e_exc_inf (
 	--va_typ varchar, deprecated

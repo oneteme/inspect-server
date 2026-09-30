@@ -132,7 +132,7 @@ CREATE TABLE IF NOT EXISTS e_ses_evt (
     va_typ varchar,
     va_cnt varchar,
     va_lct varchar,
-    cd_ins uuid
+    cd_prn_ses uuid
     );
 
 -- Migration de la table e_exc_inf : ajout des champs va_cas et va_trc_typ
@@ -147,6 +147,16 @@ ALTER TABLE e_env_ins ADD COLUMN IF NOT EXISTS cd_nsp varchar;
 UPDATE e_env_ins
 SET cd_nsp = UPPER(<prefix> || '-' || va_env)
   WHERE va_env IS NOT NULL;
+
+-- Migration de l'identifiant legacy du serveur distant dans la configuration
+UPDATE e_env_ins
+SET va_cnf = jsonb_set(
+        va_cnf::jsonb,
+        '{tracing,remote,@type}',
+        '"02"'::jsonb,
+        false
+    )::json
+WHERE va_cnf::jsonb #>> '{tracing,remote,@type}' = 'rest-rmt';
 
 --TODO add UPPER(<prefix> || '-' || va_env) + TOKEN => va_enc_tkn
 
