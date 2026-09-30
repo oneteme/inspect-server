@@ -12,21 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.usf.inspect.core.DatabaseRequestStage;
-import org.usf.inspect.core.DirectoryRequestStage;
-import org.usf.inspect.core.ExceptionTrace;
-import org.usf.inspect.core.FtpRequestStage;
-import org.usf.inspect.core.HttpRequestStage;
-import org.usf.inspect.core.HttpSessionStage;
-import org.usf.inspect.core.InspectCollectorConfiguration;
-import org.usf.inspect.core.InstanceEnvironment;
-import org.usf.inspect.core.InstanceType;
-import org.usf.inspect.core.LogEntry;
-import org.usf.inspect.core.MachineResource;
-import org.usf.inspect.core.MachineResourceUsage;
-import org.usf.inspect.core.Mail;
-import org.usf.inspect.core.MailRequestStage;
-import org.usf.inspect.core.StackTraceRow;
+import org.usf.inspect.core.*;
 import org.usf.inspect.server.dto.DatabaseRequestDto;
 import org.usf.inspect.server.dto.DirectoryRequestDto;
 import org.usf.inspect.server.dto.FtpRequestDto;
@@ -591,16 +577,30 @@ public class Mappers {
         };
     }
 
-    public static RowMapper<UserAction> userActionRowMapper(){
+    public static RowMapper<ExceptionTrace> exceptionRowMapper() {
         return (rs, row) -> {
-            UserAction out = new UserAction(
+            var exception = new ExceptionTrace(
+                    rs.getString("errType"),
+                    rs.getString("errMsg"),
+                    fromJson(rs.getString("stacktrace"), StackTraceRow[].class),
+                    null
+            );
+            exception.setTraceId(rs.getObject("parent", UUID.class));
+            exception.setOffset(rs.getLong("order"));
+            return exception;
+        };
+    }
+
+
+    public static RowMapper<SessionEvent> sessionEventRowMapper(){
+        return (rs, row) -> {
+            return new SessionEvent(
                     fromNullableTimestamp(rs.getTimestamp("start")),
                     rs.getString("type"),
-                    rs.getString("name"),
-                    rs.getString("nodeName")
+                    rs.getString("value"),
+                    rs.getString("location"),
+                    rs.getObject("sessionId", UUID.class)
             );
-            out.setCdSession(rs.getObject("parent", UUID.class));
-            return out;
         };
     }
 

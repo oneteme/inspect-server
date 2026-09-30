@@ -8,7 +8,6 @@ public final class FieldConstant {
 
     public static final String ID_SES = "id_ses";
     public static final String CD_PRN_SES = "cd_prn_ses";
-    public static final String CD_TRC = "cd_trc";
     public static final String CD_DTB_RQT = "cd_dtb_rqt";
     public static final String ID_DTB_RQT = "id_dtb_rqt";
     public static final String ID_FTP_RQT = "id_ftp_rqt";
@@ -92,6 +91,9 @@ public final class FieldConstant {
     public static final String VA_USED_MET = "va_usd_met";
     public static final String VA_COMMITED_MET = "va_cmt_met";
     public static final String VA_USED_DISK_SPACE = "va_usd_dsk";
+    public static final String NB_ACTIVE_THREAD = "nb_act_thr";
+    public static final String NB_START_THREAD = "nb_str_thr";
+    public static final String VA_CPU_USAGE= "va_cpu_usg";
     public static final String VA_FAIL= "va_fail";
     public static final String VA_FILENAME= "va_fln";
     public static final String VA_BODY_CONTENT = "va_bdy_cnt";

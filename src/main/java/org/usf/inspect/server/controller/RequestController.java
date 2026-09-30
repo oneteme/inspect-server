@@ -160,13 +160,28 @@ public class RequestController {
             view = EXCEPTION_BY_REQUEST_RESULTSET_MAPPER,
             select = "err_type,err_msg,parent",
             ignore = "requestIds")
-    public Map<Long, ExceptionTrace> fetchExceptionByRequests( //TODO with session for tree
+    public Map<Long, ExceptionTrace> fetchExceptionByRequests(
             MvcRequest mvc,
             @RequestParam( name = "requestIds") String[] requestIds)  {
         var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.exception().parent().in(Arrays.stream(requestIds).map(UUID::fromString).toArray())); // UUID
 
         return (Map<Long, ExceptionTrace>) mvc.execute();
+    }
+
+    @GetMapping("session/{sessionId}/exception")
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "exception",
+            view = EXCEPTION_ROW_MAPPER,
+            select = "err_type,err_msg,stacktrace,order,parent",
+            order = "order")
+    public Collection<ExceptionTrace> fetchExceptionsBySession(
+            MvcRequest mvc,
+            @PathVariable String sessionId) {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.exception().parent().eq(fromString(sessionId)));
+
+        return (Collection<ExceptionTrace>) mvc.execute();
     }
 
     @GetMapping("session/request/database/stages/count")
@@ -768,60 +783,57 @@ public class RequestController {
 
     @GetMapping("session/{sessionId}/user/action")
     @QueryExtension(select = REJECT, overrideView = false)
-    @QueryTemplate(dataset = "user_action",
-            view = USER_ACTION_ROW_MAPPER,
-            select = "name,node_name,type,start,parent",
+    @QueryTemplate(dataset = "session_event",
+            view = SESSION_EVENT_ROW_MAPPER,
+            select = "start,type,value,location,sessionId",
             order = "start")
-    public Collection<UserAction> getUserActions(
+    public Collection<SessionEvent> getUserActions(
             MvcRequest mvc,
             @PathVariable String sessionId) {
         var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.userAction().parent().eq(fromString(sessionId))); // UUID
+        mvc.getComposer().criteria(store.sessionEvent().sessionId().eq(fromString(sessionId))); // UUID
 
-        return (Collection<UserAction>) mvc.execute();
+        return (Collection<SessionEvent>) mvc.execute();
     }
 
     @GetMapping("session/user/{user}/action")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "main_session",
-            view = USER_ACTION_ROW_MAPPER,
-            select = "id,start:session_start,end,location,name:session_name,user_action.name:action_name,user_action.node_name,user_action.type,user_action.start:action_start",
-            join = "user_action",
-            order = "main_session.start,user_action.start", ignore = "date")
-    public Collection<AnalyticDto> getUserActions(
+            view = SESSION_EVENT_ROW_MAPPER,
+            select = "id,name,start,end,location,session_event.type:type,session_event.start:session_start,session_event.value:value,session_event.location:event_location,session_event.sessionId",
+            join = "session_event",
+            order = "main_session.start,session_event.start", ignore = "date")
+    public Collection<SessionEventDto> getUserActions(
             MvcRequest mvc,
             @PathVariable(name = "user") String user,
             @RequestParam(name = "date") @Validate(Condition.INSTANT) Instant date
     ) {
         var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.mainSession().user().eq(user).and(store.mainSession().start().ge(date)));
+        mvc.getComposer().criteria(store.mainSession().user().eq(user).and(store.sessionEvent().start().ge(date)).and(store.mainSession().name().ne("<startup>")));
 
         return store.execute(mvc.getComposer().compose(store), rs -> {
-            List<AnalyticDto> sessions = new ArrayList<>();
+            List<SessionEventDto> sessions = new ArrayList<>();
             while (rs.next()) {
-                var userAction =  new UserAction(
-                        fromNullableTimestamp(rs.getTimestamp("action_start")),
+                var sessionEvent =  new SessionEvent(
+                        fromNullableTimestamp(rs.getTimestamp("session_start")),
                         rs.getString("type"),
-                        rs.getString("action_name"),
-                        rs.getString("nodeName")
+                        rs.getString("value"),
+                        rs.getString("event_location"),
+                        rs.getObject("sessionId", UUID.class)
                 );
-                var cdSession = rs.getObject("id", UUID.class);
+                var cdSession = rs.getObject("sessionId", UUID.class);
                 var session = sessions.stream().filter(s -> s.getId().equals(cdSession)).findFirst().orElse(null);
                 if(session == null) {
-                    session = new AnalyticDto();
+                    session = new SessionEventDto();
                     session.setId(rs.getObject("id", UUID.class));
-                    session.setStart(fromNullableTimestamp(rs.getTimestamp("session_start")));
+                    session.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
                     session.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
-                    session.setName(rs.getString("session_name"));
+                    session.setName(rs.getString("name"));
                     session.setLocation(rs.getString("location"));
-                    if(userAction.getStart() == null) {
-                        session.setUserActions(new ArrayList<>());
-                    } else {
-                        session.setUserActions(new ArrayList<>(List.of(userAction)));
-                    }
+                    session.setSessionEvents(new ArrayList<>(List.of(sessionEvent)));
                     sessions.add(session);
                 } else {
-                    session.getUserActions().add(userAction);
+                    session.getSessionEvents().add(sessionEvent);
                 }
             }
             return sessions;

@@ -86,11 +86,7 @@ public interface InspectStore extends StoreCatalog {
 	
 	@Bind("e_env_ins")
 	InstanceCatalog instance();
-	
-	@Bind("e_usr_acn")
-	@Expose(identity = "user_action")
-	UserActionCatalog userAction();
-	
+
 	@Bind("e_ins_trc")
 	@Expose(identity = "instance_trace")
 	InstanceTraceCatalog instanceTrace();
@@ -102,7 +98,12 @@ public interface InspectStore extends StoreCatalog {
 	@Bind("e_rsc_usg")
 	@Expose(identity = "resource_usage")
 	ResourceUsageCatalog resourceUsage();
-	
+
+	@Bind("e_ses_evt")
+	@Expose(identity = "session_event")
+	SessionEventCatalog sessionEvent();
+
+
 	default OperatorDefinition coalesce() {
 		return function(firstArgType(), "COALESCE", required(), varargs(VARCHAR));
 	}
@@ -153,6 +154,8 @@ public interface InspectStore extends StoreCatalog {
 			.register(LDAP_REQUEST_RESULTSET_MAPPER, rsp-> defaultExecutor(ldapRequestResultSetMapper()))
 			.register(LDAP_REQUEST_STAGE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(ldapRequestStageRowMapper())))
 			.register(EXCEPTION_BY_REQUEST_RESULTSET_MAPPER, rsp-> defaultExecutor(exceptionByRequestResultSetMapper()))
-			.register(USER_ACTION_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(userActionRowMapper())));
-	
+			.register(EXCEPTION_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(exceptionRowMapper())))
+			.register(USER_ACTION_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(userActionRowMapper())))
+			.register(SESSION_EVENT_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(sessionEventRowMapper())));
+
 }
