@@ -421,10 +421,8 @@ public class RequestService {
                 .columns(
                         restRequest.id(), restRequest.protocol(), restRequest.auth(), restRequest.host(), restRequest.port(), restRequest.path(), restRequest.query(), restRequest.method(),
                         restRequest.status(), restRequest.sizeIn(), restRequest.sizeOut(), restRequest.contentEncodingIn(), restRequest.contentEncodingOut(), restRequest.start(), restRequest.end(), restRequest.thread(),
-                        restRequest.linked(), restRequest.parent(),
-                        exception.errType(), exception.errMsg()
+                        restRequest.linked(), restRequest.parent()
                 )
-                .joins(restRequest.exception().getJoins())
                 .criteria(restRequest.parent().in(ids.stream().map(UUID::toString).toArray()));
         if(start != null) {
             v.criteria(restRequest.start().ge(start));
