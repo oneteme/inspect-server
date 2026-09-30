@@ -348,7 +348,7 @@ CREATE INDEX IF NOT EXISTS idx_dtb_rqt_cd_ins ON e_dtb_rqt(cd_ins);
 CREATE INDEX IF NOT EXISTS idx_dtb_stg_cd_dtb_rqt ON e_dtb_stg(cd_dtb_rqt);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_lcl_rqt_id_lcl_rqt_dh_str ON e_lcl_rqt(id_lcl_rqt, dh_str DESC);
 CREATE INDEX IF NOT EXISTS idx_lcl_rqt_cd_prn_ses ON e_lcl_rqt(cd_prn_ses);
-CREATE INDEX IF NOT EXISTS idx_exc_inf_cd_rqt ON e_exc_inf(cd_rqt);
+CREATE INDEX IF NOT EXISTS idx_exc_inf_cd_trc ON e_exc_inf(cd_trc);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_env_ins_id_ins ON e_env_ins(id_ins);
 CREATE INDEX IF NOT EXISTS idx_ins_trc_cd_ins ON e_ins_trc(cd_ins);
 CREATE INDEX IF NOT EXISTS idx_log_ent_cd_ins ON e_log_ent(cd_ins);
