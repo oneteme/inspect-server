@@ -57,16 +57,6 @@ public interface RestRequestCatalog extends RequestCatalog {
 	
 	@Bind(VA_LNK)
 	ViewColumn linked();
-	
-	@Expose(identity = "error_type")
-    default Column errorTypeExpressions() {
-    	var exception = getInstance().getStore(InspectStore.class).exception();
-        return status().toCase()
-                .when(eq(0), exception.errType())
-                .when(ge(200).and(lt(400)), null)
-                .when(ge(400).and(lt(500)), "ClientError")
-                .orElse("ServerError");
-    }
 
 	@Expose(identity = "size_in_tranche")
 	default Column sizeInTranche() {

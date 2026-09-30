@@ -229,7 +229,7 @@ CREATE TABLE IF NOT EXISTS e_exc_inf (
 	va_stk text,
 	va_cas text,
 	cd_ord bigint,
-	cd_rqt UUID,
+    cd_trc UUID,
     va_trc_typ SMALLINT
 );
 

@@ -95,16 +95,6 @@ public interface RestSessionCatalog extends SessionCatalog {
 		return joins(innerJoin(ldapRequest.getView(), id().eq(ldapRequest.parent())));
 	}
 
-	@Expose(identity = "error_type_session")
-    default Column errorTypeExpressionsSession() {
-        return status().toCase()
-				.when(eq(0), "CNX_ERR")
-                .when(ge(400).and(lt(500)), "APP_ERR")
-				.when(ge(500).and(lt(600)), "INT_ERR")
-				.when(ge(600), "DEV_ERR")
-                .orElse(null);
-    }
-
 	@Expose(identity = "size_in_tranche")
 	default Column sizeInTranche() {
 		return sizeIn().toCase()

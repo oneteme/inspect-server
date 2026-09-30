@@ -63,6 +63,16 @@ public interface SessionCatalog extends DatasetCatalog<InspectStore> {
         return status().toCase().when(eq(0).or(ge(400)), status()).compose().count();
     }
 
+    @Expose(identity = "error_type")
+    default Column errorTypeExpressions() {
+        return status().toCase()
+                .when(lt(100), "CNX_ERR")
+                .when(ge(400).and(lt(500)), "APP_ERR")
+                .when(ge(500).and(lt(600)), "INT_ERR")
+                .when(ge(600), "DEV_ERR")
+                .orElse(null);
+    }
+
     @Expose(identity = "status_tranche")
     default Column statusTranche() {
         return status().toCase()
