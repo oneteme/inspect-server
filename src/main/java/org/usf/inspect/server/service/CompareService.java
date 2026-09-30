@@ -134,9 +134,7 @@ public class CompareService {
                         restRequest.port(), restRequest.path(), restRequest.query(), restRequest.method(), restRequest.status(),
                         restRequest.sizeIn(), restRequest.sizeOut(), restRequest.contentEncodingIn(), restRequest.contentEncodingOut(),
                         restRequest.start(), restRequest.end(), restRequest.thread(), restRequest.bodyContent(), restRequest.user(), restRequest.linked(), restRequest.parent(),
-                        instance.appName(), instance.os(), instance.re(), instance.address(), instance.branch(), instance.hash(), instance.version(), instance.environement(),
-                        exception.errType(), exception.errMsg())
-                .joins(restRequest.exception().getJoins())
+                        instance.appName(), instance.os(), instance.re(), instance.address(), instance.branch(), instance.hash(), instance.version(), instance.environement())
                 .join(innerJoin(instance.getView(), restRequest.instanceEnv().eq(instance.id()).and(restRequest.start().ge(instance.start()))))
                 .criterias(restRequest.id().eq(id));
         return store.execute(v.compose(store), rs -> {
