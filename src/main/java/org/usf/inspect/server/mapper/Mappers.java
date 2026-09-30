@@ -29,7 +29,6 @@ import org.usf.inspect.server.model.MainSession;
 import org.usf.inspect.server.model.RestRequest;
 import org.usf.inspect.server.model.RestSession;
 import org.usf.inspect.server.model.TracePacket;
-import org.usf.inspect.server.model.UserAction;
 import org.usf.jquery.core.ResultSetMapper;
 import org.usf.jquery.core.RowMapper;
 
