@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
-@Sql("/data/purge-dao/purge-dao-data.sql")
+@Sql("/data/purge-dao/jdd-insert-purge-dao-test.sql")
 class PurgeDaoByInstanceIdsH2Test {
 
     @Autowired
