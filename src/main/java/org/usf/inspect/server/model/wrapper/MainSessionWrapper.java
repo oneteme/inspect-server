@@ -3,7 +3,7 @@ package org.usf.inspect.server.model.wrapper;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.usf.inspect.core.ExceptionInfo;
+import org.usf.inspect.core.ExceptionTrace;
 import org.usf.inspect.server.model.CompletableMetric;
 import org.usf.inspect.server.model.MainSession;
 import org.usf.inspect.server.model.Session;
@@ -11,6 +11,7 @@ import org.usf.inspect.server.model.UserAction;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -26,7 +27,7 @@ public class MainSessionWrapper implements Session {
     private List<DirectoryRequestWrapper> ldapRequests;
     private List<UserAction> userActions;
 
-    private List<ExceptionInfo> exceptions;
+    private List<ExceptionTrace> exceptions;
 
     private String appName;
     private String os;
@@ -40,13 +41,6 @@ public class MainSessionWrapper implements Session {
 
     public int getRequestsMask() {
         return mainSession.getRequestsMask();
-    }
-
-    public ExceptionInfo getException(){
-        if(exceptions != null && !exceptions.isEmpty()){
-            return exceptions.getLast();
-        }
-        return mainSession.getException();
     }
 
     public String getName() {
@@ -73,10 +67,6 @@ public class MainSessionWrapper implements Session {
         mainSession.setLocation(location);
     }
 
-    public void setException(ExceptionInfo exception) {
-        mainSession.setException(exception);
-    }
-
     public String getUser() {
         return mainSession.getUser();
     }
@@ -93,11 +83,11 @@ public class MainSessionWrapper implements Session {
         return mainSession.getThreadName();
     }
 
-    public String getSessionId() {
+    public UUID getSessionId() {
         return mainSession.getSessionId();
     }
 
-    public String getId() {
+    public UUID getId() {
         return mainSession.getId();
     }
 
@@ -122,19 +112,19 @@ public class MainSessionWrapper implements Session {
         mainSession.setThreadName(threadName);
     }
 
-    public void setSessionId(String sessionId) {
+    public void setSessionId(UUID sessionId) {
         mainSession.setSessionId(sessionId);
     }
 
-    public void setId(String id) {
+    public void setId(UUID id) {
         mainSession.setId(id);
     }
 
-    public void setInstanceId(String instanceId) {
+    public void setInstanceId(UUID instanceId) {
         mainSession.setInstanceId(instanceId);
     }
 
-    public String getInstanceId() {
+    public UUID getInstanceId() {
         return mainSession.getInstanceId();
     }
 }

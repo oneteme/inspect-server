@@ -30,7 +30,7 @@ public class ScriptService {
         log.info("\t- Period: [{}, {}]", start, end);
         log.info("\t- Tables: " + map.toString());
 
-        DispatchState previousState = traceService.getState();
+        DispatchState previousState = traceService.getDispatcherState();
         traceService.updateState(COLLECT);
         try {
             var partitions = buildPartitionScript(start, end, map);

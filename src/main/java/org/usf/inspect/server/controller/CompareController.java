@@ -7,6 +7,7 @@ import static org.springframework.http.ResponseEntity.status;
 
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -29,7 +30,7 @@ public class CompareController {
     private final CompareService compareService;
 
     @GetMapping(value = "request/rest/{id}/compare", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String, Object>> getComparedSessionFromRequest(@PathVariable @Validate(Condition.UUID) String id) {
+    public ResponseEntity<Map<String, Object>> getComparedSessionFromRequest(@PathVariable UUID id) {
         try {
             return ok().body(compareService.getComparedSession(id));
         } catch (NoSuchElementException e) {
@@ -38,7 +39,7 @@ public class CompareController {
     }
 
     @GetMapping(value = "session/rest/{id}/compare", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String, Object>> getComparedSessioFromSession(@PathVariable @Validate(Condition.UUID) String id) {
+    public ResponseEntity<Map<String, Object>> getComparedSessioFromSession(@PathVariable UUID id) {
         try {
             return ok().body(compareService.getComparedSession(id));
         } catch (NoSuchElementException e) {
