@@ -112,7 +112,7 @@ public class TracePersistenceService implements TraceExporter {
                 .mapMulti(mapper)
                 .toList();
         if(!list.isEmpty()) {
-            log.debug("saving {} {}..", list.size(), list.getFirst().getClass().getSimpleName());
+            log.info("saving {} {}..", list.size(), list.getFirst().getClass().getSimpleName());
             try {
                 saveFn.accept(list);
                 list = emptyList();
