@@ -1,5 +1,6 @@
 package org.usf.inspect.server.erm;
 
+import org.usf.jquery.core.JoinGroup;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
@@ -8,6 +9,8 @@ import org.usf.jquery.mvc.Typed;
 
 import static org.usf.inspect.server.config.constant.FieldConstant.*;
 import static org.usf.jquery.core.JDBCType.UUID;
+import static org.usf.jquery.core.Join.innerJoin;
+import static org.usf.jquery.core.JoinGroup.joins;
 
 public interface InstanceTraceCatalog extends DatasetCatalog<InspectStore> {
 	
@@ -20,6 +23,9 @@ public interface InstanceTraceCatalog extends DatasetCatalog<InspectStore> {
 	@Bind(VA_TRC_CNT)
 	@Expose(identity = "trace_count")
 	ViewColumn traceCount();
+
+	@Bind(VA_SEQ)
+	ViewColumn sequence();
 	
 	@Bind(VA_FILENAME)
 	ViewColumn filename();
@@ -31,4 +37,9 @@ public interface InstanceTraceCatalog extends DatasetCatalog<InspectStore> {
 	@Typed(UUID)
 	@Expose(identity = "instance_env")
 	ViewColumn instanceEnv();
+
+	default JoinGroup instance() {
+		var instance = getStore().instance();
+		return joins(innerJoin(instance.getView(), instanceEnv().eq(instance.id())));
+	}
 }

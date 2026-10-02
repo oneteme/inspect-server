@@ -7,7 +7,10 @@ import static org.usf.inspect.server.config.constant.FieldConstant.VA_LVL;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_MSG;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_STK;
 import static org.usf.jquery.core.JDBCType.UUID;
+import static org.usf.jquery.core.Join.innerJoin;
+import static org.usf.jquery.core.JoinGroup.joins;
 
+import org.usf.jquery.core.JoinGroup;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
@@ -38,4 +41,9 @@ public interface LogEntryCatalog extends DatasetCatalog<InspectStore> {
 	@Expose(identity = "instance_env")
 	@Typed(UUID)
 	ViewColumn instanceEnv();
+
+	default JoinGroup instance() {
+		var instance = getStore().instance();
+		return joins(innerJoin(instance.getView(), instanceEnv().eq(instance.id())));
+	}
 }

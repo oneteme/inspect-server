@@ -69,7 +69,7 @@ public class TraceController {
            var nsp = nonNull(principal) 
         		   ? principal.getName()
         		   : instance.getNamespace(); //disabled spring security
-            return service.addInstance(instance, nsp)
+            return service.addInstance(instance, "asm-nova")
                     ? ok(instance.getId().toString())
                     : status(SERVICE_UNAVAILABLE).body("dispatcher.state=" + service.getDispatcherState());
         } catch(Exception e) {
