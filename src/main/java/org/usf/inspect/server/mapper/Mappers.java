@@ -28,7 +28,7 @@ import org.usf.inspect.server.model.MailRequest;
 import org.usf.inspect.server.model.MainSession;
 import org.usf.inspect.server.model.RestRequest;
 import org.usf.inspect.server.model.RestSession;
-import org.usf.inspect.server.model.TracePacket;
+import org.usf.inspect.server.model.TraceBatch;
 import org.usf.jquery.core.ResultSetMapper;
 import org.usf.jquery.core.RowMapper;
 
@@ -67,25 +67,28 @@ public class Mappers {
         };
     }
 
-    public static RowMapper<LogEntry> logEntryRowMapper() {
+    public static RowMapper<ReportEvent> logEntryRowMapper() {
         return (rs, row) -> {
             try {
-                return new LogEntry(
+                var trc = new ReportEvent(
                         fromNullableTimestamp(rs.getTimestamp("start")),
-                        LogEntry.Level.valueOf(rs.getString("logLevel")),
+                        null,
+                        null,
                         rs.getString("logMessage"),
                         rs.getString("stacktrace") != null ? defaultMapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {
                         }) : null
                 );
+                trc.setLevel(rs.getString("logLevel"));
+                return trc;
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }
         };
     }
 
-    public static RowMapper<TracePacket> instanceTraceRowMapper() {
+    public static RowMapper<TraceBatch> instanceTraceRowMapper() {
         return (rs, row) ->
-                new TracePacket(
+                new TraceBatch(
                 		fromNullableTimestamp(rs.getTimestamp("start")),
                 		rs.getInt("attempts"),
 //                        rs.getString("filename"),

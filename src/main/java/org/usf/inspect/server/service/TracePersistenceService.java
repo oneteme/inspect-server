@@ -7,7 +7,7 @@ import org.usf.inspect.core.*;
 import org.usf.inspect.server.dao.TraceDao;
 import org.usf.inspect.server.dto.BrowserConfigDto;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
-import org.usf.inspect.server.model.TracePacket;
+import org.usf.inspect.server.model.TraceBatch;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,20 +27,23 @@ import static org.usf.inspect.server.model.TraceBatchResolver.resolve;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class TracePersistenceService implements TraceExporter {
+public class TracePersistenceService implements TracePublisher {
 	
 	private final TraceDao dao;
 	private final ExecutorService executor = wrap(newFixedThreadPool(5));
 
     @Override
-	public void dispatch(InstanceEnvironment instance) {
+	public void register(InstanceEnvironment instance) {
         dao.saveInstanceEnvironment(instance);
 	}
 
 	@Override
 	@TraceableStage
-	public List<EventTrace> dispatch(boolean complete, List<EventTrace> traces) {
-		return traces.isEmpty() ? emptyList() : addTraces(traces);
+	public void flush(boolean complete, ProcessingQueue<EventTrace> queue) {
+		queue.pollAll(snp->{
+			mergeSessionMaskUpdates(snp);
+			return addTraces(snp);
+		});
 	}
 
 	public List<EventTrace> addTraces(List<EventTrace> traces) {
@@ -87,10 +90,10 @@ public class TracePersistenceService implements TraceExporter {
         //events
         cf.add(supplyAsync(()-> filterAndApply(traces, SessionEvent.class, dao::saveSessionEvents), executor));
         cf.add(supplyAsync(()-> filterAndApply(traces, ExceptionTrace.class, dao::saveExceptionTraces), executor));
-        cf.add(supplyAsync(()-> filterAndApply(traces, LogEntry.class, dao::saveLogEntries), executor));
+        cf.add(supplyAsync(()-> filterAndApply(traces, ReportEvent.class, dao::saveLogEntries), executor));
         //monitoring
         cf.add(supplyAsync(()-> filterAndApply(traces, MachineResourceUsage.class, dao::saveMachineResourceUsages), executor));
-        cf.add(supplyAsync(()-> filterAndApply(traces, TracePacket.class, dao::saveTracePackets), executor));
+        cf.add(supplyAsync(()-> filterAndApply(traces, TraceBatch.class, dao::saveTracePackets), executor));
         //browser
         cf.add(supplyAsync(() -> filterAndApply(traces, BrowserConfigDto.class, dao::saveBrowserConfigs), executor));
         return allOf(cf.toArray(CompletableFuture[]::new)).thenApply(v-> cf.stream()

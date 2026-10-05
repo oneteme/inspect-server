@@ -34,7 +34,7 @@ import org.usf.inspect.server.dto.BrowserConfigDto;
 import org.usf.inspect.server.event.UnsavedEventTraceEvent;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.Pair;
-import org.usf.inspect.server.model.TracePacket;
+import org.usf.inspect.server.model.TraceBatch;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -96,7 +96,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveTracePackets(List<TracePacket> packets) {
+    public void saveTracePackets(List<TraceBatch> packets) {
         executeBatch("insert into e_ins_trc(va_pnd,va_atp,va_seq,va_trc_cnt,dh_str,cd_ins) values(?,?,?,?,?,?)", packets, (ps, pck) -> {
                     var idx=0;
                     ps.setObject(++idx, pck.getPending(), INTEGER);
@@ -110,14 +110,14 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveLogEntries(List<LogEntry> logEntries) {
+    public void saveLogEntries(List<ReportEvent> logEntries) {
         executeBatch("insert into e_log_ent(va_lvl,va_msg,va_stk,dh_str,cd_prn_ses,cd_ins) values(?,?,?,?,?,?)", logEntries, (ps, lg)-> {
                     var idx=0;
-                    ps.setString(++idx, toStringOrNull(lg.getLevel()));
+                    ps.setString(++idx, lg.getLevel()); //TODO remove this
                     ps.setString(++idx, lg.getMessage());
                     ps.setObject(++idx, toJson(lg.getStackRows()), OTHER);
                     ps.setTimestamp(++idx, fromNullableInstant(lg.getInstant()));
-                    ps.setObject(++idx, lg.getSessionId());
+                    ps.setObject(++idx, lg.getSessionId()); //TODO remove this
                     ps.setObject(++idx, lg.getInstanceId());
                 });
     }

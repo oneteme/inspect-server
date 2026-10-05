@@ -96,14 +96,14 @@ public class RequestController {
             dataset = "instance_trace",
             view = INSTANCE_TRACE_ROW_MAPPER,
             select = "pending,attempts,size_session,filename,start,instance_env")
-    public Collection<TracePacket> fetchInstanceTraces(
+    public Collection<TraceBatch> fetchInstanceTraces(
             MvcRequest mvc,
             @PathVariable String instanceId
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.instanceTrace().instanceEnv().eq(fromString(instanceId))); // UUID
 
-        return (Collection<TracePacket>) mvc.execute();
+        return (Collection<TraceBatch>) mvc.execute();
     }
 
     @GetMapping("instance/{instanceId}/resource/usage")
@@ -128,14 +128,14 @@ public class RequestController {
             view = LOG_ENTRY_ROW_MAPPER,
             select = "start,log_level,log_message,stacktrace",
             order = "start.desc")
-    public Collection<LogEntry> fetchLogEntriesByInstance(
+    public Collection<ReportEvent> fetchLogEntriesByInstance(
             MvcRequest mvc,
             @PathVariable String instanceId
     ) {
         var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.logEntry().instanceEnv().eq(fromString(instanceId))); // UUID
 
-        return (Collection<LogEntry>) mvc.execute();
+        return (Collection<ReportEvent>) mvc.execute();
     }
 
     @GetMapping("session/{sessionId}/log/entry")
@@ -144,14 +144,14 @@ public class RequestController {
             view = LOG_ENTRY_ROW_MAPPER,
             select = "start,log_level,log_message,stacktrace",
             order = "start.desc")
-    public Collection<LogEntry> fetchLogEntriesBySession(
+    public Collection<ReportEvent> fetchLogEntriesBySession(
             MvcRequest mvc,
             @PathVariable String sessionId
     ) {
         var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.logEntry().parent().eq(fromString(sessionId))); // UUID
 
-        return (Collection<LogEntry>) mvc.execute();
+        return (Collection<ReportEvent>) mvc.execute();
     }
 
     @GetMapping("session/request/exception") // need to add exception type to front call
