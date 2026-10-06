@@ -41,7 +41,7 @@ public class TracePersistenceService implements TracePublisher {
 	@TraceableStage
 	public void flush(boolean complete, ProcessingQueue<EventTrace> queue) {
 		queue.pollAll(snp->{
-			mergeSessionMaskUpdates(snp);
+			mergeTraces(snp);
 			return addTraces(snp);
 		});
 	}
