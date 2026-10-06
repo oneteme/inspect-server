@@ -400,7 +400,7 @@ values(?,?,?,?,?,?,?,?,?)""", signals, TraceDao::mailRequestSetter);
     public void saveMailRequests(List<Pair<MailRequestSignal, MailRequestUpdate>> requests) {
         executeBatchPair("""
 insert into e_smtp_rqt(id_smtp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str,dh_end,va_cmd,cd_stt)
-values(?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
+values(?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
             var sgn = pr.signal();
             var upd = pr.update();
             var idx=mailRequestSetter(ps, sgn);
@@ -494,7 +494,7 @@ values(?,?,?,?,?,?,?,?,?)""", signals, TraceDao::ldapRequestSignalSetter);
     public void saveLdapRequests(List<Pair<DirectoryRequestSignal, DirectoryRequestUpdate>> requests) {
         executeBatchPair("""
 insert into e_ldap_rqt(id_ldap_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str,dh_end,va_cmd,cd_stt)
-values(?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
+values(?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
             var sgn = pr.signal();
             var upd = pr.update();
             var idx = ldapRequestSignalSetter(ps, sgn);
@@ -678,7 +678,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveExceptionTraces(List<ExceptionTrace> exceptions) {
-        executeBatch("insert into e_exc_inf(va_err_typ,va_err_msg,va_stk,va_cas,cd_ord,cd_rqt,va_trc_typ) values(?,?,?,?,?,?,?)", exceptions, (ps, exp) -> {
+        executeBatch("insert into e_exc_inf(va_err_typ,va_err_msg,va_stk,va_cas,cd_ord,cd_trc,va_trc_typ) values(?,?,?,?,?,?,?)", exceptions, (ps, exp) -> {
             var idx=0;
             ps.setString(++idx, exp.getType());
             ps.setString(++idx, exp.getMessage());
