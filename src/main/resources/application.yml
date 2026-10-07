@@ -82,3 +82,18 @@ inspect:
       namespacePrefix: Jarvis
 
 
+agent:
+  copilot-cli-path: ${COPILOT_CLI_PATH:copilot}
+  model: ${COPILOT_MODEL:gpt-6-luna}
+  request-timeout: ${AGENT_REQUEST_TIMEOUT:5m}
+  session-ttl: ${AGENT_SESSION_TTL:1h}
+  mcp:
+    servers-json: ${MCP_SERVERS:}
+    gateway-token: ${ENEDIS_MCP_TOKEN:}
+    github-token: ${GITHUB_MCP_TOKEN:}
+    confluence-url: ${CONFLUENCE_MCP_URL:}
+    placide-url: ${PLACIDE_MCP_URL:}
+    drawio-url: ${DRAWIO_MCP_URL:}
+    playwright-url: ${PLAYWRIGHT_MCP_URL:}
+    jira-url: ${JIRA_MCP_URL:}
+    github-url: ${GITHUB_MCP_URL:}

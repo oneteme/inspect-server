@@ -28,6 +28,7 @@ import static java.util.UUID.fromString;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static org.usf.inspect.core.ExecutorServiceWrapper.wrap;
+import static org.usf.inspect.server.JsonUtils.fromJson;
 import static org.usf.inspect.server.Utils.*;
 import static org.usf.jquery.core.Join.innerJoin;
 import static org.usf.jquery.core.Mappers.toListMapper;
@@ -40,8 +41,24 @@ public class RequestService {
     private final RequestDao dao;
     private final ExecutorService executorService = wrap(virtualThreadExecutor("inspect-tree", 10));
 
+    public Session getMainSession(UUID id) {
+        var session = requireSingle(getMainSessions(id, false));
+        if (session == null) {
+            throw new NoSuchElementException("no main session found");
+        }
+        return session;
+    }
+
+    public Session getRestSession(UUID id) {
+        var session = requireSingle(getRestSessions(Collections.singletonList(id), null, false));
+        if (session == null) {
+            throw new NoSuchElementException("no rest session found");
+        }
+        return session;
+    }
+
     public Session getMainTree(UUID id)  {
-        var session = requireSingle(getMainSessions(id));
+        var session = requireSingle(getMainSessions(id, true));
         if(session != null) {
             updateSessionsForTree(dao.selectChildsById(id, session.getStart()), session);
             return session;
@@ -50,12 +67,62 @@ public class RequestService {
     }
 
     public Session getRestTree(UUID id)  {
-        var session = requireSingle(getRestSessions(Collections.singletonList(id),null));
+        var session = requireSingle(getRestSessions(Collections.singletonList(id), null, true));
         if(session != null) {
             updateSessionsForTree(dao.selectChildsById(id, session.getStart()), session);
             return session;
         }
         throw new NoSuchElementException("no rest session found");
+    }
+
+    public Map<String, Object> getInstanceSummary(UUID id) {
+        InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
+        InstanceCatalog instance = store.instance();
+        var query = new QueryComposer()
+                .columns(instance.id(), instance.type(), instance.start(), instance.end(), instance.appName(),
+                        instance.version(), instance.address(), instance.environement(), instance.os(), instance.re(),
+                        instance.user(), instance.branch(), instance.hash(), instance.collector(),
+                        instance.namespace())
+                .criteria(instance.id().eq(id));
+        return store.execute(query.compose(store), rs -> {
+            if (!rs.next()) {
+                return Map.of();
+            }
+            Map<String, Object> summary = new LinkedHashMap<>();
+            summary.put("id", rs.getObject("id", UUID.class));
+            summary.put("type", rs.getString("type"));
+            summary.put("start", fromNullableTimestamp(rs.getTimestamp("start")));
+            summary.put("end", fromNullableTimestamp(rs.getTimestamp("end")));
+            summary.put("appName", rs.getString("appName"));
+            summary.put("version", rs.getString("version"));
+            summary.put("address", rs.getString("address"));
+            summary.put("environment", rs.getString("environement"));
+            summary.put("os", rs.getString("os"));
+            summary.put("runtime", rs.getString("re"));
+            summary.put("user", rs.getString("user"));
+            summary.put("branch", rs.getString("branch"));
+            summary.put("hash", rs.getString("hash"));
+            summary.put("collector", rs.getString("collector"));
+            summary.put("namespace", rs.getString("namespace"));
+            return summary;
+        });
+    }
+
+    public List<ExceptionTrace> getSessionExceptions(UUID id) {
+        InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
+        ExceptionCatalog exception = store.exception();
+        var query = new QueryComposer()
+                .columns(exception.errType().as("errType"), exception.errMsg().as("errMsg"),
+                        exception.stacktrace().as("stacktrace"), exception.order().as("order"),
+                        exception.parent().as("parent"))
+                .criteria(exception.parent().eq(id));
+        return store.execute(query.compose(store), toListMapper((rs, row) -> {
+            ExceptionTrace trace = new ExceptionTrace(rs.getString("errType"), rs.getString("errMsg"),
+                    fromJson(rs.getString("stacktrace"), StackTraceRow[].class), null);
+            trace.setTraceId(rs.getObject("parent", UUID.class));
+            trace.setOffset(rs.getLong("order"));
+            return trace;
+        }));
     }
 
     public List<Architecture> createArchitecture(Instant start, Instant end, String[] namespaces){
@@ -252,7 +319,7 @@ public class RequestService {
 
     private void updateSessionsForTree(Collection<UUID> ids, Session parent)  {
         var start = parent.getStart();
-        var sessions = Utils.isEmpty(ids) ? new ArrayList<Session>() : getRestSessions(ids, start);
+        var sessions = Utils.isEmpty(ids) ? new ArrayList<Session>() : getRestSessions(ids, start, true);
         sessions.add(parent);
         var reqMap = sessions.stream().collect(toMap(Session::getId, identity()));
 
@@ -283,7 +350,7 @@ public class RequestService {
         CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
     }
 
-    private List<Session> getRestSessions(Collection<UUID> ids, Instant start)  { // remove if possible after optimizing tree
+    private List<Session> getRestSessions(Collection<UUID> ids, Instant start, boolean initializeRequestLists)  {
         if (ids.isEmpty()) {
             return new ArrayList<>();
         }
@@ -333,23 +400,25 @@ public class RequestService {
                 session.setAddress(rs.getString("address"));
                 session.setAppName(rs.getString("appName"));
                 session.setRequestsMask(rs.getInt("mask"));
-                if(SessionMask.JDBC.is(session.getRequestsMask())) {
-                    session.setDatabaseRequests(new ArrayList<>());
-                }
-                if(SessionMask.LOCAL.is(session.getRequestsMask())) {
-                    session.setLocalRequests(new ArrayList<>());
-                }
-                if(SessionMask.REST.is(session.getRequestsMask())) {
-                    session.setRestRequests(new ArrayList<>());
-                }
-                if(SessionMask.FTP.is(session.getRequestsMask())) {
-                    session.setFtpRequests(new ArrayList<>());
-                }
-                if(SessionMask.SMTP.is(session.getRequestsMask())) {
-                    session.setMailRequests(new ArrayList<>());
-                }
-                if(SessionMask.LDAP.is(session.getRequestsMask())) {
-                    session.setLdapRequests(new ArrayList<>());
+                if (initializeRequestLists) {
+                    if(SessionMask.JDBC.is(session.getRequestsMask())) {
+                        session.setDatabaseRequests(new ArrayList<>());
+                    }
+                    if(SessionMask.LOCAL.is(session.getRequestsMask())) {
+                        session.setLocalRequests(new ArrayList<>());
+                    }
+                    if(SessionMask.REST.is(session.getRequestsMask())) {
+                        session.setRestRequests(new ArrayList<>());
+                    }
+                    if(SessionMask.FTP.is(session.getRequestsMask())) {
+                        session.setFtpRequests(new ArrayList<>());
+                    }
+                    if(SessionMask.SMTP.is(session.getRequestsMask())) {
+                        session.setMailRequests(new ArrayList<>());
+                    }
+                    if(SessionMask.LDAP.is(session.getRequestsMask())) {
+                        session.setLdapRequests(new ArrayList<>());
+                    }
                 }
                 sessions.add(session);
             }
@@ -357,7 +426,7 @@ public class RequestService {
         });
     }
 
-    private List<Session> getMainSessions(UUID id) {
+    private List<Session> getMainSessions(UUID id, boolean initializeRequestLists) {
         InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
         MainSessionCatalog mainSession = store.mainSession();
         InstanceCatalog instance =  store.instance();
@@ -388,23 +457,25 @@ public class RequestService {
                 main.setUser(rs.getString("user"));
                 main.setInstanceId(rs.getObject("instanceEnv", java.util.UUID.class));
                 main.setRequestsMask(rs.getInt("mask"));
-                if(SessionMask.JDBC.is(main.getRequestsMask())) {
-                    main.setDatabaseRequests(new ArrayList<>());
-                }
-                if(SessionMask.LOCAL.is(main.getRequestsMask())) {
-                    main.setLocalRequests(new ArrayList<>());
-                }
-                if(SessionMask.REST.is(main.getRequestsMask())) {
-                    main.setRestRequests(new ArrayList<>());
-                }
-                if(SessionMask.FTP.is(main.getRequestsMask())) {
-                    main.setFtpRequests(new ArrayList<>());
-                }
-                if(SessionMask.SMTP.is(main.getRequestsMask())) {
-                    main.setMailRequests(new ArrayList<>());
-                }
-                if(SessionMask.LDAP.is(main.getRequestsMask())) {
-                    main.setLdapRequests(new ArrayList<>());
+                if (initializeRequestLists) {
+                    if(SessionMask.JDBC.is(main.getRequestsMask())) {
+                        main.setDatabaseRequests(new ArrayList<>());
+                    }
+                    if(SessionMask.LOCAL.is(main.getRequestsMask())) {
+                        main.setLocalRequests(new ArrayList<>());
+                    }
+                    if(SessionMask.REST.is(main.getRequestsMask())) {
+                        main.setRestRequests(new ArrayList<>());
+                    }
+                    if(SessionMask.FTP.is(main.getRequestsMask())) {
+                        main.setFtpRequests(new ArrayList<>());
+                    }
+                    if(SessionMask.SMTP.is(main.getRequestsMask())) {
+                        main.setMailRequests(new ArrayList<>());
+                    }
+                    if(SessionMask.LDAP.is(main.getRequestsMask())) {
+                        main.setLdapRequests(new ArrayList<>());
+                    }
                 }
                 sessions.add(main);
             }
