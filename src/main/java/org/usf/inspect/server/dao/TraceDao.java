@@ -18,7 +18,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.util.List;
-import java.util.UUID;
 import java.util.function.Consumer;
 
 import javax.sql.DataSource;
@@ -169,7 +168,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", session, (ps, pr) 
             ps.setShort(++idx, upd.getStatus());
             ps.setLong(++idx, upd.getDataSize());
             ps.setString(++idx, upd.getContentEncoding());
-            ps.setInt(++idx, upd.getRequestMask().get());
+            ps.setInt(++idx, upd.getEventMask());
             ps.setString(++idx, joinValuesOrNull(sgn.getForwardedAddresses())); //TODO -> restSessionSginalSetter
         });
     }
@@ -207,7 +206,7 @@ where id_ses=?""", updates, (ps, upd) -> {
             ps.setLong(++idx, upd.getDataSize());
             ps.setString(++idx, upd.getContentEncoding());
             ps.setTimestamp(++idx, fromNullableInstant(upd.getEnd()));
-            ps.setInt(++idx, upd.getRequestMask().get());
+            ps.setInt(++idx, upd.getEventMask());
             ps.setObject(++idx, upd.getId());
         });
     }
@@ -243,7 +242,7 @@ where id_ses=?""", updates, (ps, upd) -> {
             ps.setString(++idx, nonNull(upd.getUser()) ? upd.getUser() : sgn.getUser());
             ps.setTimestamp(++idx, fromNullableInstant(nonNull(upd.getStart()) ? upd.getStart() : sgn.getStart()));
             ps.setTimestamp(++idx, fromNullableInstant(upd.getEnd()));
-            ps.setInt(++idx, upd.getRequestMask().get());
+            ps.setInt(++idx, upd.getEventMask());
             ps.setShort(++idx, upd.getStatus());
         });
     }
@@ -268,7 +267,7 @@ where id_ses=?""", updates, (ps, upd) -> {
             ps.setString(++idx, upd.getUser());
             ps.setTimestamp(++idx, fromNullableInstant(upd.getStart()));
             ps.setTimestamp(++idx, fromNullableInstant(upd.getEnd()));
-            ps.setInt(++idx, upd.getRequestMask().get());
+            ps.setInt(++idx, upd.getEventMask());
             ps.setShort(++idx, upd.getStatus());
             ps.setObject(++idx, upd.getId());
         });

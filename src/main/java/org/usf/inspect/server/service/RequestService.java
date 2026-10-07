@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.usf.inspect.core.ExceptionTrace;
-import org.usf.inspect.core.SessionMask;
+import org.usf.inspect.core.SessionEventMask;
 import org.usf.inspect.core.StackTraceRow;
 import org.usf.inspect.server.Utils;
 import org.usf.inspect.server.dao.RequestDao;
@@ -262,22 +262,22 @@ public class RequestService {
             combinedMask |= s.getRequestsMask();
         }
         var futures = new ArrayList<CompletableFuture<?>>();
-        if (SessionMask.REST.is(combinedMask)) {
+        if (SessionEventMask.REST.is(combinedMask)) {
             futures.add(CompletableFuture.runAsync(() -> getRestRequestsCompleteForParent(reqMap.keySet(), start).forEach(r -> {
                 reqMap.get(r.getSessionId()).getRestRequests().add(r);
                 r.setRemoteTrace((RestSessionWrapper) reqMap.get(r.getId()));
             }), executorService));
         }
-        if (SessionMask.FTP.is(combinedMask)) {
+        if (SessionEventMask.FTP.is(combinedMask)) {
             futures.add(CompletableFuture.runAsync(() -> getFtpRequestsComplete(reqMap.keySet(), start).forEach(q -> reqMap.get(q.getSessionId()).getFtpRequests().add(q)), executorService));
         }
-        if (SessionMask.SMTP.is(combinedMask)) {
+        if (SessionEventMask.SMTP.is(combinedMask)) {
             futures.add(CompletableFuture.runAsync(() -> getSmtpRequestsComplete(reqMap.keySet(), start).forEach(q -> reqMap.get(q.getSessionId()).getMailRequests().add(q)), executorService));
         }
-        if (SessionMask.LDAP.is(combinedMask)) {
+        if (SessionEventMask.LDAP.is(combinedMask)) {
             futures.add(CompletableFuture.runAsync(() -> getLdapRequestsComplete(reqMap.keySet(), start).forEach(q -> reqMap.get(q.getSessionId()).getLdapRequests().add(q)), executorService));
         }
-        if (SessionMask.JDBC.is(combinedMask)) {
+        if (SessionEventMask.JDBC.is(combinedMask)) {
             getDatabaseRequestsComplete(reqMap.keySet(), start).forEach(q -> reqMap.get(q.getSessionId()).getDatabaseRequests().add(q));
         }
         CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
@@ -333,22 +333,22 @@ public class RequestService {
                 session.setAddress(rs.getString("address"));
                 session.setAppName(rs.getString("appName"));
                 session.setRequestsMask(rs.getInt("mask"));
-                if(SessionMask.JDBC.is(session.getRequestsMask())) {
+                if(SessionEventMask.JDBC.is(session.getRequestsMask())) {
                     session.setDatabaseRequests(new ArrayList<>());
                 }
-                if(SessionMask.LOCAL.is(session.getRequestsMask())) {
+                if(SessionEventMask.LOCAL.is(session.getRequestsMask())) {
                     session.setLocalRequests(new ArrayList<>());
                 }
-                if(SessionMask.REST.is(session.getRequestsMask())) {
+                if(SessionEventMask.REST.is(session.getRequestsMask())) {
                     session.setRestRequests(new ArrayList<>());
                 }
-                if(SessionMask.FTP.is(session.getRequestsMask())) {
+                if(SessionEventMask.FTP.is(session.getRequestsMask())) {
                     session.setFtpRequests(new ArrayList<>());
                 }
-                if(SessionMask.SMTP.is(session.getRequestsMask())) {
+                if(SessionEventMask.SMTP.is(session.getRequestsMask())) {
                     session.setMailRequests(new ArrayList<>());
                 }
-                if(SessionMask.LDAP.is(session.getRequestsMask())) {
+                if(SessionEventMask.LDAP.is(session.getRequestsMask())) {
                     session.setLdapRequests(new ArrayList<>());
                 }
                 sessions.add(session);
@@ -388,22 +388,22 @@ public class RequestService {
                 main.setUser(rs.getString("user"));
                 main.setInstanceId(rs.getObject("instanceEnv", java.util.UUID.class));
                 main.setRequestsMask(rs.getInt("mask"));
-                if(SessionMask.JDBC.is(main.getRequestsMask())) {
+                if(SessionEventMask.JDBC.is(main.getRequestsMask())) {
                     main.setDatabaseRequests(new ArrayList<>());
                 }
-                if(SessionMask.LOCAL.is(main.getRequestsMask())) {
+                if(SessionEventMask.LOCAL.is(main.getRequestsMask())) {
                     main.setLocalRequests(new ArrayList<>());
                 }
-                if(SessionMask.REST.is(main.getRequestsMask())) {
+                if(SessionEventMask.REST.is(main.getRequestsMask())) {
                     main.setRestRequests(new ArrayList<>());
                 }
-                if(SessionMask.FTP.is(main.getRequestsMask())) {
+                if(SessionEventMask.FTP.is(main.getRequestsMask())) {
                     main.setFtpRequests(new ArrayList<>());
                 }
-                if(SessionMask.SMTP.is(main.getRequestsMask())) {
+                if(SessionEventMask.SMTP.is(main.getRequestsMask())) {
                     main.setMailRequests(new ArrayList<>());
                 }
-                if(SessionMask.LDAP.is(main.getRequestsMask())) {
+                if(SessionEventMask.LDAP.is(main.getRequestsMask())) {
                     main.setLdapRequests(new ArrayList<>());
                 }
                 sessions.add(main);

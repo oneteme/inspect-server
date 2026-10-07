@@ -14,6 +14,10 @@ import org.usf.inspect.server.exception.DispatchProcessingException;
  *
  */
 public final class TraceBatchDispatcherHub extends TraceDispatcherHub {
+	
+	public TraceBatchDispatcherHub() {
+		super("inspect-srv-publisher");
+	}
 
 	public void emitTraces(List<EventTrace> traces) throws DispatchProcessingException {
 		if(isNull(traces) || traces.isEmpty()) {
@@ -23,7 +27,7 @@ public final class TraceBatchDispatcherHub extends TraceDispatcherHub {
 			try {
 				if(!getQueue().addAll(traces)) {
 					throw new DispatchProcessingException( 
-							"traces were not be added to the queue, state=%s, queue size=%s".formatted(getState(), getQueue().size()), true);
+							"traces were not emitted, or partially emitted, state=%s, queue size=%s".formatted(getState(), getQueue().size()), true);
 				}
 			}
 			catch (Exception e) { //
