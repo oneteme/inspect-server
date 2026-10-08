@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.server.service.TracePersistenceService;
+import org.usf.inspect.server.service.TracePersister;
 
 import java.io.IOException;
 
@@ -25,7 +25,7 @@ import static org.usf.inspect.core.DispatchState.DISABLE;
 @RequestMapping(value = "cache", produces = APPLICATION_JSON_VALUE)
 public class CacheController {
 
-    private final TracePersistenceService service;
+    private final TracePersister service;
     private final RestTemplate template;
     private final ObjectMapper mapper;
 
@@ -35,7 +35,7 @@ public class CacheController {
     @Value("${inspect.server.cache.import.host:}")
 	private String host;
 
-	public CacheController(ObjectMapper mapper, TracePersistenceService service, RestTemplateBuilder builder) {
+	public CacheController(ObjectMapper mapper, TracePersister service, RestTemplateBuilder builder) {
 		this.service = service;
 		this.mapper = mapper;
 		this.template = builder //load interceptors

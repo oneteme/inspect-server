@@ -5,7 +5,6 @@ import static org.springframework.http.converter.json.Jackson2ObjectMapperBuilde
 import static org.usf.inspect.core.InspectConfiguration.coreModule;
 
 import org.usf.inspect.core.Retention;
-import org.usf.inspect.core.SessionEvent;
 import org.usf.inspect.server.dto.BrowserConfigDto;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.TraceBatch;
