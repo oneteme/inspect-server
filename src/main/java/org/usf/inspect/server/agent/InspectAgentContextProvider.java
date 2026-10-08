@@ -2,6 +2,8 @@ package org.usf.inspect.server.agent;
 
 import static java.util.UUID.fromString;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -24,38 +26,108 @@ public class InspectAgentContextProvider {
 	private final RequestService requestService;
 	private final ObjectMapper mapper;
 
-	public Map<String, Object> resolve(InspectAgentController.InspectAgentRequest request) {
-		Map<String, Object> context = new LinkedHashMap<>();
-		putIfPresent(context, "page", request.page());
-		putIfPresent(context, "type", request.type());
-		putIfPresent(context, "recordId", request.id());
 
-		if (request.id() != null && !request.id().isBlank()) {
-			if (isType(request.type(), "rest")) {
-				Session session = requestService.getRestSession(fromString(request.id().trim()));
-				context.put("session", summarizeSession(session));
-			} else if (isType(request.type(), "main")) {
-				Session session = requestService.getMainSession(fromString(request.id().trim()));
-				context.put("session", summarizeSession(session));
-			} else {
-				throw new IllegalArgumentException("type must be Rest or Main when id is provided");
+	Map<String, Object> resolveSessionDetail(String id) {
+		return resolveSessionContext(requestService.getRestSession(fromString(id)));
+	}
+
+	Map<String, Object> resolveSessionDetailView(String id) {
+		return resolveSessionContext(requestService.getMainSession(fromString(id)));
+	}
+
+	// Page-specific enrichment is not yet defined for the following resolvers.
+	Map<String, Object> resolveDashboard(String id) {
+		return Map.of();
+	}
+
+	Map<String, Object> resolveRequestSearch(String id) {
+		return Map.of();
+	}
+
+	Map<String, Object> resolveRequestDetail(String id) {
+		return Map.of();
+	}
+
+	Map<String, Object> resolveRequestCompare(String id) {
+		return Map.of();
+	}
+
+	Map<String, Object> resolveSessionSearch(String id) {
+		return Map.of();
+	}
+
+	Map<String, Object> resolveSessionTree(String id) {
+		return Map.of();
+	}
+
+	Map<String, Object> resolveSessionCompare(String id) {
+		return Map.of();
+	}
+
+	Map<String, Object> resolveInstance(String id) {
+		return Map.of();
+	}
+
+	Map<String, Object> resolveAnalytic(String id) {
+		return Map.of();
+	}
+
+	Map<String, Object> resolveArchitecture(String id) {
+		return Map.of();
+	}
+
+	Map<String, Object> resolveServerSupervision(String id) {
+		return Map.of();
+	}
+
+	Map<String, Object> resolveClientSupervision(String id) {
+		return Map.of();
+	}
+
+	Map<String, Object> resolveRequestKpi(String id) {
+		return Map.of();
+	}
+
+	Map<String, Object> resolveSessionKpi(String id) {
+		return Map.of();
+	}
+
+	Map<String, Object> resolveUnknown(String id) {
+		return Map.of();
+	}
+
+	private Map<String, Object> resolveSessionContext(Session session) {
+		Map<String, Object> summary = summarizeSession(session);
+		if (session.getInstanceId() != null) {
+			Map<String, Object> instance = new LinkedHashMap<>(requestService.getInstanceSummary(session.getInstanceId()));
+			instance.remove("address");
+			Object startedAt = instance.remove("start");
+			Object endedAt = instance.remove("end");
+			if (startedAt != null) {
+				instance.put("startedAt", startedAt instanceof Instant instant ? instant.toString() : startedAt);
 			}
+			if (endedAt != null) {
+				instance.put("endedAt", endedAt instanceof Instant instant ? instant.toString() : endedAt);
+			}
+			summary.put("instance", instance);
 		}
-		return context;
+		summary.put("exceptions", requestService.getSessionExceptions(session.getId()).stream()
+				.map(this::summarizeException).toList());
+		return Map.of("session", summary);
 	}
 
 	private Map<String, Object> summarizeSession(Session session) {
 		Map<String, Object> summary = new LinkedHashMap<>();
-		summary.put("id", session.getId());
-		summary.put("instanceId", session.getInstanceId());
-		if (session.getInstanceId() != null) {
-			summary.put("instance", requestService.getInstanceSummary(session.getInstanceId()));
+		if (session.getStart() != null) {
+			summary.put("startedAt", session.getStart().toString());
 		}
-		summary.put("start", session.getStart());
-		summary.put("end", session.getEnd());
-		summary.put("requestsMask", session.getRequestsMask()); // todo remove
+		if (session.getEnd() != null) {
+			summary.put("endedAt", session.getEnd().toString());
+			if (session.getStart() != null && !session.getEnd().isBefore(session.getStart())) {
+				summary.put("durationMs", Duration.between(session.getStart(), session.getEnd()).toMillis());
+			}
+		}
 		if (session instanceof RestSessionWrapper rest) {
-			putIfPresent(summary, "appName", rest.getAppName());
 			putIfPresent(summary, "version", rest.getVersion());
 			putIfPresent(summary, "branch", rest.getBranch());
 			putIfPresent(summary, "method", rest.getMethod());
@@ -64,14 +136,11 @@ public class InspectAgentContextProvider {
 			summary.put("status", rest.getStatus());
 			putIfPresent(summary, "contentType", rest.getContentType());
 		} else if (session instanceof MainSessionWrapper main) {
-			putIfPresent(summary, "appName", main.getAppName());
 			putIfPresent(summary, "name", main.getName());
 			putIfPresent(summary, "type", main.getType());
 		} else {
 			throw new IllegalStateException("Inspect returned an unexpected session representation");
 		}
-		summary.put("exceptions", requestService.getSessionExceptions(session.getId()).stream()
-				.map(this::summarizeException).toList());
 		return summary;
 	}
 
@@ -96,7 +165,4 @@ public class InspectAgentContextProvider {
 		}
 	}
 
-	private boolean isType(String actual, String expected) {
-		return actual != null && expected.equalsIgnoreCase(actual.trim());
-	}
 }
