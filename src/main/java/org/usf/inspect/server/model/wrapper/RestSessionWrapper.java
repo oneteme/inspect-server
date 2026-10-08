@@ -4,13 +4,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.usf.inspect.core.ExceptionInfo;
+import org.usf.inspect.core.ExceptionTrace;
 import org.usf.inspect.server.model.CompletableMetric;
 import org.usf.inspect.server.model.RestSession;
 import org.usf.inspect.server.model.Session;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -44,15 +45,7 @@ public class RestSessionWrapper implements Session {
         return restSession.getRequestsMask();
     }
 
-    public void setException(ExceptionInfo exception) {
-        restSession.setException(exception);
-    }
-
-    public ExceptionInfo getException() {
-        return restSession.getException();
-    }
-
-    public String getSessionId() {
+    public UUID getSessionId() {
         return restSession.getSessionId();
     }
 
@@ -84,7 +77,7 @@ public class RestSessionWrapper implements Session {
         restSession.setBodyContent(bodyContent);
     }
 
-    public void setSessionId(String sessionId) {
+    public void setSessionId(UUID sessionId) {
         restSession.setSessionId(sessionId);
     }
 
@@ -172,7 +165,7 @@ public class RestSessionWrapper implements Session {
         restSession.setContentType(contentType);
     }
 
-    public void setStatus(int status) {
+    public void setStatus(short status) {
         restSession.setStatus(status);
     }
 
@@ -196,19 +189,19 @@ public class RestSessionWrapper implements Session {
         return restSession.getStatus();
     }
 
-    public String getId() {
+    public UUID getId() {
         return restSession.getId();
     }
 
-    public void setId(String id) {
+    public void setId(UUID id) {
         restSession.setId(id);
     }
 
-    public void setInstanceId(String instanceId) {
+    public void setInstanceId(UUID instanceId) {
         restSession.setInstanceId(instanceId);
     }
 
-    public String getInstanceId() {
+    public UUID getInstanceId() {
         return restSession.getInstanceId();
     }
 

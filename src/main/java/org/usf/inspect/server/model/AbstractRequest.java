@@ -7,6 +7,7 @@ import lombok.Setter;
 import org.usf.inspect.core.*;
 
 import java.time.Instant;
+import java.util.UUID;
 
 /**
  * 
@@ -22,12 +23,9 @@ public abstract class AbstractRequest implements EventTrace {
 	private Instant end;
 	private String threadName;
 	private String user;
-	private String id;
+	private UUID id;
 	private String command;
-	private String sessionId;
-	private String instanceId;
-
-    public abstract TraceSignal toRequest();
-
-    public abstract TraceUpdate toCallback();
+	private short status; //2xx, 4xx, 5xx, 0 otherwise
+	private UUID sessionId;
+	private UUID instanceId;
 }
