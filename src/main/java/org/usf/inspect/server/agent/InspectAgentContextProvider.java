@@ -23,6 +23,9 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class InspectAgentContextProvider {
+	private static final String APPLICATION_REPOSITORY = "dev/donnees/stm/produits/asm/inspect-app";
+	private static final String APPLICATION_JIRA = "N1T";
+
 	private final RequestService requestService;
 	private final ObjectMapper mapper;
 
@@ -32,7 +35,33 @@ public class InspectAgentContextProvider {
 	}
 
 	Map<String, Object> resolveSessionDetailView(String id) {
-		return resolveSessionContext(requestService.getMainSession(fromString(id)));
+		Session session = requestService.getMainSession(fromString(id));
+		if (!(session instanceof MainSessionWrapper main)) {
+			throw new IllegalStateException("Inspect returned an unexpected main session representation");
+		}
+
+		Map<String, Object> instance = main.getInstanceId() == null
+				? Map.of() : requestService.getInstanceSummary(main.getInstanceId());
+		Map<String, Object> environment = new LinkedHashMap<>();
+		environment.put("application_name", valueOrEmpty(instance.get("appName")));
+		environment.put("application_version", valueOrEmpty(instance.get("version")));
+		environment.put("application_environment", valueOrEmpty(instance.get("environment")));
+		environment.put("user_operating_system", valueOrEmpty(instance.get("os")));
+		environment.put("user_browser", valueOrEmpty(instance.get("runtime")));
+		environment.put("application_namespace", valueOrEmpty(instance.get("namespace")));
+		environment.put("application_user", valueOrEmpty(instance.get("user")));
+		environment.put("session_user", valueOrEmpty(main.getUser()));
+		environment.put("application_repository", APPLICATION_REPOSITORY);
+		environment.put("application_jira", APPLICATION_JIRA);
+
+		Map<String, Object> navigation = new LinkedHashMap<>();
+		navigation.put("page_loaded", main.getStart() == null ? "" : main.getStart().toString());
+		navigation.put("page_unloaded", main.getEnd() == null ? "" : main.getEnd().toString());
+		navigation.put("page_title", valueOrEmpty(main.getName()));
+		navigation.put("page_url", valueOrEmpty(main.getLocation()));
+		navigation.put("page_environment", environment);
+		navigation.put("page_requests", requestService.getPageRequests(main.getId(), main.getStart()));
+		return Map.of("page_navigation", navigation);
 	}
 
 	// Page-specific enrichment is not yet defined for the following resolvers.
@@ -163,6 +192,10 @@ public class InspectAgentContextProvider {
 		if (value != null && !value.isBlank()) {
 			target.put(key, value);
 		}
+	}
+
+	private String valueOrEmpty(Object value) {
+		return value == null ? "" : value.toString();
 	}
 
 }

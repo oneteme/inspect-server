@@ -125,6 +125,39 @@ public class RequestService {
         }));
     }
 
+    public List<Map<String, Object>> getPageRequests(UUID sessionId, Instant sessionStart) {
+        return getRestRequestsCompleteForParent(List.of(sessionId), sessionStart).stream().map(request -> {
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("url", buildRequestUrl(request));
+            result.put("date_debut", request.getStart() == null ? "" : request.getStart().toString());
+            result.put("date_fin", request.getEnd() == null ? "" : request.getEnd().toString());
+            //result.put("content_type", request.getContentType() == null ? "" : request.getContentType());
+            result.put("status", request.getStatus());
+            return result;
+        }).toList();
+    }
+
+    private String buildRequestUrl(RestRequestWrapper request) {
+        StringBuilder url = new StringBuilder();
+        if (request.getProtocol() != null && !request.getProtocol().isBlank()) {
+            url.append(request.getProtocol()).append("://");
+        }
+        if (request.getHost() != null) {
+            url.append(request.getHost());
+        }
+        if (request.getPort() > 0 && !(("http".equalsIgnoreCase(request.getProtocol()) && request.getPort() == 80)
+                || ("https".equalsIgnoreCase(request.getProtocol()) && request.getPort() == 443))) {
+            url.append(':').append(request.getPort());
+        }
+        if (request.getPath() != null) {
+            url.append(request.getPath());
+        }
+        if (request.getQuery() != null && !request.getQuery().isBlank()) {
+            url.append(request.getQuery().startsWith("?") ? "" : "?").append(request.getQuery());
+        }
+        return url.toString();
+    }
+
     public List<Architecture> createArchitecture(Instant start, Instant end, String[] namespaces){
         InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
         MainSessionCatalog mainSession = store.mainSession();
@@ -494,7 +527,7 @@ public class RequestService {
                         restRequest.status(), restRequest.sizeIn(), restRequest.sizeOut(), restRequest.contentEncodingIn(), restRequest.contentEncodingOut(), restRequest.start(), restRequest.end(), restRequest.thread(),
                         restRequest.linked(), restRequest.parent()
                 )
-                .criteria(restRequest.parent().in(ids.stream().map(UUID::toString).toArray()));
+                .criteria(restRequest.parent().in(ids.stream().toArray(UUID[]::new)));
         if(start != null) {
             v.criteria(restRequest.start().ge(start));
         }
@@ -521,7 +554,7 @@ public class RequestService {
                 out.setThreadName(rs.getString("thread"));
                 out.setLinked(rs.getBoolean("linked"));
                 out.setAuthScheme(rs.getString("auth"));
-                out.setException(getExceptionInfoIfNotNull(rs.getString("errType"), rs.getString("errMsg"), null));
+             //   out.setException(getExceptionInfoIfNotNull(rs.getString("errType"), rs.getString("errMsg"), null));
                 outs.add(out);
             }
             return outs;

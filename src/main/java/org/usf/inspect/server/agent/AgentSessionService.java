@@ -51,6 +51,10 @@ public class AgentSessionService {
 		}
 	}
 
+	public boolean hasSession(String sessionId) {
+		return sessionId != null && sessions.containsKey(sessionId);
+	}
+
 	public Optional<Map<String, Object>> history(String sessionId) {
 		SessionRecord session = sessions.get(sessionId);
 		if (session == null) {
