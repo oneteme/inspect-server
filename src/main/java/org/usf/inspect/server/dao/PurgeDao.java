@@ -32,7 +32,7 @@ import static java.time.Duration.ofDays;
 import static java.util.Arrays.stream;
 import static java.util.Objects.nonNull;
 import static org.usf.inspect.core.SessionEventMask.*;
-import static org.usf.inspect.core.SessionContextManager.emitError;
+import static org.usf.inspect.core.SessionLog.emitError;
 import static org.usf.inspect.server.JsonUtils.fromJson;
 import static org.usf.inspect.server.JsonUtils.toJson;
 import static org.usf.jquery.core.Column.ctimestamp;

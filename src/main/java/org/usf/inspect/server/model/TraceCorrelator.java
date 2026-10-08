@@ -4,7 +4,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Comparator.comparing;
 import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.groupingBy;
-import static org.usf.inspect.core.SessionContextManager.emitWarn;
+import static org.usf.inspect.core.SessionLog.emitWarn;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,6 +13,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.core.TraceHub;
 import org.usf.inspect.core.TracePart;
 import org.usf.inspect.core.TraceSignal;
 import org.usf.inspect.core.TraceUpdate;
@@ -63,7 +64,7 @@ public final class TraceCorrelator<S extends TraceSignal, U extends TraceUpdate>
             try {
                 pairTraceConsumer.accept(pairs);
             } catch (Exception e) {
-                log.error("error while resolving [{}/{}] traces", signalType.getSimpleName(),  updateType.getSimpleName(), e);
+                log.error("error while resolving [{}/{}] traces", signalType.getSimpleName(), updateType.getSimpleName(), e);
                 pairs.forEach(ent->{
                     fallback.add(ent.signal());
                     fallback.add(ent.update());
@@ -101,7 +102,7 @@ public final class TraceCorrelator<S extends TraceSignal, U extends TraceUpdate>
                         updList.add(updateType.cast(prt));
                     }
                     else {
-                    	
+                    	log.warn("trace {} mismatch with {}/{}", prt, signalType.getSimpleName(), updateType.getSimpleName());
                     }
                 }
                 if(sgnList.size() == 1) {
