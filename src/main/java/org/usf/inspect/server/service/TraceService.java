@@ -125,7 +125,7 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
             }
             if(nonNull(id)) {
                 try {
-                    var report = new ReportEvent(now(), null, "saveTrace", defaultMapper.writeValueAsString(trace), null);
+                    var report = new ReportEvent(now(), null, "saveTrace", null, defaultMapper.writeValueAsString(trace), null);
                     report.setInstanceId(id);
                     dispatcher.emitTrace(report);
                 }

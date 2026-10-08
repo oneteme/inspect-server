@@ -74,6 +74,7 @@ public class Mappers {
                         fromNullableTimestamp(rs.getTimestamp("start")),
                         null,
                         null,
+                        null,
                         rs.getString("logMessage"),
                         rs.getString("stacktrace") != null ? defaultMapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {
                         }) : null

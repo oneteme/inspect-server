@@ -8,12 +8,17 @@ import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.core.TraceDispatcherHub;
 import org.usf.inspect.server.exception.DispatchProcessingException;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * 
  * @author u$f
  *
  */
+@Slf4j
 public final class TraceBatchDispatcherHub extends TraceDispatcherHub {
+
+	private static final TraceBatchDispatcherHub DEFAULT_HUB = new TraceBatchDispatcherHub();
 	
 	public TraceBatchDispatcherHub() {
 		super("inspect-srv-publisher");
@@ -42,5 +47,9 @@ public final class TraceBatchDispatcherHub extends TraceDispatcherHub {
 			throw new DispatchProcessingException(
 					"traces were not emitted, state=%s, queue size=%s".formatted(getState(), getQueue().size()), true);
 		}
+	}
+	
+	public static TraceBatchDispatcherHub serverHub() {
+		return DEFAULT_HUB;
 	}
 }

@@ -1,14 +1,12 @@
 package org.usf.inspect.server.controller;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.usf.inspect.core.*;
-import org.usf.inspect.core.SessionEvent.LogLevel;
-import org.usf.inspect.server.model.UserAction;
-import org.usf.inspect.server.service.TraceService;
+import static java.util.Objects.nonNull;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
+import static org.usf.inspect.core.DualEventTracer.APP_ERROR;
+import static org.usf.inspect.core.DualEventTracer.INT_ERROR;
+import static org.usf.inspect.core.DualEventTracer.SUCCESS;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,10 +14,41 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import static java.util.Objects.nonNull;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
-import static org.usf.inspect.core.DualEventTracer.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.usf.inspect.core.AbstractSessionUpdate;
+import org.usf.inspect.core.AbstractStage;
+import org.usf.inspect.core.DatabaseRequestStage;
+import org.usf.inspect.core.DatabaseRequestUpdate;
+import org.usf.inspect.core.DirectoryRequestStage;
+import org.usf.inspect.core.DirectoryRequestUpdate;
+import org.usf.inspect.core.DispatchState;
+import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.core.ExceptionTrace;
+import org.usf.inspect.core.FtpRequestStage;
+import org.usf.inspect.core.FtpRequestUpdate;
+import org.usf.inspect.core.InstanceEnvironment;
+import org.usf.inspect.core.LocalRequestUpdate;
+import org.usf.inspect.core.MailRequestUpdate;
+import org.usf.inspect.core.MainSessionUpdate;
+import org.usf.inspect.core.ReportEvent;
+import org.usf.inspect.core.SessionEvent;
+import org.usf.inspect.core.SessionLog.LogLevel;
+import org.usf.inspect.core.StagePayload;
+import org.usf.inspect.server.model.UserAction;
+import org.usf.inspect.server.service.TraceService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @CrossOrigin

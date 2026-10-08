@@ -1,6 +1,7 @@
 package org.usf.inspect.server;
 
 import static org.usf.inspect.server.JsonUtils.defaultMapper;
+import static org.usf.inspect.server.service.TraceBatchDispatcherHub.serverHub;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -45,13 +46,13 @@ public class InspectApplication {
 
 	@Bean
 	@ConfigurationProperties(prefix = "inspect.server")
-	InspectServerConfiguration serverConfigurationProperties() {
+	static InspectServerConfiguration serverConfigurationProperties() {
 		return new InspectServerConfiguration();
 	}
 
 	@Bean
 	TraceBatchDispatcherHub inspectServerContext() {
-		return new TraceBatchDispatcherHub(); //disable by default
+		return serverHub();
 	}
 	
 	@Bean

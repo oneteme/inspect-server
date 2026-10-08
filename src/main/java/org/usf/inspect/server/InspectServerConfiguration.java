@@ -13,9 +13,11 @@ import lombok.ToString;
 public final class InspectServerConfiguration extends InspectCollectorConfiguration {
    
     private PartitionProperties partition = new PartitionProperties();
+    private boolean selfReport = true;
     
     public InspectServerConfiguration() {
     	setEnabled(true); //server is always enabled
+    	setDebugMode(false);
     }
     
     @Override
