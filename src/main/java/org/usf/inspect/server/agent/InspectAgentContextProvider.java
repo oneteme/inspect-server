@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class InspectAgentContextProvider {
-	private static final String APPLICATION_REPOSITORY = "dev/donnees/stm/produits/asm/inspect-app";
+	private static final String APPLICATION_REPOSITORY = "dev/donnees/stm/produits/asm/";
 	private static final String APPLICATION_JIRA = "N1T";
 
 	private final RequestService requestService;
@@ -53,7 +53,7 @@ public class InspectAgentContextProvider {
 		environment.put("application_namespace", valueOrEmpty(instance.get("namespace")));
 		environment.put("application_user", valueOrEmpty(instance.get("user")));
 		environment.put("session_user", valueOrEmpty(main.getUser()));
-		environment.put("application_repository", APPLICATION_REPOSITORY);
+		environment.put("application_repository", APPLICATION_REPOSITORY + valueOrEmpty(instance.get("appName")));
 		environment.put("application_jira", APPLICATION_JIRA);
 
 		Map<String, Object> navigation = new LinkedHashMap<>();
