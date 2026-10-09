@@ -5,6 +5,7 @@ import static java.util.UUID.fromString;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -27,11 +28,12 @@ public class InspectAgentContextProvider {
 	private static final String APPLICATION_JIRA = "N1T";
 
 	private final RequestService requestService;
+	private final AgentRequestService agentRequestService;
 	private final ObjectMapper mapper;
 
 
-	Map<String, Object> resolveSessionDetail(String id) {
-		return resolveSessionContext(requestService.getRestSession(fromString(id)));
+	Map<String, Object> resolveSessionDetailRest(String id) {
+		return Map.of("rest_api_call", resolveRestSessionContext(id));
 	}
 
 	Map<String, Object> resolveSessionDetailView(String id) {
@@ -126,6 +128,19 @@ public class InspectAgentContextProvider {
 
 	Map<String, Object> resolveUnknown(String id) {
 		return Map.of();
+	}
+
+	private Map<String, Object> resolveRestSessionContext(String id) {
+		Map<String, Object> restApiCall = new LinkedHashMap<>(agentRequestService.getRestSession(fromString(id)));
+		restApiCall.put("rest_api_exceptions", agentRequestService.getExceptions(fromString(id)));
+		List<Map<String, Object>> subRequests = agentRequestService.getRestRequests(fromString(id));
+		subRequests.addAll(agentRequestService.getDatabaseRequests(fromString(id)));
+		for (Map<String, Object> subRequest : subRequests) {
+			subRequest.put("request_exceptions", agentRequestService.getExceptions(fromString((String) subRequest.get("request_id"))));
+			subRequest.remove("request_id");
+		}
+		restApiCall.put("rest_api_sub_requests", subRequests);
+		return restApiCall;
 	}
 
 	private Map<String, Object> resolveSessionContext(Session session) {
