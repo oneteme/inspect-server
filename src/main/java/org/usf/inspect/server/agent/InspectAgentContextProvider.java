@@ -61,7 +61,10 @@ public class InspectAgentContextProvider {
 		navigation.put("page_url", valueOrEmpty(main.getLocation()));
 		navigation.put("page_environment", environment);
 		navigation.put("page_requests", requestService.getPageRequests(main.getId(), main.getStart()));
-		return Map.of("page_navigation", navigation);
+		return Map.of(
+				"page_navigation", navigation,
+				"exceptions", requestService.getSessionExceptions(main.getId()).stream()
+						.map(this::summarizeException).toList());
 	}
 
 	// Page-specific enrichment is not yet defined for the following resolvers.
