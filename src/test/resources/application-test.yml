@@ -1,0 +1,39 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:purge-dao;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+    hikari:
+      minimum-idle: 1
+      maximum-pool-size: 5
+  security:
+    enabled: false
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+  h2:
+    console:
+      enabled: false
+
+logging:
+  level:
+    org.usf.jquery: DEBUG
+    org.usf.inspect: DEBUG
+    org.springframework.jdbc.core: DEBUG
+
+inspect:
+  collector:
+    enabled: false
+    scheduling:
+      interval: 365d
+  server:
+    partition:
+      enabled: false
+    purge:
+      enabled: false
+    migration:
+      namespacePrefix: NOVA
+    scheduling:
+      interval: 365d

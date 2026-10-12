@@ -138,7 +138,7 @@ CREATE TABLE IF NOT EXISTS e_ses_evt (
 -- Migration de la table e_exc_inf : ajout des champs va_cas et va_trc_typ
 ALTER TABLE e_exc_inf ADD COLUMN IF NOT EXISTS va_cas json;
 ALTER TABLE e_exc_inf ADD COLUMN IF NOT EXISTS va_trc_typ SMALLINT;
-
+ALTER TABLE e_exc_inf RENAME COLUMN cd_rqt TO cd_trc;
 
 -- Migration du namespace historique
 -- reprise de la valeur de va_env vers cd_nsp
@@ -181,4 +181,6 @@ CREATE INDEX IF NOT EXISTS idx_env_ins_cd_nsp ON e_env_ins(cd_nsp);
 -- Suppression des objets legacy user action
 DROP INDEX IF EXISTS idx_usr_acn_cd_prn_ses;
 DROP TABLE IF EXISTS e_usr_acn;
+
+DROP INDEX IF EXISTS idx_exc_inf_cd_rqt;
 COMMIT;

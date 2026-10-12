@@ -28,7 +28,7 @@ public interface ExceptionCatalog extends DatasetCatalog<InspectStore> {
 	@Bind(CD_ORD)
 	ViewColumn order();
 	
-	@Bind(CD_RQT)
+	@Bind("cd_trc")
 	@Typed(UUID)
 	ViewColumn parent();
 

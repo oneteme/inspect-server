@@ -6,11 +6,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.usf.inspect.core.*;
-import org.usf.inspect.core.LogEntry.Level;
+import org.usf.inspect.core.SessionEvent.LogLevel;
 import org.usf.inspect.server.model.UserAction;
 import org.usf.inspect.server.service.TraceService;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -41,7 +42,7 @@ public class TraceV4Controller {
         if (instance != null && instance.getEnv() != null) {
             instance.setNamespace((namespacePrefix +"-"+ instance.getEnv()).toUpperCase());
         }
-       return controller.addInstanceEnvironment(instance, null); //auto retention conversion
+       return controller.addInstanceEnvironment(instance, 1, null); //auto retention conversion
     }
 
     @PutMapping(value = "instance/{id}/session", produces = APPLICATION_JSON_VALUE)
@@ -129,9 +130,9 @@ public class TraceV4Controller {
     }
 
     static void convertToSessionEvent(EventTrace trc, Consumer<SessionEvent> acc) {
-    	if(trc instanceof LogEntry log) {
-    		if(log.getSessionId() != null && log.getLevel() != Level.REPORT) {
-    			var evt = new SessionEvent(log.getInstant(), log.getLevel().name(), log.getMessage(), null, log.getSessionId());
+    	if(trc instanceof ReportEvent log) {
+    		if(log.getSessionId() != null && !log.getLevel().equals(LogLevel.REPORT.name())) {
+    			var evt = new SessionEvent(log.getInstant(), log.getLevel(), log.getMessage(), null, log.getSessionId());
     			acc.accept(evt);
     		}
     	}
@@ -142,7 +143,7 @@ public class TraceV4Controller {
     }
 
     @GetMapping(value = "queue", produces = APPLICATION_JSON_VALUE)
-    public List<EventTrace> peekQueue(){
+    public Collection<EventTrace> peekQueue(){
         return service.peekQueue();
     }
 

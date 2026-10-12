@@ -352,7 +352,7 @@ public class PurgeDao {
         return "DELETE FROM e_exc_inf" +
                 " WHERE va_trc_typ='" + trcType.getValue() + "'" +
         " AND  NOT EXISTS (SELECT 1 FROM e_"
-                + tableSuffix + " WHERE  id_" + idSuffix + " = cd_rqt)";
+                + tableSuffix + " WHERE  id_" + idSuffix + " = cd_trc)";
     }
 
 
@@ -380,7 +380,7 @@ public class PurgeDao {
                 " AND dh_end < '" + before + "'";
 
         var exceptionQuery = "DELETE FROM e_exc_inf" +
-                " WHERE cd_rqt IN (" + subQuery + ") " ;
+                " WHERE cd_trc IN (" + subQuery + ") " ;
               //  " AND va_typ = '" + type + "'";
 
         return stream(template.batchUpdate(stageQuery, exceptionQuery)).sum();

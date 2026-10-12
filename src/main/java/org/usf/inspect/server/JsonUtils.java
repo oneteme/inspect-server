@@ -8,7 +8,7 @@ import org.usf.inspect.core.Retention;
 import org.usf.inspect.core.SessionEvent;
 import org.usf.inspect.server.dto.BrowserConfigDto;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
-import org.usf.inspect.server.model.TracePacket;
+import org.usf.inspect.server.model.TraceBatch;
 import org.usf.inspect.server.model.wrapper.MainSessionWrapper;
 import org.usf.inspect.server.model.wrapper.RestSessionWrapper;
 
@@ -55,7 +55,7 @@ public final class JsonUtils {
 	static {
 		var mapper = json()
 				.modules(new JavaTimeModule(), new ParameterNamesModule(), coreModule().registerSubtypes(
-						new NamedType(TracePacket.class, "inst-trc"), 
+						new NamedType(TraceBatch.class, "inst-trc"), 
 						new NamedType(InstanceEnvironmentUpdate.class, "inst-updt"),
 						new NamedType(BrowserConfigDto.class, "400")))
 				.build()

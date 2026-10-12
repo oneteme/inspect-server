@@ -34,7 +34,7 @@ import org.usf.inspect.server.dto.BrowserConfigDto;
 import org.usf.inspect.server.event.UnsavedEventTraceEvent;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.Pair;
-import org.usf.inspect.server.model.TracePacket;
+import org.usf.inspect.server.model.TraceBatch;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -96,7 +96,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveTracePackets(List<TracePacket> packets) {
+    public void saveTracePackets(List<TraceBatch> packets) {
         executeBatch("insert into e_ins_trc(va_pnd,va_atp,va_seq,va_trc_cnt,dh_str,cd_ins) values(?,?,?,?,?,?)", packets, (ps, pck) -> {
                     var idx=0;
                     ps.setObject(++idx, pck.getPending(), INTEGER);
@@ -110,14 +110,14 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveLogEntries(List<LogEntry> logEntries) {
+    public void saveLogEntries(List<ReportEvent> logEntries) {
         executeBatch("insert into e_log_ent(va_lvl,va_msg,va_stk,dh_str,cd_prn_ses,cd_ins) values(?,?,?,?,?,?)", logEntries, (ps, lg)-> {
                     var idx=0;
-                    ps.setString(++idx, toStringOrNull(lg.getLevel()));
+                    ps.setString(++idx, lg.getLevel()); //TODO remove this
                     ps.setString(++idx, lg.getMessage());
                     ps.setObject(++idx, toJson(lg.getStackRows()), OTHER);
                     ps.setTimestamp(++idx, fromNullableInstant(lg.getInstant()));
-                    ps.setObject(++idx, lg.getSessionId());
+                    ps.setObject(++idx, lg.getSessionId()); //TODO remove this
                     ps.setObject(++idx, lg.getInstanceId());
                 });
     }
@@ -400,7 +400,7 @@ values(?,?,?,?,?,?,?,?,?)""", signals, TraceDao::mailRequestSetter);
     public void saveMailRequests(List<Pair<MailRequestSignal, MailRequestUpdate>> requests) {
         executeBatchPair("""
 insert into e_smtp_rqt(id_smtp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str,dh_end,va_cmd,cd_stt)
-values(?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
+values(?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
             var sgn = pr.signal();
             var upd = pr.update();
             var idx=mailRequestSetter(ps, sgn);
@@ -494,7 +494,7 @@ values(?,?,?,?,?,?,?,?,?)""", signals, TraceDao::ldapRequestSignalSetter);
     public void saveLdapRequests(List<Pair<DirectoryRequestSignal, DirectoryRequestUpdate>> requests) {
         executeBatchPair("""
 insert into e_ldap_rqt(id_ldap_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str,dh_end,va_cmd,cd_stt)
-values(?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
+values(?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
             var sgn = pr.signal();
             var upd = pr.update();
             var idx = ldapRequestSignalSetter(ps, sgn);
@@ -678,7 +678,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveExceptionTraces(List<ExceptionTrace> exceptions) {
-        executeBatch("insert into e_exc_inf(va_err_typ,va_err_msg,va_stk,va_cas,cd_ord,cd_rqt,va_trc_typ) values(?,?,?,?,?,?,?)", exceptions, (ps, exp) -> {
+        executeBatch("insert into e_exc_inf(va_err_typ,va_err_msg,va_stk,va_cas,cd_ord,cd_trc,va_trc_typ) values(?,?,?,?,?,?,?)", exceptions, (ps, exp) -> {
             var idx=0;
             ps.setString(++idx, exp.getType());
             ps.setString(++idx, exp.getMessage());

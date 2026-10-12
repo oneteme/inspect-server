@@ -35,10 +35,10 @@ spring:
       enabled: true
       path: /h2
 
-logging:
-  level:
+#logging:
+#  level:
 #    org.usf.jquery: DEBUG
-    org.usf.inspect: DEBUG
+#    org.usf.inspect: DEBUG
 #    org.springframework.jdbc.core: DEBUG
 #    org.springframework.security: DEBUG
 #    org.springframework.web: DEBUG
