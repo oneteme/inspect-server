@@ -42,6 +42,7 @@ import org.usf.inspect.core.MainSessionSignal;
 import org.usf.inspect.core.MainSessionUpdate;
 import org.usf.inspect.core.ProcessingQueue;
 import org.usf.inspect.core.ReportEvent;
+import org.usf.inspect.core.SessionAsyncDurationUpdate;
 import org.usf.inspect.core.SessionEvent;
 import org.usf.inspect.core.SessionMaskUpdate;
 import org.usf.inspect.core.TracePublisher;
@@ -71,7 +72,7 @@ public class TracePersister implements TracePublisher {
 	@TraceableStage
 	public void flush(boolean complete, ProcessingQueue<EventTrace> queue) {
 		queue.pollAll(snp->{
-			mergeTraces(snp);
+			mergeTraceParts(snp);
 			return addTraces(unmodifiableList(snp));
 		});
 	}
@@ -116,7 +117,16 @@ public class TracePersister implements TracePublisher {
                 cons.accept(upd);
             }
         }, dao::updateMaskRestSessions), executor));
-        //TODO add SessionAsyncDurationUpdate
+        cf.add(supplyAsync(()-> filterAndConsume(traces, (e, cons) -> {
+            if(e instanceof SessionAsyncDurationUpdate upd && upd.isMain()) {
+                cons.accept(upd);
+            }
+        }, dao::updateMainSessionAsyncDuration), executor));
+        cf.add(supplyAsync(()-> filterAndConsume(traces, (e, cons) -> {
+            if(e instanceof SessionAsyncDurationUpdate upd && !upd.isMain()) {
+                cons.accept(upd);
+            }
+        }, dao::updateRestSessionAsyncDuration), executor));
         return allOf(cf.toArray(CompletableFuture[]::new)).thenApply(v-> cf.stream()
         		.map(CompletableFuture::join)
                 .flatMap(Collection::stream)

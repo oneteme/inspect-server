@@ -1,11 +1,15 @@
 package org.usf.inspect.server.config;
 
 import static ch.qos.logback.classic.Level.WARN;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.Instant.ofEpochMilli;
 import static java.util.Objects.nonNull;
+import static java.util.UUID.nameUUIDFromBytes;
 import static org.slf4j.LoggerFactory.getILoggerFactory;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.usf.inspect.server.service.TraceBatchDispatcherHub.serverHub;
+
+import java.util.UUID;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
@@ -29,6 +33,8 @@ import lombok.RequiredArgsConstructor;
 @Configuration
 @ConditionalOnProperty(name = "inspect.server.diagnostics.enabled", havingValue = "true")
 public class InspectServerDiagnosticsConfiguration {
+
+    public static UUID INSPECT_ID = nameUUIDFromBytes("AUTO_INSPECT".getBytes(UTF_8));
 	
     public InspectServerDiagnosticsConfiguration() {
         var app = new InspectLogAppender(WARN);
@@ -56,6 +62,7 @@ public class InspectServerDiagnosticsConfiguration {
 						stc = toStackTraceRow(event.getThrowableProxy().getStackTraceElementProxyArray());
 					}
 					var rpr = new ReportEvent(tms, event.getThreadName(), lvl, event.getFormattedMessage(), exp, stc);
+					rpr.setInstanceId(INSPECT_ID);
 					serverHub().emitTrace(rpr);
 	        	}
 	        	catch (Exception e) {

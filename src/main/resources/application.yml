@@ -50,7 +50,7 @@ inspect:
       interval: 30s #default=60s, interval between trace dispatches
       queue-capacity: 5000 #default=10000, queue capacity for trace dispatching !v1.2
     monitoring:
-      http-route:
+      webmvc:
         excludes:
           method: OPTIONS #default=[], exclude OPTIONS requests
           path: /favicon.ico #default=[], exclude matching request paths
@@ -58,7 +58,7 @@ inspect:
         max-stack-trace-rows: -1 #default=5, -1 no limit
         max-cause-depth: -1 #default=-1
         #class-name-pattern: fr.enedis.nova.*
-      resources:
+      system:
         enabled: true
     tracing:
       type: REST #default=null, trace dispatch type (e.g., REST) !v1.2

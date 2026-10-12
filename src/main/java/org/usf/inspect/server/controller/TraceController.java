@@ -48,9 +48,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping(value = "/v5/trace", produces = APPLICATION_JSON_VALUE)
 public class TraceController {
 
-	private static final String DO_RETRY = RETRY+"";
-	private static final String DO_NOT_RETRY = ABORT+"";
-
 	private final TraceService service;
 
 	@PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
@@ -92,7 +89,7 @@ public class TraceController {
 
 		if(service.getDispatcherState() == DISABLE) {
 			return status(SERVICE_UNAVAILABLE)
-					.header(TRACE_RETRY_HEADER, DO_RETRY)
+					.header(TRACE_RETRY_HEADER, RETRY)
 					.body("dispatch.state=DISABLE");
 		}
 		try {
@@ -104,7 +101,7 @@ public class TraceController {
 		} catch (Exception e) {
 			var retry = e instanceof DispatchProcessingException dpe && dpe.isRetryable();
 			log.error("failed to add traces for id={} seq={} atm={} end={} retry={}", id, seq, atm, end, retry, e);
-			return internalServerError().header(TRACE_RETRY_HEADER, retry ? DO_RETRY : DO_NOT_RETRY).body(e.getMessage());
+			return internalServerError().header(TRACE_RETRY_HEADER, retry ? RETRY : ABORT).body(e.getMessage());
 		}
 	}
 

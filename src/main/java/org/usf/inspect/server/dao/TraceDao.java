@@ -226,7 +226,7 @@ where id_ses=?""", updates, (ps, upd) -> {
             ps.setTimestamp(++idx, fromNullableInstant(sgn.getStart()));
         });
     }
-
+    
     @Transactional(rollbackFor = Throwable.class)
     public void saveMainSessions(List<Pair<MainSessionSignal, MainSessionUpdate>> sessions) {
     	executeBatchPair("insert into e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str,dh_end,va_msk,cd_stt) values(?,?,?,?,?,?,?,?,?,?,?)", sessions, (ps, pr) -> {
@@ -276,6 +276,14 @@ where id_ses=?""", updates, (ps, upd) -> {
             ps.setInt(++idx, upd.getMask());
             ps.setObject(++idx, upd.getId());
         });
+    }
+    
+    public void updateMainSessionAsyncDuration(List<SessionAsyncDurationUpdate> updates) {
+		//TODO: add asyncDuration column to e_main_ses table
+	}
+    
+    public void updateRestSessionAsyncDuration(List<SessionAsyncDurationUpdate> updates) {
+    	//TODO: add asyncDuration column to e_rst_ses table
     }
 
     @Transactional(rollbackFor = Throwable.class)
