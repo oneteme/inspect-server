@@ -34,7 +34,7 @@ import org.usf.inspect.core.HttpSessionUpdate;
 import org.usf.inspect.core.InstanceEnvironment;
 import org.usf.inspect.core.LocalRequestSignal;
 import org.usf.inspect.core.LocalRequestUpdate;
-import org.usf.inspect.core.MachineResourceUsage;
+import org.usf.inspect.core.SystemMetrics;
 import org.usf.inspect.core.MailRequestSignal;
 import org.usf.inspect.core.MailRequestStage;
 import org.usf.inspect.core.MailRequestUpdate;
@@ -100,7 +100,7 @@ public class TracePersister implements TracePublisher {
         cf.add(supplyAsync(()-> filterAndConsume(traces, ExceptionTrace.class, dao::saveExceptionTraces), executor));
         cf.add(supplyAsync(()-> filterAndConsume(traces, ReportEvent.class, dao::saveLogEntries), executor));
         //monitoring
-        cf.add(supplyAsync(()-> filterAndConsume(traces, MachineResourceUsage.class, dao::saveMachineResourceUsages), executor));
+        cf.add(supplyAsync(()-> filterAndConsume(traces, SystemMetrics.class, dao::saveMachineResourceUsages), executor));
         cf.add(supplyAsync(()-> filterAndConsume(traces, TraceBatch.class, dao::saveTracePackets), executor));
         //browser
         cf.add(supplyAsync(() -> filterAndConsume(traces, BrowserConfigDto.class, dao::saveBrowserConfigs), executor));

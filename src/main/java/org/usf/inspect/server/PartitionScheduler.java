@@ -18,7 +18,7 @@ import static org.usf.inspect.server.model.PartitionedTable.*;
 
 @Service
 @Setter
-@ConditionalOnProperty(prefix = "inspect.server.partition", name="enabled", havingValue = "true")
+@ConditionalOnProperty(name = "inspect.server.partition.enabled", havingValue = "true")
 public class PartitionScheduler {
 
     private final ScriptService scriptService;

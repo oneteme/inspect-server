@@ -19,10 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 public final class TraceBatchDispatcherHub extends TraceDispatcherHub {
 
 	private static final TraceBatchDispatcherHub DEFAULT_HUB = new TraceBatchDispatcherHub();
-	
-	public TraceBatchDispatcherHub() {
-		super("inspect-srv-publisher");
-	}
 
 	public void emitTraces(List<EventTrace> traces) throws DispatchProcessingException {
 		if(isNull(traces) || traces.isEmpty()) {

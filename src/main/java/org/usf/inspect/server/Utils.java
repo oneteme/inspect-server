@@ -132,6 +132,7 @@ public final class Utils {
 		return contentType;
 	}
 
+	@Deprecated
     public static boolean isUUID(String uuid) {
         return nonNull(uuid) && isUUID.test(uuid);
     }

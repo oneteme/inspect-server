@@ -21,7 +21,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.usf.inspect.core.InspectCollectorConfiguration;
+import org.usf.inspect.core.InspectCollectorProperties;
 import org.usf.inspect.core.InstanceType;
 import org.usf.inspect.core.TraceDispatcherHub;
 import org.usf.inspect.server.dao.PurgeDao;
@@ -41,7 +41,7 @@ class PurgeServiceStepsH2Test {
 
     @BeforeEach
     void cleanDatabase() {
-        var configuration = new InspectCollectorConfiguration();
+        var configuration = new InspectCollectorProperties();
         configuration.setEnabled(false);
         ((TraceDispatcherHub) hub()).configure(configuration);
         executeSql("cleanup.sql");

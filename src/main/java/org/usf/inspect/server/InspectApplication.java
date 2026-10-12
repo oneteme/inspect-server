@@ -1,5 +1,6 @@
 package org.usf.inspect.server;
 
+import static java.util.Collections.emptyList;
 import static org.usf.inspect.server.JsonUtils.defaultMapper;
 import static org.usf.inspect.server.service.TraceBatchDispatcherHub.serverHub;
 
@@ -19,10 +20,8 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.usf.inspect.core.ApplicationPropertiesProvider;
-import org.usf.inspect.core.TraceDispatcherHub;
 import org.usf.inspect.core.TracePublisher;
 import org.usf.inspect.server.config.ApplicationInspectPropertiesProvider;
-import org.usf.inspect.server.service.TraceBatchDispatcherHub;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -49,15 +48,10 @@ public class InspectApplication {
 	static InspectServerConfiguration serverConfigurationProperties() {
 		return new InspectServerConfiguration();
 	}
-
-	@Bean
-	TraceBatchDispatcherHub inspectServerContext() {
-		return serverHub();
-	}
 	
 	@Bean
-	ApplicationListener<ApplicationReadyEvent> enableDispatcherOnReady(TraceDispatcherHub ctx, InspectServerConfiguration conf, TracePublisher agent) {
-		return e-> ctx.configure(conf, agent); //wait for server startup before start dispatcher
+	ApplicationListener<ApplicationReadyEvent> configureTraceHubOnReady(InspectServerConfiguration conf, TracePublisher agent) {
+		return e-> serverHub().configure(conf.getScheduling(), agent, emptyList()); //wait for server startup before start dispatcher
 	}
 
     @Bean //used by inspect-core to get application properties and git info

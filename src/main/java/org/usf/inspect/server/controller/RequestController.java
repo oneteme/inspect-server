@@ -112,14 +112,14 @@ public class RequestController {
             dataset = "resource_usage",
             view = MACHINE_RESOURCE_USAGE_ROW_MAPPER,
             select = "low_heap,high_heap,start")
-    public Collection<MachineResourceUsage> fetchResourceUsages(
+    public Collection<SystemMetrics> fetchResourceUsages(
             MvcRequest mvc,
             @PathVariable String instanceId
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.resourceUsage().instanceEnv().eq(fromString(instanceId))); // UUID
 
-        return (Collection<MachineResourceUsage>) mvc.execute();
+        return (Collection<SystemMetrics>) mvc.execute();
     }
 
     @GetMapping("instance/{instanceId}/log/entry")

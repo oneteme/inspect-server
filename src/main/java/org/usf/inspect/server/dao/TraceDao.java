@@ -122,7 +122,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveMachineResourceUsages(List<MachineResourceUsage> usages) {
+    public void saveMachineResourceUsages(List<SystemMetrics> usages) {
         executeBatch("insert into e_rsc_usg(dh_str,va_usd_hep,va_cmt_hep,va_usd_dsk,nb_act_thr,nb_str_thr,va_cpu_usg,cd_ins) values(?,?,?,?,?,?,?,?)", usages, (ps, usg)-> {
             var idx=0;
             ps.setTimestamp(++idx, fromNullableInstant(usg.getInstant()));

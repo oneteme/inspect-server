@@ -135,22 +135,22 @@ public class TraceV4Controller {
     
     static void detachException(EventTrace trc, Consumer<ExceptionTrace> acc) {
         if (trc instanceof AbstractSessionUpdate upd) {
-        	if(upd.getException() != null) {
+        	if(nonNull(upd.getException())) {
                 var exp = upd.getException();
                 exp.setTraceId(upd.getId());
-                exp.setOffset(nonNull(upd.getEnd()) ? upd.getEnd().toEpochMilli() : 1); //negative offset !!
+                exp.setOffset(nonNull(upd.getEnd()) ? upd.getEnd().toEpochMilli() : 1);
                 acc.accept(exp);
         	}
         }
         else if (trc instanceof LocalRequestUpdate upd) {
-        	if(upd.getException() != null) {
+        	if(nonNull(upd.getException())) {
                 var exp = upd.getException();
                 exp.setTraceId(upd.getId());
-                exp.setOffset(nonNull(upd.getEnd()) ? upd.getEnd().toEpochMilli() : 1); //negative offset !!
+                exp.setOffset(nonNull(upd.getEnd()) ? upd.getEnd().toEpochMilli() : 1);
                 acc.accept(exp);
         	}
         }
-        else if (trc instanceof AbstractStage stg && stg.getException() == null) {
+        else if (trc instanceof AbstractStage stg && nonNull(stg.getException())) {
     		var exp = stg.getException();
     		exp.setTraceId(stg.getRequestId());
     		exp.setOffset(stg.getOrder());
@@ -162,7 +162,7 @@ public class TraceV4Controller {
     	if(trc instanceof ReportEvent log) {
     		if(log.getSessionId() != null && !log.getLevel().equals(LogLevel.REPORT.name())) {
     			var evt = new SessionEvent(log.getInstant(), log.getLevel(), log.getMessage(), null, log.getSessionId());
-    			acc.accept(evt);
+    			acc.accept(evt); //TODO delete ReportEvent
     		}
     	}
     	else if(trc instanceof UserAction act) {

@@ -7,6 +7,7 @@ import static java.util.Objects.nonNull;
 import static java.util.function.Function.identity;
 import static org.usf.inspect.server.JsonUtils.defaultMapper;
 import static org.usf.inspect.server.model.TraceBatch.newTraceBatch;
+import static org.usf.inspect.server.service.TraceBatchDispatcherHub.serverHub;
 
 import java.time.Instant;
 import java.util.Collection;
@@ -23,7 +24,7 @@ import org.usf.inspect.core.DispatchException;
 import org.usf.inspect.core.DispatchState;
 import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.core.InstanceEnvironment;
-import org.usf.inspect.core.MachineResourceUsage;
+import org.usf.inspect.core.SystemMetrics;
 import org.usf.inspect.core.ReportEvent;
 import org.usf.inspect.server.event.UnsavedEventTraceEvent;
 import org.usf.inspect.server.exception.DispatchProcessingException;
@@ -36,24 +37,22 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class TraceService implements ApplicationListener<UnsavedEventTraceEvent> {
 
-    private final TraceBatchDispatcherHub dispatcher;
     private final JdbcTemplate template;
 
-    TraceService(TraceBatchDispatcherHub dispatcher, JdbcTemplate template) {
-        this.dispatcher = dispatcher;
+    TraceService(JdbcTemplate template) {
         this.template = template;
     }
 
     public void addInstance(InstanceEnvironment instance, String namespace, int attempts) throws DispatchException {
         instance.setNamespace(namespace);
-        dispatcher.dispatch(instance);
-        dispatcher.emitTrace(newTraceBatch(now(), 0, attempts, instance.getId(), emptyList())); //ensure that the trace batch is emitted after the instance has been dispatched
+        serverHub().dispatch(instance);
+        serverHub().emitTrace(newTraceBatch(now(), 0, attempts, instance.getId(), emptyList())); //ensure that the trace batch is emitted after the instance has been dispatched
     }
 
     public void addTraces(UUID id, int seq, int attempts, Instant end, List<EventTrace> traces) throws DispatchProcessingException {
         var now = now();
     	if(nonNull(end)){
-        	dispatcher.emitTrace(new InstanceEnvironmentUpdate(id, end));
+        	serverHub().emitTrace(new InstanceEnvironmentUpdate(id, end));
         }
         if(nonNull(traces) && !traces.isEmpty()) {
             for(var e : traces) {
@@ -61,20 +60,20 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
                     sgn.setInstanceId(id);
                 } else if(e instanceof AbstractSessionSignal sgn) {
                     sgn.setInstanceId(id);
-                } else if(e instanceof MachineResourceUsage mru) {
+                } else if(e instanceof SystemMetrics mru) {
                     mru.setInstanceId(id);
                 } else if(e instanceof ReportEvent evn) {
                     evn.setInstanceId(id);
                 }
             }
-            dispatcher.emitTraces(traces);
+            serverHub().emitTraces(traces);
         }
-        dispatcher.emitTrace(newTraceBatch(now, seq, attempts, id, traces)); //ensure that the trace batch is emitted after all traces have been dispatched
+        serverHub().emitTrace(newTraceBatch(now, seq, attempts, id, traces)); //ensure that the trace batch is emitted after all traces have been dispatched
 	}
 
     public Collection<EventTrace> peekQueue() {
         try {
-			return dispatcher.peekAsync(identity()).get();
+			return serverHub().peekAsync(identity()).get();
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 			throw new IllegalStateException("Interrupted while peeking trace queue", e);
@@ -84,18 +83,18 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
     }
 
     public DispatchState getDispatcherState() {
-        return dispatcher.getState();
+        return serverHub().getState();
     }
     
     public void updateState(DispatchState state) {
         log.info("update dispatcher state to {}", state);
-        dispatcher.setState(state);
+        serverHub().setState(state);
     }
     
     public boolean hasBeenTraced(UUID id, int seq) {
 		try {
 			//make sure that the trace has been processed by the dispatcher before checking the database
-			return dispatcher.peekAsync(q-> q.stream()
+			return serverHub().peekAsync(q-> q.stream()
 					.anyMatch(t-> t instanceof TraceBatch pck 
 						&& pck.getInstanceId().equals(id) 
 						&& pck.getSequence() == seq)).get() || 
@@ -113,7 +112,7 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
     public void onApplicationEvent(UnsavedEventTraceEvent event) {
         var trace = event.getTrace();
         if(event.isRetry()) {
-            dispatcher.emitTrace(trace);
+            serverHub().emitTrace(trace);
         }
         else {
             UUID id = null;
@@ -127,7 +126,7 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
                 try {
                     var report = new ReportEvent(now(), null, "saveTrace", null, defaultMapper.writeValueAsString(trace), null);
                     report.setInstanceId(id);
-                    dispatcher.emitTrace(report);
+                    serverHub().emitTrace(report);
                 }
                 catch(Exception e) {
                     log.warn("cannot report unsaved trace of type {} because of serialization error: {}", trace.getClass().getSimpleName(), e.getMessage());
