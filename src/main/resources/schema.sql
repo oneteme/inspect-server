@@ -267,6 +267,7 @@ create table if not exists e_ins_trc (
 create table if not exists e_log_ent (
 	dh_str timestamp(6),
 	va_msg varchar,
+    va_err_typ varchar,
 	va_stk text,
     va_thr varchar,
     va_act varchar,
