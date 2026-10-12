@@ -103,20 +103,19 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
                     ps.setObject(++idx, pck.getSequence(), INTEGER);
                     ps.setInt(++idx, pck.getTraceCount());
                     ps.setTimestamp(++idx, fromNullableInstant(pck.getInstant()));
-                    //TODO  delete filename column
                     ps.setObject(++idx, pck.getInstanceId());
                 });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveLogEntries(List<ReportEvent> logEntries) {
-        executeBatch("insert into e_log_ent(va_lvl,va_msg,va_stk,dh_str,cd_prn_ses,cd_ins) values(?,?,?,?,?,?)", logEntries, (ps, lg)-> {
+        executeBatch("insert into e_log_ent(va_msg,va_stk,dh_str,va_thr,va_act,cd_ins) values(?,?,?,?,?,?)", logEntries, (ps, lg)-> {
                     var idx=0;
-                    ps.setString(++idx, lg.getLevel()); //TODO remove this
                     ps.setString(++idx, lg.getMessage());
                     ps.setObject(++idx, toJson(lg.getStackRows()), OTHER);
                     ps.setTimestamp(++idx, fromNullableInstant(lg.getInstant()));
-                    ps.setObject(++idx, lg.getSessionId()); //TODO remove this
+                    ps.setString(++idx, lg.getThread());
+                    ps.setString(++idx, lg.getAction());
                     ps.setObject(++idx, lg.getInstanceId());
                 });
     }
@@ -140,21 +139,18 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     @Transactional(rollbackFor = Throwable.class)
     public void saveRestSessionSignals(List<HttpSessionSignal> signals) {
         executeBatch("""
-insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,va_nam,va_usr,va_usr_agt,va_msk,va_fwd_add)
+insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,va_usr_agt,va_fwd_add,va_nam,va_usr)
 values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", signals, (ps, sgn) -> {
             var idx = restSessionSginalSetter(ps, sgn);
             ps.setString(++idx, sgn.getName());
             ps.setString(++idx, sgn.getUser());
-            ps.setString(++idx, userAgentExtract(sgn.getUserAgent())); //TODO -> restSessionSginalSetter
-            ps.setInt(++idx, 0); //Unnecessary 
-            ps.setString(++idx, joinValuesOrNull(sgn.getForwardedAddresses())); //TODO -> restSessionSginalSetter
         });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveRestSessions(List<Pair<HttpSessionSignal, HttpSessionUpdate>> session) {
     	executeBatchPair("""
-insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,dh_end,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_cnt_typ,cd_stt,va_o_sze,va_o_cnt_enc,va_msk,va_fwd_add)
+insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,va_usr_agt,va_fwd_add,dh_end,va_nam,va_usr,va_cch_ctr,va_cnt_typ,cd_stt,va_o_sze,va_o_cnt_enc,va_msk)
 values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", session, (ps, pr) -> {
             var sgn = pr.signal();
             var upd = pr.update();
@@ -162,14 +158,12 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", session, (ps, pr) 
             ps.setTimestamp(++idx, fromNullableInstant(upd.getEnd()));
             ps.setString(++idx, nonNull(upd.getName()) ? upd.getName() : sgn.getName());
             ps.setString(++idx, nonNull(upd.getUser()) ? upd.getUser() : sgn.getUser());
-            ps.setString(++idx, userAgentExtract(sgn.getUserAgent()));  //TODO -> restSessionSginalSetter
             ps.setString(++idx, upd.getCacheControl());
             ps.setString(++idx, contentTypeExtract(upd.getContentType()));
             ps.setShort(++idx, upd.getStatus());
             ps.setLong(++idx, upd.getDataSize());
             ps.setString(++idx, upd.getContentEncoding());
             ps.setInt(++idx, upd.getEventMask());
-            ps.setString(++idx, joinValuesOrNull(sgn.getForwardedAddresses())); //TODO -> restSessionSginalSetter
         });
     }
 
@@ -189,6 +183,8 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", session, (ps, pr) 
         ps.setString(++idx, sgn.getThreadName());
         ps.setBoolean(++idx, sgn.isLinked());
         ps.setTimestamp(++idx, fromNullableInstant(sgn.getStart()));
+        ps.setString(++idx, userAgentExtract(sgn.getUserAgent()));
+        ps.setString(++idx, joinValuesOrNull(sgn.getForwardedAddresses()));
         return idx;
     }
 
@@ -227,7 +223,6 @@ where id_ses=?""", updates, (ps, upd) -> {
             ps.setString(++idx, sgn.getName());
             ps.setString(++idx, sgn.getUser());
             ps.setTimestamp(++idx, fromNullableInstant(sgn.getStart()));
-          //  ps.setInt(++idx, 0); //Unnecessary
         });
     }
 
@@ -641,7 +636,6 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             ps.setString(++idx, stg.getCommand());
             ps.setInt(++idx, stg.getOrder());
             ps.setObject(++idx, stg.getRequestId());
-            //ps.setObject(++idx, toJson(stg.getPayload()), OTHER) no payload
         });
         saveMailRequestMails(stages);
     }
@@ -714,7 +708,6 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             ps.setString(++idx, cfg.getUserLanguage());
             ps.setString(++idx, cfg.getUserTheme());
             ps.setObject(++idx, cfg.getSessionId());
-           // ps.setObject(++idx, cfg.getSessionId());
         });
     }
 

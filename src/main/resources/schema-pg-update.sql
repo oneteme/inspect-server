@@ -121,6 +121,12 @@ ALTER TABLE e_rsc_usg ADD COLUMN IF NOT EXISTS nb_act_thr int;
 ALTER TABLE e_rsc_usg ADD COLUMN IF NOT EXISTS nb_str_thr int;
 ALTER TABLE e_rsc_usg ADD COLUMN IF NOT EXISTS va_cpu_usg SMALLINT;
 
+ALTER TABLE e_log_ent DROP COLUMN IF EXISTS va_lvl;
+ALTER TABLE e_log_ent DROP COLUMN IF EXISTS cd_prn_ses;
+ALTER TABLE e_log_ent ADD COLUMN IF NOT EXISTS va_thr varchar;
+ALTER TABLE e_log_ent ADD COLUMN IF NOT EXISTS va_act varchar;
+DROP INDEX IF EXISTS idx_log_ent_cd_prn_ses;
+
 -- Creation des nouvelles tables namespace et evenements de session
 CREATE TABLE IF NOT EXISTS e_nsp_ins (
     va_nam varchar NOT NULL UNIQUE,
