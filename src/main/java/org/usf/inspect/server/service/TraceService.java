@@ -43,6 +43,7 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
         this.template = template;
     }
 
+    //transactional !?
     public void addInstance(InstanceEnvironment instance, String namespace, int attempts) throws DispatchException {
         instance.setNamespace(namespace);
         serverHub().dispatch(instance);

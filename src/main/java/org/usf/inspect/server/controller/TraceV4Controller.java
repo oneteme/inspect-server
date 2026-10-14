@@ -87,7 +87,8 @@ public class TraceV4Controller {
             detachException(t, addTraces::add);
             convertToSessionEvent(t, addTraces::add);
         }
-        traces.removeIf(t-> t instanceof UserAction || (t instanceof ReportEvent logEvt && nonNull(logEvt.getSessionId()) && !REPORT.name().equals(logEvt.getLevel())));
+        traces.removeIf(t-> t instanceof UserAction 
+        		|| (t instanceof ReportEvent rpr && nonNull(rpr.getSessionId()) && !REPORT.name().equals(rpr.getLevel())));
         if (!addTraces.isEmpty()) {
             traces.addAll(addTraces);
         }
@@ -158,13 +159,13 @@ public class TraceV4Controller {
     }
 
     static void convertToSessionEvent(EventTrace trc, Consumer<SessionEvent> acc) {
-    	if(trc instanceof ReportEvent logEvt) {
-    		if(nonNull(logEvt.getSessionId()) && !REPORT.name().equals(logEvt.getLevel())) {
-    			var evt = new SessionEvent(logEvt.getInstant(), logEvt.getLevel(), logEvt.getMessage(), logEvt.getThread(), null, logEvt.getSessionId());
-    			acc.accept(evt); //TODO delete ReportEvent
+    	if(trc instanceof ReportEvent rpr) {
+    		if(nonNull(rpr.getSessionId()) && !REPORT.name().equals(rpr.getLevel())) {
+    			var evt = new SessionEvent(rpr.getInstant(), rpr.getLevel(), rpr.getMessage(), rpr.getThread(), null, rpr.getSessionId());
+    			acc.accept(evt);
     		}
     	}
-    	else if(trc instanceof UserAction act) { //TODO check UserAction deserializer => JsonUtils
+    	else if(trc instanceof UserAction act) { //TODO check UserAction NamedType => JsonUtils
     		var evt = new SessionEvent(act.getStart(), act.getType(), act.getName(), null, act.getNodeName(), act.getCdSession());
     		acc.accept(evt);
     	}

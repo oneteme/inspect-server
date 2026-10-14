@@ -5,7 +5,7 @@ import static java.util.concurrent.CompletableFuture.allOf;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.usf.inspect.core.ExecutorServiceWrapper.wrap;
-import static org.usf.inspect.server.model.TraceCorrelator.filterAndConsume;
+import static org.usf.inspect.server.service.TraceCorrelator.filterAndConsume;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,6 +55,11 @@ import org.usf.inspect.server.model.TraceBatch;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 
+ * @author u$f
+ *
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -72,7 +77,7 @@ public class TracePersister implements TracePublisher {
 	@TraceableStage
 	public void flush(boolean complete, ProcessingQueue<EventTrace> queue) {
 		queue.pollAll(snp->{
-			mergeTraceParts(snp);
+			mergeTraceParts(snp); //safe !?
 			return addTraces(unmodifiableList(snp));
 		});
 	}
