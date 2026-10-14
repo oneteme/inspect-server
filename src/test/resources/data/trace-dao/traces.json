@@ -1,0 +1,1261 @@
+{
+  "restSession": {
+    "signal": {
+      "@type": "20",
+      "id": "10000000-0000-0000-0000-000000000001",
+      "instanceId": "20000000-0000-0000-0000-000000000001",
+      "start": "2026-01-15T10:00:00Z",
+      "threadName": "http-worker",
+      "name": "original",
+      "user": "alice",
+      "method": "POST",
+      "protocol": "https",
+      "host": "api.example.test",
+      "port": 443,
+      "path": "/orders",
+      "query": "page=1",
+      "authScheme": "Bearer",
+      "dataSize": 128,
+      "contentEncoding": "gzip",
+      "userAgent": "PostmanRuntime/7.43.0",
+      "linked": true,
+      "forwardedAddresses": [
+        "192.0.2.1",
+        "192.0.2.2"
+      ]
+    },
+    "update": {
+      "@type": "21",
+      "id": "10000000-0000-0000-0000-000000000001",
+      "end": "2026-01-15T10:00:05Z",
+      "name": "updated",
+      "user": "bob",
+      "cacheControl": "no-cache",
+      "contentType": "application/json; charset=UTF-8",
+      "status": 200,
+      "dataSize": 256,
+      "contentEncoding": "identity",
+      "eventMask": 5
+    },
+    "signalRow": {
+      "id_ses": "10000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_thr": "http-worker",
+      "va_nam": "original",
+      "va_usr": "alice",
+      "va_mth": "POST",
+      "va_pcl": "https",
+      "va_hst": "api.example.test",
+      "cd_prt": 443,
+      "va_pth": "/orders",
+      "va_qry": "page=1",
+      "va_ath_sch": "Bearer",
+      "va_i_sze": 128,
+      "va_i_cnt_enc": "gzip",
+      "va_usr_agt": "Postman/7.43.0",
+      "va_lnk": true,
+      "va_fwd_add": "192.0.2.1, 192.0.2.2",
+      "va_msk": 0,
+      "dh_end": null,
+      "va_cch_ctr": null,
+      "va_cnt_typ": null,
+      "cd_stt": null,
+      "va_o_sze": null,
+      "va_o_cnt_enc": null,
+      "va_int_nds": null
+    },
+    "updateRow": {
+      "dh_end": "2026-01-15T10:00:05Z",
+      "va_nam": "updated",
+      "va_usr": "bob",
+      "va_cch_ctr": "no-cache",
+      "va_cnt_typ": "json",
+      "cd_stt": 200,
+      "va_o_sze": 256,
+      "va_o_cnt_enc": "identity",
+      "va_msk": 5
+    },
+    "signalRowMin": {
+      "id_ses": "10000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_thr": "http-worker",
+      "va_nam": null,
+      "va_usr": null,
+      "va_mth": null,
+      "va_pcl": null,
+      "va_hst": null,
+      "cd_prt": 0,
+      "va_pth": null,
+      "va_qry": null,
+      "va_ath_sch": null,
+      "va_i_sze": 0,
+      "va_i_cnt_enc": null,
+      "va_usr_agt": null,
+      "va_lnk": false,
+      "va_fwd_add": null,
+      "va_msk": 0,
+      "dh_end": null,
+      "va_cch_ctr": null,
+      "va_cnt_typ": null,
+      "cd_stt": null,
+      "va_o_sze": null,
+      "va_o_cnt_enc": null,
+      "va_int_nds": null
+    },
+    "pairRowMin": {
+      "id_ses": "10000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "dh_end": null,
+      "va_thr": "http-worker",
+      "va_nam": null,
+      "va_usr": null,
+      "va_mth": null,
+      "va_pcl": null,
+      "va_hst": null,
+      "cd_prt": 0,
+      "va_pth": null,
+      "va_qry": null,
+      "va_ath_sch": null,
+      "va_i_sze": 0,
+      "va_i_cnt_enc": null,
+      "va_usr_agt": null,
+      "va_cch_ctr": null,
+      "va_cnt_typ": null,
+      "cd_stt": 0,
+      "va_o_sze": 0,
+      "va_o_cnt_enc": null,
+      "va_lnk": false,
+      "va_fwd_add": null,
+      "va_msk": 0,
+      "va_int_nds": null
+    },
+    "updateRowMin": {
+      "dh_end": null,
+      "va_nam": "original",
+      "va_usr": "alice",
+      "va_cch_ctr": "max-age=60",
+      "va_cnt_typ": null,
+      "cd_stt": 0,
+      "va_o_sze": 0,
+      "va_o_cnt_enc": null,
+      "va_msk": 0
+    }
+  },
+  "mainSession": {
+    "signal": {
+      "@type": "10",
+      "id": "10000000-0000-0000-0000-000000000001",
+      "instanceId": "20000000-0000-0000-0000-000000000001",
+      "start": "2026-01-15T10:00:00Z",
+      "threadName": "main-worker",
+      "type": "SCHEDULE",
+      "location": "Original.run",
+      "name": "original",
+      "user": "alice"
+    },
+    "update": {
+      "@type": "11",
+      "id": "10000000-0000-0000-0000-000000000001",
+      "start": "2026-01-15T10:00:01Z",
+      "end": "2026-01-15T10:00:05Z",
+      "location": "Updated.run",
+      "name": "updated",
+      "user": "bob",
+      "status": 200,
+      "eventMask": 5
+    },
+    "signalRow": {
+      "id_ses": "10000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_thr": "main-worker",
+      "va_typ": "SCHEDULE",
+      "va_lct": "Original.run",
+      "va_nam": "original",
+      "va_usr": "alice",
+      "dh_end": null,
+      "va_msk": null,
+      "cd_stt": null
+    },
+    "updateRow": {
+      "dh_str": "2026-01-15T10:00:01Z",
+      "dh_end": "2026-01-15T10:00:05Z",
+      "va_lct": "Updated.run",
+      "va_nam": "updated",
+      "va_usr": "bob",
+      "cd_stt": 200,
+      "va_msk": 5
+    },
+    "signalRowMin": {
+      "id_ses": "10000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_thr": "main-worker",
+      "va_typ": "SCHEDULE",
+      "va_lct": null,
+      "va_nam": null,
+      "va_usr": null,
+      "dh_end": null,
+      "va_msk": null,
+      "cd_stt": null
+    },
+    "pairRowMin": {
+      "id_ses": "10000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "dh_end": null,
+      "va_thr": "main-worker",
+      "va_typ": "SCHEDULE",
+      "va_lct": null,
+      "va_nam": null,
+      "va_usr": null,
+      "va_msk": 0,
+      "cd_stt": 0
+    },
+    "updateRowMin": {
+      "dh_end": null,
+      "va_msk": 0,
+      "cd_stt": 0
+    }
+  },
+  "rest": {
+    "signal": {
+      "@type": "120",
+      "id": "10000000-0000-0000-0000-000000000001",
+      "sessionId": "30000000-0000-0000-0000-000000000001",
+      "instanceId": "20000000-0000-0000-0000-000000000001",
+      "start": "2026-01-15T10:00:00Z",
+      "threadName": "rest-worker",
+      "user": "alice",
+      "method": "GET",
+      "protocol": "https",
+      "host": "remote.example.test",
+      "port": 8443,
+      "path": "/products",
+      "query": "id=42",
+      "authScheme": "Basic",
+      "dataSize": 64,
+      "contentEncoding": "gzip"
+    },
+    "update": {
+      "@type": "121",
+      "id": "10000000-0000-0000-0000-000000000001",
+      "end": "2026-01-15T10:00:05Z",
+      "contentType": "application/json",
+      "status": 200,
+      "dataSize": 512,
+      "contentEncoding": "identity",
+      "bodyContent": "{\"ok\":true}",
+      "linked": true
+    },
+    "signalRow": {
+      "id_rst_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_thr": "rest-worker",
+      "va_usr": "alice",
+      "va_mth": "GET",
+      "va_pcl": "https",
+      "va_hst": "remote.example.test",
+      "cd_prt": 8443,
+      "va_pth": "/products",
+      "va_qry": "id=42",
+      "va_ath_sch": "Basic",
+      "va_o_sze": 64,
+      "va_o_cnt_enc": "gzip",
+      "dh_end": null,
+      "va_cnt_typ": null,
+      "cd_stt": null,
+      "va_i_sze": null,
+      "va_i_cnt_enc": null,
+      "va_bdy_cnt": null,
+      "va_lnk": null
+    },
+    "updateRow": {
+      "dh_end": "2026-01-15T10:00:05Z",
+      "va_cnt_typ": "json",
+      "cd_stt": 200,
+      "va_i_sze": 512,
+      "va_i_cnt_enc": "identity",
+      "va_bdy_cnt": "{\"ok\":true}",
+      "va_lnk": true
+    },
+    "signalRowMin": {
+      "id_rst_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_thr": "rest-worker",
+      "va_usr": null,
+      "va_mth": null,
+      "va_pcl": null,
+      "va_hst": null,
+      "cd_prt": 0,
+      "va_pth": null,
+      "va_qry": null,
+      "va_ath_sch": null,
+      "va_o_sze": 0,
+      "va_o_cnt_enc": null,
+      "dh_end": null,
+      "va_cnt_typ": null,
+      "cd_stt": null,
+      "va_i_sze": null,
+      "va_i_cnt_enc": null,
+      "va_bdy_cnt": null,
+      "va_lnk": null
+    },
+    "pairRowMin": {
+      "id_rst_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "dh_end": null,
+      "va_thr": "rest-worker",
+      "va_usr": null,
+      "va_mth": null,
+      "va_pcl": null,
+      "va_hst": null,
+      "cd_prt": 0,
+      "va_pth": null,
+      "va_qry": null,
+      "va_ath_sch": null,
+      "va_o_sze": 0,
+      "va_o_cnt_enc": null,
+      "va_cnt_typ": null,
+      "cd_stt": -1,
+      "va_i_sze": 0,
+      "va_i_cnt_enc": null,
+      "va_bdy_cnt": null,
+      "va_lnk": false
+    },
+    "updateRowMin": {
+      "dh_end": null,
+      "va_cnt_typ": null,
+      "cd_stt": -1,
+      "va_i_sze": 0,
+      "va_i_cnt_enc": null,
+      "va_bdy_cnt": null,
+      "va_lnk": false
+    }
+  },
+  "local": {
+    "signal": {
+      "@type": "110",
+      "id": "10000000-0000-0000-0000-000000000001",
+      "sessionId": "30000000-0000-0000-0000-000000000001",
+      "instanceId": "20000000-0000-0000-0000-000000000001",
+      "start": "2026-01-15T10:00:00Z",
+      "threadName": "local-worker",
+      "user": "alice",
+      "type": "FILE",
+      "name": "readFile",
+      "location": "Storage.read"
+    },
+    "update": {
+      "@type": "111",
+      "id": "10000000-0000-0000-0000-000000000001",
+      "start": "2026-01-15T10:00:01Z",
+      "end": "2026-01-15T10:00:05Z",
+      "status": 200
+    },
+    "signalRow": {
+      "id_lcl_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_thr": "local-worker",
+      "va_usr": "alice",
+      "va_typ": "FILE",
+      "va_nam": "readFile",
+      "va_lct": "Storage.read",
+      "dh_end": null,
+      "cd_stt": null
+    },
+    "updateRow": {
+      "dh_str": "2026-01-15T10:00:01Z",
+      "dh_end": "2026-01-15T10:00:05Z",
+      "cd_stt": 200
+    },
+    "signalRowMin": {
+      "id_lcl_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_thr": "local-worker",
+      "va_usr": null,
+      "va_typ": null,
+      "va_nam": null,
+      "va_lct": null,
+      "dh_end": null,
+      "cd_stt": null
+    },
+    "pairRowMin": {
+      "id_lcl_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "dh_end": null,
+      "va_thr": "local-worker",
+      "va_usr": null,
+      "va_typ": null,
+      "va_nam": null,
+      "va_lct": null,
+      "cd_stt": -1
+    },
+    "updateRowMin": {
+      "dh_end": null,
+      "cd_stt": -1
+    }
+  },
+  "mail": {
+    "signal": {
+      "@type": "150",
+      "id": "10000000-0000-0000-0000-000000000001",
+      "sessionId": "30000000-0000-0000-0000-000000000001",
+      "instanceId": "20000000-0000-0000-0000-000000000001",
+      "start": "2026-01-15T10:00:00Z",
+      "threadName": "mail-worker",
+      "user": "alice",
+      "host": "smtp.example.test",
+      "port": 587,
+      "protocol": "smtp"
+    },
+    "update": {
+      "@type": "151",
+      "id": "10000000-0000-0000-0000-000000000001",
+      "end": "2026-01-15T10:00:05Z",
+      "command": "SEND",
+      "status": 200
+    },
+    "signalRow": {
+      "id_smtp_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_thr": "mail-worker",
+      "va_usr": "alice",
+      "va_hst": "smtp.example.test",
+      "cd_prt": 587,
+      "va_pcl": "smtp",
+      "dh_end": null,
+      "va_cmd": null,
+      "cd_stt": null
+    },
+    "updateRow": {
+      "dh_end": "2026-01-15T10:00:05Z",
+      "va_cmd": "SEND",
+      "cd_stt": 200
+    },
+    "signalRowMin": {
+      "id_smtp_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_thr": "mail-worker",
+      "va_usr": null,
+      "va_hst": null,
+      "cd_prt": 0,
+      "va_pcl": null,
+      "dh_end": null,
+      "va_cmd": null,
+      "cd_stt": null
+    },
+    "pairRowMin": {
+      "id_smtp_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "dh_end": null,
+      "va_thr": "mail-worker",
+      "va_usr": null,
+      "va_hst": null,
+      "cd_prt": 0,
+      "va_pcl": null,
+      "va_cmd": null,
+      "cd_stt": -1
+    },
+    "updateRowMin": {
+      "dh_end": null,
+      "va_cmd": null,
+      "cd_stt": -1
+    }
+  },
+  "ftp": {
+    "signal": {
+      "@type": "140",
+      "id": "10000000-0000-0000-0000-000000000001",
+      "sessionId": "30000000-0000-0000-0000-000000000001",
+      "instanceId": "20000000-0000-0000-0000-000000000001",
+      "start": "2026-01-15T10:00:00Z",
+      "threadName": "ftp-worker",
+      "user": "alice",
+      "host": "ftp.example.test",
+      "port": 21,
+      "protocol": "ftp",
+      "serverVersion": "server-2.0",
+      "clientVersion": "client-1.0"
+    },
+    "update": {
+      "@type": "141",
+      "id": "10000000-0000-0000-0000-000000000001",
+      "end": "2026-01-15T10:00:05Z",
+      "command": "RETR",
+      "status": 200
+    },
+    "signalRow": {
+      "id_ftp_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_thr": "ftp-worker",
+      "va_usr": "alice",
+      "va_hst": "ftp.example.test",
+      "cd_prt": 21,
+      "va_pcl": "ftp",
+      "va_srv_vrs": "server-2.0",
+      "va_clt_vrs": "client-1.0",
+      "dh_end": null,
+      "va_cmd": null,
+      "cd_stt": null
+    },
+    "updateRow": {
+      "dh_end": "2026-01-15T10:00:05Z",
+      "va_cmd": "RETR",
+      "cd_stt": 200
+    },
+    "signalRowMin": {
+      "id_ftp_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_thr": "ftp-worker",
+      "va_usr": null,
+      "va_hst": null,
+      "cd_prt": 0,
+      "va_pcl": null,
+      "va_srv_vrs": null,
+      "va_clt_vrs": null,
+      "dh_end": null,
+      "va_cmd": null,
+      "cd_stt": null
+    },
+    "pairRowMin": {
+      "id_ftp_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "dh_end": null,
+      "va_thr": "ftp-worker",
+      "va_usr": null,
+      "va_hst": null,
+      "cd_prt": 0,
+      "va_pcl": null,
+      "va_srv_vrs": null,
+      "va_clt_vrs": null,
+      "va_cmd": null,
+      "cd_stt": -1
+    },
+    "updateRowMin": {
+      "dh_end": null,
+      "va_cmd": null,
+      "cd_stt": -1
+    }
+  },
+  "ldap": {
+    "signal": {
+      "@type": "160",
+      "id": "10000000-0000-0000-0000-000000000001",
+      "sessionId": "30000000-0000-0000-0000-000000000001",
+      "instanceId": "20000000-0000-0000-0000-000000000001",
+      "start": "2026-01-15T10:00:00Z",
+      "threadName": "ldap-worker",
+      "user": "alice",
+      "host": "ldap.example.test",
+      "port": 389,
+      "protocol": "ldap"
+    },
+    "update": {
+      "@type": "161",
+      "id": "10000000-0000-0000-0000-000000000001",
+      "end": "2026-01-15T10:00:05Z",
+      "command": "SEARCH",
+      "status": 200
+    },
+    "signalRow": {
+      "id_ldap_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_thr": "ldap-worker",
+      "va_usr": "alice",
+      "va_hst": "ldap.example.test",
+      "cd_prt": 389,
+      "va_pcl": "ldap",
+      "dh_end": null,
+      "va_cmd": null,
+      "cd_stt": null
+    },
+    "updateRow": {
+      "dh_end": "2026-01-15T10:00:05Z",
+      "va_cmd": "SEARCH",
+      "cd_stt": 200
+    },
+    "signalRowMin": {
+      "id_ldap_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_thr": "ldap-worker",
+      "va_usr": null,
+      "va_hst": null,
+      "cd_prt": 0,
+      "va_pcl": null,
+      "dh_end": null,
+      "va_cmd": null,
+      "cd_stt": null
+    },
+    "pairRowMin": {
+      "id_ldap_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "dh_end": null,
+      "va_thr": "ldap-worker",
+      "va_usr": null,
+      "va_hst": null,
+      "cd_prt": 0,
+      "va_pcl": null,
+      "va_cmd": null,
+      "cd_stt": -1
+    },
+    "updateRowMin": {
+      "dh_end": null,
+      "va_cmd": null,
+      "cd_stt": -1
+    }
+  },
+  "database": {
+    "signal": {
+      "@type": "130",
+      "id": "10000000-0000-0000-0000-000000000001",
+      "sessionId": "30000000-0000-0000-0000-000000000001",
+      "instanceId": "20000000-0000-0000-0000-000000000001",
+      "start": "2026-01-15T10:00:00Z",
+      "threadName": "jdbc-worker",
+      "user": "alice",
+      "host": "db.example.test",
+      "port": 5432,
+      "protocol": "postgresql",
+      "name": "inspect",
+      "schema": "public",
+      "driverVersion": "42.7",
+      "productName": "PostgreSQL",
+      "productVersion": "16"
+    },
+    "update": {
+      "@type": "131",
+      "id": "10000000-0000-0000-0000-000000000001",
+      "end": "2026-01-15T10:00:05Z",
+      "command": "SELECT",
+      "status": 200
+    },
+    "signalRow": {
+      "id_dtb_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_thr": "jdbc-worker",
+      "va_usr": "alice",
+      "va_hst": "db.example.test",
+      "cd_prt": 5432,
+      "va_she": "public",
+      "va_nam": "inspect",
+      "va_sha": "public",
+      "va_drv": "42.7",
+      "va_prd_nam": "PostgreSQL",
+      "va_prd_vrs": "16",
+      "dh_end": null,
+      "va_cmd": null,
+      "cd_stt": null
+    },
+    "updateRow": {
+      "dh_end": "2026-01-15T10:00:05Z",
+      "va_cmd": "SELECT",
+      "cd_stt": 200
+    },
+    "signalRowMin": {
+      "id_dtb_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_thr": "jdbc-worker",
+      "va_usr": null,
+      "va_hst": null,
+      "cd_prt": 0,
+      "va_she": null,
+      "va_nam": null,
+      "va_sha": null,
+      "va_drv": null,
+      "va_prd_nam": null,
+      "va_prd_vrs": null,
+      "dh_end": null,
+      "va_cmd": null,
+      "cd_stt": null
+    },
+    "pairRowMin": {
+      "id_dtb_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "dh_end": null,
+      "va_thr": "jdbc-worker",
+      "va_usr": null,
+      "va_hst": null,
+      "cd_prt": 0,
+      "va_she": null,
+      "va_nam": null,
+      "va_sha": null,
+      "va_drv": null,
+      "va_prd_nam": null,
+      "va_prd_vrs": null,
+      "va_cmd": null,
+      "cd_stt": -1
+    },
+    "updateRowMin": {
+      "dh_end": null,
+      "va_cmd": null,
+      "cd_stt": -1
+    }
+  },
+  "packet": {
+    "input": {
+      "@type": "inst-trc",
+      "instant": "2026-01-15T10:00:00Z",
+      "attempts": 2,
+      "instanceId": "20000000-0000-0000-0000-000000000001",
+      "traceCount": 12,
+      "pending": 3,
+      "sequence": 7
+    },
+    "row": {
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_atp": 2,
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "va_trc_cnt": 12,
+      "va_pnd": 3,
+      "va_seq": 7
+    },
+    "rowMin": {
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_atp": 2,
+      "cd_ins": "20000000-0000-0000-0000-000000000001",
+      "va_trc_cnt": 12,
+      "va_pnd": 3,
+      "va_seq": 7
+    }
+  },
+  "log": {
+    "input": {
+      "@type": "00",
+      "instant": "2026-01-15T10:00:00Z",
+      "level": "WARN",
+      "message": "Slow request",
+      "stackRows": [
+        {
+          "className": "example.Service",
+          "methodName": "run",
+          "lineNumber": 42
+        }
+      ],
+      "sessionId": "30000000-0000-0000-0000-000000000001",
+      "instanceId": "20000000-0000-0000-0000-000000000001"
+    },
+    "row": {
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_lvl": "WARN",
+      "va_msg": "Slow request",
+      "va_stk": [
+        {
+          "className": "example.Service",
+          "methodName": "run",
+          "lineNumber": 42
+        }
+      ],
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001",
+      "cd_ins": "20000000-0000-0000-0000-000000000001"
+    },
+    "rowMin": {
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_lvl": null,
+      "va_msg": "Slow request",
+      "va_stk": [
+        {
+          "className": "example.Service",
+          "methodName": "run",
+          "lineNumber": 42
+        }
+      ],
+      "cd_prn_ses": null,
+      "cd_ins": null
+    }
+  },
+  "resource": {
+    "input": {
+      "@type": "01",
+      "instant": "2026-01-15T10:00:00Z",
+      "usedHeap": 128,
+      "commitedHeap": 512,
+      "usedDiskSpace": 1024,
+      "activeThreadCount": 8,
+      "startedThreadCount": 24,
+      "cpuUsage": 1250,
+      "instanceId": "20000000-0000-0000-0000-000000000001"
+    },
+    "row": {
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_usd_hep": 128,
+      "va_cmt_hep": 512,
+      "va_usd_dsk": 1024,
+      "nb_act_thr": 8,
+      "nb_str_thr": 24,
+      "va_cpu_usg": 1250,
+      "cd_ins": "20000000-0000-0000-0000-000000000001"
+    },
+    "rowMin": {
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_usd_hep": 128,
+      "va_cmt_hep": 512,
+      "va_usd_dsk": 1024,
+      "nb_act_thr": 8,
+      "nb_str_thr": 24,
+      "va_cpu_usg": 1250,
+      "cd_ins": "20000000-0000-0000-0000-000000000001"
+    }
+  },
+  "httpRequestStage": {
+    "input": {
+      "requestId": "10000000-0000-0000-0000-000000000001",
+      "order": 1,
+      "name": "READ",
+      "start": "2026-01-15T10:00:00Z",
+      "end": "2026-01-15T10:00:05Z"
+    },
+    "row": {
+      "cd_rst_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_ord": 1,
+      "va_nam": "READ",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "dh_end": "2026-01-15T10:00:05Z"
+    },
+    "rowMin": {
+      "cd_rst_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_ord": 1,
+      "va_nam": null,
+      "dh_str": null,
+      "dh_end": null
+    }
+  },
+  "httpSessionStage": {
+    "input": {
+      "requestId": "10000000-0000-0000-0000-000000000001",
+      "order": 2,
+      "name": "WRITE",
+      "start": "2026-01-15T10:00:00Z",
+      "end": "2026-01-15T10:00:05Z"
+    },
+    "row": {
+      "cd_prn_ses": "10000000-0000-0000-0000-000000000001",
+      "cd_ord": 2,
+      "va_nam": "WRITE",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "dh_end": "2026-01-15T10:00:05Z"
+    },
+    "rowMin": {
+      "cd_prn_ses": "10000000-0000-0000-0000-000000000001",
+      "cd_ord": 2,
+      "va_nam": null,
+      "dh_str": null,
+      "dh_end": null
+    }
+  },
+  "ftpStage": {
+    "input": {
+      "requestId": "10000000-0000-0000-0000-000000000001",
+      "order": 1,
+      "name": "DOWNLOAD",
+      "command": "RETR",
+      "start": "2026-01-15T10:00:00Z",
+      "end": "2026-01-15T10:00:05Z",
+      "payload": {
+        "args": [
+          "report.csv"
+        ],
+        "count": [
+          128
+        ]
+      }
+    },
+    "row": {
+      "cd_ftp_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_ord": 1,
+      "va_nam": "DOWNLOAD",
+      "va_cmd": "RETR",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "dh_end": "2026-01-15T10:00:05Z",
+      "va_pld": {
+        "args": [
+          "report.csv"
+        ],
+        "count": [
+          128
+        ]
+      }
+    },
+    "rowMin": {
+      "cd_ftp_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_ord": 1,
+      "va_nam": null,
+      "va_cmd": null,
+      "dh_str": null,
+      "dh_end": null,
+      "va_pld": null
+    }
+  },
+  "ldapStage": {
+    "input": {
+      "requestId": "10000000-0000-0000-0000-000000000001",
+      "order": 1,
+      "name": "SEARCH",
+      "command": "SEARCH",
+      "start": "2026-01-15T10:00:00Z",
+      "end": "2026-01-15T10:00:05Z",
+      "payload": {
+        "args": [
+          "cn=alice"
+        ],
+        "count": [
+          1
+        ]
+      }
+    },
+    "row": {
+      "cd_ldap_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_ord": 1,
+      "va_nam": "SEARCH",
+      "va_cmd": "SEARCH",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "dh_end": "2026-01-15T10:00:05Z",
+      "va_pld": {
+        "args": [
+          "cn=alice"
+        ],
+        "count": [
+          1
+        ]
+      }
+    },
+    "rowMin": {
+      "cd_ldap_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_ord": 1,
+      "va_nam": null,
+      "va_cmd": null,
+      "dh_str": null,
+      "dh_end": null,
+      "va_pld": null
+    }
+  },
+  "mailStage": {
+    "input": {
+      "requestId": "10000000-0000-0000-0000-000000000001",
+      "order": 1,
+      "name": "SEND",
+      "command": "DATA",
+      "start": "2026-01-15T10:00:00Z",
+      "end": "2026-01-15T10:00:05Z",
+      "mail": {
+        "subject": "Order confirmation",
+        "contentType": "text/html",
+        "from": [
+          "sender@example.test"
+        ],
+        "recipients": [
+          "alice@example.test",
+          "bob@example.test"
+        ],
+        "replyTo": [
+          "support@example.test"
+        ],
+        "size": 1024
+      }
+    },
+    "row": {
+      "cd_smtp_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_ord": 1,
+      "va_nam": "SEND",
+      "va_cmd": "DATA",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "dh_end": "2026-01-15T10:00:05Z"
+    },
+    "mailRow": {
+      "cd_smtp_rqt": "10000000-0000-0000-0000-000000000001",
+      "va_sbj": "Order confirmation",
+      "va_cnt_typ": "text/html",
+      "va_frm": "sender@example.test",
+      "va_rcp": "alice@example.test, bob@example.test",
+      "va_rpl": "support@example.test",
+      "va_sze": 1024
+    },
+    "rowMin": {
+      "cd_smtp_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_ord": 1,
+      "va_nam": null,
+      "va_cmd": null,
+      "dh_str": null,
+      "dh_end": null
+    }
+  },
+  "databaseStage": {
+    "input": {
+      "requestId": "10000000-0000-0000-0000-000000000001",
+      "order": 1,
+      "name": "QUERY",
+      "command": "SELECT id FROM orders WHERE status = ?",
+      "start": "2026-01-15T10:00:00Z",
+      "end": "2026-01-15T10:00:05Z",
+      "payload": {
+        "args": [
+          "PAID"
+        ],
+        "count": [
+          2
+        ]
+      }
+    },
+    "row": {
+      "cd_dtb_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_ord": 1,
+      "va_nam": "QUERY",
+      "va_cmd": "SELECT id FROM orders WHERE status = ?",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "dh_end": "2026-01-15T10:00:05Z",
+      "va_pld": {
+        "args": [
+          "PAID"
+        ],
+        "count": [
+          2
+        ]
+      }
+    },
+    "rowMin": {
+      "cd_dtb_rqt": "10000000-0000-0000-0000-000000000001",
+      "cd_ord": 1,
+      "va_nam": null,
+      "va_cmd": null,
+      "dh_str": null,
+      "dh_end": null,
+      "va_pld": null
+    }
+  },
+  "exception": {
+    "input": {
+      "@type": "04",
+      "type": "java.lang.IllegalStateException",
+      "message": "Request failed",
+      "stackTraceRows": [
+        {
+          "className": "example.Service",
+          "methodName": "run",
+          "lineNumber": 42
+        }
+      ],
+      "cause": {
+        "@type": "04",
+        "type": "java.lang.IllegalArgumentException",
+        "message": "Invalid argument",
+        "stackTraceRows": null,
+        "cause": null
+      },
+      "traceId": "10000000-0000-0000-0000-000000000001",
+      "traceType": 120,
+      "offset": 5
+    },
+    "row": {
+      "va_err_typ": "java.lang.IllegalStateException",
+      "va_err_msg": "Request failed",
+      "va_stk": [
+        {
+          "className": "example.Service",
+          "methodName": "run",
+          "lineNumber": 42
+        }
+      ],
+      "va_cas": {
+        "@type": "05",
+        "type": "java.lang.IllegalArgumentException",
+        "message": "Invalid argument",
+        "traceType": 0,
+        "offset": 0
+      },
+      "cd_trc": "10000000-0000-0000-0000-000000000001",
+      "va_trc_typ": 120,
+      "cd_ord": 5
+    },
+    "rowMin": {
+      "va_err_typ": "java.lang.IllegalStateException",
+      "va_err_msg": "Request failed",
+      "va_stk": [
+        {
+          "className": "example.Service",
+          "methodName": "run",
+          "lineNumber": 42
+        }
+      ],
+      "va_cas": null,
+      "cd_trc": "10000000-0000-0000-0000-000000000001",
+      "va_trc_typ": 120,
+      "cd_ord": 0
+    }
+  },
+  "event": {
+    "input": {
+      "@type": "05",
+      "instant": "2026-01-15T10:00:00Z",
+      "type": "click",
+      "value": "submit",
+      "location": "#order-form",
+      "sessionId": "30000000-0000-0000-0000-000000000001"
+    },
+    "row": {
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_typ": "click",
+      "va_cnt": "submit",
+      "va_lct": "#order-form",
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001"
+    },
+    "rowMin": {
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_typ": "click",
+      "va_cnt": "submit",
+      "va_lct": "#order-form",
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001"
+    }
+  },
+  "browser": {
+    "input": {
+      "@type": "400",
+      "deviceDisplayResolution": "1920x1080",
+      "deviceOrientation": "landscape",
+      "deviceConnectivity": "wifi",
+      "saveData": true,
+      "windowViewportBounds": "1280x720",
+      "windowZoomLevel": "100%",
+      "userLanguage": "fr-FR",
+      "userTheme": "dark",
+      "sessionId": "30000000-0000-0000-0000-000000000001"
+    },
+    "row": {
+      "va_dvc_dsp_rsl": "1920x1080",
+      "va_dvc_orn": "landscape",
+      "va_dvc_cnt": "wifi",
+      "va_sav_dta": true,
+      "va_wdw_vpt_bds": "1280x720",
+      "va_wdw_zom_lvl": "100%",
+      "va_usr_lng": "fr-FR",
+      "va_usr_thm": "dark",
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001"
+    },
+    "rowMin": {
+      "va_dvc_dsp_rsl": null,
+      "va_dvc_orn": null,
+      "va_dvc_cnt": null,
+      "va_sav_dta": null,
+      "va_wdw_vpt_bds": null,
+      "va_wdw_zom_lvl": null,
+      "va_usr_lng": null,
+      "va_usr_thm": null,
+      "cd_prn_ses": null
+    }
+  },
+  "environment": {
+    "input": {
+      "id": "20000000-0000-0000-0000-000000000001",
+      "instant": "2026-01-15T10:00:00Z",
+      "type": "SERVER",
+      "name": "inspect-test",
+      "version": "1.5.0",
+      "env": "test",
+      "address": "192.0.2.10",
+      "os": "Windows",
+      "re": "Java 21",
+      "user": "service",
+      "branch": "main",
+      "hash": "abc123",
+      "collector": "spring-collector",
+      "additionalProperties": {
+        "region": "eu"
+      },
+      "configuration": null,
+      "resource": {
+        "minHeap": 128,
+        "maxHeap": 512,
+        "diskTotalSpace": 2048,
+        "availableProcessors": 4
+      },
+      "namespace": "NOVA"
+    },
+    "row": {
+      "id_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_typ": "SERVER",
+      "va_app": "inspect-test",
+      "va_vrs": "1.5.0",
+      "va_env": "test",
+      "va_adr": "192.0.2.10",
+      "va_os": "Windows",
+      "va_re": "Java 21",
+      "va_usr": "service",
+      "va_brch": "main",
+      "va_hsh": "abc123",
+      "va_clr": "spring-collector",
+      "va_add_prp": {
+        "region": "eu"
+      },
+      "va_cnf": null,
+      "va_rsr": {
+        "minHeap": 128,
+        "maxHeap": 512,
+        "diskTotalSpace": 2048,
+        "availableProcessors": 4
+      },
+      "cd_nsp": "NOVA",
+      "dh_end": null
+    },
+    "rowMin": {
+      "id_ins": "20000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_typ": "SERVER",
+      "va_app": "inspect-test",
+      "va_vrs": "1.5.0",
+      "va_env": "test",
+      "va_adr": "192.0.2.10",
+      "va_os": "Windows",
+      "va_re": "Java 21",
+      "va_usr": "service",
+      "va_brch": "main",
+      "va_hsh": "abc123",
+      "va_clr": "spring-collector",
+      "va_add_prp": {
+        "region": "eu"
+      },
+      "va_cnf": null,
+      "va_rsr": null,
+      "cd_nsp": null,
+      "dh_end": null
+    }
+  }
+}
