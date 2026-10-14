@@ -161,7 +161,8 @@ public class TraceV4Controller {
     	if(trc instanceof ReportEvent logEvt) {
     		if(nonNull(logEvt.getSessionId()) && !REPORT.name().equals(logEvt.getLevel())) {
     			var evt = new SessionEvent(logEvt.getInstant(), logEvt.getLevel(), logEvt.getMessage(), logEvt.getThread(), null, logEvt.getSessionId());
-    			acc.accept(evt); //TODO delete ReportEvent
+                evt.setInstanceId(logEvt.getInstanceId());
+                acc.accept(evt); //TODO delete ReportEvent
     		}
     	}
     	else if(trc instanceof UserAction act) { //TODO check UserAction deserializer => JsonUtils
