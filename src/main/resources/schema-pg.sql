@@ -266,7 +266,7 @@ create table if not exists e_ins_trc (
 )
 PARTITION BY RANGE (dh_str);
 
-create table if not exists e_log_ent (
+create table if not exists e_rpt_evt (
     dh_str timestamp(6),
     va_msg varchar,
     va_err_typ varchar,
@@ -352,6 +352,6 @@ CREATE INDEX IF NOT EXISTS idx_lcl_rqt_cd_prn_ses ON e_lcl_rqt(cd_prn_ses);
 CREATE INDEX IF NOT EXISTS idx_exc_inf_cd_trc ON e_exc_inf(cd_trc);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_env_ins_id_ins ON e_env_ins(id_ins);
 CREATE INDEX IF NOT EXISTS idx_ins_trc_cd_ins ON e_ins_trc(cd_ins);
-CREATE INDEX IF NOT EXISTS idx_log_ent_cd_ins ON e_log_ent(cd_ins);
+CREATE INDEX IF NOT EXISTS idx_rpt_evt_cd_ins ON e_rpt_evt(cd_ins);
 CREATE INDEX IF NOT EXISTS idx_nsp_ins_va_nam ON e_nsp_ins(va_nam);
 CREATE INDEX IF NOT EXISTS idx_env_ins_cd_nsp ON e_env_ins(cd_nsp);

@@ -159,9 +159,9 @@ class PurgeDaoH2Test {
         var deletedRows = purgeDao.purgeLogEntry(before);
 
         assertEquals(1, deletedRows);
-        assertEquals(0, countByInstance("e_log_ent", OLD_ORPHAN_INSTANCE_ID));
-        assertEquals(1, countByInstance("e_log_ent", RECENT_ORPHAN_INSTANCE_ID));
-        assertEquals(1, countByInstance("e_log_ent", LINKED_INSTANCE_ID));
+        assertEquals(0, countByInstance("e_rpt_evt", OLD_ORPHAN_INSTANCE_ID));
+        assertEquals(1, countByInstance("e_rpt_evt", RECENT_ORPHAN_INSTANCE_ID));
+        assertEquals(1, countByInstance("e_rpt_evt", LINKED_INSTANCE_ID));
     }
 
     @Test
