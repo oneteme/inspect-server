@@ -248,11 +248,11 @@ public class PurgeDao {
     }
 
     public int purgeLogEntry(List<UUID>  ids, Timestamp before){
-        return purgeRequest("log_ent", ids, before, false);
+        return purgeRequest("rpt_evt", ids, before, false);
     }
 
     public int purgeLogEntry(LocalDate before){
-        return purgeRequest("log_ent",Timestamp.valueOf(before.atStartOfDay()));
+        return purgeRequest("rpt_evt",Timestamp.valueOf(before.atStartOfDay()));
     }
 
 

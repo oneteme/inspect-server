@@ -142,8 +142,8 @@ class PurgeDaoByInstanceIdsH2Test {
         var deletedRows = purgeDao.purgeLogEntry(List.of(TARGET_INSTANCE_ID), before);
 
         assertEquals(1, deletedRows);
-        assertEquals(1, countByInstance("e_log_ent", TARGET_INSTANCE_ID));
-        assertEquals(1, countByInstance("e_log_ent", OTHER_INSTANCE_ID));
+        assertEquals(1, countByInstance("e_rpt_evt", TARGET_INSTANCE_ID));
+        assertEquals(1, countByInstance("e_rpt_evt", OTHER_INSTANCE_ID));
     }
 
     @Test

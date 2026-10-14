@@ -127,6 +127,10 @@ ALTER TABLE e_log_ent ADD COLUMN IF NOT EXISTS va_err_typ varchar;
 ALTER TABLE e_log_ent ADD COLUMN IF NOT EXISTS va_thr varchar;
 ALTER TABLE e_log_ent ADD COLUMN IF NOT EXISTS va_act varchar;
 DROP INDEX IF EXISTS idx_log_ent_cd_prn_ses;
+DROP INDEX IF EXISTS idx_log_ent_cd_ins;
+
+ALTER TABLE e_log_ent RENAME TO e_rpt_evt;
+CREATE INDEX IF NOT EXISTS idx_rpt_evt_cd_ins ON e_rpt_evt(cd_ins);
 
 -- Creation des nouvelles tables namespace et evenements de session
 CREATE TABLE IF NOT EXISTS e_nsp_ins (

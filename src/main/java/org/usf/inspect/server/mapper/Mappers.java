@@ -70,17 +70,15 @@ public class Mappers {
     public static RowMapper<ReportEvent> logEntryRowMapper() {
         return (rs, row) -> {
             try {
-                var trc = new ReportEvent(
+                return new ReportEvent(
                         fromNullableTimestamp(rs.getTimestamp("start")),
                         null,
                         null,
-                        null,
                         rs.getString("logMessage"),
+                        null,
                         rs.getString("stacktrace") != null ? defaultMapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {
                         }) : null
                 );
-                trc.setLevel(rs.getString("logLevel"));
-                return trc;
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }

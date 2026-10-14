@@ -109,7 +109,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveLogEntries(List<ReportEvent> logEntries) {
-        executeBatch("insert into e_log_ent(va_msg,va_err_typ,va_stk,dh_str,va_thr,va_act,cd_ins) values(?,?,?,?,?,?,?)", logEntries, (ps, lg)-> {
+        executeBatch("insert into e_rpt_evt(va_msg,va_err_typ,va_stk,dh_str,va_thr,va_act,cd_ins) values(?,?,?,?,?,?,?)", logEntries, (ps, lg)-> {
                     var idx=0;
                     ps.setString(++idx, lg.getMessage());
                     ps.setString(++idx, lg.getException());
