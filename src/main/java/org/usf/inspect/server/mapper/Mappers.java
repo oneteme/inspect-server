@@ -601,6 +601,7 @@ public class Mappers {
                     fromNullableTimestamp(rs.getTimestamp("start")),
                     rs.getString("type"),
                     rs.getString("value"),
+                    rs.getString("scope"), //TODO change it
                     rs.getString("location"),
                     rs.getObject("sessionId", UUID.class)
             );

@@ -1,29 +1,15 @@
 package org.usf.inspect.server.config;
 
-import static ch.qos.logback.classic.Level.WARN;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.time.Instant.ofEpochMilli;
-import static java.util.Objects.nonNull;
-import static java.util.UUID.nameUUIDFromBytes;
-import static org.slf4j.LoggerFactory.getILoggerFactory;
-import static org.slf4j.LoggerFactory.getLogger;
+import static org.usf.inspect.logging.InspectLogReporter.configureLogReporter;
+import static org.usf.inspect.server.service.TraceBatchDispatcherHub.INSPECT_ID;
 import static org.usf.inspect.server.service.TraceBatchDispatcherHub.serverHub;
-
-import java.util.UUID;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.usf.inspect.core.ReportEvent;
-import org.usf.inspect.core.StackTraceRow;
-import org.usf.inspect.server.InspectApplication;
+import org.usf.inspect.logging.InspectLogReporter;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.StackTraceElementProxy;
-import ch.qos.logback.core.AppenderBase;
-import lombok.RequiredArgsConstructor;
 
 /**
  * 
@@ -34,53 +20,21 @@ import lombok.RequiredArgsConstructor;
 @ConditionalOnProperty(name = "inspect.server.diagnostics.enabled", havingValue = "true")
 public class InspectServerDiagnosticsConfiguration {
 
-    public static UUID INSPECT_ID = nameUUIDFromBytes("AUTO_INSPECT".getBytes(UTF_8));
-	
     public InspectServerDiagnosticsConfiguration() {
-        var app = new InspectLogAppender(WARN);
-        app.setContext((LoggerContext) getILoggerFactory());
-        app.setName("INSPECT_REPORTER");
-        app.start();
-        ((Logger) getLogger(InspectApplication.class.getPackage().getName())).addAppender(app);
+        configureLogReporter("org.usf.inspect.server", true, InspectLogAppender::new);
     }
 
-	@RequiredArgsConstructor
-	public final class InspectLogAppender extends AppenderBase<ILoggingEvent> {
+	public final class InspectLogAppender extends InspectLogReporter {
 		
-		private final Level level;
-
-	    @Override
-	    protected void append(ILoggingEvent event) {
-	        if(event.getLevel().isGreaterOrEqual(level)) {
-	        	try {
-					var lvl = event.getLevel().toString();
-					var tms = ofEpochMilli(event.getTimeStamp());
-					String exp = null;
-					StackTraceRow[] stc = null;
-					if(nonNull(event.getThrowableProxy())) {
-						exp = event.getThrowableProxy().getClassName() + ": " + event.getThrowableProxy().getMessage();
-						stc = toStackTraceRow(event.getThrowableProxy().getStackTraceElementProxyArray());
-					}
-					var rpr = new ReportEvent(tms, event.getThreadName(), lvl, event.getFormattedMessage(), exp, stc);
-					rpr.setInstanceId(INSPECT_ID);
-					serverHub().emitTrace(rpr);
-	        	}
-	        	catch (Exception e) {
-	        		//do not log, avoid loop
-	        	}
-	        }
-	    }
-	}
-	
-	static StackTraceRow[] toStackTraceRow(StackTraceElementProxy[] stack) {
-		if(nonNull(stack) && stack.length > 0) {
-			var stc = new StackTraceRow[stack.length];
-			for(var i=0; i<stack.length; i++) {
-				var e = stack[i].getStackTraceElement();
-				stc[i] = new StackTraceRow(e.getClassName(), e.getMethodName(), e.getLineNumber());
-			}
-			return stc;
+		public InspectLogAppender() {
+			super(serverHub(), true);
 		}
-		return null;
+		
+		@Override
+		protected ReportEvent createReportEvent(ILoggingEvent event) {
+			var trc = super.createReportEvent(event);
+			trc.setInstanceId(INSPECT_ID);
+			return trc;
+		}
 	}
 }

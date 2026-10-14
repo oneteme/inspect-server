@@ -6,6 +6,7 @@ import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 import static org.usf.inspect.core.DualEventTracer.APP_ERROR;
 import static org.usf.inspect.core.DualEventTracer.INT_ERROR;
 import static org.usf.inspect.core.DualEventTracer.SUCCESS;
+import static org.usf.inspect.core.SessionLog.LogLevel.REPORT;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -42,7 +43,6 @@ import org.usf.inspect.core.MailRequestUpdate;
 import org.usf.inspect.core.MainSessionUpdate;
 import org.usf.inspect.core.ReportEvent;
 import org.usf.inspect.core.SessionEvent;
-import org.usf.inspect.core.SessionLog.LogLevel;
 import org.usf.inspect.core.StagePayload;
 import org.usf.inspect.server.model.UserAction;
 import org.usf.inspect.server.service.TraceService;
@@ -62,7 +62,6 @@ public class TraceV4Controller {
 
     @Value("${inspect.server.migration.namespacePrefix}")
     private String namespacePrefix;
-
 
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<Object> addInstanceEnvironment(
@@ -88,7 +87,7 @@ public class TraceV4Controller {
             detachException(t, addTraces::add);
             convertToSessionEvent(t, addTraces::add);
         }
-        traces.removeIf(UserAction.class::isInstance); //remove user action traces
+        traces.removeIf(t-> t instanceof UserAction || (t instanceof ReportEvent logEvt && nonNull(logEvt.getSessionId()) && !REPORT.name().equals(logEvt.getLevel())));
         if (!addTraces.isEmpty()) {
             traces.addAll(addTraces);
         }
@@ -159,14 +158,14 @@ public class TraceV4Controller {
     }
 
     static void convertToSessionEvent(EventTrace trc, Consumer<SessionEvent> acc) {
-    	if(trc instanceof ReportEvent log) {
-    		if(log.getSessionId() != null && !log.getLevel().equals(LogLevel.REPORT.name())) {
-    			var evt = new SessionEvent(log.getInstant(), log.getLevel(), log.getMessage(), null, log.getSessionId());
+    	if(trc instanceof ReportEvent logEvt) {
+    		if(nonNull(logEvt.getSessionId()) && !REPORT.name().equals(logEvt.getLevel())) {
+    			var evt = new SessionEvent(logEvt.getInstant(), logEvt.getLevel(), logEvt.getMessage(), logEvt.getThread(), null, logEvt.getSessionId());
     			acc.accept(evt); //TODO delete ReportEvent
     		}
     	}
-    	else if(trc instanceof UserAction act) {
-    		var evt = new SessionEvent(act.getStart(), act.getType(), act.getName(), act.getNodeName(), act.getCdSession());
+    	else if(trc instanceof UserAction act) { //TODO check UserAction deserializer => JsonUtils
+    		var evt = new SessionEvent(act.getStart(), act.getType(), act.getName(), null, act.getNodeName(), act.getCdSession());
     		acc.accept(evt);
     	}
     }

@@ -818,6 +818,7 @@ public class RequestController {
                         fromNullableTimestamp(rs.getTimestamp("session_start")),
                         rs.getString("type"),
                         rs.getString("value"),
+                        null, //TODO change it
                         rs.getString("event_location"),
                         rs.getObject("sessionId", UUID.class)
                 );

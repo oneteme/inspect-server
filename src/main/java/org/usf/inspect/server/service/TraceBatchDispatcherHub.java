@@ -1,8 +1,10 @@
 package org.usf.inspect.server.service;
 
 import static java.util.Objects.isNull;
+import static java.util.UUID.nameUUIDFromBytes;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.core.TraceDispatcherHub;
@@ -18,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public final class TraceBatchDispatcherHub extends TraceDispatcherHub {
 
+	public static UUID INSPECT_ID = nameUUIDFromBytes("AUTO_INSPECT".getBytes());
 	private static final TraceBatchDispatcherHub DEFAULT_HUB = new TraceBatchDispatcherHub();
 
 	public void emitTraces(List<EventTrace> traces) throws DispatchProcessingException {

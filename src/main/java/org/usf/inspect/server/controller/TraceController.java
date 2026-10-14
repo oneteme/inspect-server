@@ -70,7 +70,7 @@ public class TraceController {
 				? principal.getName()
 				: instance.getNamespace(); //disabled spring security
 		try {
-			service.addInstance(instance, nsp, atm);
+			service.addInstance(instance, nsp, atm); //TODO : check existing instance (if atm > 1) before insert
 			return ok(instance.getId().toString());
 		}
 		catch(Exception e) {
