@@ -91,7 +91,7 @@ public interface InspectStore extends StoreCatalog {
 	@Expose(identity = "instance_trace")
 	InstanceTraceCatalog instanceTrace();
 	
-	@Bind("e_log_ent")
+	@Bind("e_rpt_evt")
 	@Expose(identity = "log_entry")
 	LogEntryCatalog logEntry();
 	

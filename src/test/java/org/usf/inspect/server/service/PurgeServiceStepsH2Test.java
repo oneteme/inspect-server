@@ -115,7 +115,7 @@ class PurgeServiceStepsH2Test {
         purge.join();
 
         assertEquals(0, countByInstance("e_ins_trc", ORPHAN_INSTANCE_ID));
-        assertEquals(0, countByInstance("e_log_ent", ORPHAN_INSTANCE_ID));
+        assertEquals(0, countByInstance("e_rpt_evt", ORPHAN_INSTANCE_ID));
     }
 
     private boolean instanceExists(UUID id) {
