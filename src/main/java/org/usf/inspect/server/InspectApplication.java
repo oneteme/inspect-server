@@ -67,6 +67,9 @@ public class InspectApplication {
         		log.error("Failed to load git.properties", e);
 			}
         }
+        else {
+        	log.warn("'{}' file doesn't exists", rsr.getFilename());
+        }
         return new ApplicationInspectPropertiesProvider(env, prp);
     }
 }
