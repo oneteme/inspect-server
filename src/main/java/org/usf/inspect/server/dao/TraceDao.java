@@ -694,13 +694,15 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
     
     @Transactional(rollbackFor = Throwable.class)
     public void saveSessionEvents(List<SessionEvent> exceptions) {
-        executeBatch("insert into e_ses_evt(dh_str,va_typ,va_cnt,va_lct,cd_prn_ses) values(?,?,?,?,?)", exceptions, (ps, exp) -> {
+        executeBatch("insert into e_ses_evt(dh_str,va_typ,va_cnt,va_scp,va_lct,cd_prn_ses,cd_ins) values(?,?,?,?,?,?,?)", exceptions, (ps, exp) -> {
             var idx=0;
             ps.setTimestamp(++idx, fromNullableInstant(exp.getInstant()));
             ps.setString(++idx, exp.getType());
             ps.setString(++idx, exp.getValue());
+            ps.setString(++idx, exp.getScope());
             ps.setString(++idx, exp.getLocation());
             ps.setObject(++idx, exp.getSessionId(), OTHER);
+            ps.setObject(++idx, exp.getInstanceId(), OTHER);
         });
     }
 

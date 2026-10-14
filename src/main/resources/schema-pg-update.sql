@@ -130,21 +130,6 @@ DROP INDEX IF EXISTS idx_log_ent_cd_prn_ses;
 DROP INDEX IF EXISTS idx_log_ent_cd_ins;
 
 ALTER TABLE e_log_ent RENAME TO e_rpt_evt;
-CREATE INDEX IF NOT EXISTS idx_rpt_evt_cd_ins ON e_rpt_evt(cd_ins);
-
--- Creation des nouvelles tables namespace et evenements de session
-CREATE TABLE IF NOT EXISTS e_nsp_ins (
-    va_nam varchar NOT NULL UNIQUE,
-    va_enc_tkn varchar NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS e_ses_evt (
-    dh_str timestamp(6),
-    va_typ varchar,
-    va_cnt varchar,
-    va_lct varchar,
-    cd_prn_ses uuid
-    );
 
 -- Migration de la table e_exc_inf : ajout des champs va_cas et va_trc_typ
 ALTER TABLE e_exc_inf ADD COLUMN IF NOT EXISTS va_cas json;
@@ -171,23 +156,8 @@ WHERE va_cnf::jsonb #>> '{tracing,remote,@type}' = 'rest-rmt';
 
 --TODO add UPPER(<prefix> || '-' || va_env) + TOKEN => va_enc_tkn
 
---Ajout de la table BrowserConfig
-CREATE TABLE IF NOT EXISTS o_brw_cfg (
-          va_dvc_dsp_rsl varchar,
-          va_dvc_orn varchar,
-          va_dvc_cnt varchar,
-          va_sav_dta boolean,
-          va_wdw_vpt_bds varchar,
-          va_wdw_zom_lvl varchar,
-          va_usr_lng varchar,
-          va_usr_thm varchar,
-          --va_nav_rfr varchar,
-          cd_prn_ses uuid
-);
-
 -- Migration des index environnement
 DROP INDEX IF EXISTS idx_env_ins_va_app_va_env;
-CREATE INDEX IF NOT EXISTS idx_env_ins_cd_nsp ON e_env_ins(cd_nsp);
 
 -- Suppression des objets legacy user action
 DROP INDEX IF EXISTS idx_usr_acn_cd_prn_ses;

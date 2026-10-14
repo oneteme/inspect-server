@@ -24,8 +24,9 @@ import org.usf.inspect.core.DispatchException;
 import org.usf.inspect.core.DispatchState;
 import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.core.InstanceEnvironment;
-import org.usf.inspect.core.SystemMetrics;
 import org.usf.inspect.core.ReportEvent;
+import org.usf.inspect.core.SessionEvent;
+import org.usf.inspect.core.SystemMetrics;
 import org.usf.inspect.server.event.UnsavedEventTraceEvent;
 import org.usf.inspect.server.exception.DispatchProcessingException;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
@@ -59,12 +60,18 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
             for(var e : traces) {
                 if(e instanceof AbstractRequestSignal sgn) {
                     sgn.setInstanceId(id);
-                } else if(e instanceof AbstractSessionSignal sgn) {
+                } 
+                else if(e instanceof AbstractSessionSignal sgn) {
                     sgn.setInstanceId(id);
-                } else if(e instanceof SystemMetrics mru) {
+                } 
+                else if(e instanceof SystemMetrics mru) {
                     mru.setInstanceId(id);
-                } else if(e instanceof ReportEvent evn) {
+                } 
+                else if(e instanceof ReportEvent evn) {
                     evn.setInstanceId(id);
+                }
+                else if(e instanceof SessionEvent se) {
+                	se.setInstanceId(id);
                 }
             }
             serverHub().emitTraces(traces);

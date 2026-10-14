@@ -297,8 +297,10 @@ CREATE TABLE IF NOT EXISTS e_ses_evt (
 	dh_str timestamp(6),
     va_typ varchar,
     va_cnt varchar,
+    va_scp varchar,
     va_lct varchar,
-    cd_prn_ses uuid
+    cd_prn_ses uuid,
+    cd_ins uuid
 );
 
 --Ajout de la table BrowserConfig
@@ -354,4 +356,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_env_ins_id_ins ON e_env_ins(id_ins);
 CREATE INDEX IF NOT EXISTS idx_ins_trc_cd_ins ON e_ins_trc(cd_ins);
 CREATE INDEX IF NOT EXISTS idx_rpt_evt_cd_ins ON e_rpt_evt(cd_ins);
 CREATE INDEX IF NOT EXISTS idx_nsp_ins_va_nam ON e_nsp_ins(va_nam);
+CREATE INDEX IF NOT EXISTS idx_ses_evt_cd_ins ON e_ses_evt(cd_ins);
+CREATE INDEX IF NOT EXISTS idx_ses_evt_cd_prn_ses ON e_ses_evt(cd_prn_ses);
 CREATE INDEX IF NOT EXISTS idx_env_ins_cd_nsp ON e_env_ins(cd_nsp);
