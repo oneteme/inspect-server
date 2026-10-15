@@ -281,6 +281,7 @@ create table if not exists e_rsc_usg (
 	va_cpu_usg SMALLINT,
 	cd_ins uuid
 );
+
 CREATE TABLE IF NOT EXISTS e_nsp_ins (
 	va_nam varchar NOT NULL UNIQUE,
 	va_enc_tkn varchar NOT NULL
