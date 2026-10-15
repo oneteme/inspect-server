@@ -301,7 +301,8 @@ CREATE TABLE IF NOT EXISTS e_ses_evt (
     va_lct varchar,
     cd_prn_ses uuid,
     cd_ins uuid
-);
+)
+PARTITION BY RANGE (dh_str);
 
 --Ajout de la table BrowserConfig
 CREATE TABLE IF NOT EXISTS o_brw_cfg (
