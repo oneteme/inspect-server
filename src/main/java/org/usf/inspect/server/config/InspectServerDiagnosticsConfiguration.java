@@ -18,22 +18,17 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
  *
  */
 @Configuration
-@ConditionalOnProperty(name = "inspect.server.diagnostics.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "inspect.server.reporting.enabled", havingValue = "true", matchIfMissing = true)
 public class InspectServerDiagnosticsConfiguration {
 
     public InspectServerDiagnosticsConfiguration(InspectServerConfiguration config) {
     	var report = config.getReporting();
-    	if(report.isEnabled()) {
-    		configureLogger("org.usf.inspect.server", true, ()-> new InspectLogAppender(report.isStackTrace()));
-    	}
-    	else {
-    		configureLogger("org.usf.inspect.server", true);	
-    	}
+		configureLogger("org.usf.inspect.server", true, ()-> new InspectServerLogReporter(report.isStackTrace()));
     }
 
-	public final class InspectLogAppender extends InspectLogReporter {
+	public final class InspectServerLogReporter extends InspectLogReporter {
 		
-		public InspectLogAppender(boolean stackTrace) {
+		public InspectServerLogReporter(boolean stackTrace) {
 			super(serverHub(), stackTrace);
 		}
 		

@@ -6,7 +6,7 @@ import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 import static org.usf.inspect.core.DualEventTracer.APP_ERROR;
 import static org.usf.inspect.core.DualEventTracer.INT_ERROR;
 import static org.usf.inspect.core.DualEventTracer.SUCCESS;
-import static org.usf.inspect.core.SessionLog.LogLevel.REPORT;
+import static org.usf.inspect.core.InspectLogger.LogLevel.REPORT;
 
 import java.time.Instant;
 import java.util.ArrayList;
