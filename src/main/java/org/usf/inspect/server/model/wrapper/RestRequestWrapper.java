@@ -5,8 +5,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;
-import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.ExceptionTrace;
+
+import org.usf.inspect.EventTrace;
+import org.usf.inspect.ExceptionTrace;
 import org.usf.inspect.server.model.RestRequest;
 
 @Getter

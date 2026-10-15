@@ -7,9 +7,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.usf.inspect.core.TraceUpdate;
-import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.TraceSignal;
+import org.usf.inspect.EventTrace;
+import org.usf.inspect.TraceSignal;
+import org.usf.inspect.TraceUpdate;
 import org.usf.inspect.server.model.Pair;
 
 import java.time.Instant;

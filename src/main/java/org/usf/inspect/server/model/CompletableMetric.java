@@ -4,7 +4,7 @@ import static java.util.Objects.nonNull;
 
 import java.util.UUID;
 
-import org.usf.inspect.core.TimedTrace;
+import org.usf.inspect.TimedTrace;
 
 /**
  * 

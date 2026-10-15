@@ -2,10 +2,11 @@ package org.usf.inspect.server.model;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.usf.inspect.core.EventTrace;
 
 import java.time.Instant;
 import java.util.UUID;
+
+import org.usf.inspect.EventTrace;
 
 @Getter
 @RequiredArgsConstructor

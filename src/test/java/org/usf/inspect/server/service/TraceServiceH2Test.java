@@ -26,18 +26,20 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.HttpRequestSignal;
-import org.usf.inspect.core.InstanceEnvironment;
-import org.usf.inspect.core.InstanceType;
-import org.usf.inspect.core.MainSessionSignal;
+import org.usf.inspect.EventTrace;
+import org.usf.inspect.HttpRequestSignal;
+import org.usf.inspect.InstanceEnvironment;
+import org.usf.inspect.InstanceType;
+import org.usf.inspect.MainSessionSignal;
+import org.usf.inspect.ReportEvent;
+import org.usf.inspect.SystemMetrics;
 import org.usf.inspect.core.ProcessingQueue;
-import org.usf.inspect.core.ReportEvent;
-import org.usf.inspect.core.SystemMetrics;
 import org.usf.inspect.server.event.UnsavedEventTraceEvent;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.TraceBatch;
+import org.usf.inspect.test.InspectTest;
 
+@InspectTest
 @SpringBootTest
 @ActiveProfiles("test")
 class TraceServiceH2Test {

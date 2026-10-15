@@ -11,10 +11,10 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.TracePart;
-import org.usf.inspect.core.TraceSignal;
-import org.usf.inspect.core.TraceUpdate;
+import org.usf.inspect.EventTrace;
+import org.usf.inspect.TracePart;
+import org.usf.inspect.TraceSignal;
+import org.usf.inspect.TraceUpdate;
 import org.usf.inspect.server.model.Pair;
 
 import lombok.RequiredArgsConstructor;

@@ -8,7 +8,7 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
-import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.EventTrace;
 import org.usf.inspect.server.service.TracePersister;
 
 import java.io.IOException;

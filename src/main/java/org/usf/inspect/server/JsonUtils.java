@@ -3,8 +3,8 @@ package org.usf.inspect.server;
 import static java.util.Objects.nonNull;
 import static org.springframework.http.converter.json.Jackson2ObjectMapperBuilder.json;
 
-import org.usf.inspect.core.InspectCoreModule;
-import org.usf.inspect.core.Retention;
+import org.usf.inspect.InspectCoreModule;
+import org.usf.inspect.config.Retention;
 import org.usf.inspect.server.dto.BrowserConfigDto;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.TraceBatch;

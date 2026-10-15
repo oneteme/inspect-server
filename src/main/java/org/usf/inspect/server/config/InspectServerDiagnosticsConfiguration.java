@@ -1,14 +1,14 @@
 package org.usf.inspect.server.config;
 
-import static org.usf.inspect.logging.InspectLogReporter.configureLogger;
 import static org.usf.inspect.server.service.TraceBatchDispatcherHub.INSPECT_ID;
 import static org.usf.inspect.server.service.TraceBatchDispatcherHub.serverHub;
+import static org.usf.inspect.slf4j.InspectLogReporter.configureLogger;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
-import org.usf.inspect.core.ReportEvent;
-import org.usf.inspect.logging.InspectLogReporter;
+import org.usf.inspect.ReportEvent;
 import org.usf.inspect.server.InspectServerConfiguration;
+import org.usf.inspect.slf4j.InspectLogReporter;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 

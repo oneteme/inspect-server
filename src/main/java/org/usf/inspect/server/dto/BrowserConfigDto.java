@@ -2,9 +2,10 @@ package org.usf.inspect.server.dto;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.usf.inspect.core.EventTrace;
 
 import java.util.UUID;
+
+import org.usf.inspect.EventTrace;
 
 @Getter
 @Setter

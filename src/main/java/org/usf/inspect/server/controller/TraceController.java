@@ -13,7 +13,7 @@ import static org.springframework.http.ResponseEntity.status;
 import static org.usf.inspect.core.DispatchState.DISABLE;
 import static org.usf.inspect.core.TracePublisher.ABORT;
 import static org.usf.inspect.core.TracePublisher.RETRY;
-import static org.usf.inspect.http.WebUtils.TRACE_RETRY_HEADER;
+import static org.usf.inspect.web.WebUtils.TRACE_RETRY_HEADER;
 import static org.usf.jquery.core.Utils.isEmpty;
 
 import java.security.Principal;
@@ -32,9 +32,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.usf.inspect.EventTrace;
+import org.usf.inspect.InstanceEnvironment;
 import org.usf.inspect.core.DispatchState;
-import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.InstanceEnvironment;
 import org.usf.inspect.server.exception.DispatchProcessingException;
 import org.usf.inspect.server.service.TraceService;
 

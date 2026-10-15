@@ -6,7 +6,7 @@ import static java.util.UUID.nameUUIDFromBytes;
 import java.util.List;
 import java.util.UUID;
 
-import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.EventTrace;
 import org.usf.inspect.core.TraceDispatcherHub;
 import org.usf.inspect.server.exception.DispatchProcessingException;
 

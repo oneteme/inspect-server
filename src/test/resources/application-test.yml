@@ -25,9 +25,9 @@ logging:
 
 inspect:
   collector:
-    enabled: false
+    enabled: true
     scheduling:
-      interval: 365d
+      interval: 10s
   server:
     partition:
       enabled: false
