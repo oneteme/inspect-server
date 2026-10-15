@@ -48,6 +48,7 @@ public class PartitionScheduler {
         ofNullable(properties.getLocalRequest()).ifPresent(o-> map.put(REQ_LOCAL, o));
         ofNullable(properties.getInstanceTrace()).ifPresent(o-> map.put(INSTANCE_TRACE, o));
         ofNullable(properties.getResourceUsage()).ifPresent(o-> map.put(RESOURCE_USAGE, o));
+        ofNullable(properties.getSessionEvent()).ifPresent(o-> map.put(SESSION_EVENT, o));
         return map;
     }
 }

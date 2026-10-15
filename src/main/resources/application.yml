@@ -78,6 +78,7 @@ inspect:
       http-session: DAY
       http-request: DAY
       jdbc-request: DAY
+      session-event: DAY
     purge:
       enabled: false
     migration:
