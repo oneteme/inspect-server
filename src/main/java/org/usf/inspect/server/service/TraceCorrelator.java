@@ -1,10 +1,9 @@
-package org.usf.inspect.server.model;
+package org.usf.inspect.server.service;
 
 import static java.util.Collections.emptyList;
 import static java.util.Comparator.comparing;
 import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.groupingBy;
-import static org.usf.inspect.server.service.TraceBatchDispatcherHub.serverHub;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,61 +15,63 @@ import org.usf.inspect.core.EventTrace;
 import org.usf.inspect.core.TracePart;
 import org.usf.inspect.core.TraceSignal;
 import org.usf.inspect.core.TraceUpdate;
+import org.usf.inspect.server.model.Pair;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 
  * @author u$f
  *
  */
+@Slf4j
 @RequiredArgsConstructor
 public final class TraceCorrelator<S extends TraceSignal, U extends TraceUpdate> {
 
     private final Class<S> signalType;
     private final Class<U> updateType;
 
-    private final Consumer<List<S>> signalTraceConsumer;
-    private final Consumer<List<U>> updateTraceConsumer;
-    private final Consumer<List<Pair<S, U>>> pairTraceConsumer;
+    private final Consumer<List<S>> signalTraceConsumer; //change to intFunction
+    private final Consumer<List<U>> updateTraceConsumer; //change to intFunction
+    private final Consumer<List<Pair<S, U>>> pairTraceConsumer; //change to intFunction
 
     public List<EventTrace> process(Collection<EventTrace> traces){
         var signals = new ArrayList<S>();
         var updates = new ArrayList<U>();
         var pairs   = new ArrayList<Pair<S, U>>();
         correlate(traces, signals, updates, pairs);
-        var fallback = new ArrayList<EventTrace>();
+        
+        var fallbackList = new ArrayList<EventTrace>();
         if(!signals.isEmpty()) {
             try {
                 signalTraceConsumer.accept(signals);
             } catch (Exception e) {
-                serverHub().emitReport("TraceCorrelator.process", 
-                		"error while processing %s traces".formatted(signalType.getSimpleName()), e);
-                fallback.addAll(signals);
+                log.error("TraceCorrelator.process: error while processing {} {} traces", signals.size(), signalType.getSimpleName(), e);
+                fallbackList.addAll(signals);
             }
         }
         if(!updates.isEmpty()) {
             try {
                 updateTraceConsumer.accept(updates);
             } catch (Exception e) {
-                serverHub().emitReport("TraceCorrelator.process", 
-                		"error while processing %s traces".formatted(updateType.getSimpleName()), e);
-                fallback.addAll(updates);
+            	log.error("TraceCorrelator.process: error while processing {} {} traces", updates.size(), updateType.getSimpleName(), e);
+                fallbackList.addAll(updates);
             }
         }
         if(!pairs.isEmpty()) {
             try {
                 pairTraceConsumer.accept(pairs);
             } catch (Exception e) {
-                serverHub().emitReport("TraceCorrelator.process", 
-                		"error while processing pairs{%s,%s} traces".formatted(signalType.getSimpleName(), updateType.getSimpleName()), e);
+            	log.error("TraceCorrelator.process: error while processing {} pairs of [{},{}] traces", 
+            			pairs.size(), signalType.getSimpleName(), updateType.getSimpleName(), e);
                 pairs.forEach(ent->{
-                    fallback.add(ent.signal());
-                    fallback.add(ent.update());
+                    fallbackList.add(ent.signal());
+                    fallbackList.add(ent.update());
                 });
             }
         }
-        return fallback;
+        return fallbackList;
     }
     
     void correlate(Collection<EventTrace> traces, List<S> signals, List<U> updates, List<Pair<S,U>> pairs) {
@@ -101,22 +102,21 @@ public final class TraceCorrelator<S extends TraceSignal, U extends TraceUpdate>
                         updList.add(updateType.cast(prt));
                     }
                     else {
-                    	serverHub().emitReport("TraceCorrelator.correlate", 
-                    			"trace {} mismatch with pair{%s,%s}".formatted(signalType.getSimpleName(), updateType.getSimpleName()));
+                    	log.warn("TraceCorrelator.correlate: trace {} mismatch with pair of [{},{}]", signalType.getSimpleName(), updateType.getSimpleName());
                     }
                 }
                 if(sgnList.size() == 1) {
                 	sgn = sgnList.get(0);
                 }
                 else if(sgnList.size() > 1) {
-                    serverHub().emitReport("TraceCorrelator.correlate", "multiple %s found for the same identifier : %s".formatted(signalType.getSimpleName(), o.getKey()));
+                	log.warn("TraceCorrelator.correlate", "multiple {} found for the same identifier : {}", signalType.getSimpleName(), o.getKey());
                     sgn = sgnList.stream().min(comparing(TraceSignal::getStart)).orElseThrow();
                 }
                 if(updList.size() == 1) {
                 	upd = updList.get(0);
                 }
                 else if(updList.size() > 1) {
-                	serverHub().emitReport("TraceCorrelator.correlate", "multiple %s found for the same identifier : %s".formatted(updateType.getSimpleName(), o.getKey()));
+                	log.warn("TraceCorrelator.correlate: multiple {} found for the same identifier : {}", updateType.getSimpleName(), o.getKey());
                     upd = updList.stream().max(comparing(TraceUpdate::getEnd)).orElseThrow();
                 }
         	}
@@ -128,7 +128,7 @@ public final class TraceCorrelator<S extends TraceSignal, U extends TraceUpdate>
                 updates.add(upd);
             }
             else {
-            	serverHub().emitReport("TraceCorrelator.correlate", "unexpected state"); 
+            	log.warn("TraceCorrelator.correlate: unexpected state"); 
             }
         }
     }
@@ -145,8 +145,8 @@ public final class TraceCorrelator<S extends TraceSignal, U extends TraceUpdate>
         }, traceTypeConsumer);
     }
 
-    public static <U> List<EventTrace> filterAndConsume(Collection<EventTrace> trace, BiConsumer<EventTrace, ? super Consumer<U>> traceFilter, Consumer<List<U>> filteredTraceConsumer) {
-        var list = trace.stream()
+    public static <U> List<EventTrace> filterAndConsume(Collection<EventTrace> traces, BiConsumer<EventTrace, ? super Consumer<U>> traceFilter, Consumer<List<U>> filteredTraceConsumer) {
+        var list = traces.stream()
                 .mapMulti(traceFilter)
                 .toList();
         if(!list.isEmpty()) {
@@ -154,7 +154,7 @@ public final class TraceCorrelator<S extends TraceSignal, U extends TraceUpdate>
                 filteredTraceConsumer.accept(list);
                 list = emptyList();
             } catch (Exception e) {
-                serverHub().emitReport("TraceCorrelator.filterAndConsume", "error while processing traces", e);
+                log.error("TraceCorrelator.filterAndConsume: error while processing {} traces", list.size(), e);
             }
         }
         return (List<EventTrace>) list;

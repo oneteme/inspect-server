@@ -64,8 +64,11 @@ public class InspectApplication {
         		prp.load(rsr.getInputStream());
         	}
         	catch (IOException e) {
-        		log.warn("Failed to load git.properties", e);
+        		log.error("Failed to load git.properties", e);
 			}
+        }
+        else {
+        	log.warn("'{}' file doesn't exists", rsr.getFilename());
         }
         return new ApplicationInspectPropertiesProvider(env, prp);
     }

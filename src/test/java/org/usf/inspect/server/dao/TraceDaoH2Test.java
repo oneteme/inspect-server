@@ -938,7 +938,7 @@ class TraceDaoH2Test {
     class SaveSessionEvents {
         @Test
         void withMinimumRequiredFields() throws IOException {
-            var event = new SessionEvent(START, "click", "submit", "#order-form", SESSION_ID);
+            var event = new SessionEvent(START, "click", "submit", "#order-form", ">anywhere<", SESSION_ID);
 
             traceDao.saveSessionEvents(List.of(event));
 
