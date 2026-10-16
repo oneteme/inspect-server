@@ -1,10 +1,6 @@
 package org.usf.inspect.server.erm;
 
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_INS;
-import static org.usf.inspect.server.config.constant.FieldConstant.DH_STR;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_COMMITED_HEP;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_USED_DISK_SPACE;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_USED_HEP;
+import static org.usf.inspect.server.config.constant.FieldConstant.*;
 import static org.usf.jquery.core.JDBCType.UUID;
 
 import org.usf.jquery.core.ViewColumn;
@@ -26,7 +22,19 @@ public interface ResourceUsageCatalog extends DatasetCatalog<InspectStore> {
 	@Bind(VA_USED_DISK_SPACE)
 	@Expose(identity = "used_disk_space")
 	ViewColumn usedDiskSpace();
-	
+
+	@Bind(NB_ACTIVE_THREAD)
+	@Expose(identity ="nb_active_thread")
+	ViewColumn nbActiveThread();
+
+	@Bind(NB_START_THREAD)
+	@Expose(identity = "nb_start_thread")
+	ViewColumn nbStartThread();
+
+	@Bind(VA_CPU_USAGE)
+	@Expose(identity = "cpu_usage")
+	ViewColumn cpuUsage();
+
 	@Bind(DH_STR)
 	ViewColumn start();
 	

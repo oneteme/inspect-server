@@ -17,5 +17,6 @@ public class PartitionProperties {
     private Partition ftpRequest;
     private Partition localRequest;
     private Partition resourceUsage;
+    private Partition sessionEvent;
     private Partition instanceTrace;
 }

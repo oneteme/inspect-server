@@ -8,13 +8,11 @@ import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
 import org.usf.jquery.mvc.Typed;
 
-import static org.usf.inspect.core.RequestMask.LOCAL;
 import static org.usf.inspect.server.config.constant.FieldConstant.*;
 import static org.usf.jquery.core.JDBCType.UUID;
 import static org.usf.jquery.core.Join.innerJoin;
 import static org.usf.jquery.core.Join.leftJoin;
 import static org.usf.jquery.core.JoinGroup.joins;
-import static org.usf.jquery.mvc.StoreManager.getInstance;
 
 public interface LocalRequestCatalog extends DatasetCatalog<InspectStore> {
 
@@ -42,10 +40,10 @@ public interface LocalRequestCatalog extends DatasetCatalog<InspectStore> {
 	
 	@Bind(VA_THR)
 	ViewColumn thread();
-	
-	@Bind(VA_FAIL)
-	ViewColumn failed();
-	
+
+	@Bind(CD_STT)
+	ViewColumn status();
+
 	@Bind(CD_PRN_SES)
 	@Typed(UUID)
 	ViewColumn parent();
@@ -62,7 +60,7 @@ public interface LocalRequestCatalog extends DatasetCatalog<InspectStore> {
 
 	default JoinGroup exception() {
 		var exception = getStore().exception();
-		return joins(leftJoin(exception.getView(), exception.parent().eq(id()), exception.type().eq(LOCAL.name())));
+		return joins(leftJoin(exception.getView(), exception.parent().eq(id())));
 	}
 
 	default Column elapsedTime() {

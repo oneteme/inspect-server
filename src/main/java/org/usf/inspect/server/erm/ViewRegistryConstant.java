@@ -30,6 +30,8 @@ public class ViewRegistryConstant {
     public static final String LDAP_REQUEST_RESULTSET_MAPPER = "ldapRequestResultSetMapper";
     public static final String LDAP_REQUEST_STAGE_ROW_MAPPER = "ldapRequestStageRowMapper";
     public static final String EXCEPTION_BY_REQUEST_RESULTSET_MAPPER = "exceptionByRequestResultSetMapper";
+    public static final String EXCEPTION_ROW_MAPPER = "exceptionRowMapper";
     public static final String USER_ACTION_ROW_MAPPER = "userActionRowMapper";
+    public static final String SESSION_EVENT_ROW_MAPPER = "sessionEventRowMapper";
 
 }

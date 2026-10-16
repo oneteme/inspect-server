@@ -2,7 +2,7 @@ package org.usf.inspect.server.event;
 
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
-import org.usf.inspect.core.EventTrace;
+import org.usf.inspect.EventTrace;
 
 @Getter
 @SuppressWarnings("serial")
