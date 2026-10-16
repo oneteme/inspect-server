@@ -1,7 +1,7 @@
 package org.usf.inspect.server;
 
-import org.usf.inspect.config.InspectCollectorProperties;
-import org.usf.inspect.config.MonitoringProperties;
+import org.usf.inspect.InspectCollectorProperties;
+import org.usf.inspect.MonitoringProperties;
 
 import lombok.Getter;
 import lombok.Setter;

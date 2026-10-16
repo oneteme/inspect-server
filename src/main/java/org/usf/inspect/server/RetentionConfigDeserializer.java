@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import java.io.IOException;
 import java.time.Duration;
 
-import org.usf.inspect.config.Retention;
+import org.usf.inspect.Retention;
 
 public final class RetentionConfigDeserializer extends StdDeserializer<Retention>  {
 
