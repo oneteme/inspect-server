@@ -1,6 +1,8 @@
 package org.usf.inspect.server;
 
+import static java.util.Collections.emptyList;
 import static org.usf.inspect.server.JsonUtils.defaultMapper;
+import static org.usf.inspect.server.service.TraceBatchDispatcherHub.serverHub;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -18,10 +20,8 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.usf.inspect.core.ApplicationPropertiesProvider;
-import org.usf.inspect.core.TraceDispatcherHub;
 import org.usf.inspect.core.TracePublisher;
 import org.usf.inspect.server.config.ApplicationInspectPropertiesProvider;
-import org.usf.inspect.server.service.TraceBatchDispatcherHub;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -45,18 +45,13 @@ public class InspectApplication {
 
 	@Bean
 	@ConfigurationProperties(prefix = "inspect.server")
-	InspectServerConfiguration serverConfigurationProperties() {
+	static InspectServerConfiguration serverConfigurationProperties() {
 		return new InspectServerConfiguration();
-	}
-
-	@Bean
-	TraceBatchDispatcherHub inspectServerContext() {
-		return new TraceBatchDispatcherHub(); //disable by default
 	}
 	
 	@Bean
-	ApplicationListener<ApplicationReadyEvent> enableDispatcherOnReady(TraceDispatcherHub ctx, InspectServerConfiguration conf, TracePublisher agent) {
-		return e-> ctx.configure(conf, agent); //wait for server startup before start dispatcher
+	ApplicationListener<ApplicationReadyEvent> configureTraceHubOnReady(InspectServerConfiguration conf, TracePublisher agent) {
+		return e-> serverHub().configure(conf.getScheduling(), agent, emptyList()); //wait for server startup before start dispatcher
 	}
 
     @Bean //used by inspect-core to get application properties and git info
@@ -69,8 +64,11 @@ public class InspectApplication {
         		prp.load(rsr.getInputStream());
         	}
         	catch (IOException e) {
-        		log.warn("Failed to load git.properties", e);
+        		log.error("Failed to load git.properties", e);
 			}
+        }
+        else {
+        	log.warn("'{}' file doesn't exists", rsr.getFilename());
         }
         return new ApplicationInspectPropertiesProvider(env, prp);
     }

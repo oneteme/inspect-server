@@ -1,14 +1,13 @@
 package org.usf.inspect.server.controller;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.usf.inspect.core.*;
-import org.usf.inspect.core.SessionEvent.LogLevel;
-import org.usf.inspect.server.model.UserAction;
-import org.usf.inspect.server.service.TraceService;
+import static java.util.Objects.nonNull;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
+import static org.usf.inspect.core.DualEventTracer.APP_ERROR;
+import static org.usf.inspect.core.DualEventTracer.INT_ERROR;
+import static org.usf.inspect.core.DualEventTracer.SUCCESS;
+import static org.usf.inspect.core.InspectLogger.LogLevel.REPORT;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,10 +15,40 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import static java.util.Objects.nonNull;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
-import static org.usf.inspect.core.DualEventTracer.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.usf.inspect.AbstractSessionUpdate;
+import org.usf.inspect.AbstractStage;
+import org.usf.inspect.DatabaseRequestStage;
+import org.usf.inspect.DatabaseRequestUpdate;
+import org.usf.inspect.DirectoryRequestStage;
+import org.usf.inspect.DirectoryRequestUpdate;
+import org.usf.inspect.EventTrace;
+import org.usf.inspect.ExceptionTrace;
+import org.usf.inspect.FtpRequestStage;
+import org.usf.inspect.FtpRequestUpdate;
+import org.usf.inspect.InstanceEnvironment;
+import org.usf.inspect.LocalRequestUpdate;
+import org.usf.inspect.MailRequestUpdate;
+import org.usf.inspect.MainSessionUpdate;
+import org.usf.inspect.ReportEvent;
+import org.usf.inspect.SessionEvent;
+import org.usf.inspect.StagePayload;
+import org.usf.inspect.core.DispatchState;
+import org.usf.inspect.server.model.UserAction;
+import org.usf.inspect.server.service.TraceService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @CrossOrigin
@@ -33,7 +62,6 @@ public class TraceV4Controller {
 
     @Value("${inspect.server.migration.namespacePrefix}")
     private String namespacePrefix;
-
 
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
     public ResponseEntity<Object> addInstanceEnvironment(
@@ -59,7 +87,8 @@ public class TraceV4Controller {
             detachException(t, addTraces::add);
             convertToSessionEvent(t, addTraces::add);
         }
-        traces.removeIf(UserAction.class::isInstance); //remove user action traces
+        traces.removeIf(t-> t instanceof UserAction 
+        		|| (t instanceof ReportEvent rpr && nonNull(rpr.getSessionId()) && !REPORT.name().equals(rpr.getLevel())));
         if (!addTraces.isEmpty()) {
             traces.addAll(addTraces);
         }
@@ -106,22 +135,22 @@ public class TraceV4Controller {
     
     static void detachException(EventTrace trc, Consumer<ExceptionTrace> acc) {
         if (trc instanceof AbstractSessionUpdate upd) {
-        	if(upd.getException() != null) {
+        	if(nonNull(upd.getException())) {
                 var exp = upd.getException();
                 exp.setTraceId(upd.getId());
-                exp.setOffset(nonNull(upd.getEnd()) ? upd.getEnd().toEpochMilli() : 1); //negative offset !!
+                exp.setOffset(nonNull(upd.getEnd()) ? upd.getEnd().toEpochMilli() : 1);
                 acc.accept(exp);
         	}
         }
         else if (trc instanceof LocalRequestUpdate upd) {
-        	if(upd.getException() != null) {
+        	if(nonNull(upd.getException())) {
                 var exp = upd.getException();
                 exp.setTraceId(upd.getId());
-                exp.setOffset(nonNull(upd.getEnd()) ? upd.getEnd().toEpochMilli() : 1); //negative offset !!
+                exp.setOffset(nonNull(upd.getEnd()) ? upd.getEnd().toEpochMilli() : 1);
                 acc.accept(exp);
         	}
         }
-        else if (trc instanceof AbstractStage stg && stg.getException() == null) {
+        else if (trc instanceof AbstractStage stg && nonNull(stg.getException())) {
     		var exp = stg.getException();
     		exp.setTraceId(stg.getRequestId());
     		exp.setOffset(stg.getOrder());
@@ -130,14 +159,14 @@ public class TraceV4Controller {
     }
 
     static void convertToSessionEvent(EventTrace trc, Consumer<SessionEvent> acc) {
-    	if(trc instanceof ReportEvent log) {
-    		if(log.getSessionId() != null && !log.getLevel().equals(LogLevel.REPORT.name())) {
-    			var evt = new SessionEvent(log.getInstant(), log.getLevel(), log.getMessage(), null, log.getSessionId());
+    	if(trc instanceof ReportEvent rpr) {
+    		if(nonNull(rpr.getSessionId()) && !REPORT.name().equals(rpr.getLevel())) {
+    			var evt = new SessionEvent(rpr.getInstant(), rpr.getLevel(), rpr.getMessage(), rpr.getThread(), null, rpr.getSessionId());
     			acc.accept(evt);
     		}
     	}
-    	else if(trc instanceof UserAction act) {
-    		var evt = new SessionEvent(act.getStart(), act.getType(), act.getName(), act.getNodeName(), act.getCdSession());
+    	else if(trc instanceof UserAction act) { //TODO check UserAction NamedType => JsonUtils
+    		var evt = new SessionEvent(act.getStart(), act.getType(), act.getName(), null, act.getNodeName(), act.getCdSession());
     		acc.accept(evt);
     	}
     }

@@ -5,9 +5,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;
-import org.usf.inspect.core.ExceptionTrace;
-import org.usf.inspect.core.HttpSessionSignal;
-import org.usf.inspect.core.HttpSessionUpdate;
+
+import org.usf.inspect.ExceptionTrace;
+import org.usf.inspect.HttpSessionSignal;
+import org.usf.inspect.HttpSessionUpdate;
 
 /**
  * 

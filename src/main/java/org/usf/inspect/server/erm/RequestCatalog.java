@@ -72,10 +72,10 @@ public interface RequestCatalog extends DatasetCatalog<InspectStore> {
     @Expose(identity = "error_type")
     default Column errorTypeExpressions() {
         return status().toCase()
-                .when(lt(100), "CNX_ERR")
-                .when(ge(400).and(lt(500)), "APP_ERR")
-                .when(ge(500).and(lt(600)), "INT_ERR")
-                .when(ge(600), "DEV_ERR")
+                .when(lt(100), "0xx") //Erreurs de connexion
+                .when(ge(400).and(lt(500)), "4xx")   //Erreurs applicatives
+                .when(ge(500).and(lt(600)), "5xx") //Erreurs d'interface
+                .when(ge(600), "6xx")
                 .orElse(null);
     }
 

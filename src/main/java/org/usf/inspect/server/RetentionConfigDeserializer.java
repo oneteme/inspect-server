@@ -3,10 +3,11 @@ package org.usf.inspect.server;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import org.usf.inspect.core.Retention;
 
 import java.io.IOException;
 import java.time.Duration;
+
+import org.usf.inspect.Retention;
 
 public final class RetentionConfigDeserializer extends StdDeserializer<Retention>  {
 

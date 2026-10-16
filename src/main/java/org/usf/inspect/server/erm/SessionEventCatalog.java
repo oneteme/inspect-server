@@ -3,6 +3,7 @@ package org.usf.inspect.server.erm;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
+import org.usf.jquery.mvc.Expose;
 import org.usf.jquery.mvc.Typed;
 
 import static org.usf.inspect.server.config.constant.FieldConstant.*;
@@ -25,4 +26,9 @@ public interface SessionEventCatalog extends DatasetCatalog<InspectStore> {
     @Bind(CD_PRN_SES)
     @Typed(UUID)
     ViewColumn sessionId();
+
+    @Bind(CD_INS)
+    @Expose(identity = "instance_env")
+    @Typed(UUID)
+    ViewColumn instanceEnv();
 }

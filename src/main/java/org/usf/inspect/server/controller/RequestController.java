@@ -7,6 +7,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.usf.inspect.DatabaseRequestStage;
+import org.usf.inspect.DirectoryRequestStage;
+import org.usf.inspect.ExceptionTrace;
+import org.usf.inspect.FtpRequestStage;
+import org.usf.inspect.HttpRequestStage;
+import org.usf.inspect.HttpSessionStage;
+import org.usf.inspect.InstanceEnvironment;
+import org.usf.inspect.Mail;
+import org.usf.inspect.MailRequestStage;
+import org.usf.inspect.ReportEvent;
+import org.usf.inspect.SessionEvent;
+import org.usf.inspect.SystemMetrics;
 import org.usf.inspect.core.*;
 import org.usf.inspect.server.dto.*;
 import org.usf.inspect.server.erm.InspectStore;
@@ -112,21 +124,21 @@ public class RequestController {
             dataset = "resource_usage",
             view = MACHINE_RESOURCE_USAGE_ROW_MAPPER,
             select = "low_heap,high_heap,start")
-    public Collection<MachineResourceUsage> fetchResourceUsages(
+    public Collection<SystemMetrics> fetchResourceUsages(
             MvcRequest mvc,
             @PathVariable String instanceId
     )  {
         var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.resourceUsage().instanceEnv().eq(fromString(instanceId))); // UUID
 
-        return (Collection<MachineResourceUsage>) mvc.execute();
+        return (Collection<SystemMetrics>) mvc.execute();
     }
 
     @GetMapping("instance/{instanceId}/log/entry")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "log_entry",
             view = LOG_ENTRY_ROW_MAPPER,
-            select = "start,log_level,log_message,stacktrace",
+            select = "start,log_message,stacktrace",
             order = "start.desc")
     public Collection<ReportEvent> fetchLogEntriesByInstance(
             MvcRequest mvc,
@@ -134,22 +146,6 @@ public class RequestController {
     ) {
         var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.logEntry().instanceEnv().eq(fromString(instanceId))); // UUID
-
-        return (Collection<ReportEvent>) mvc.execute();
-    }
-
-    @GetMapping("session/{sessionId}/log/entry")
-    @QueryExtension(select = REJECT, overrideView = false)
-    @QueryTemplate(dataset = "log_entry",
-            view = LOG_ENTRY_ROW_MAPPER,
-            select = "start,log_level,log_message,stacktrace",
-            order = "start.desc")
-    public Collection<ReportEvent> fetchLogEntriesBySession(
-            MvcRequest mvc,
-            @PathVariable String sessionId
-    ) {
-        var store = mvc.getStore().unwrap(InspectStore.class);
-        mvc.getComposer().criteria(store.logEntry().parent().eq(fromString(sessionId))); // UUID
 
         return (Collection<ReportEvent>) mvc.execute();
     }
@@ -818,6 +814,7 @@ public class RequestController {
                         fromNullableTimestamp(rs.getTimestamp("session_start")),
                         rs.getString("type"),
                         rs.getString("value"),
+                        null, //TODO change it
                         rs.getString("event_location"),
                         rs.getObject("sessionId", UUID.class)
                 );

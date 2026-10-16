@@ -1,10 +1,11 @@
 package org.usf.inspect.server.model;
 
+import org.usf.inspect.MailRequestSignal;
+import org.usf.inspect.MailRequestUpdate;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Getter;
 import lombok.Setter;
-import org.usf.inspect.core.MailRequestSignal;
-import org.usf.inspect.core.MailRequestUpdate;
 
 /**
  *

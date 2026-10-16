@@ -8,10 +8,10 @@ import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.allOf;
 import static java.util.concurrent.CompletableFuture.runAsync;
 import static java.util.stream.Collectors.joining;
-import static org.usf.inspect.core.ExecutorServiceWrapper.wrap;
-import static org.usf.inspect.core.SessionContextManager.emitInfo;
+import static org.usf.inspect.core.InspectLogger.emitInfo;
 import static org.usf.inspect.server.Utils.virtualThreadExecutor;
 //import static org.usf.inspect.server.Utils.*;
+import static org.usf.inspect.util.ExecutorServiceWrapper.wrap;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;

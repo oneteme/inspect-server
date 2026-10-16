@@ -18,9 +18,9 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.context.ActiveProfiles;
-import org.usf.inspect.core.InspectCollectorConfiguration;
-import org.usf.inspect.core.InstanceType;
-import org.usf.inspect.core.Retention;
+import org.usf.inspect.InspectCollectorProperties;
+import org.usf.inspect.InstanceType;
+import org.usf.inspect.Retention;
 import org.usf.inspect.core.TraceDispatcherHub;
 import org.usf.inspect.server.dao.PurgeDao;
 
@@ -39,9 +39,6 @@ class PurgeServiceH2Test {
 
     @BeforeEach
     void cleanDatabase() {
-        var configuration = new InspectCollectorConfiguration();
-        configuration.setEnabled(false);
-        ((TraceDispatcherHub) hub()).configure(configuration);
         executeSql("cleanup.sql");
     }
 
@@ -51,7 +48,7 @@ class PurgeServiceH2Test {
 
         assertEquals(7, countRows("e_env_ins"));
         assertEquals(12, countRows("e_ins_trc"));
-        assertEquals(7, countRows("e_log_ent"));
+        assertEquals(7, countRows("e_rpt_evt"));
         assertEquals(7, countRows("e_rst_rqt"));
         assertEquals(7, countRows("e_rst_rqt_stg"));
     }
@@ -71,9 +68,9 @@ class PurgeServiceH2Test {
         assertEquals(0, countByInstance("e_ins_trc", CLOSED_INSTANCE_ID));
         assertEquals(0, countByInstance("e_ins_trc", ABANDONED_INSTANCE_ID));
 
-        assertEquals(1, countByInstance("e_log_ent", ACTIVE_INSTANCE_ID));
-        assertEquals(0, countByInstance("e_log_ent", CLOSED_INSTANCE_ID));
-        assertEquals(0, countByInstance("e_log_ent", ABANDONED_INSTANCE_ID));
+        assertEquals(1, countByInstance("e_rpt_evt", ACTIVE_INSTANCE_ID));
+        assertEquals(0, countByInstance("e_rpt_evt", CLOSED_INSTANCE_ID));
+        assertEquals(0, countByInstance("e_rpt_evt", ABANDONED_INSTANCE_ID));
 
         assertEquals(1, countById("e_rst_rqt", "id_rst_rqt", ACTIVE_REQUEST_ID));
         assertEquals(0, countById("e_rst_rqt", "id_rst_rqt", CLOSED_REQUEST_ID));
@@ -91,11 +88,11 @@ class PurgeServiceH2Test {
         purgeService.launchPurge();
 
         assertEquals(0, countInstance(NO_TRACE_INSTANCE_ID));
-        assertEquals(0, countByInstance("e_log_ent", NO_TRACE_INSTANCE_ID));
+        assertEquals(0, countByInstance("e_rpt_evt", NO_TRACE_INSTANCE_ID));
         assertEquals(0, countById("e_rst_rqt", "id_rst_rqt", NO_TRACE_REQUEST_ID));
         assertEquals(0, countById("e_rst_rqt_stg", "cd_rst_rqt", NO_TRACE_REQUEST_ID));
         assertEquals(1, countInstance(RECENT_NO_TRACE_INSTANCE_ID));
-        assertEquals(1, countByInstance("e_log_ent", RECENT_NO_TRACE_INSTANCE_ID));
+        assertEquals(1, countByInstance("e_rpt_evt", RECENT_NO_TRACE_INSTANCE_ID));
         assertEquals(1, countById("e_rst_rqt", "id_rst_rqt", RECENT_NO_TRACE_REQUEST_ID));
         assertEquals(1, countById("e_rst_rqt_stg", "cd_rst_rqt", RECENT_NO_TRACE_REQUEST_ID));
         assertEquals(1, countInstance(ACTIVE_INSTANCE_ID));

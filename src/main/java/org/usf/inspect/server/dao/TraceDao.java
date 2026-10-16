@@ -18,7 +18,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.util.List;
-import java.util.UUID;
 import java.util.function.Consumer;
 
 import javax.sql.DataSource;
@@ -29,7 +28,36 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import org.usf.inspect.core.*;
+import org.usf.inspect.DatabaseRequestSignal;
+import org.usf.inspect.DatabaseRequestStage;
+import org.usf.inspect.DatabaseRequestUpdate;
+import org.usf.inspect.DirectoryRequestSignal;
+import org.usf.inspect.DirectoryRequestStage;
+import org.usf.inspect.DirectoryRequestUpdate;
+import org.usf.inspect.EventTrace;
+import org.usf.inspect.ExceptionTrace;
+import org.usf.inspect.FtpRequestSignal;
+import org.usf.inspect.FtpRequestStage;
+import org.usf.inspect.FtpRequestUpdate;
+import org.usf.inspect.HttpRequestSignal;
+import org.usf.inspect.HttpRequestStage;
+import org.usf.inspect.HttpRequestUpdate;
+import org.usf.inspect.HttpSessionSignal;
+import org.usf.inspect.HttpSessionStage;
+import org.usf.inspect.HttpSessionUpdate;
+import org.usf.inspect.InstanceEnvironment;
+import org.usf.inspect.LocalRequestSignal;
+import org.usf.inspect.LocalRequestUpdate;
+import org.usf.inspect.MailRequestSignal;
+import org.usf.inspect.MailRequestStage;
+import org.usf.inspect.MailRequestUpdate;
+import org.usf.inspect.MainSessionSignal;
+import org.usf.inspect.MainSessionUpdate;
+import org.usf.inspect.ReportEvent;
+import org.usf.inspect.SessionAsyncDurationUpdate;
+import org.usf.inspect.SessionEvent;
+import org.usf.inspect.SessionMaskUpdate;
+import org.usf.inspect.SystemMetrics;
 import org.usf.inspect.server.dto.BrowserConfigDto;
 import org.usf.inspect.server.event.UnsavedEventTraceEvent;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
@@ -104,26 +132,26 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
                     ps.setObject(++idx, pck.getSequence(), INTEGER);
                     ps.setInt(++idx, pck.getTraceCount());
                     ps.setTimestamp(++idx, fromNullableInstant(pck.getInstant()));
-                    //TODO  delete filename column
                     ps.setObject(++idx, pck.getInstanceId());
                 });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveLogEntries(List<ReportEvent> logEntries) {
-        executeBatch("insert into e_log_ent(va_lvl,va_msg,va_stk,dh_str,cd_prn_ses,cd_ins) values(?,?,?,?,?,?)", logEntries, (ps, lg)-> {
+        executeBatch("insert into e_rpt_evt(va_msg,va_err_typ,va_stk,dh_str,va_thr,va_act,cd_ins) values(?,?,?,?,?,?,?)", logEntries, (ps, lg)-> {
                     var idx=0;
-                    ps.setString(++idx, lg.getLevel()); //TODO remove this
                     ps.setString(++idx, lg.getMessage());
+                    ps.setString(++idx, lg.getException());
                     ps.setObject(++idx, toJson(lg.getStackRows()), OTHER);
                     ps.setTimestamp(++idx, fromNullableInstant(lg.getInstant()));
-                    ps.setObject(++idx, lg.getSessionId()); //TODO remove this
+                    ps.setString(++idx, lg.getThread());
+                    ps.setString(++idx, lg.getAction());
                     ps.setObject(++idx, lg.getInstanceId());
                 });
     }
 
     @Transactional(rollbackFor = Throwable.class)
-    public void saveMachineResourceUsages(List<MachineResourceUsage> usages) {
+    public void saveMachineResourceUsages(List<SystemMetrics> usages) {
         executeBatch("insert into e_rsc_usg(dh_str,va_usd_hep,va_cmt_hep,va_usd_dsk,nb_act_thr,nb_str_thr,va_cpu_usg,cd_ins) values(?,?,?,?,?,?,?,?)", usages, (ps, usg)-> {
             var idx=0;
             ps.setTimestamp(++idx, fromNullableInstant(usg.getInstant()));
@@ -141,21 +169,18 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     @Transactional(rollbackFor = Throwable.class)
     public void saveRestSessionSignals(List<HttpSessionSignal> signals) {
         executeBatch("""
-insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,va_nam,va_usr,va_usr_agt,va_msk,va_fwd_add)
-values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", signals, (ps, sgn) -> {
+insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,va_usr_agt,va_fwd_add,va_nam,va_usr)
+values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", signals, (ps, sgn) -> {
             var idx = restSessionSginalSetter(ps, sgn);
             ps.setString(++idx, sgn.getName());
             ps.setString(++idx, sgn.getUser());
-            ps.setString(++idx, userAgentExtract(sgn.getUserAgent())); //TODO -> restSessionSginalSetter
-            ps.setInt(++idx, 0); //Unnecessary 
-            ps.setString(++idx, joinValuesOrNull(sgn.getForwardedAddresses())); //TODO -> restSessionSginalSetter
         });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveRestSessions(List<Pair<HttpSessionSignal, HttpSessionUpdate>> session) {
     	executeBatchPair("""
-insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,dh_end,va_nam,va_usr,va_usr_agt,va_cch_ctr,va_cnt_typ,cd_stt,va_o_sze,va_o_cnt_enc,va_msk,va_fwd_add)
+insert into e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,va_usr_agt,va_fwd_add,dh_end,va_nam,va_usr,va_cch_ctr,va_cnt_typ,cd_stt,va_o_sze,va_o_cnt_enc,va_msk)
 values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", session, (ps, pr) -> {
             var sgn = pr.signal();
             var upd = pr.update();
@@ -163,14 +188,12 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", session, (ps, pr) 
             ps.setTimestamp(++idx, fromNullableInstant(upd.getEnd()));
             ps.setString(++idx, nonNull(upd.getName()) ? upd.getName() : sgn.getName());
             ps.setString(++idx, nonNull(upd.getUser()) ? upd.getUser() : sgn.getUser());
-            ps.setString(++idx, userAgentExtract(sgn.getUserAgent()));  //TODO -> restSessionSginalSetter
             ps.setString(++idx, upd.getCacheControl());
             ps.setString(++idx, contentTypeExtract(upd.getContentType()));
             ps.setShort(++idx, upd.getStatus());
             ps.setLong(++idx, upd.getDataSize());
             ps.setString(++idx, upd.getContentEncoding());
-            ps.setInt(++idx, upd.getRequestMask().get());
-            ps.setString(++idx, joinValuesOrNull(sgn.getForwardedAddresses())); //TODO -> restSessionSginalSetter
+            ps.setInt(++idx, upd.getEventMask());
         });
     }
 
@@ -190,6 +213,8 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", session, (ps, pr) 
         ps.setString(++idx, sgn.getThreadName());
         ps.setBoolean(++idx, sgn.isLinked());
         ps.setTimestamp(++idx, fromNullableInstant(sgn.getStart()));
+        ps.setString(++idx, userAgentExtract(sgn.getUserAgent()));
+        ps.setString(++idx, joinValuesOrNull(sgn.getForwardedAddresses()));
         return idx;
     }
 
@@ -207,7 +232,7 @@ where id_ses=?""", updates, (ps, upd) -> {
             ps.setLong(++idx, upd.getDataSize());
             ps.setString(++idx, upd.getContentEncoding());
             ps.setTimestamp(++idx, fromNullableInstant(upd.getEnd()));
-            ps.setInt(++idx, upd.getRequestMask().get());
+            ps.setInt(++idx, upd.getEventMask());
             ps.setObject(++idx, upd.getId());
         });
     }
@@ -228,10 +253,9 @@ where id_ses=?""", updates, (ps, upd) -> {
             ps.setString(++idx, sgn.getName());
             ps.setString(++idx, sgn.getUser());
             ps.setTimestamp(++idx, fromNullableInstant(sgn.getStart()));
-          //  ps.setInt(++idx, 0); //Unnecessary
         });
     }
-
+    
     @Transactional(rollbackFor = Throwable.class)
     public void saveMainSessions(List<Pair<MainSessionSignal, MainSessionUpdate>> sessions) {
     	executeBatchPair("insert into e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str,dh_end,va_msk,cd_stt) values(?,?,?,?,?,?,?,?,?,?,?)", sessions, (ps, pr) -> {
@@ -243,7 +267,7 @@ where id_ses=?""", updates, (ps, upd) -> {
             ps.setString(++idx, nonNull(upd.getUser()) ? upd.getUser() : sgn.getUser());
             ps.setTimestamp(++idx, fromNullableInstant(nonNull(upd.getStart()) ? upd.getStart() : sgn.getStart()));
             ps.setTimestamp(++idx, fromNullableInstant(upd.getEnd()));
-            ps.setInt(++idx, upd.getRequestMask().get());
+            ps.setInt(++idx, upd.getEventMask());
             ps.setShort(++idx, upd.getStatus());
         });
     }
@@ -268,7 +292,7 @@ where id_ses=?""", updates, (ps, upd) -> {
             ps.setString(++idx, upd.getUser());
             ps.setTimestamp(++idx, fromNullableInstant(upd.getStart()));
             ps.setTimestamp(++idx, fromNullableInstant(upd.getEnd()));
-            ps.setInt(++idx, upd.getRequestMask().get());
+            ps.setInt(++idx, upd.getEventMask());
             ps.setShort(++idx, upd.getStatus());
             ps.setObject(++idx, upd.getId());
         });
@@ -281,6 +305,14 @@ where id_ses=?""", updates, (ps, upd) -> {
             ps.setInt(++idx, upd.getMask());
             ps.setObject(++idx, upd.getId());
         });
+    }
+    
+    public void updateMainSessionAsyncDuration(List<SessionAsyncDurationUpdate> updates) {
+		//TODO: add asyncDuration column to e_main_ses table
+	}
+    
+    public void updateRestSessionAsyncDuration(List<SessionAsyncDurationUpdate> updates) {
+    	//TODO: add asyncDuration column to e_rst_ses table
     }
 
     @Transactional(rollbackFor = Throwable.class)
@@ -642,7 +674,6 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             ps.setString(++idx, stg.getCommand());
             ps.setInt(++idx, stg.getOrder());
             ps.setObject(++idx, stg.getRequestId());
-            //ps.setObject(++idx, toJson(stg.getPayload()), OTHER) no payload
         });
         saveMailRequestMails(stages);
     }
@@ -692,13 +723,15 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
     
     @Transactional(rollbackFor = Throwable.class)
     public void saveSessionEvents(List<SessionEvent> exceptions) {
-        executeBatch("insert into e_ses_evt(dh_str,va_typ,va_cnt,va_lct,cd_prn_ses) values(?,?,?,?,?)", exceptions, (ps, exp) -> {
+        executeBatch("insert into e_ses_evt(dh_str,va_typ,va_cnt,va_scp,va_lct,cd_prn_ses,cd_ins) values(?,?,?,?,?,?,?)", exceptions, (ps, exp) -> {
             var idx=0;
             ps.setTimestamp(++idx, fromNullableInstant(exp.getInstant()));
             ps.setString(++idx, exp.getType());
             ps.setString(++idx, exp.getValue());
+            ps.setString(++idx, exp.getScope());
             ps.setString(++idx, exp.getLocation());
             ps.setObject(++idx, exp.getSessionId(), OTHER);
+            ps.setObject(++idx, exp.getInstanceId(), OTHER);
         });
     }
 
@@ -715,7 +748,6 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             ps.setString(++idx, cfg.getUserLanguage());
             ps.setString(++idx, cfg.getUserTheme());
             ps.setObject(++idx, cfg.getSessionId());
-           // ps.setObject(++idx, cfg.getSessionId());
         });
     }
 

@@ -6,10 +6,10 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-import org.usf.inspect.core.AbstractStage;
-import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.TraceSignal;
-import org.usf.inspect.core.TraceUpdate;
+import org.usf.inspect.AbstractStage;
+import org.usf.inspect.EventTrace;
+import org.usf.inspect.TraceSignal;
+import org.usf.inspect.TraceUpdate;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

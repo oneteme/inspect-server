@@ -9,7 +9,9 @@ import java.util.function.Predicate;
 
 public enum Condition {
 
-	UUID(o -> isUUID(o.toString())), INSTANT(o -> isInstant(o.toString())), NOT_EMPTY(Condition::isNotEmpty);
+	@Deprecated UUID(o -> isUUID(o.toString())), 
+	INSTANT(o -> isInstant(o.toString())), 
+	NOT_EMPTY(Condition::isNotEmpty);
 
 	private final Predicate<Object> predicate;
 

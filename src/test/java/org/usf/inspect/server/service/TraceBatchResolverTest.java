@@ -7,11 +7,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.usf.inspect.core.TraceUpdate;
-import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.TraceSignal;
+import org.usf.inspect.EventTrace;
+import org.usf.inspect.TraceSignal;
+import org.usf.inspect.TraceUpdate;
 import org.usf.inspect.server.model.Pair;
-import org.usf.inspect.server.model.TraceBatchResolver;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -45,11 +44,11 @@ class TraceBatchResolverTest {
     @Captor
     private ArgumentCaptor<List<Pair<TestInitializer, TestCallback>>> completeCaptor;
 
-    private TraceBatchResolver<TestInitializer, TestCallback> resolver;
+    private TraceCorrelator<TestInitializer, TestCallback> resolver;
 
     @BeforeEach
     void setUp() {
-        resolver = new TraceBatchResolver<>(
+        resolver = new TraceCorrelator<>(
                 TestInitializer.class,
                 TestCallback.class,
                 insertPartialBatchExecutor,
@@ -64,7 +63,7 @@ class TraceBatchResolverTest {
         List<EventTrace> traces = emptyList();
 
         // When
-        List<EventTrace> result = resolver.resolve(traces);
+        List<EventTrace> result = resolver.process(traces);
 
         // Then
         assertTrue(result.isEmpty());
@@ -80,7 +79,7 @@ class TraceBatchResolverTest {
         );
 
         // When
-        List<EventTrace> result = resolver.resolve(traces);
+        List<EventTrace> result = resolver.process(traces);
 
         // Then
         assertTrue(result.isEmpty());
@@ -98,7 +97,7 @@ class TraceBatchResolverTest {
         );
 
         // When
-        List<EventTrace> result = resolver.resolve(traces);
+        List<EventTrace> result = resolver.process(traces);
 
         // Then
         assertTrue(result.isEmpty());
@@ -120,7 +119,7 @@ class TraceBatchResolverTest {
         );
 
         // When
-        List<EventTrace> result = resolver.resolve(traces);
+        List<EventTrace> result = resolver.process(traces);
 
         // Then
         assertTrue(result.isEmpty());
@@ -151,7 +150,7 @@ class TraceBatchResolverTest {
         );
 
         // When
-        List<EventTrace> result = resolver.resolve(traces);
+        List<EventTrace> result = resolver.process(traces);
 
         // Then
         assertTrue(result.isEmpty());
@@ -182,7 +181,7 @@ class TraceBatchResolverTest {
         );
 
         // When
-        List<EventTrace> result = resolver.resolve(traces);
+        List<EventTrace> result = resolver.process(traces);
 
         // Then
         assertTrue(result.isEmpty());
@@ -205,7 +204,7 @@ class TraceBatchResolverTest {
         );
 
         // When
-        List<EventTrace> result = resolver.resolve(traces);
+        List<EventTrace> result = resolver.process(traces);
 
         // Then
         assertTrue(result.isEmpty());
@@ -223,7 +222,7 @@ class TraceBatchResolverTest {
         doThrow(new RuntimeException("Database error")).when(insertPartialBatchExecutor).accept(anyList());
 
         // When
-        List<EventTrace> result = resolver.resolve(traces);
+        List<EventTrace> result = resolver.process(traces);
 
         // Then
         assertEquals(1, result.size());
@@ -239,7 +238,7 @@ class TraceBatchResolverTest {
         doThrow(new RuntimeException("Database error")).when(updateBatchExecutor).accept(anyList());
 
         // When
-        List<EventTrace> result = resolver.resolve(traces);
+        List<EventTrace> result = resolver.process(traces);
 
         // Then
         assertEquals(1, result.size());
@@ -257,7 +256,7 @@ class TraceBatchResolverTest {
         doThrow(new RuntimeException("Database error")).when(insertCompleteBatchExecutor).accept(anyList());
 
         // When
-        List<EventTrace> result = resolver.resolve(traces);
+        List<EventTrace> result = resolver.process(traces);
 
         // Then
         assertEquals(2, result.size());
@@ -273,7 +272,7 @@ class TraceBatchResolverTest {
         traces.add(new NonCompletableTrace()); // Trace qui n'est pas Initializer ni Callback
 
         // When
-        List<EventTrace> result = resolver.resolve(traces);
+        List<EventTrace> result = resolver.process(traces);
 
         // Then
         assertTrue(result.isEmpty());
@@ -299,7 +298,7 @@ class TraceBatchResolverTest {
         );
 
         // When
-        List<EventTrace> result = resolver.resolve(traces);
+        List<EventTrace> result = resolver.process(traces);
 
         // Then
         assertTrue(result.isEmpty());

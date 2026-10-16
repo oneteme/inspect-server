@@ -90,9 +90,9 @@ public class JQueryController {
     	return mvc.execute(res);
     }
 
-    @GetMapping("user/action")
-    @QueryTemplate(dataset = "sesssion_event", select= "count")
-    public Object getSessionEvent(MvcRequest mvc, HttpServletResponse res) {
+    @GetMapping("session/event")
+    @QueryTemplate(dataset = "session_event", select= "count")
+    public Object fetchSessionEvent(MvcRequest mvc, HttpServletResponse res) {
         return mvc.execute(res);
     }
 

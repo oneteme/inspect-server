@@ -13,7 +13,7 @@ import static org.springframework.http.ResponseEntity.status;
 import static org.usf.inspect.core.DispatchState.DISABLE;
 import static org.usf.inspect.core.TracePublisher.ABORT;
 import static org.usf.inspect.core.TracePublisher.RETRY;
-import static org.usf.inspect.http.WebUtils.TRACE_RETRY_HEADER;
+import static org.usf.inspect.web.WebUtils.TRACE_RETRY_HEADER;
 import static org.usf.jquery.core.Utils.isEmpty;
 
 import java.security.Principal;
@@ -32,9 +32,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.usf.inspect.EventTrace;
+import org.usf.inspect.InstanceEnvironment;
 import org.usf.inspect.core.DispatchState;
-import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.InstanceEnvironment;
 import org.usf.inspect.server.exception.DispatchProcessingException;
 import org.usf.inspect.server.service.TraceService;
 
@@ -47,9 +47,6 @@ import lombok.extern.slf4j.Slf4j;
 @CrossOrigin(exposedHeaders = TRACE_RETRY_HEADER)
 @RequestMapping(value = "/v5/trace", produces = APPLICATION_JSON_VALUE)
 public class TraceController {
-
-	private static final String DO_RETRY = RETRY+"";
-	private static final String DO_NOT_RETRY = ABORT+"";
 
 	private final TraceService service;
 
@@ -73,7 +70,7 @@ public class TraceController {
 				? principal.getName()
 				: instance.getNamespace(); //disabled spring security
 		try {
-			service.addInstance(instance, nsp, atm);
+			service.addInstance(instance, nsp, atm); //TODO : check existing instance (if atm > 1) before insert
 			return ok(instance.getId().toString());
 		}
 		catch(Exception e) {
@@ -92,7 +89,7 @@ public class TraceController {
 
 		if(service.getDispatcherState() == DISABLE) {
 			return status(SERVICE_UNAVAILABLE)
-					.header(TRACE_RETRY_HEADER, DO_RETRY)
+					.header(TRACE_RETRY_HEADER, RETRY)
 					.body("dispatch.state=DISABLE");
 		}
 		try {
@@ -104,7 +101,7 @@ public class TraceController {
 		} catch (Exception e) {
 			var retry = e instanceof DispatchProcessingException dpe && dpe.isRetryable();
 			log.error("failed to add traces for id={} seq={} atm={} end={} retry={}", id, seq, atm, end, retry, e);
-			return internalServerError().header(TRACE_RETRY_HEADER, retry ? DO_RETRY : DO_NOT_RETRY).body(e.getMessage());
+			return internalServerError().header(TRACE_RETRY_HEADER, retry ? RETRY : ABORT).body(e.getMessage());
 		}
 	}
 

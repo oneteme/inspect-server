@@ -2,10 +2,9 @@ package org.usf.inspect.server;
 
 import static java.util.Objects.nonNull;
 import static org.springframework.http.converter.json.Jackson2ObjectMapperBuilder.json;
-import static org.usf.inspect.core.InspectConfiguration.coreModule;
 
-import org.usf.inspect.core.Retention;
-import org.usf.inspect.core.SessionEvent;
+import org.usf.inspect.InspectCoreModule;
+import org.usf.inspect.Retention;
 import org.usf.inspect.server.dto.BrowserConfigDto;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.TraceBatch;
@@ -54,7 +53,7 @@ public final class JsonUtils {
     
 	static {
 		var mapper = json()
-				.modules(new JavaTimeModule(), new ParameterNamesModule(), coreModule().registerSubtypes(
+				.modules(new JavaTimeModule(), new ParameterNamesModule(), new InspectCoreModule().registerSubtypes(
 						new NamedType(TraceBatch.class, "inst-trc"), 
 						new NamedType(InstanceEnvironmentUpdate.class, "inst-updt"),
 						new NamedType(BrowserConfigDto.class, "400")))

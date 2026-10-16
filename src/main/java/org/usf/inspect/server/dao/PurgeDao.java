@@ -6,11 +6,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import org.usf.inspect.InspectCollectorProperties;
+import org.usf.inspect.InstanceType;
+import org.usf.inspect.Retention;
+import org.usf.inspect.TraceType;
 import org.usf.inspect.core.*;
 import org.usf.inspect.server.InspectApplication;
 import org.usf.inspect.server.erm.InspectStore;
 import org.usf.inspect.server.erm.InstanceCatalog;
-import org.usf.inspect.core.TraceType;
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.Order;
 import org.usf.jquery.mvc.StoreManager;
@@ -31,8 +34,8 @@ import static java.sql.Types.OTHER;
 import static java.time.Duration.ofDays;
 import static java.util.Arrays.stream;
 import static java.util.Objects.nonNull;
-import static org.usf.inspect.core.SessionMask.*;
-import static org.usf.inspect.core.SessionContextManager.emitError;
+import static org.usf.inspect.SessionEventMask.*;
+import static org.usf.inspect.core.InspectLogger.emitError;
 import static org.usf.inspect.server.JsonUtils.fromJson;
 import static org.usf.inspect.server.JsonUtils.toJson;
 import static org.usf.jquery.core.Column.ctimestamp;
@@ -248,11 +251,11 @@ public class PurgeDao {
     }
 
     public int purgeLogEntry(List<UUID>  ids, Timestamp before){
-        return purgeRequest("log_ent", ids, before, false);
+        return purgeRequest("rpt_evt", ids, before, false);
     }
 
     public int purgeLogEntry(LocalDate before){
-        return purgeRequest("log_ent",Timestamp.valueOf(before.atStartOfDay()));
+        return purgeRequest("rpt_evt",Timestamp.valueOf(before.atStartOfDay()));
     }
 
 
@@ -403,7 +406,7 @@ public class PurgeDao {
             var type = InstanceType.valueOf(rs.getString("type"));
             var raw = rs.getString("configuration");
 
-            var config = fromJson(raw, InspectCollectorConfiguration.class);
+            var config = fromJson(raw, InspectCollectorProperties.class);
             var rtt = config == null ? DEFAULT_RETENTION_CONFIG : config.getTracing().getRemote().getRetentionMaxAge();
             // Extract retention durations directly from the Retention object
             out.add(new PurgeScope(type, app, namespace, rtt));

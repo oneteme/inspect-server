@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import org.usf.inspect.EventTrace;
 import org.usf.inspect.core.*;
 
 import java.time.Instant;
