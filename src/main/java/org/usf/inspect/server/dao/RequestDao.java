@@ -21,7 +21,7 @@ public class RequestDao {
 
     public Set<UUID> selectChildsById(UUID id, Instant start) {
         var query = "with recursive recusive(prnt,chld) as (" +
-                " select null as prnt, ? as chld " +
+                " select null::uuid as prnt, ? as chld " + //TODO Check h2 cast
                 " union all " +
                 " select  recusive.chld, E_RST_RQT.ID_RST_RQT " +
                 " from E_RST_RQT, recusive " +

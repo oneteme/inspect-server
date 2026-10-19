@@ -423,7 +423,7 @@ public class RequestService {
                         restRequest.status(), restRequest.sizeIn(), restRequest.sizeOut(), restRequest.contentEncodingIn(), restRequest.contentEncodingOut(), restRequest.start(), restRequest.end(), restRequest.thread(),
                         restRequest.linked(), restRequest.parent()
                 )
-                .criteria(restRequest.parent().in(ids.stream().map(UUID::toString).toArray()));
+                .criteria(restRequest.parent().in(ids.toArray(new UUID[0])));
         if(start != null) {
             v.criteria(restRequest.start().ge(start));
         }
@@ -450,7 +450,6 @@ public class RequestService {
                 out.setThreadName(rs.getString("thread"));
                 out.setLinked(rs.getBoolean("linked"));
                 out.setAuthScheme(rs.getString("auth"));
-                out.setException(getExceptionInfoIfNotNull(rs.getString("errType"), rs.getString("errMsg"), null));
                 outs.add(out);
             }
             return outs;
@@ -467,7 +466,7 @@ public class RequestService {
                         databaseRequest.user(), databaseRequest.thread(), databaseRequest.driver(), databaseRequest.dbName(), databaseRequest.dbVersion(), databaseRequest.command(),
                         databaseRequest.schema(), databaseRequest.parent()
                 )
-                .criteria(databaseRequest.parent().in(ids.stream().toArray(UUID[]::new)));
+                .criteria(databaseRequest.parent().in(ids.toArray(new UUID[0])));
         if (start != null) {
             v.criteria(databaseRequest.start().ge(from(start)));
         }
@@ -506,7 +505,7 @@ public class RequestService {
                         ftpRequest.id(), ftpRequest.host(), ftpRequest.port(), ftpRequest.protocol(), ftpRequest.serverVersion(), ftpRequest.clientVersion(),
                         ftpRequest.start(), ftpRequest.end(), ftpRequest.command(), ftpRequest.user(), ftpRequest.thread(), ftpRequest.parent()
                 )
-                .criteria(ftpRequest.parent().in(ids.stream().toArray(UUID[]::new)));
+                .criteria(ftpRequest.parent().in(ids.toArray(new UUID[0])));
         if (start != null) {
             v.criteria(ftpRequest.start().ge(from(start)));
         }
@@ -542,7 +541,7 @@ public class RequestService {
                 .columns(
                         smtpRequest.id(), smtpRequest.host(), smtpRequest.port(), smtpRequest.start(), smtpRequest.end(), smtpRequest.command(), smtpRequest.user(), smtpRequest.thread(), smtpRequest.parent()
                 )
-                .criteria(smtpRequest.parent().in(ids.stream().toArray(UUID[]::new)));
+                .criteria(smtpRequest.parent().in(ids.toArray(new UUID[0])));
         if (start != null) {
             v.criteria(smtpRequest.start().ge(start));
         }
@@ -575,7 +574,7 @@ public class RequestService {
                 .columns(
                         ldapRequest.id(), ldapRequest.host(), ldapRequest.port(), ldapRequest.protocol(), ldapRequest.start(), ldapRequest.end(), ldapRequest.command(), ldapRequest.user(), ldapRequest.thread(), ldapRequest.parent()
                 )
-                .criteria(ldapRequest.parent().in(ids.stream().toArray(UUID[]::new)));
+                .criteria(ldapRequest.parent().in(ids.toArray(new UUID[0])));
         if (start != null) {
             v.criteria(ldapRequest.start().ge(start));
         }

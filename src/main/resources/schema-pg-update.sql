@@ -133,7 +133,7 @@ ALTER TABLE e_log_ent RENAME TO e_rpt_evt;
 
 -- Migration de la table e_exc_inf : ajout des champs va_cas et va_trc_typ
 ALTER TABLE e_exc_inf ADD COLUMN IF NOT EXISTS va_cas json;
-ALTER TABLE e_exc_inf ADD COLUMN IF NOT EXISTS va_trc_typ SMALLINT;
+ALTER TABLE e_exc_inf RENAME COLUMN va_typ TO va_trc_typ;
 ALTER TABLE e_exc_inf RENAME COLUMN cd_rqt TO cd_trc;
 
 -- Migration du namespace historique

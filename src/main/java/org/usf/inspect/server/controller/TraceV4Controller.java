@@ -26,23 +26,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.usf.inspect.AbstractSessionUpdate;
-import org.usf.inspect.AbstractStage;
-import org.usf.inspect.DatabaseRequestStage;
-import org.usf.inspect.DatabaseRequestUpdate;
-import org.usf.inspect.DirectoryRequestStage;
-import org.usf.inspect.DirectoryRequestUpdate;
-import org.usf.inspect.EventTrace;
-import org.usf.inspect.ExceptionTrace;
-import org.usf.inspect.FtpRequestStage;
-import org.usf.inspect.FtpRequestUpdate;
-import org.usf.inspect.InstanceEnvironment;
-import org.usf.inspect.LocalRequestUpdate;
-import org.usf.inspect.MailRequestUpdate;
-import org.usf.inspect.MainSessionUpdate;
-import org.usf.inspect.ReportEvent;
-import org.usf.inspect.SessionEvent;
-import org.usf.inspect.StagePayload;
+import org.usf.inspect.*;
 import org.usf.inspect.core.DispatchState;
 import org.usf.inspect.server.model.UserAction;
 import org.usf.inspect.server.service.TraceService;
@@ -101,6 +85,10 @@ public class TraceV4Controller {
         }
     	if (trc instanceof MainSessionUpdate upd ) {
             upd.setStatus(upd.getException() != null ? APP_ERROR : SUCCESS);
+            upd.setEventMask(upd.getRequestMask());
+        }
+        if (trc instanceof HttpSessionUpdate upd ) {
+            upd.setEventMask(upd.getRequestMask());
         }
     	//else httpSessionUpdate has already a status set
 		else if (trc instanceof DatabaseRequestUpdate upd ) {
