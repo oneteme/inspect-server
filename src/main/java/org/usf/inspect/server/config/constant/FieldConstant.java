@@ -50,6 +50,7 @@ public final class FieldConstant {
     public static final String VA_TYP = "va_typ";
     public static final String VA_LCT = "va_lct";
     public static final String VA_THR = "va_thr";
+    public static final String VA_ACT = "va_act";
     public static final String VA_LNK = "va_lnk";
     public static final String VA_APP = "va_app";
     public static final String VA_VRS = "va_vrs";
@@ -63,7 +64,7 @@ public final class FieldConstant {
     public static final String VA_CNT = "va_cnt";
     public static final String VA_ERR_TYP = "va_err_typ";
     public static final String VA_ERR_MSG = "va_err_msg";
-
+    public static final String VA_SCP = "va_scp";
     public static final String VA_CCH_CTR = "va_cch_ctr";
     public static final String VA_SRV_VRS = "va_srv_vrs";
     public static final String VA_CLT_VRS = "va_clt_vrs";

@@ -20,6 +20,9 @@ public interface SessionEventCatalog extends DatasetCatalog<InspectStore> {
     @Bind(VA_CNT)
     ViewColumn value();
 
+    @Bind(VA_SCP)
+    ViewColumn scope();
+
     @Bind(VA_LCT)
     ViewColumn location();
 

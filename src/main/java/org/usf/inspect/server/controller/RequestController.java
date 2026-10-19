@@ -781,7 +781,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "session_event",
             view = SESSION_EVENT_ROW_MAPPER,
-            select = "start,type,value,location,sessionId",
+            select = "start,type,value,scope,location,sessionId",
             order = "start")
     public Collection<SessionEvent> getUserActions(
             MvcRequest mvc,
@@ -796,7 +796,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "main_session",
             view = SESSION_EVENT_ROW_MAPPER,
-            select = "id,name,start,end,location,session_event.type:type,session_event.start:session_start,session_event.value:value,session_event.location:event_location,session_event.sessionId",
+            select = "id,name,start,end,location,session_event.type:type,session_event.start:session_start,session_event.value:value,session_event.location:event_location,session_event.scope:scope,session_event.sessionId",
             join = "session_event",
             order = "main_session.start,session_event.start", ignore = "date")
     public Collection<SessionEventDto> getUserActions(
@@ -814,7 +814,7 @@ public class RequestController {
                         fromNullableTimestamp(rs.getTimestamp("session_start")),
                         rs.getString("type"),
                         rs.getString("value"),
-                        null, //TODO change it
+                        rs.getString("scope"),
                         rs.getString("event_location"),
                         rs.getObject("sessionId", UUID.class)
                 );

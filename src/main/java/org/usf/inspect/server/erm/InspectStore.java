@@ -2,9 +2,12 @@ package org.usf.inspect.server.erm;
 
 import static org.usf.inspect.server.erm.ViewRegistryConstant.*;
 import static org.usf.inspect.server.mapper.Mappers.*;
+import static org.usf.jquery.core.JDBCType.INTEGER;
 import static org.usf.jquery.core.JDBCType.VARCHAR;
 import static org.usf.jquery.core.Mappers.toListMapper;
 import static org.usf.jquery.core.Operators.function;
+import static org.usf.jquery.core.Operators.window;
+import static org.usf.jquery.core.Parameter.optional;
 import static org.usf.jquery.core.Parameter.required;
 import static org.usf.jquery.core.Parameter.varargs;
 import static org.usf.jquery.core.Predicate.*;
@@ -103,7 +106,9 @@ public interface InspectStore extends StoreCatalog {
 	@Expose(identity = "session_event")
 	SessionEventCatalog sessionEvent();
 
-
+	default OperatorDefinition lag() {
+		return window(firstArgType(), "LAG", required(), optional(INTEGER), optional(firstArgType()));
+	}
 	default OperatorDefinition coalesce() {
 		return function(firstArgType(), "COALESCE", required(), varargs(VARCHAR));
 	}

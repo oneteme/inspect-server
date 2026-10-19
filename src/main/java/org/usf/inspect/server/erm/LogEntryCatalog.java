@@ -1,11 +1,6 @@
 package org.usf.inspect.server.erm;
 
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_INS;
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_PRN_SES;
-import static org.usf.inspect.server.config.constant.FieldConstant.DH_STR;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_LVL;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_MSG;
-import static org.usf.inspect.server.config.constant.FieldConstant.VA_STK;
+import static org.usf.inspect.server.config.constant.FieldConstant.*;
 import static org.usf.jquery.core.JDBCType.UUID;
 import static org.usf.jquery.core.Join.innerJoin;
 import static org.usf.jquery.core.JoinGroup.joins;
@@ -18,17 +13,19 @@ import org.usf.jquery.mvc.Expose;
 import org.usf.jquery.mvc.Typed;
 
 public interface LogEntryCatalog extends DatasetCatalog<InspectStore> {
-	
-	@Bind(VA_LVL)
-	@Expose(identity = "log_level")
-	ViewColumn logLevel();
-	
+
 	@Bind(VA_MSG)
 	@Expose(identity = "log_message")
 	ViewColumn logMessage();
 	
 	@Bind(VA_STK)
 	ViewColumn stacktrace();
+
+	@Bind(VA_THR)
+	ViewColumn thread();
+
+	@Bind(VA_ACT)
+	ViewColumn action();
 	
 	@Bind(DH_STR)
 	ViewColumn start();
