@@ -118,7 +118,7 @@ public interface InspectStore extends StoreCatalog {
 			case "5xx"-> ge(500);
 			case "4xx"-> ge(400).and(lt(500));
 			case "2xx"-> ge(200).and(lt(300));
-			case "0"->	 eq(0);
+			case "0xx"-> lt(100);
 			case "pending"-> isNull();
 			default -> null;
 		});
