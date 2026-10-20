@@ -66,15 +66,16 @@ public class TraceController {
 		if (instance.getId() == null){
 			return status(BAD_REQUEST).body("invalid id="+instance.getId());
 		}
-		var nsp = nonNull(principal) 
-				? principal.getName()
-				: instance.getNamespace(); //disabled spring security
+		if(nonNull(principal) && !principal.getName().equals(instance.getNamespace())) {
+			log.warn("namespace mismatch between principal={} and instance={}", principal.getName(), instance.getNamespace());
+			instance.setNamespace(principal.getName());
+		}
 		try {
-			service.addInstance(instance, nsp, atm); //TODO : check existing instance (if atm > 1) before insert
+			service.addInstance(instance, atm); //TODO !important : check existing instance (if atm > 1) before insert
 			return ok(instance.getId().toString());
 		}
 		catch(Exception e) {
-			log.error("failed to add instance environment for id={} name={} namespace={} atm={}", instance.getId(), instance.getName(), nsp, atm, e);
+			log.error("failed to add instance environment for id={} name={} atm={}", instance.getId(), instance.getName(), atm, e);
 			return internalServerError().body("dispatcher.state=" + service.getDispatcherState() + "message=" + e.getMessage());
 		}
 	}

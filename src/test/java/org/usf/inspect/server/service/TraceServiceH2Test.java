@@ -67,8 +67,9 @@ class TraceServiceH2Test {
         var instance = new InstanceEnvironment(id, START, InstanceType.SERVER,
                 "inspect-test", "1.5.0", "test", "192.0.2.10", "Windows", "Java 21",
                 "service", "main", "abc123", "spring-collector", Map.of(), null);
+        instance.setNamespace("NOVA_DEV");
 
-        traceService.addInstance(instance, "NOVA_DEV", 3);
+        traceService.addInstance(instance, 3);
 
         assertEquals("NOVA_DEV", instance.getNamespace());
         assertEquals(1, jdbcTemplate.queryForObject(
