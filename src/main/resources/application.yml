@@ -58,20 +58,18 @@ inspect:
         max-stack-trace-rows: -1 #default=5, -1 no limit
         max-cause-depth: -1 #default=-1
         #class-name-pattern: fr.enedis.nova.*
-      system:
-        enabled: true
     tracing:
       type: REST #default=null, trace dispatch type (e.g., REST) !v1.2
       remote:
         host: http://localhost:9001 #default=localhost, target dispatch host
         #retention-max-age: 10d #default=30d, maximum age of traces in days
   server:
-    diagnostics:
-      enabled: true
     scheduling:
       name: inspect-srv-publisher #!v1.2
       interval: 30s #default=60s, interval between trace dispatches
       queue-capacity: 500000 #default=10000, queue capacity for trace dispatching !v1.2
+    reporting:
+      enabled: true
     partition:
       enabled: true
       schedule: "0 0 0 L * ?"

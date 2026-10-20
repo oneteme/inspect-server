@@ -80,14 +80,19 @@ public class TraceV4Controller {
     }
     
     static void resolveTraceUpdateStatus(EventTrace trc) {
-    	if (trc instanceof LocalRequestUpdate upd ) {
+    	if (trc instanceof LocalRequestUpdate upd) {
             upd.setStatus(upd.getException() != null ? APP_ERROR : SUCCESS);
         }
-    	if (trc instanceof MainSessionUpdate upd ) {
+    	else if (trc instanceof MainSessionUpdate upd ) {
             upd.setStatus(upd.getException() != null ? APP_ERROR : SUCCESS);
             upd.setEventMask(upd.getRequestMask());
-        }
-        if (trc instanceof HttpSessionUpdate upd ) {
+		}
+    	else if(trc instanceof MainSessionSignal sig) {
+    		if(MainSessionType.BATCH.name().equals(sig.getType())) {
+				sig.setType(MainSessionType.SCHEDULE.name());
+			}
+		}
+    	else if (trc instanceof HttpSessionUpdate upd ) {
             upd.setEventMask(upd.getRequestMask());
         }
     	//else httpSessionUpdate has already a status set
@@ -153,7 +158,7 @@ public class TraceV4Controller {
     			acc.accept(evt);
     		}
     	}
-    	else if(trc instanceof UserAction act) { //TODO check UserAction NamedType => JsonUtils
+    	else if(trc instanceof UserAction act) { //TODO check UserAction NamedType declaration => JsonUtils
     		var evt = new SessionEvent(act.getStart(), act.getType(), act.getName(), null, act.getNodeName(), act.getCdSession());
     		acc.accept(evt);
     	}
