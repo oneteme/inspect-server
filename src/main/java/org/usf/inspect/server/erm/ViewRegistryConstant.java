@@ -33,5 +33,6 @@ public class ViewRegistryConstant {
     public static final String EXCEPTION_ROW_MAPPER = "exceptionRowMapper";
     public static final String USER_ACTION_ROW_MAPPER = "userActionRowMapper";
     public static final String SESSION_EVENT_ROW_MAPPER = "sessionEventRowMapper";
+    public static final String SESSION_EVENT_MAPPER = "sessionEventMapper";
 
 }

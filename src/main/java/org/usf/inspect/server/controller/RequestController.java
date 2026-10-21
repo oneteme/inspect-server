@@ -841,8 +841,8 @@ public class RequestController {
     @QueryGuard(maxRows = 300000)
     @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "session_event",
-            view = SESSION_EVENT_ROW_MAPPER,
-            select = "start,type,value,scope,location,sessionId,instance.app_name",
+            view = SESSION_EVENT_MAPPER,
+            select = "start,type,value,scope,location,sessionId,instance.namespace",
             join = "instance",
             order = "start")
     public Collection<SessionEventDto> fetchSessionEvents(
