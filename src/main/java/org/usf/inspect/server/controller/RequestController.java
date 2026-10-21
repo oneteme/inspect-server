@@ -836,4 +836,19 @@ public class RequestController {
             return sessions;
         });
     }
+
+    @GetMapping("session/event")
+    @QueryGuard(maxRows = 300000)
+    @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "session_event",
+            view = SESSION_EVENT_MAPPER,
+            select = "start,type,value,scope,location,sessionId,instance.namespace",
+            join = "instance",
+            order = "start")
+    public Collection<SessionEventDto> fetchSessionEvents(
+            MvcRequest mvc
+    )  {
+
+        return (Collection<SessionEventDto>) mvc.execute();
+    }
 }

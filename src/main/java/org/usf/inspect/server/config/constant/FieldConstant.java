@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 public final class FieldConstant {
 
     public static final String ID_SES = "id_ses";
+    public static final String ID_EVT = "id_evt";
     public static final String CD_PRN_SES = "cd_prn_ses";
     public static final String CD_DTB_RQT = "cd_dtb_rqt";
     public static final String ID_DTB_RQT = "id_dtb_rqt";
