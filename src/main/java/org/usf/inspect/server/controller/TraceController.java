@@ -74,7 +74,7 @@ public class TraceController {
 			instance.setNamespace(principal.getName());
 		}
 		try {
-			service.addInstance(instance, atm); //TODO !important : check existing instance (if atm > 1) before insert
+			service.addInstance(instance, atm);
 			return ok(instance.getId().toString());
 		}
 		catch(Exception e) {
