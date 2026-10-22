@@ -12,18 +12,15 @@ import static org.usf.inspect.server.Utils.fromNullableInstant;
 import static org.usf.inspect.server.Utils.joinValuesOrNull;
 import static org.usf.inspect.server.Utils.userAgentExtract;
 import static org.usf.inspect.server.Utils.valueOfNullable;
-import static org.usf.jquery.core.Utils.isEmpty;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.util.List;
-import java.util.function.Consumer;
 
 import javax.sql.DataSource;
 
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
@@ -35,7 +32,6 @@ import org.usf.inspect.DatabaseRequestUpdate;
 import org.usf.inspect.DirectoryRequestSignal;
 import org.usf.inspect.DirectoryRequestStage;
 import org.usf.inspect.DirectoryRequestUpdate;
-import org.usf.inspect.EventTrace;
 import org.usf.inspect.ExceptionTrace;
 import org.usf.inspect.FtpRequestSignal;
 import org.usf.inspect.FtpRequestStage;
@@ -60,7 +56,6 @@ import org.usf.inspect.SessionEvent;
 import org.usf.inspect.SessionMaskUpdate;
 import org.usf.inspect.SystemMetrics;
 import org.usf.inspect.server.dto.BrowserConfigDto;
-import org.usf.inspect.server.event.UnsavedEventTraceEvent;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.Pair;
 import org.usf.inspect.server.model.TraceBatch;
@@ -81,12 +76,10 @@ public class TraceDao {
     private static final int BATCH_SIZE = 1_000;
 
     private final JdbcTemplate template;
-    private final ApplicationEventPublisher publisher;
     private final boolean supportsSavePoints;
 
-	public TraceDao(JdbcTemplate template, ApplicationEventPublisher publisher) {
+	public TraceDao(JdbcTemplate template) {
 		this.template = template;
-		this.publisher = publisher;
 		this.supportsSavePoints = supportsSavePoints(template.getDataSource());
 	}
 
@@ -117,7 +110,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateInstanceEnvironments(List<InstanceEnvironmentUpdate> updates){
-        executeBatch("UPDATE e_env_ins set dh_end=? where id_ins=? AND dh_end is NULL", updates, (ps, ins) -> {
+        batchUpdateWithRetry("UPDATE e_env_ins set dh_end=? where id_ins=? AND dh_end is NULL", updates, (ps, ins) -> {
             var idx=0;
             ps.setTimestamp(++idx, fromNullableInstant(ins.getEnd()));
             ps.setObject(++idx, ins.getId());
@@ -126,35 +119,35 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveTracePackets(List<TraceBatch> packets) {
-        executeBatch("INSERT INTO e_ins_trc(va_pnd,va_atp,va_seq,va_trc_cnt,dh_str,cd_ins) VALUES(?,?,?,?,?,?)", packets, (ps, pck) -> {
-                    var idx=0;
-                    ps.setObject(++idx, pck.getPending(), INTEGER);
-                    ps.setObject(++idx, pck.getAttempts(), INTEGER);
-                    ps.setObject(++idx, pck.getSequence(), INTEGER);
-                    ps.setInt(++idx, pck.getTraceCount());
-                    ps.setTimestamp(++idx, fromNullableInstant(pck.getInstant()));
-                    ps.setObject(++idx, pck.getInstanceId());
-                });
+        batchUpdateWithRetry("INSERT INTO e_ins_trc(va_pnd,va_atp,va_seq,va_trc_cnt,dh_str,cd_ins) VALUES(?,?,?,?,?,?)", packets, (ps, pck) -> {
+            var idx=0;
+            ps.setObject(++idx, pck.getPending(), INTEGER);
+            ps.setObject(++idx, pck.getAttempts(), INTEGER);
+            ps.setObject(++idx, pck.getSequence(), INTEGER);
+            ps.setInt(++idx, pck.getTraceCount());
+            ps.setTimestamp(++idx, fromNullableInstant(pck.getInstant()));
+            ps.setObject(++idx, pck.getInstanceId());
+        });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveLogEntries(List<ReportEvent> logEntries) {
-        executeBatch("INSERT INTO e_rpt_evt(va_msg,va_err_typ,va_stk,dh_str,va_thr,va_act,cd_ins) VALUES(?,?,?,?,?,?,?)", logEntries, (ps, lg)-> {
-                    var idx=0;
-                    ps.setString(++idx, lg.getMessage());
-                    ps.setString(++idx, lg.getException());
-                    ps.setObject(++idx, toJson(lg.getStackRows()), OTHER);
-                    ps.setTimestamp(++idx, fromNullableInstant(lg.getInstant()));
-                    ps.setString(++idx, lg.getThread());
-                    ps.setString(++idx, lg.getAction());
-                    ps.setObject(++idx, lg.getInstanceId());
-                });
+        batchUpdateWithRetry("INSERT INTO e_rpt_evt(va_msg,va_err_typ,va_stk,dh_str,va_thr,va_act,cd_ins) VALUES(?,?,?,?,?,?,?)", logEntries, (ps, lg)-> {
+        	var idx=0;
+            ps.setString(++idx, lg.getMessage());
+            ps.setString(++idx, lg.getException());
+            ps.setObject(++idx, toJson(lg.getStackRows()), OTHER);
+            ps.setTimestamp(++idx, fromNullableInstant(lg.getInstant()));
+            ps.setString(++idx, lg.getThread());
+            ps.setString(++idx, lg.getAction());
+            ps.setObject(++idx, lg.getInstanceId());
+        });
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveMachineResourceUsages(List<SystemMetrics> usages) {
-        executeBatch("INSERT INTO e_rsc_usg(dh_str,va_usd_hep,va_cmt_hep,va_usd_dsk,nb_act_thr,nb_str_thr,va_cpu_usg,cd_ins) VALUES(?,?,?,?,?,?,?,?)", usages, (ps, usg)-> {
-            var idx=0;
+        batchUpdateWithRetry("INSERT INTO e_rsc_usg(dh_str,va_usd_hep,va_cmt_hep,va_usd_dsk,nb_act_thr,nb_str_thr,va_cpu_usg,cd_ins) VALUES(?,?,?,?,?,?,?,?)", usages, (ps, usg)-> {
+        	var idx=0;
             ps.setTimestamp(++idx, fromNullableInstant(usg.getInstant()));
             ps.setInt(++idx, usg.getUsedHeap());
             ps.setInt(++idx, usg.getCommitedHeap());
@@ -169,10 +162,10 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     // New version
     @Transactional(rollbackFor = Throwable.class)
     public void saveRestSessionSignals(List<HttpSessionSignal> signals) {
-        executeBatch("""
+        batchUpdateWithRetry("""
 INSERT INTO e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,va_usr_agt,va_fwd_add,va_nam,va_usr)
 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", signals, (ps, sgn) -> {
-            var idx = restSessionSginalSetter(ps, sgn);
+            var idx = restSessionSignalSetter(ps, sgn);
             ps.setString(++idx, sgn.getName());
             ps.setString(++idx, sgn.getUser());
         });
@@ -180,12 +173,12 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", signals, (ps, sgn) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveRestSessions(List<Pair<HttpSessionSignal, HttpSessionUpdate>> session) {
-    	executeBatchPair("""
+    	batchUpdateWithRetry("""
 INSERT INTO e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,va_usr_agt,va_fwd_add,dh_end,va_nam,va_usr,va_cch_ctr,va_cnt_typ,cd_stt,va_o_sze,va_o_cnt_enc,va_msk,va_asy_drt)
 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", session, (ps, pr) -> {
             var sgn = pr.signal();
             var upd = pr.update();
-            var idx = restSessionSginalSetter(ps, sgn);
+            var idx = restSessionSignalSetter(ps, sgn);
             ps.setTimestamp(++idx, fromNullableInstant(upd.getEnd()));
             ps.setString(++idx, nonNull(upd.getName()) ? upd.getName() : sgn.getName());
             ps.setString(++idx, nonNull(upd.getUser()) ? upd.getUser() : sgn.getUser());
@@ -199,7 +192,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", session, (ps, pr
         });
     }
 
-    static int restSessionSginalSetter(PreparedStatement ps, HttpSessionSignal sgn) throws SQLException {
+    static int restSessionSignalSetter(PreparedStatement ps, HttpSessionSignal sgn) throws SQLException {
         var idx=0;
         ps.setObject(++idx, sgn.getId());
         ps.setObject(++idx, sgn.getInstanceId());
@@ -222,9 +215,9 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", session, (ps, pr
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateRestSessions(List<HttpSessionUpdate> updates) {
-        executeBatch("""
-UPDATE e_rst_ses set va_nam=coalesce(?, va_nam), va_usr=coalesce(?, va_usr), va_cch_ctr=coalesce(?, va_cch_ctr), va_cnt_typ=?, cd_stt=?, va_o_sze=?, va_o_cnt_enc=?, dh_end=?, va_msk=?, va_asy_drt=?
-WHERE id_ses=? AND dh_end is NULL""", updates, (ps, upd) -> {
+        batchUpdateWithRetry("""
+UPDATE e_rst_ses SET va_nam=coalesce(?, va_nam), va_usr=coalesce(?, va_usr), va_cch_ctr=coalesce(?, va_cch_ctr), va_cnt_typ=?, cd_stt=?, va_o_sze=?, va_o_cnt_enc=?, dh_end=?, va_msk=?, va_asy_drt=?
+WHERE id_ses=? AND dh_end IS NULL""", updates, (ps, upd) -> {
             var idx = 0;
             ps.setString(++idx, upd.getName());
             ps.setString(++idx, upd.getUser());
@@ -242,7 +235,7 @@ WHERE id_ses=? AND dh_end is NULL""", updates, (ps, upd) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateMaskRestSessions(List<SessionMaskUpdate> updates) {
-        executeBatch("UPDATE e_rst_ses set va_msk=? WHERE id_ses=? AND dh_end is NULL", updates, (ps, upd) -> {
+        batchUpdateWithRetry("UPDATE e_rst_ses SET va_msk=? WHERE id_ses=?", updates, (ps, upd) -> { //TODO : va_msk&?<>? H2 compatibility
             ps.setInt(1, upd.getMask());
             ps.setObject(2, upd.getId());
         });
@@ -250,7 +243,7 @@ WHERE id_ses=? AND dh_end is NULL""", updates, (ps, upd) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveMainSessionSignals(List<MainSessionSignal> signals) {
-        executeBatch("INSERT INTO e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str) VALUES(?,?,?,?,?,?,?,?)", signals, (ps, sgn) -> {
+        batchUpdateWithRetry("INSERT INTO e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str) VALUES(?,?,?,?,?,?,?,?)", signals, (ps, sgn) -> {
             var idx = mainSessionSignalSetter(ps, sgn);
             ps.setString(++idx, sgn.getLocation());
             ps.setString(++idx, sgn.getName());
@@ -261,7 +254,7 @@ WHERE id_ses=? AND dh_end is NULL""", updates, (ps, upd) -> {
     
     @Transactional(rollbackFor = Throwable.class)
     public void saveMainSessions(List<Pair<MainSessionSignal, MainSessionUpdate>> sessions) {
-    	executeBatchPair("INSERT INTO e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str,dh_end,va_msk,cd_stt,va_asy_drt) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", sessions, (ps, pr) -> {
+    	batchUpdateWithRetry("INSERT INTO e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str,dh_end,va_msk,cd_stt,va_asy_drt) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", sessions, (ps, pr) -> {
             var sgn = pr.signal();
             var upd = pr.update();
             var idx = mainSessionSignalSetter(ps, sgn);
@@ -287,9 +280,9 @@ WHERE id_ses=? AND dh_end is NULL""", updates, (ps, upd) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateMainSessions(List<MainSessionUpdate> updates) {
-        executeBatch("""
-UPDATE e_main_ses set va_lct=coalesce(?, va_lct), va_nam=coalesce(?, va_nam), va_usr=coalesce(?, va_usr), dh_str=coalesce(?, dh_str), dh_end=?, va_msk=?, cd_stt=?, va_asy_drt=?
-WHERE id_ses=? AND dh_end is NULL""", updates, (ps, upd) -> {
+        batchUpdateWithRetry("""
+UPDATE e_main_ses SET va_lct=coalesce(?, va_lct), va_nam=coalesce(?, va_nam), va_usr=coalesce(?, va_usr), dh_str=coalesce(?, dh_str), dh_end=?, va_msk=?, cd_stt=?, va_asy_drt=?
+WHERE id_ses=? AND dh_end IS NULL""", updates, (ps, upd) -> {
             var idx = 0;
             ps.setString(++idx, upd.getLocation());
             ps.setString(++idx, upd.getName());
@@ -305,7 +298,7 @@ WHERE id_ses=? AND dh_end is NULL""", updates, (ps, upd) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateMaskMainSessions(List<SessionMaskUpdate> updates) {
-        executeBatch("UPDATE e_main_ses set va_msk=? WHERE id_ses=? ", updates, (ps, upd) -> {
+        batchUpdateWithRetry("UPDATE e_main_ses SET va_msk=? WHERE id_ses=? ", updates, (ps, upd) -> { //TODO : va_msk&?<>? H2 compatibility
             var idx = 0;
             ps.setInt(++idx, upd.getMask());
             ps.setObject(++idx, upd.getId());
@@ -314,7 +307,7 @@ WHERE id_ses=? AND dh_end is NULL""", updates, (ps, upd) -> {
     
     @Transactional(rollbackFor = Throwable.class)
     public void updateMainSessionAsyncDuration(List<SessionAsyncDurationUpdate> updates) {
-        executeBatch("UPDATE e_main_ses set va_asy_drt=? WHERE id_ses=? AND va_asy_drt=-1", updates, (ps, upd) -> {
+        batchUpdateWithRetry("UPDATE e_main_ses SET va_asy_drt=? WHERE id_ses=? AND va_asy_drt=-1", updates, (ps, upd) -> {
             ps.setLong(1, upd.getDuration());
             ps.setObject(2, upd.getId());
         });
@@ -322,7 +315,7 @@ WHERE id_ses=? AND dh_end is NULL""", updates, (ps, upd) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateRestSessionAsyncDuration(List<SessionAsyncDurationUpdate> updates) {
-        executeBatch("UPDATE e_rst_ses set va_asy_drt=? WHERE id_ses=? AND va_asy_drt=-1", updates, (ps, upd) -> {
+        batchUpdateWithRetry("UPDATE e_rst_ses SET va_asy_drt=? WHERE id_ses=? AND va_asy_drt=-1", updates, (ps, upd) -> {
             ps.setLong(1, upd.getDuration());
             ps.setObject(2, upd.getId());
         });
@@ -330,14 +323,14 @@ WHERE id_ses=? AND dh_end is NULL""", updates, (ps, upd) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveRestRequestSignals(List<HttpRequestSignal> signals) {
-        executeBatch("""
+        batchUpdateWithRetry("""
 INSERT INTO e_rst_rqt(id_rst_rqt,cd_prn_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,va_usr,dh_str)
 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", signals, TraceDao::restRequestSignalSetter);
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveRestRequests(List<Pair<HttpRequestSignal, HttpRequestUpdate>> requests) {
-    	executeBatchPair("""
+    	batchUpdateWithRetry("""
 insert into e_rst_rqt(id_rst_rqt,cd_prn_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_o_sze,va_o_cnt_enc,va_thr,va_usr,dh_str,dh_end,va_cnt_typ,cd_stt,va_i_sze,va_i_cnt_enc,va_bdy_cnt,va_lnk)
 values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
             var sgn = pr.signal();
@@ -375,7 +368,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateRestRequests(List<HttpRequestUpdate> updates) {
-        executeBatch("UPDATE e_rst_rqt set va_cnt_typ=?, cd_stt=?, va_i_sze=?, va_i_cnt_enc=?, dh_end=?, va_bdy_cnt=?, va_lnk=? WHERE id_rst_rqt=? and dh_end is null ", updates, (ps, upd) -> {
+        batchUpdateWithRetry("UPDATE e_rst_rqt SET va_cnt_typ=?, cd_stt=?, va_i_sze=?, va_i_cnt_enc=?, dh_end=?, va_bdy_cnt=?, va_lnk=? WHERE id_rst_rqt=? AND dh_end IS NULL", updates, (ps, upd) -> {
             var idx = 0;
             ps.setString(++idx, contentTypeExtract(upd.getContentType()));
             ps.setShort(++idx, upd.getStatus());
@@ -390,7 +383,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveLocalRequestSignals(List<LocalRequestSignal> signals) {
-        executeBatch("INSERT INTO e_lcl_rqt(id_lcl_rqt,cd_prn_ses,cd_ins,va_typ,va_nam,va_lct,va_usr,va_thr,dh_str) VALUES(?,?,?,?,?,?,?,?,?)", signals, (ps, req) -> {
+        batchUpdateWithRetry("INSERT INTO e_lcl_rqt(id_lcl_rqt,cd_prn_ses,cd_ins,va_typ,va_nam,va_lct,va_usr,va_thr,dh_str) VALUES(?,?,?,?,?,?,?,?,?)", signals, (ps, req) -> {
             var idx = localRequestSignalSetter(ps, req);
             ps.setTimestamp(++idx, fromNullableInstant(req.getStart()));
         });
@@ -398,7 +391,7 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveLocalRequests(List<Pair<LocalRequestSignal, LocalRequestUpdate>> requests) {
-    	executeBatchPair("""
+    	batchUpdateWithRetry("""
 INSERT INTO e_lcl_rqt(id_lcl_rqt,cd_prn_ses,cd_ins,va_typ,va_nam,va_lct,va_usr,va_thr,dh_str,dh_end,cd_stt)
 VALUES(?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
             var sgn = pr.signal();
@@ -425,7 +418,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateLocalRequests(List<LocalRequestUpdate> requests) {
-        executeBatch("UPDATE e_lcl_rqt set dh_str=coalesce(?, dh_str), dh_end=?, cd_stt=? WHERE id_lcl_rqt=? AND dh_end is null", requests, (ps, upd) -> {
+        batchUpdateWithRetry("UPDATE e_lcl_rqt SET dh_str=coalesce(?, dh_str), dh_end=?, cd_stt=? WHERE id_lcl_rqt=? AND dh_end IS NULL", requests, (ps, upd) -> {
             var idx = 0;
             ps.setTimestamp(++idx, fromNullableInstant(upd.getStart()));
             ps.setTimestamp(++idx, fromNullableInstant(upd.getEnd()));
@@ -436,14 +429,14 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveMailRequestSignals(List<MailRequestSignal> signals) {
-        executeBatch("""
+        batchUpdateWithRetry("""
 INSERT INTO e_smtp_rqt(id_smtp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str)
 VALUES(?,?,?,?,?,?,?,?,?)""", signals, TraceDao::mailRequestSetter);
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveMailRequests(List<Pair<MailRequestSignal, MailRequestUpdate>> requests) {
-        executeBatchPair("""
+    	batchUpdateWithRetry("""
 INSERT INTO e_smtp_rqt(id_smtp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str,dh_end,va_cmd,cd_stt)
 VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
             var sgn = pr.signal();
@@ -471,7 +464,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateMailRequests(List<MailRequestUpdate> updates) {
-        executeBatch("UPDATE e_smtp_rqt set dh_end=?, va_cmd=?, cd_stt=? WHERE id_smtp_rqt=? AND dh_end is null", updates, (ps, upd) -> {
+        batchUpdateWithRetry("UPDATE e_smtp_rqt SET dh_end=?, va_cmd=?, cd_stt=? WHERE id_smtp_rqt=? AND dh_end IS NULL", updates, (ps, upd) -> {
             var idx = 0;
             ps.setTimestamp(++idx, fromNullableInstant(upd.getEnd()));
             ps.setString(++idx, upd.getCommand());
@@ -482,14 +475,14 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveFtpRequestSignals(List<FtpRequestSignal> signals) {
-        executeBatch("""
+        batchUpdateWithRetry("""
 INSERT INTO e_ftp_rqt(id_ftp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_srv_vrs,va_clt_vrs,va_usr,va_thr,dh_str)
 VALUES(?,?,?,?,?,?,?,?,?,?,?)""", signals, TraceDao::ftpRequestSignalSetter);
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveFtpRequests(List<Pair<FtpRequestSignal, FtpRequestUpdate>> requests) {
-        executeBatchPair("""
+    	batchUpdateWithRetry("""
 INSERT INTO e_ftp_rqt(id_ftp_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_srv_vrs,va_clt_vrs,va_usr,va_thr,dh_str,dh_end,va_cmd,cd_stt)
 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
             var sgn = pr.signal();
@@ -519,7 +512,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateFtpRequests(List<FtpRequestUpdate> updates) {
-        executeBatch("UPDATE e_ftp_rqt set dh_end=?, va_cmd=?, cd_stt=? WHERE id_ftp_rqt=? AND dh_end is null", updates, (ps, upd) -> {
+    	batchUpdateWithRetry("UPDATE e_ftp_rqt SET dh_end=?, va_cmd=?, cd_stt=? WHERE id_ftp_rqt=? AND dh_end IS NULL", updates, (ps, upd) -> {
             var idx = 0;
             ps.setTimestamp(++idx, fromNullableInstant(upd.getEnd()));
             ps.setString(++idx, upd.getCommand());
@@ -530,14 +523,14 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveLdapRequestSignals(List<DirectoryRequestSignal> signals) {
-        executeBatch("""
+    	batchUpdateWithRetry("""
 INSERT INTO e_ldap_rqt(id_ldap_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str)
 VALUES(?,?,?,?,?,?,?,?,?)""", signals, TraceDao::ldapRequestSignalSetter);
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveLdapRequests(List<Pair<DirectoryRequestSignal, DirectoryRequestUpdate>> requests) {
-        executeBatchPair("""
+    	batchUpdateWithRetry("""
 INSERT INTO e_ldap_rqt(id_ldap_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_pcl,va_usr,va_thr,dh_str,dh_end,va_cmd,cd_stt)
 VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
             var sgn = pr.signal();
@@ -565,7 +558,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateLdapRequests(List<DirectoryRequestUpdate> updates) {
-        executeBatch("UPDATE e_ldap_rqt set dh_end=?, va_cmd=?, cd_stt=? WHERE id_ldap_rqt=? AND dh_end is null", updates, (ps, upd) -> {
+    	batchUpdateWithRetry("UPDATE e_ldap_rqt SET dh_end=?, va_cmd=?, cd_stt=? WHERE id_ldap_rqt=? AND dh_end IS NULL", updates, (ps, upd) -> {
             var idx = 0;
             ps.setTimestamp(++idx, fromNullableInstant(upd.getEnd()));
             ps.setString(++idx, upd.getCommand());
@@ -576,14 +569,14 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pr) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveDatabaseRequestSignals(List<DatabaseRequestSignal> signals) {
-        executeBatch("""
+    	batchUpdateWithRetry("""
 INSERT INTO e_dtb_rqt(id_dtb_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_she,va_nam,va_sha,va_usr,va_thr,va_drv,va_prd_nam,va_prd_vrs,dh_str)
 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", signals, TraceDao::databaseRequestSetter);
     }
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveDatabaseRequests(List<Pair<DatabaseRequestSignal, DatabaseRequestUpdate>> requests) {
-        executeBatchPair("""
+    	batchUpdateWithRetry("""
 INSERT INTO e_dtb_rqt(id_dtb_rqt,cd_prn_ses,cd_ins,va_hst,cd_prt,va_she,va_nam,va_sha,va_usr,va_thr,va_drv,va_prd_nam,va_prd_vrs,dh_str,dh_end,va_cmd,cd_stt)
 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             var sgn = pair.signal();
@@ -604,7 +597,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
         ps.setInt(++idx, sgn.getPort());
         ps.setString(++idx, sgn.getSchema());
         ps.setString(++idx, sgn.getName());
-        ps.setString(++idx, sgn.getSchema());
+        ps.setString(++idx, sgn.getSchema());//FIXME called twice
         ps.setString(++idx, sgn.getUser());
         ps.setString(++idx, sgn.getThreadName());
         ps.setString(++idx, sgn.getDriverVersion());
@@ -616,7 +609,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void updateDatabaseRequests(List<DatabaseRequestUpdate> updates) {
-        executeBatch("UPDATE e_dtb_rqt set dh_end=?, va_cmd=?, cd_stt=? WHERE id_dtb_rqt=? AND dh_end is null", updates, (ps, upd) -> {
+        batchUpdateWithRetry("UPDATE e_dtb_rqt SET dh_end=?, va_cmd=?, cd_stt=? WHERE id_dtb_rqt=? AND dh_end IS NULL", updates, (ps, upd) -> {
            var idx=0;
             ps.setTimestamp(++idx, fromNullableInstant(upd.getEnd()));
             ps.setString(++idx, upd.getCommand());
@@ -627,7 +620,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveHttpRequestStages(List<HttpRequestStage> stages) {
-        executeBatch("INSERT INTO e_rst_rqt_stg(va_nam,dh_str,dh_end,cd_ord,cd_rst_rqt) VALUES(?,?,?,?,?)", stages, (ps, stg)-> {
+        batchUpdateWithRetry("INSERT INTO e_rst_rqt_stg(va_nam,dh_str,dh_end,cd_ord,cd_rst_rqt) VALUES(?,?,?,?,?)", stages, (ps, stg)-> {
             var idx=0;
             ps.setString(++idx, stg.getName());
             ps.setTimestamp(++idx, fromNullableInstant(stg.getStart()));
@@ -639,7 +632,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveHttpSessionStages(List<HttpSessionStage> stages) {
-        executeBatch("INSERT INTO e_rst_ses_stg(va_nam,dh_str,dh_end,cd_ord,cd_prn_ses) VALUES(?,?,?,?,?)", stages, (ps, stg)-> {
+        batchUpdateWithRetry("INSERT INTO e_rst_ses_stg(va_nam,dh_str,dh_end,cd_ord,cd_prn_ses) VALUES(?,?,?,?,?)", stages, (ps, stg)-> {
             var idx=0;
             ps.setString(++idx, stg.getName());
             ps.setTimestamp(++idx, fromNullableInstant(stg.getStart()));
@@ -651,7 +644,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveFtpRequestStages(List<FtpRequestStage> stages) {
-        executeBatch("INSERT INTO e_ftp_stg(va_nam,dh_str,dh_end,va_cmd,cd_ord,cd_ftp_rqt,va_pld) VALUES(?,?,?,?,?,?,?)", stages, (ps, stg)-> {
+        batchUpdateWithRetry("INSERT INTO e_ftp_stg(va_nam,dh_str,dh_end,va_cmd,cd_ord,cd_ftp_rqt,va_pld) VALUES(?,?,?,?,?,?,?)", stages, (ps, stg)-> {
             var idx=0;
             ps.setString(++idx, stg.getName());
             ps.setTimestamp(++idx, fromNullableInstant(stg.getStart()));
@@ -665,7 +658,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveLdapRequestStages(List<DirectoryRequestStage> stages) {
-        executeBatch("INSERT INTO e_ldap_stg(va_nam,dh_str,dh_end,va_cmd,cd_ord,cd_ldap_rqt,va_pld) VALUES(?,?,?,?,?,?,?)", stages, (ps, stg)-> {
+        batchUpdateWithRetry("INSERT INTO e_ldap_stg(va_nam,dh_str,dh_end,va_cmd,cd_ord,cd_ldap_rqt,va_pld) VALUES(?,?,?,?,?,?,?)", stages, (ps, stg)-> {
             var idx=0;
             ps.setString(++idx, stg.getName());
             ps.setTimestamp(++idx, fromNullableInstant(stg.getStart()));
@@ -679,7 +672,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveMailRequestStages(List<MailRequestStage> stages) {
-        executeBatch("INSERT INTO e_smtp_stg(va_nam,dh_str,dh_end,va_cmd,cd_ord,cd_smtp_rqt) VALUES(?,?,?,?,?,?)", stages, (ps, stg)-> {
+        batchUpdateWithRetry("INSERT INTO e_smtp_stg(va_nam,dh_str,dh_end,va_cmd,cd_ord,cd_smtp_rqt) VALUES(?,?,?,?,?,?)", stages, (ps, stg)-> {
         	var idx=0;
             ps.setString(++idx, stg.getName());
             ps.setTimestamp(++idx, fromNullableInstant(stg.getStart()));
@@ -693,7 +686,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
 
     void saveMailRequestMails(List<MailRequestStage> stages) {
     	var mails = stages.stream().filter(m -> nonNull(m.getMail())).toList();
-        executeBatch("INSERT INTO e_smtp_mail(va_sbj,va_cnt_typ,va_frm,va_rcp,va_rpl,va_sze,cd_smtp_rqt) VALUES(?,?,?,?,?,?,?)", mails, (ps, stg)-> {
+        batchUpdateWithRetry("INSERT INTO e_smtp_mail(va_sbj,va_cnt_typ,va_frm,va_rcp,va_rpl,va_sze,cd_smtp_rqt) VALUES(?,?,?,?,?,?,?)", mails, (ps, stg)-> {
         	var idx=0;
             var mail = stg.getMail();
             ps.setString(++idx, mail.getSubject());
@@ -708,7 +701,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveDatabaseRequestStages(List<DatabaseRequestStage> stages) {
-        executeBatch("INSERT INTO e_dtb_stg(va_nam,dh_str,dh_end,va_cmd,cd_ord,cd_dtb_rqt,va_pld) VALUES(?,?,?,?,?,?,?)", stages, (ps, stg)-> {
+        batchUpdateWithRetry("INSERT INTO e_dtb_stg(va_nam,dh_str,dh_end,va_cmd,cd_ord,cd_dtb_rqt,va_pld) VALUES(?,?,?,?,?,?,?)", stages, (ps, stg)-> {
             var idx=0;
             ps.setString(++idx, stg.getName());
             ps.setTimestamp(++idx, fromNullableInstant(stg.getStart()));
@@ -722,7 +715,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveExceptionTraces(List<ExceptionTrace> exceptions) {
-        executeBatch("INSERT INTO e_exc_inf(va_err_typ,va_err_msg,va_stk,va_cas,cd_ord,cd_trc,va_trc_typ) VALUES(?,?,?,?,?,?,?)", exceptions, (ps, exp) -> {
+        batchUpdateWithRetry("INSERT INTO e_exc_inf(va_err_typ,va_err_msg,va_stk,va_cas,cd_ord,cd_trc,va_trc_typ) VALUES(?,?,?,?,?,?,?)", exceptions, (ps, exp) -> {
             var idx=0;
             ps.setString(++idx, exp.getType());
             ps.setString(++idx, exp.getMessage());
@@ -736,7 +729,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
     
     @Transactional(rollbackFor = Throwable.class)
     public void saveSessionEvents(List<SessionEvent> exceptions) {
-        executeBatch("INSERT INTO e_ses_evt(dh_str,va_typ,va_cnt,va_scp,va_lct,cd_prn_ses,cd_ins) VALUES(?,?,?,?,?,?,?)", exceptions, (ps, exp) -> {
+        batchUpdateWithRetry("INSERT INTO e_ses_evt(dh_str,va_typ,va_cnt,va_scp,va_lct,cd_prn_ses,cd_ins) VALUES(?,?,?,?,?,?,?)", exceptions, (ps, exp) -> {
             var idx=0;
             ps.setTimestamp(++idx, fromNullableInstant(exp.getInstant()));
             ps.setString(++idx, exp.getType());
@@ -750,7 +743,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveBrowserConfigs(List<BrowserConfigDto> configs) {
-        executeBatch("INSERT INTO o_brw_cfg(va_dvc_dsp_rsl,va_dvc_orn,va_dvc_cnt, va_sav_dta, va_wdw_vpt_bds, va_wdw_zom_lvl, va_usr_lng,va_usr_thm,cd_prn_ses) VALUES(?,?,?,?,?,?,?,?,?)", configs, (ps, cfg) -> {
+        batchUpdateWithRetry("INSERT INTO o_brw_cfg(va_dvc_dsp_rsl,va_dvc_orn,va_dvc_cnt, va_sav_dta, va_wdw_vpt_bds, va_wdw_zom_lvl, va_usr_lng,va_usr_thm,cd_prn_ses) VALUES(?,?,?,?,?,?,?,?,?)", configs, (ps, cfg) -> {
             var idx = 0;
             ps.setString(++idx, cfg.getDeviceDisplayResolution());
             ps.setString(++idx, cfg.getDeviceOrientation());
@@ -765,31 +758,25 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
     }
 
 
-    private <T extends EventTrace> void executeBatch(String sql, List<T> records, ParameterizedPreparedStatementSetter<T> pss) {
-       var resultats = updateAll(sql, records, pss, t-> publisher.publishEvent(new UnsavedEventTraceEvent(this, t, false)));
-        var i = 0;
-        for (var batch : resultats) {
-            for (var updatedRows : batch) {
-                if (updatedRows == 0) {
-                    log.warn(
-                            "Row at index {} was not updated, record={}, sql={}", i, records.get(i), sql);
-                }
-                i++;
-            }
-        }
-    }
-
-    private <T extends EventTrace, V extends EventTrace> void executeBatchPair(String sql, List<Pair<T,V>> it, ParameterizedPreparedStatementSetter<Pair<T,V>> pss) {
-		updateAll(sql, it, pss, t-> {
-			publisher.publishEvent(new UnsavedEventTraceEvent(this, t.signal(), false));
-			publisher.publishEvent(new UnsavedEventTraceEvent(this, t.update(), true));
-		});
-    }
-
-    private <T> int[][] updateAll(String sql, List<T> records, ParameterizedPreparedStatementSetter<T> pss, Consumer<T> fallback) {
-    	if(isEmpty(records)) {
-            return new int[0][];
+    private <T> void batchUpdateWithRetry(String sql, List<T> records, ParameterizedPreparedStatementSetter<T> pss) {
+    	if(nonNull(records) && !records.isEmpty()) {
+	       var result = updateAll(sql, records, pss);
+	        var idx=0;
+	        for (var batch : result) {
+	            for (var updatedRows : batch) {
+	                if(updatedRows == 0) {
+	                    log.warn("TraceDao.batchUpdateWithRetry: Record {} was not updated, sql={}", records.get(idx), sql);
+	                }
+	                idx++;
+	            }
+	        }
+	        if(records.size() != idx) {
+	        	log.warn("TraceDao.batchUpdateWithRetry: Number of records processed ({}) does not match number of records provided ({}), sql={}", idx, records.size(), sql);
+	        }
     	}
+    }
+
+    private <T> int[][] updateAll(String sql, List<T> records, ParameterizedPreparedStatementSetter<T> pss) {
 		var cnx = getConnection(template.getDataSource()); //current transaction connection
 		Savepoint sp = null;
 		if(supportsSavePoints) {
@@ -801,7 +788,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
 			}
 		}
 		try {
-            var results =	template.batchUpdate(sql, records, BATCH_SIZE, pss);
+            var results = template.batchUpdate(sql, records, BATCH_SIZE, pss);
 			if(nonNull(sp)) {
 				try {
 					cnx.releaseSavepoint(sp);
@@ -820,7 +807,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
 				} catch (SQLException e1) {
 					throw new IllegalStateException("Failed to rollback after batch update failure", e1);
 				}
-				var rows = retryAsSingles(sql, records, pss, fallback, cnx);
+				var rows = retryAsSingles(sql, records, pss, cnx);
 		        log.warn("Batch update failed with DuplicateKeyException, retried as single updates for batch, total rows updated: {}", rows);
                 return new int[][] { rows };
             }
@@ -833,43 +820,34 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
 		}
     }
 
-    private <T>  int[] retryAsSingles(String sql, List<T> records, ParameterizedPreparedStatementSetter<T> pss, Consumer<T> fallback, Connection cnx) {
-        if(!supportsSavePoints) {
-			throw new IllegalStateException("Cannot retry as single updates because savepoints are not supported");
-		}
-    	var rows = new int[records.size()];
-        for (int i = 0; i < records.size(); i++) {
-        	var r = records.get(i);
-        	Savepoint sp = null;
-            try {
-                sp = cnx.setSavepoint();
-                rows[i] = template.update(sql, ps -> pss.setValues(ps, r));
-                cnx.releaseSavepoint(sp);
-            } catch (Exception e) {
-                if (nonNull(sp)) {
+    private <T> int[] retryAsSingles(String sql, List<T> records, ParameterizedPreparedStatementSetter<T> pss, Connection cnx) {
+        if(supportsSavePoints) {
+        	var rows = new int[records.size()];
+            for(int i = 0; i < records.size(); i++) {
+            	var r = records.get(i);
+            	Savepoint sp = null;
+                try {
+                    sp = cnx.setSavepoint();
+                    rows[i] = template.update(sql, ps-> pss.setValues(ps, r));
+                    cnx.releaseSavepoint(sp);
+                } catch (DuplicateKeyException e) { //cannot be setSavepoint, so we cannot retry as single updates
                     try {
                         cnx.rollback(sp);
+                        rows[i] = 0;
                     } catch (SQLException ex) {
     					throw new IllegalStateException("Failed to rollback after single update failure", ex);
                     }
                 }
-                if (e instanceof DuplicateKeyException) {
-                    try {
-                        rows[i] = 0;
-                        //fallback.accept(r); //continue
-                    } catch (Exception ex) {
-                        log.error("Failed to execute fallback for record " + r, ex);
-                    }
-                }
-                else if (e instanceof RuntimeException re) {
-                	throw re;
-                }
-                else {
+                catch (RuntimeException e) {
+    				throw e;
+    			}
+                catch (Exception e) {
                 	throw new RuntimeException("Failed to execute single update for record " + r, e);
-                }
+    			}
             }
+            return rows;
         }
-        return rows;
+        throw new UnsupportedOperationException("Cannot retry as single updates because savepoints are not supported");
     }
 
     static boolean supportsSavePoints(DataSource ds) {
@@ -877,7 +855,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
         	try(var cnx = ds.getConnection()){
     			return cnx.getMetaData().supportsSavepoints();
     		} catch (Exception e) {
-    			// do nothing
+    			log.warn("TraceDao.supportsSavePoints: Failed to check if savepoints are supported", e);
     		}
     	}
     	return false;
