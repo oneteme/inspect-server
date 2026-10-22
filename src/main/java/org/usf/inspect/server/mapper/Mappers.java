@@ -35,6 +35,7 @@ import org.usf.inspect.server.dto.MailRequestDto;
 import org.usf.inspect.server.dto.MainSessionDto;
 import org.usf.inspect.server.dto.RestRequestDto;
 import org.usf.inspect.server.dto.RestSessionDto;
+import org.usf.inspect.server.dto.SessionEventDto;
 import org.usf.inspect.server.model.DatabaseRequest;
 import org.usf.inspect.server.model.DirectoryRequest;
 import org.usf.inspect.server.model.FtpRequest;
@@ -595,6 +596,20 @@ public class Mappers {
                     rs.getString("location"),
                     rs.getObject("sessionId", UUID.class)
             );
+        };
+    }
+
+    public static RowMapper<SessionEventDto> sessionEventMapper(){
+        return (rs, row) -> {
+            var out = new SessionEventDto();
+            out.setInstant(fromNullableTimestamp(rs.getTimestamp("start")));
+            out.setType(rs.getString("type"));
+            out.setValue(rs.getString("value"));
+            out.setScope(rs.getString("scope"));
+            out.setLocation(rs.getString("location"));
+            out.setSessionId(rs.getObject("sessionId", UUID.class));
+            out.setNamespace(rs.getString("namespace"));
+            return out;
         };
     }
 

@@ -66,12 +66,15 @@ public class TraceController {
 		if (instance.getId() == null){
 			return status(BAD_REQUEST).body("invalid id="+instance.getId());
 		}
+		if(atm > 1 && service.hasInstance(instance.getId())) {
+			return status(CONFLICT).body("instance="+instance.getId()+" has already been registered");
+		}
 		if(nonNull(principal) && !principal.getName().equals(instance.getNamespace())) {
 			log.warn("namespace mismatch between principal={} and instance={}", principal.getName(), instance.getNamespace());
 			instance.setNamespace(principal.getName());
 		}
 		try {
-			service.addInstance(instance, atm); //TODO !important : check existing instance (if atm > 1) before insert
+			service.addInstance(instance, atm);
 			return ok(instance.getId().toString());
 		}
 		catch(Exception e) {

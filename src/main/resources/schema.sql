@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS e_main_ses (
     va_thr varchar,
     va_msk int,
     cd_ins UUID,
-    cd_stt SMALLINT
+    cd_stt SMALLINT,
+    va_asy_drt BIGINT
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_main_ses_id_ses_dh_str ON e_main_ses(id_ses, dh_str DESC);
@@ -41,7 +42,8 @@ CREATE TABLE IF NOT EXISTS e_rst_ses (
     va_lnk boolean,
     va_int_nds text,
     cd_ins UUID,
-    va_fwd_add varchar
+    va_fwd_add varchar,
+    va_asy_drt BIGINT
 );
 
 CREATE TABLE IF NOT EXISTS e_rst_ses_stg (

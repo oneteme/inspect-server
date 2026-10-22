@@ -95,6 +95,13 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
         serverHub().setState(state);
         log.info("Trace dispatcher state updated to {}", state);
     }
+
+    public boolean hasInstance(UUID id) {
+        return template.queryForObject(
+                "SELECT COUNT(*) FROM e_env_ins WHERE id_ins=?",
+                (rs, idx) -> rs.getInt(1),
+                id) > 0;
+    }
     
     public boolean hasBeenTraced(UUID id, int seq) {
 		try {

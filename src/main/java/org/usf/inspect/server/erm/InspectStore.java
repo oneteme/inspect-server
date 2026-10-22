@@ -160,6 +160,8 @@ public interface InspectStore extends StoreCatalog {
 			.register(LDAP_REQUEST_STAGE_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(ldapRequestStageRowMapper())))
 			.register(EXCEPTION_BY_REQUEST_RESULTSET_MAPPER, rsp-> defaultExecutor(exceptionByRequestResultSetMapper()))
 			.register(EXCEPTION_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(exceptionRowMapper())))
-			.register(SESSION_EVENT_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(sessionEventRowMapper())));
+			.register(SESSION_EVENT_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(sessionEventRowMapper())))
+			.register(SESSION_EVENT_MAPPER, rsp -> defaultExecutor(toListMapper(sessionEventMapper())));
+;
 
 }
