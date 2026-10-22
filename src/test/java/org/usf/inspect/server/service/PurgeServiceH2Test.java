@@ -2,8 +2,16 @@ package org.usf.inspect.server.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doReturn;
-import static org.usf.inspect.core.TraceHub.hub;
-import static org.usf.inspect.server.service.PurgeServiceTestData.*;
+import static org.usf.inspect.server.service.PurgeServiceTestData.ABANDONED_INSTANCE_ID;
+import static org.usf.inspect.server.service.PurgeServiceTestData.ABANDONED_REQUEST_ID;
+import static org.usf.inspect.server.service.PurgeServiceTestData.ACTIVE_INSTANCE_ID;
+import static org.usf.inspect.server.service.PurgeServiceTestData.ACTIVE_REQUEST_ID;
+import static org.usf.inspect.server.service.PurgeServiceTestData.CLOSED_INSTANCE_ID;
+import static org.usf.inspect.server.service.PurgeServiceTestData.CLOSED_REQUEST_ID;
+import static org.usf.inspect.server.service.PurgeServiceTestData.NO_TRACE_INSTANCE_ID;
+import static org.usf.inspect.server.service.PurgeServiceTestData.NO_TRACE_REQUEST_ID;
+import static org.usf.inspect.server.service.PurgeServiceTestData.RECENT_NO_TRACE_INSTANCE_ID;
+import static org.usf.inspect.server.service.PurgeServiceTestData.RECENT_NO_TRACE_REQUEST_ID;
 
 import java.time.Duration;
 import java.util.List;
@@ -13,15 +21,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.context.ActiveProfiles;
-import org.usf.inspect.InspectCollectorProperties;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.usf.inspect.InstanceType;
 import org.usf.inspect.Retention;
-import org.usf.inspect.core.TraceDispatcherHub;
 import org.usf.inspect.server.dao.PurgeDao;
 
 @SpringBootTest
@@ -34,7 +40,7 @@ class PurgeServiceH2Test {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @SpyBean
+    @MockitoSpyBean
     private PurgeDao purgeDao;
 
     @BeforeEach

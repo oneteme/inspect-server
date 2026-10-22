@@ -66,6 +66,7 @@ inspect:
   application:
     name: ${spring.application.name} 
     namespace: jarvis
+    version: 0.0.1
   server:
     scheduling:
       interval: 30s #default=60s, interval between trace dispatches

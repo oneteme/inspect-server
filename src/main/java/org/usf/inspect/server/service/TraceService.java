@@ -92,8 +92,8 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
     }
     
     public void updateState(DispatchState state) {
-        log.info("update dispatcher state to {}", state);
         serverHub().setState(state);
+        log.info("Trace dispatcher state updated to {}", state);
     }
     
     public boolean hasBeenTraced(UUID id, int seq) {

@@ -1,10 +1,11 @@
 package org.usf.inspect.server.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.json.JsonMapper;
+
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.boot.restclient.RestTemplateBuilder;
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,7 +28,7 @@ public class CacheController {
 
     private final TracePersister service;
     private final RestTemplate template;
-    private final ObjectMapper mapper;
+    private final JsonMapper mapper;
 
     @Value("${spring.profiles.active:}")
     private String activeProfile;
@@ -35,11 +36,11 @@ public class CacheController {
     @Value("${inspect.server.cache.import.host:}")
 	private String host;
 
-	public CacheController(ObjectMapper mapper, TracePersister service, RestTemplateBuilder builder) {
+	public CacheController(JsonMapper mapper, TracePersister service, RestTemplateBuilder builder) {
 		this.service = service;
 		this.mapper = mapper;
 		this.template = builder //load interceptors
-				.messageConverters(new MappingJackson2HttpMessageConverter(mapper))
+				.messageConverters(new JacksonJsonHttpMessageConverter(mapper))
                 .defaultHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                 .build();
 	}

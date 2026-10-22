@@ -28,7 +28,6 @@ import org.usf.inspect.ReportEvent;
 import org.usf.inspect.SessionEvent;
 import org.usf.inspect.StackTraceRow;
 import org.usf.inspect.SystemMetrics;
-import org.usf.inspect.core.*;
 import org.usf.inspect.server.dto.DatabaseRequestDto;
 import org.usf.inspect.server.dto.DirectoryRequestDto;
 import org.usf.inspect.server.dto.FtpRequestDto;
@@ -48,8 +47,9 @@ import org.usf.inspect.server.model.TraceBatch;
 import org.usf.jquery.core.ResultSetMapper;
 import org.usf.jquery.core.RowMapper;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
 
 public class Mappers {
     public static ResultSetMapper<InstanceEnvironment> instanceEnvironmentResultSetMapper() {
@@ -85,7 +85,6 @@ public class Mappers {
 
     public static RowMapper<ReportEvent> logEntryRowMapper() {
         return (rs, row) -> {
-            try {
                 return new ReportEvent(
                         fromNullableTimestamp(rs.getTimestamp("start")),
                         null,
@@ -95,9 +94,6 @@ public class Mappers {
                         rs.getString("stacktrace") != null ? defaultMapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {
                         }) : null
                 );
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
         };
     }
 
@@ -170,10 +166,10 @@ public class Mappers {
                 out.setLinked(rs.getBoolean("linked"));
                 try {
                     String intermediateNodesStr = rs.getString("intermediateNodes");
-                    if (intermediateNodesStr != null) { //TODO String[] => split(',')
+                    if (intermediateNodesStr != null) { //FIXME(@tasnimRIDENE) String[] => just split(',')
                         out.setIntermediateNodes(defaultMapper.readValue(intermediateNodesStr, new TypeReference<java.util.List<String>>() {}));
                     }
-                } catch (JsonProcessingException e) {
+                } catch (JacksonException e) {
                     throw new RuntimeException(e);
                 }
                 return out;
@@ -311,7 +307,6 @@ public class Mappers {
             out.setName(rs.getString("name"));
             out.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
-            try {
                 out.setException(getExceptionInfoIfNotNull(
                         rs.getString("errType"),
                         rs.getString("errMsg"),
@@ -319,9 +314,6 @@ public class Mappers {
                                 ? defaultMapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {})
                                 : null
                 ));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
             return out;
         };
     }
@@ -386,7 +378,6 @@ public class Mappers {
             out.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
             out.setCommand(rs.getString("command"));
-            try {
                 out.setException(getExceptionInfoIfNotNull(
                         rs.getString("errType"),
                         rs.getString("errMsg"),
@@ -394,9 +385,6 @@ public class Mappers {
                                 ? defaultMapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {})
                                 : null
                 ));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
             return out;
         };
     }
@@ -444,7 +432,6 @@ public class Mappers {
             out.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
             out.setCommand(rs.getString("command"));
-            try {
                 out.setException(getExceptionInfoIfNotNull(
                         rs.getString("errType"),
                         rs.getString("errMsg"),
@@ -452,9 +439,6 @@ public class Mappers {
                                 ? defaultMapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {})
                                 : null
                 ));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
             return out;
         };
     }
@@ -499,7 +483,6 @@ public class Mappers {
             out.setCommand(rs.getString("command"));
             out.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
-            try {
                 out.setException(getExceptionInfoIfNotNull(
                         rs.getString("errType"),
                         rs.getString("errMsg"),
@@ -507,9 +490,6 @@ public class Mappers {
                                 ? defaultMapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {})
                                 : null
                 ));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
             return out;
         };
     }
@@ -569,7 +549,6 @@ public class Mappers {
             out.setCommand(rs.getString("command"));
             out.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
-            try {
                 out.setException(getExceptionInfoIfNotNull(
                         rs.getString("errType"),
                         rs.getString("errMsg"),
@@ -577,9 +556,6 @@ public class Mappers {
                                 ? defaultMapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {})
                                 : null
                 ));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
             return out;
         };
     }
