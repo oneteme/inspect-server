@@ -171,7 +171,7 @@ class TraceDaoH2Test {
 
             traceDao.saveLogEntries(List.of(logEntry));
 
-            assertSingleRow("e_log_ent", data("log").required("rowMin"));
+            assertSingleRow("e_rpt_evt", data("log").required("rowMin"));
         }
 
         @Test
@@ -180,7 +180,7 @@ class TraceDaoH2Test {
 
             traceDao.saveLogEntries(List.of(logEntry));
 
-            assertSingleRow("e_log_ent", data("log").required("row"));
+            assertSingleRow("e_rpt_evt", data("log").required("row"));
         }
     }
 

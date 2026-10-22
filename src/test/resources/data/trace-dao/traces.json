@@ -57,7 +57,7 @@
       "va_usr_agt": "Postman/7.43.0",
       "va_lnk": true,
       "va_fwd_add": "192.0.2.1, 192.0.2.2",
-      "va_msk": 0,
+      "va_msk": null,
       "dh_end": null,
       "va_cch_ctr": null,
       "va_cnt_typ": null,
@@ -98,7 +98,7 @@
       "va_usr_agt": null,
       "va_lnk": false,
       "va_fwd_add": null,
-      "va_msk": 0,
+      "va_msk": null,
       "dh_end": null,
       "va_cch_ctr": null,
       "va_cnt_typ": null,
@@ -774,8 +774,10 @@
     "input": {
       "@type": "00",
       "instant": "2026-01-15T10:00:00Z",
-      "level": "WARN",
+      "thread": "http-worker",
+      "action": "REPORT",
       "message": "Slow request",
+      "exception": "java.lang.IllegalStateException: boom",
       "stackRows": [
         {
           "className": "example.Service",
@@ -783,13 +785,11 @@
           "lineNumber": 42
         }
       ],
-      "sessionId": "30000000-0000-0000-0000-000000000001",
       "instanceId": "20000000-0000-0000-0000-000000000001"
     },
     "row": {
-      "dh_str": "2026-01-15T10:00:00Z",
-      "va_lvl": "WARN",
       "va_msg": "Slow request",
+      "va_err_typ": "java.lang.IllegalStateException: boom",
       "va_stk": [
         {
           "className": "example.Service",
@@ -797,13 +797,14 @@
           "lineNumber": 42
         }
       ],
-      "cd_prn_ses": "30000000-0000-0000-0000-000000000001",
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_thr": "http-worker",
+      "va_act": "REPORT",
       "cd_ins": "20000000-0000-0000-0000-000000000001"
     },
     "rowMin": {
-      "dh_str": "2026-01-15T10:00:00Z",
-      "va_lvl": null,
       "va_msg": "Slow request",
+      "va_err_typ": null,
       "va_stk": [
         {
           "className": "example.Service",
@@ -811,7 +812,9 @@
           "lineNumber": 42
         }
       ],
-      "cd_prn_ses": null,
+      "dh_str": "2026-01-15T10:00:00Z",
+      "va_thr": "main",
+      "va_act": "REPORT",
       "cd_ins": null
     }
   },
@@ -1146,15 +1149,19 @@
       "dh_str": "2026-01-15T10:00:00Z",
       "va_typ": "click",
       "va_cnt": "submit",
+      "va_scp": null,
       "va_lct": "#order-form",
-      "cd_prn_ses": "30000000-0000-0000-0000-000000000001"
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001",
+      "cd_ins": null
     },
     "rowMin": {
       "dh_str": "2026-01-15T10:00:00Z",
       "va_typ": "click",
       "va_cnt": "submit",
-      "va_lct": "#order-form",
-      "cd_prn_ses": "30000000-0000-0000-0000-000000000001"
+      "va_scp": "#order-form",
+      "va_lct": ">anywhere<",
+      "cd_prn_ses": "30000000-0000-0000-0000-000000000001",
+      "cd_ins": null
     }
   },
   "browser": {
