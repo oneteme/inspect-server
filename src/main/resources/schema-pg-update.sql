@@ -60,15 +60,23 @@ SET cd_stt = CASE
                  WHEN dh_end is not null then  200
     END;
 
+-- Migration du type de session principal legacy
+UPDATE e_main_ses
+SET va_typ = 'SCHEDULE'
+WHERE va_typ = 'BATCH';
+
 ALTER TABLE e_main_ses DROP COLUMN IF EXISTS va_err_typ;
 ALTER TABLE e_main_ses DROP COLUMN IF EXISTS va_err_msg;
 ALTER TABLE e_main_ses DROP COLUMN IF EXISTS va_stk;
-
+ALTER TABLE e_main_ses
+    ADD COLUMN IF NOT EXISTS va_asy_drt BIGINT;
 
 -- Nettoyage des exceptions legacy
 ALTER TABLE e_rst_ses DROP COLUMN IF EXISTS va_err_typ;
 ALTER TABLE e_rst_ses DROP COLUMN IF EXISTS va_err_msg;
 ALTER TABLE e_rst_ses DROP COLUMN IF EXISTS va_stk;
+ALTER TABLE e_rst_ses
+    ADD COLUMN IF NOT EXISTS va_asy_drt BIGINT;
 
 -- Migration du type du statut HTTP : INT -> SMALLINT
 ALTER TABLE e_rst_ses

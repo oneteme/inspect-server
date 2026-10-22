@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS e_main_ses (
     va_thr varchar,
     va_msk int,
     cd_ins UUID,
-    cd_stt SMALLINT
+    cd_stt SMALLINT,
+    va_asy_drt BIGINT
 )
 PARTITION BY RANGE (dh_str);
 
@@ -38,7 +39,8 @@ CREATE TABLE IF NOT EXISTS e_rst_ses (
     va_msk int,
     va_lnk boolean,
     cd_ins UUID,
-    va_fwd_add varchar
+    va_fwd_add varchar,
+    va_asy_drt BIGINT
 )
 PARTITION BY RANGE (dh_str);
 
@@ -318,6 +320,8 @@ CREATE TABLE IF NOT EXISTS o_brw_cfg (
      cd_prn_ses uuid
 );
 
+
+
 -- Ajouter les index du cd instance dans les requests
 CREATE UNIQUE INDEX IF NOT EXISTS idx_main_ses_id_ses_dh_str ON e_main_ses(id_ses, dh_str DESC);
 CREATE INDEX IF NOT EXISTS idx_main_ses_cd_ins ON e_main_ses(cd_ins);
@@ -360,3 +364,4 @@ CREATE INDEX IF NOT EXISTS idx_nsp_ins_va_nam ON e_nsp_ins(va_nam);
 CREATE INDEX IF NOT EXISTS idx_ses_evt_cd_ins ON e_ses_evt(cd_ins);
 CREATE INDEX IF NOT EXISTS idx_ses_evt_cd_prn_ses ON e_ses_evt(cd_prn_ses);
 CREATE INDEX IF NOT EXISTS idx_env_ins_cd_nsp ON e_env_ins(cd_nsp);
+

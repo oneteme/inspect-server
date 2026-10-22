@@ -66,11 +66,14 @@ public class TraceController {
 		if (instance.getId() == null){
 			return status(BAD_REQUEST).body("invalid id="+instance.getId());
 		}
+		if(atm > 1 && service.hasInstance(instance.getId())) {
+			return status(CONFLICT).body("instance="+instance.getId()+" has already been registered");
+		}
 		var nsp = nonNull(principal) 
 				? principal.getName()
 				: instance.getNamespace(); //disabled spring security
 		try {
-			service.addInstance(instance, nsp, atm); //TODO : check existing instance (if atm > 1) before insert
+			service.addInstance(instance, nsp, atm);
 			return ok(instance.getId().toString());
 		}
 		catch(Exception e) {

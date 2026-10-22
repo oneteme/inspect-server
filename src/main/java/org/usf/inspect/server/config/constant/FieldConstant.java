@@ -70,6 +70,7 @@ public final class FieldConstant {
     public static final String VA_CLT_VRS = "va_clt_vrs";
     public static final String VA_ARG = "va_arg";
     public static final String VA_MSK = "va_msk";
+    public static final String VA_ASY_DRT = "va_asy_drt";
     public static final String CD_ORD = "cd_ord";
     public static final String VA_SBJ = "va_sbj";
     public static final String VA_FRM = "va_frm";
