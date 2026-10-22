@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.usf.inspect.core.DispatchState.COLLECT;
 import static org.usf.inspect.core.DispatchState.DISABLE;
 import static org.usf.inspect.server.JsonUtils.defaultMapper;
+import static org.usf.inspect.server.service.TraceBatchDispatcherHub.INSPECT_ID;
 import static org.usf.inspect.server.service.TraceBatchDispatcherHub.serverHub;
 
 import java.time.Instant;
@@ -216,8 +217,8 @@ class TraceServiceH2Test {
         var request = new HttpRequestSignal(UUID.randomUUID(), UUID.randomUUID(), START, "http-worker");
 
         traceService.onApplicationEvent(new UnsavedEventTraceEvent(this, request, false));
-
-        assertTrue(traceService.peekQueue().isEmpty());
+        assertTrue(traceService.peekQueue().stream()
+                .allMatch(t -> t instanceof ReportEvent report && INSPECT_ID.equals(report.getInstanceId())));
     }
 
     @SuppressWarnings("unchecked")

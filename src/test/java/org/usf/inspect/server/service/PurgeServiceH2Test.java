@@ -18,10 +18,8 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.context.ActiveProfiles;
-import org.usf.inspect.InspectCollectorProperties;
 import org.usf.inspect.InstanceType;
 import org.usf.inspect.Retention;
-import org.usf.inspect.core.TraceDispatcherHub;
 import org.usf.inspect.server.dao.PurgeDao;
 
 @SpringBootTest
