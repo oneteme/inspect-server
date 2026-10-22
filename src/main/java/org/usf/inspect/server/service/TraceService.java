@@ -32,21 +32,18 @@ import org.usf.inspect.server.exception.DispatchProcessingException;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.TraceBatch;
 
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 public class TraceService implements ApplicationListener<UnsavedEventTraceEvent> {
 
     private final JdbcTemplate template;
 
-    TraceService(JdbcTemplate template) {
-        this.template = template;
-    }
-
-    //transactional !?
-    public void addInstance(InstanceEnvironment instance, String namespace, int attempts) throws DispatchException {
-        instance.setNamespace(namespace);
+    public void addInstance(InstanceEnvironment instance, int attempts) throws DispatchException {
         serverHub().dispatch(instance);
         serverHub().emitTrace(newTraceBatch(now(), 0, attempts, instance.getId(), emptyList())); //ensure that the trace batch is emitted after the instance has been dispatched
     }
@@ -64,8 +61,8 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
                 else if(e instanceof AbstractSessionSignal sgn) {
                     sgn.setInstanceId(id);
                 } 
-                else if(e instanceof SystemMetrics mru) {
-                    mru.setInstanceId(id);
+                else if(e instanceof SystemMetrics sys) {
+                    sys.setInstanceId(id);
                 } 
                 else if(e instanceof ReportEvent evn) {
                     evn.setInstanceId(id);
@@ -124,6 +121,7 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
     }
 
     @Override
+    @Deprecated(since = "v1.2")
     public void onApplicationEvent(UnsavedEventTraceEvent event) {
         var trace = event.getTrace();
         if(event.isRetry()) {
