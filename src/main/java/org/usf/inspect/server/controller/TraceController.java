@@ -50,7 +50,7 @@ public class TraceController {
 
 	private final TraceService service;
 
-	@PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
+	@PutMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
 	public ResponseEntity<Object> addInstanceEnvironment(
 			@RequestBody InstanceEnvironment instance, 
 			@RequestParam int atm,
