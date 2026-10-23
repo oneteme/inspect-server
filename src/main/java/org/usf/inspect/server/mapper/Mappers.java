@@ -70,7 +70,11 @@ public class Mappers {
                         rs.getString("branch"),
                         rs.getString("hash"),
                         rs.getString("collector"),
-                        null,
+                        rs.getString("additionalProperties") != null
+                                ? defaultMapper.readValue(
+                                rs.getString("additionalProperties"),
+                                new TypeReference<Map<String, String>>() {})
+                                : null,
                         fromJson(rs.getString("configuration"), InspectCollectorProperties.class)
                         //rs.getString(ADDITIONAL_PROPERTIES.reference()) != null ? mapper.readValue(rs.getString(ADDITIONAL_PROPERTIES.reference()), new TypeReference<Map<String, String>>() {}) : null,
                         //rs.getString(CONFIGURATION.reference()) != null ? mapper.readValue(rs.getString(CONFIGURATION.reference()), InspectCollectorConfiguration.class) : null

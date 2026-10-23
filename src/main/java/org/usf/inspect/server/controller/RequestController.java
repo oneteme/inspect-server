@@ -91,7 +91,7 @@ public class RequestController {
     @QueryTemplate(
             dataset = "instance",
             view = INSTANCE_ENVIRONMENT_RESULTSET_MAPPER,
-            select = "app_name,version,address,environement,os,re,user,type,start,collector,branch,hash,end,resource,configuration,id,namespace")
+            select = "app_name,version,address,environement,os,re,user,type,start,collector,branch,hash,end,resource,configuration,id,namespace,additionalProperties")
     public ResponseEntity<InstanceEnvironment> fetchInstance(
             MvcRequest mvc,
             @PathVariable String instanceId
