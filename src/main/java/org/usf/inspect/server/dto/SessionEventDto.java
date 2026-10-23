@@ -20,5 +20,6 @@ public class SessionEventDto extends MainSession {
     private String location;
     private UUID sessionId;
     private String namespace;
+    private String appName;
     private List<SessionEvent> sessionEvents;
 }
