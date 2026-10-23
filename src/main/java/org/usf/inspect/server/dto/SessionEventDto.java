@@ -16,8 +16,6 @@ public class SessionEventDto extends MainSession {
     private Instant instant;
     private String type;
     private String value;
-    private String scope;
-    private String location;
     private UUID sessionId;
     private String namespace;
     private String appName;
