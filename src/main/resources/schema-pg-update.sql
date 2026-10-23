@@ -143,6 +143,7 @@ ALTER TABLE e_rpt_evt RENAME TO e_rpt_evt;
 ALTER TABLE e_exc_inf ADD COLUMN IF NOT EXISTS va_cas json;
 ALTER TABLE e_exc_inf RENAME COLUMN va_typ TO va_trc_typ;
 ALTER TABLE e_exc_inf RENAME COLUMN cd_rqt TO cd_trc;
+ALTER TABLE e_exc_inf ALTER COLUMN cd_ord TYPE bigint;
 
 -- Migration du namespace historique
 -- reprise de la valeur de va_env vers cd_nsp
