@@ -4,11 +4,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-@RequiredArgsConstructor
 @Repository
+@RequiredArgsConstructor
 public class AdminDao {
+	
     private final JdbcTemplate template;
 
+    //FIXME never call !?
     public boolean existNamespace(String namespace) {
         Integer count = template.queryForObject(
                 "SELECT COUNT(*) FROM e_nsp_ins WHERE va_nam = ?",
