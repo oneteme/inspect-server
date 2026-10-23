@@ -597,7 +597,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
         ps.setInt(++idx, sgn.getPort());
         ps.setString(++idx, sgn.getSchema());
         ps.setString(++idx, sgn.getName());
-        ps.setString(++idx, sgn.getSchema());//FIXME called twice
+        ps.setString(++idx, sgn.getProtocol());
         ps.setString(++idx, sgn.getUser());
         ps.setString(++idx, sgn.getThreadName());
         ps.setString(++idx, sgn.getDriverVersion());
