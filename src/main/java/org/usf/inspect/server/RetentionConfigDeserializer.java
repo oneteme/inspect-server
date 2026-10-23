@@ -1,23 +1,22 @@
 package org.usf.inspect.server;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-
-import java.io.IOException;
 import java.time.Duration;
 
 import org.usf.inspect.Retention;
 
-public final class RetentionConfigDeserializer extends StdDeserializer<Retention>  {
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JsonNode;
+
+public final class RetentionConfigDeserializer extends tools.jackson.databind.deser.std.StdDeserializer<Retention>  {
 
     RetentionConfigDeserializer() {
         super(Retention.class);
     }
-
+    
     @Override
-    public Retention deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
-        JsonNode node = jp.getCodec().readTree(jp);
+    public Retention deserialize(JsonParser jp, DeserializationContext ctxt) {
+        JsonNode node = ctxt.readTree(jp);
 
         if (node != null && !node.isNull()) {
             if (node.isNumber() || node.isTextual()) {
@@ -29,7 +28,7 @@ public final class RetentionConfigDeserializer extends StdDeserializer<Retention
                 Duration audit = node.has("audit") ? toDuration(node.get("audit")) : null;
                 return new Retention(diagnostic, audit);
             } else {
-                throw new JsonMappingException(jp, "Invalid Retention configuration: " + node.toString());
+                ctxt.reportInputMismatch(Retention.class, "Invalid Retention configuration: " + node.toString()); //throws exception
             }
         }
         return null;

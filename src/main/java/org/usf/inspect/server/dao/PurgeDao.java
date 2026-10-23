@@ -1,28 +1,14 @@
 package org.usf.inspect.server.dao;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
-import org.usf.inspect.InspectCollectorProperties;
-import org.usf.inspect.InstanceType;
-import org.usf.inspect.Retention;
-import org.usf.inspect.TraceType;
-import org.usf.inspect.core.*;
-import org.usf.inspect.server.InspectApplication;
-import org.usf.inspect.server.erm.InspectStore;
-import org.usf.inspect.server.erm.InstanceCatalog;
-import org.usf.jquery.core.Column;
-import org.usf.jquery.core.Order;
-import org.usf.jquery.mvc.StoreManager;
+import static java.time.Duration.ofDays;
+import static java.util.Arrays.stream;
+import static java.util.Objects.nonNull;
+import static org.usf.inspect.server.JsonUtils.fromJson;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,21 +16,23 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static java.sql.Types.OTHER;
-import static java.time.Duration.ofDays;
-import static java.util.Arrays.stream;
-import static java.util.Objects.nonNull;
-import static org.usf.inspect.SessionEventMask.*;
-import static org.usf.inspect.core.InspectLogger.emitError;
-import static org.usf.inspect.server.JsonUtils.fromJson;
-import static org.usf.inspect.server.JsonUtils.toJson;
-import static org.usf.jquery.core.Column.ctimestamp;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.usf.jquery.core.QueryComposer;
-
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Repository;
+import org.usf.inspect.InspectCollectorProperties;
+import org.usf.inspect.InstanceType;
+import org.usf.inspect.Retention;
+import org.usf.inspect.TraceType;
+import org.usf.inspect.server.erm.InspectStore;
+import org.usf.inspect.server.erm.InstanceCatalog;
+import org.usf.jquery.core.Column;
+import org.usf.jquery.core.Order;
+import org.usf.jquery.core.QueryComposer;
+import org.usf.jquery.mvc.StoreManager;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Repository
@@ -57,7 +45,6 @@ public class PurgeDao {
     private static final Retention DEFAULT_RETENTION_CONFIG = new Retention(DEFAULT_RETENTION, DEFAULT_RETENTION);
     private final NamedParameterJdbcTemplate namedTemplate;
 
-    private final ObjectMapper mapper;
     private final JdbcTemplate template;
     public record PurgeScope(
             InstanceType type,

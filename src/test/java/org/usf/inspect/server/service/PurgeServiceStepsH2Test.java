@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,13 @@ class PurgeServiceStepsH2Test {
     void cleanDatabase() {
         ((TraceDispatcherHub) hub()).setState(DispatchState.DISABLE);
         executeSql("cleanup.sql");
+    }
+
+    @AfterEach
+    void restoreHubState() {
+        //the hub is a JVM-wide singleton shared across Spring test contexts;
+        //restore its state so later contexts (other test classes) can still dispatch
+        ((TraceDispatcherHub) hub()).setState(DispatchState.COLLECT);
     }
 
     @Test

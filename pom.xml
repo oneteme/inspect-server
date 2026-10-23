@@ -9,28 +9,38 @@
 	<packaging>jar</packaging>
 	<name>inspect-server</name>
 	<description>INtegrated System Performance Evaluation and Communication Tracking server</description>
-	<url>https://oneteme.github.io/</url>
-	<developers>
-		<developer>
-			<name>u$f</name>
-			<email>usf.alami@gmail.com</email>
-			<organization>JARVIS</organization>
-			<organizationUrl>https://oneteme.github.io/</organizationUrl>
-		</developer>
-	</developers>
-	<scm>
-		<url>https://github.com/oneteme/inspect-server</url>
-	</scm>
+	<url>https://oneteme.github.io/inspect.io</url>
 	<licenses>
 		<license>
 			<name>Apache License 2.0</name>
 			<url>https://github.com/oneteme/inspect-server/blob/main/LICENSE</url>
 		</license>
 	</licenses>
+	<organization>
+	    <name>JARVIS</name>
+		<url>https://oneteme.github.io</url>
+	</organization>
+	<developers>
+		<developer>
+			<name>u$f</name>
+			<email>usf.alami@gmail.com</email>
+			<organization>JARVIS</organization>
+			<organizationUrl>https://oneteme.github.io</organizationUrl>
+		</developer>
+	</developers>
+	<scm>
+	    <url>https://github.com/oneteme/inspect-server</url>
+		<connection>scm:git:git://github.com/oneteme/inspect-server.git</connection>
+	    <developerConnection>scm:git:ssh://git@github.com:oneteme/inspect-server.git</developerConnection>
+	</scm>
+	<issueManagement>
+    	<system>GitHub</system>
+    	<url>https://github.com/oneteme/inspect-server/issues</url>
+	</issueManagement>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.2.0</version>
+    <version>4.1.1</version>
 	</parent>
 	<properties>
 		<java.version>21</java.version>
@@ -49,7 +59,23 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-restclient</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-jdbc</artifactId>
+		</dependency>
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-h2console</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>io.github.oneteme</groupId>
@@ -65,19 +91,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 		<!-- Source: https://mvnrepository.com/artifact/jakarta.validation/jakarta.validation-api -->
 		<dependency>

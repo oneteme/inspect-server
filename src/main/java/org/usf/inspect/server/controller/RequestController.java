@@ -777,7 +777,7 @@ public class RequestController {
         return requestService.getRequestSchema(namespace, start, end, host);
     }
 
-    @GetMapping("session/{sessionId}/user/action")
+    @GetMapping("session/{sessionId}/event")
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "session_event",
             view = SESSION_EVENT_ROW_MAPPER,

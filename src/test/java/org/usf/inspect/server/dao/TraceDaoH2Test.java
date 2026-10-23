@@ -59,8 +59,9 @@ import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.Pair;
 import org.usf.inspect.server.model.TraceBatch;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
+
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -79,7 +80,7 @@ class TraceDaoH2Test {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    private JsonNode fixtures;
+    private tools.jackson.databind.JsonNode fixtures;
 
     @BeforeAll
     void loadFixtures() throws IOException {
@@ -171,7 +172,7 @@ class TraceDaoH2Test {
 
             traceDao.saveLogEntries(List.of(logEntry));
 
-            assertSingleRow("e_log_ent", data("log").required("rowMin"));
+            assertSingleRow("e_rpt_evt", data("log").required("rowMin"));
         }
 
         @Test
@@ -180,7 +181,7 @@ class TraceDaoH2Test {
 
             traceDao.saveLogEntries(List.of(logEntry));
 
-            assertSingleRow("e_log_ent", data("log").required("row"));
+            assertSingleRow("e_rpt_evt", data("log").required("row"));
         }
     }
 
@@ -1034,9 +1035,7 @@ class TraceDaoH2Test {
 
     private void assertExactRow(Map<String, Object> actual, JsonNode expected) throws IOException {
         assertEquals(expected.size(), actual.size(), "Unexpected columns in persisted row");
-        var fields = expected.fields();
-        while (fields.hasNext()) {
-            var field = fields.next();
+        for (var field : expected.properties()) {
             var column = field.getKey();
             var expectedValue = field.getValue();
             assertTrue(actual.containsKey(column), "Missing column: " + column);
@@ -1049,7 +1048,7 @@ class TraceDaoH2Test {
                 assertEquals(UUID.fromString(expectedValue.asText()), uuid, column);
             } else if (stored instanceof Number number) {
                 assertEquals(0, expectedValue.decimalValue().compareTo(new BigDecimal(number.toString())), column);
-            } else if (expectedValue.isContainerNode()) {
+            } else if (expectedValue.isContainer()) {
                 assertEquals(expectedValue, defaultMapper.readTree((String) stored), column);
             } else if (expectedValue.isBoolean()) {
                 assertEquals(expectedValue.booleanValue(), stored, column);

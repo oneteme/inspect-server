@@ -23,9 +23,8 @@ import org.usf.inspect.core.ApplicationPropertiesProvider;
 import org.usf.inspect.core.TracePublisher;
 import org.usf.inspect.server.config.ApplicationInspectPropertiesProvider;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.json.JsonMapper;
 
 @Slf4j
 @SpringBootApplication
@@ -39,7 +38,7 @@ public class InspectApplication {
 
 	@Bean
 	@Primary
-	ObjectMapper mapper(){
+	JsonMapper mapper(){
 		return defaultMapper;
 	}
 
