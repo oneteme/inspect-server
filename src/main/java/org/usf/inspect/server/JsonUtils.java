@@ -1,8 +1,7 @@
 package org.usf.inspect.server;
 
-import static java.util.Objects.nonNull;
+import static org.usf.inspect.InspectCoreModule.jsonMapperBuilder;
 
-import org.usf.inspect.InspectCoreModule;
 import org.usf.inspect.Retention;
 import org.usf.inspect.server.dto.BrowserConfigDto;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
@@ -14,7 +13,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import tools.jackson.core.JacksonException;
 import tools.jackson.databind.MapperFeature;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.jsontype.NamedType;
@@ -27,25 +25,11 @@ public final class JsonUtils {
 	public static final JsonMapper defaultMapper;
     
 	public static <T> T fromJson(String json, Class<T> valueType) {
-        if(nonNull(json)) {
-            try {
-                return defaultMapper.readValue(json, valueType);
-            } catch (JacksonException e) {
-                log.warn("error while reading value " + valueType, e);
-            }
-		}
-        return null;
+        return defaultMapper.readValue(json, valueType);
     }
 
     public static String toJson(Object object) {
-        if(nonNull(object)) {
-            try {
-                return defaultMapper.writeValueAsString(object);
-            } catch (JacksonException e) {
-                log.warn("error while writing value as string", e);
-            }
-        }
-        return null;
+        return defaultMapper.writeValueAsString(object);
     }
     
 	static {
@@ -58,13 +42,9 @@ public final class JsonUtils {
 						new NamedType(InstanceEnvironmentUpdate.class, "inst-updt"), //TODO: unnecessary, we don't serialize InstanceEnvironmentUpdate
 						new NamedType(BrowserConfigDto.class, "400"));
 
-		var mapper = JsonMapper.builder()
-				.addModules(new InspectCoreModule(), serverModule)
-				.changeDefaultPropertyInclusion(incl -> incl //replace .setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
-                        .withValueInclusion(JsonInclude.Include.NON_EMPTY)   // for standard 
-                        .withContentInclusion(JsonInclude.Include.NON_EMPTY)) // for Maps/Collections
+		var mapper = jsonMapperBuilder()
+				.addModules(serverModule)
 				.enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
-		// Deprecated(since = "v1.1", forRemoval = true)
 		defaultMapper = mapper.build();
 	}
 }
