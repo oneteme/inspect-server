@@ -633,6 +633,7 @@ public class Mappers {
             out.setLocation(rs.getString("location"));
             out.setSessionId(rs.getObject("sessionId", UUID.class));
             out.setNamespace(rs.getString("namespace"));
+            out.setAppName(rs.getString("appName"));
             return out;
         };
     }
