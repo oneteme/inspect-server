@@ -167,8 +167,8 @@ public class Mappers {
                 out.setLinked(rs.getBoolean("linked"));
                 try {
                     String intermediateNodesStr = rs.getString("intermediateNodes");
-                    if (intermediateNodesStr != null) { //FIXME(@tasnimRIDENE) String[] => just split(',')
-                        out.setIntermediateNodes(defaultMapper.readValue(intermediateNodesStr, new TypeReference<java.util.List<String>>() {}));
+                    if (intermediateNodesStr != null) {
+                        out.setIntermediateNodes(Arrays.asList(intermediateNodesStr.split(",")));
                     }
                 } catch (JacksonException e) {
                     throw new RuntimeException(e);
