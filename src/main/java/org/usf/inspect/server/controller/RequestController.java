@@ -842,7 +842,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, join = REJECT, overrideView = false)
     @QueryTemplate(dataset = "session_event",
             view = SESSION_EVENT_MAPPER,
-            select = "start,type,value,scope,location,sessionId,instance.namespace,instance.app_name",
+            select = "start,type,value,sessionId,instance.namespace,instance.app_name",
             join = "instance",
             order = "start")
     public Collection<SessionEventDto> fetchSessionEvents(

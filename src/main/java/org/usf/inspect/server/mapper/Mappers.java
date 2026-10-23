@@ -609,8 +609,6 @@ public class Mappers {
             out.setInstant(fromNullableTimestamp(rs.getTimestamp("start")));
             out.setType(rs.getString("type"));
             out.setValue(rs.getString("value"));
-            out.setScope(rs.getString("scope"));
-            out.setLocation(rs.getString("location"));
             out.setSessionId(rs.getObject("sessionId", UUID.class));
             out.setNamespace(rs.getString("namespace"));
             out.setAppName(rs.getString("appName"));
