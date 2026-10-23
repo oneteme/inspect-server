@@ -44,7 +44,7 @@ public class TraceV4Controller {
     private final TraceService service;
     private final TraceController controller;
 
-    @Value("${inspect.server.migration.namespacePrefix}")
+    @Value("${inspect.server.migration.namespacePrefix:}")
     private String namespacePrefix;
 
     @PostMapping(value = "instance", produces = TEXT_PLAIN_VALUE)

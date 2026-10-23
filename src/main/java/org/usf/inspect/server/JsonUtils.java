@@ -11,6 +11,7 @@ import org.usf.inspect.server.model.wrapper.RestSessionWrapper;
 
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.MapperFeature;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.jsontype.NamedType;
@@ -42,7 +43,8 @@ public final class JsonUtils {
 
 		var mapper = jsonMapperBuilder() //use same builder as core
 				.addModules(serverModule)
-				.enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
+				.enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL)
+				.disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES); // skip null for primitive types, e.g. int, long, boolean, etc. (default: true)
 		defaultMapper = mapper.build();
 	}
 }
