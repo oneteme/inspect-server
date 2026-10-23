@@ -1,5 +1,6 @@
 package org.usf.inspect.server.controller;
 
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
@@ -10,7 +11,6 @@ import static org.springframework.http.ResponseEntity.accepted;
 import static org.springframework.http.ResponseEntity.internalServerError;
 import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.http.ResponseEntity.status;
-import static org.usf.inspect.core.DispatchState.DISABLE;
 import static org.usf.inspect.core.TracePublisher.ABORT;
 import static org.usf.inspect.core.TracePublisher.RETRY;
 import static org.usf.inspect.web.WebUtils.TRACE_RETRY_HEADER;
@@ -20,6 +20,7 @@ import java.security.Principal;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
@@ -34,13 +35,19 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.usf.inspect.EventTrace;
 import org.usf.inspect.InstanceEnvironment;
+import org.usf.inspect.core.TraceDispatchException;
 import org.usf.inspect.core.DispatchState;
-import org.usf.inspect.server.exception.DispatchProcessingException;
+import org.usf.inspect.server.exception.TraceDispatchProcessingException;
 import org.usf.inspect.server.service.TraceService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 
+ * @author u$f
+ *
+ */
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -53,33 +60,35 @@ public class TraceController {
 	@PutMapping(value = "instance", produces = TEXT_PLAIN_VALUE)
 	public ResponseEntity<Object> addInstanceEnvironment(
 			@RequestBody InstanceEnvironment instance, 
-			@RequestParam int atm,
-			Principal principal){ //check
-
-		if(service.getDispatcherState() == DISABLE) {
-			return status(SERVICE_UNAVAILABLE)
-					.body("dispatch.state=DISABLE");
+			@RequestParam int atm, Principal principal){
+		if (isNull(instance.getId())){
+			return status(BAD_REQUEST).body("invalid id="+instance.getId());
 		}
 		if(isEmpty(instance.getName())) {
 			return status(BAD_REQUEST).body("invalid name="+instance.getName());
 		}
-		if (instance.getId() == null){
-			return status(BAD_REQUEST).body("invalid id="+instance.getId());
-		}
-		if(atm > 1 && service.hasInstance(instance.getId())) {
-			return status(CONFLICT).body("instance="+instance.getId()+" has already been registered");
-		}
-		if(nonNull(principal) && !principal.getName().equals(instance.getNamespace())) {
+		if(nonNull(principal) && !Objects.equals(principal.getName(), instance.getNamespace())) {
 			log.warn("namespace mismatch between principal={} and instance={}", principal.getName(), instance.getNamespace());
-			instance.setNamespace(principal.getName());
+			instance.setNamespace(principal.getName()); //override namespace with principal name to avoid security issue
+		}
+		if(isEmpty(instance.getNamespace())) {
+			return status(BAD_REQUEST).body("invalid namespace="+instance.getName());
 		}
 		try {
 			service.addInstance(instance, atm);
 			return ok(instance.getId().toString());
 		}
+		catch (TraceDispatchConflictException e) {
+			log.warn("trace dispatch conflict for instance id={}", instance.getId(), e);
+			return status(CONFLICT).body(e.getMessage());
+		}
+		catch (TraceDispatchException e) {
+			log.warn("trace dispatch exception for instance id={}", instance.getId(), e);
+			return status(SERVICE_UNAVAILABLE).body(e.getMessage());
+		}
 		catch(Exception e) {
-			log.error("failed to add instance environment for id={} name={} atm={}", instance.getId(), instance.getName(), atm, e);
-			return internalServerError().body("dispatcher.state=" + service.getDispatcherState() + "message=" + e.getMessage());
+			log.error("failed to dispatch instance environment for id={} name={} atm={}", instance.getId(), instance.getName(), atm, e);
+			return internalServerError().body("state=%s, message=".formatted(instance.getId()) + e.getMessage());
 		}
 	}
 
@@ -90,22 +99,33 @@ public class TraceController {
 			@RequestParam int atm,
 			@RequestParam(required = false) Instant end,
 			@RequestBody List<EventTrace> traces){
-
-		if(service.getDispatcherState() == DISABLE) {
-			return status(SERVICE_UNAVAILABLE)
-					.header(TRACE_RETRY_HEADER, RETRY)
-					.body("dispatch.state=DISABLE");
-		}
 		try {
-			if(atm>1 && service.hasBeenTraced(id, seq)) {
-				return status(CONFLICT).body("seq="+seq+" has already been traced");
-			}
 			service.addTraces(id, seq, atm, end, traces);
 			return accepted().build();
-		} catch (Exception e) {
-			var retry = e instanceof DispatchProcessingException dpe && dpe.isRetryable();
-			log.error("failed to add traces for id={} seq={} atm={} end={} retry={}", id, seq, atm, end, retry, e);
-			return internalServerError().header(TRACE_RETRY_HEADER, retry ? RETRY : ABORT).body(e.getMessage());
+		} 
+		catch (TraceDispatchConflictException e) {
+			log.warn("trace dispatch conflict for instance id={} seq={}", id, seq, e);
+			return status(CONFLICT) //409 => ABORT
+					.header(TRACE_RETRY_HEADER, ABORT)
+					.body(e.getMessage());
+		}
+		catch (TraceDispatchProcessingException e) {
+			log.warn("trace dispatch processing exception for instance id={} seq={}", id, seq, e);
+			return internalServerError()
+					.header(TRACE_RETRY_HEADER, e.isRetryable() ? RETRY : ABORT)
+					.body(e.getMessage());
+		}
+		catch (TraceDispatchException e) {
+			log.warn("trace dispatch exception for instance id={}", id, e);
+			return status(SERVICE_UNAVAILABLE)
+					.header(TRACE_RETRY_HEADER, RETRY)
+					.body(e.getMessage());
+		}
+		catch (Exception e) {
+			log.error("failed to dispatch traces for instance id={} seq={} atm={} end={} traces.size={}", id, seq, atm, end, traces.size(), e);
+			return internalServerError()
+					.header(TRACE_RETRY_HEADER, RETRY)
+					.body(e.getMessage());
 		}
 	}
 

@@ -5,6 +5,7 @@ import static java.time.Instant.now;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.nonNull;
 import static java.util.function.Function.identity;
+import static org.usf.inspect.core.DispatchState.DISABLE;
 import static org.usf.inspect.server.model.TraceBatch.newTraceBatch;
 import static org.usf.inspect.server.service.TraceBatchDispatcherHub.serverHub;
 
@@ -23,9 +24,9 @@ import org.usf.inspect.InstanceEnvironment;
 import org.usf.inspect.ReportEvent;
 import org.usf.inspect.SessionEvent;
 import org.usf.inspect.SystemMetrics;
-import org.usf.inspect.core.DispatchException;
+import org.usf.inspect.core.TraceDispatchException;
 import org.usf.inspect.core.DispatchState;
-import org.usf.inspect.server.exception.DispatchProcessingException;
+import org.usf.inspect.server.controller.TraceDispatchConflictException;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.TraceBatch;
 
@@ -33,6 +34,11 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 
+ * @author u$f
+ *
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
@@ -40,13 +46,25 @@ public class TraceService {
 
     private final JdbcTemplate template;
 
-    public void addInstance(InstanceEnvironment instance, int attempts) throws DispatchException {
-        serverHub().dispatch(instance);
+    public void addInstance(InstanceEnvironment instance, int attempts) throws TraceDispatchException {
+		if(getDispatcherState() == DISABLE) { //avoid checking the database if the dispatcher is disabled
+			throw new TraceDispatchException("trace dispatcher is disabled");
+		}
+    	if(attempts > 1 && hasInstance(instance.getId())) {
+			throw new TraceDispatchConflictException("instance with id=%s has already been registered".formatted(instance.getId()));
+		}
+    	serverHub().dispatch(instance); //dispatch immediately 
         serverHub().emitTrace(newTraceBatch(now(), 0, attempts, instance.getId(), emptyList())); //ensure that the trace batch is emitted after the instance has been dispatched
     }
 
-    public void addTraces(UUID id, int seq, int attempts, Instant end, List<EventTrace> traces) throws DispatchProcessingException {
+    public void addTraces(UUID id, int seq, int attempts, Instant end, List<EventTrace> traces) throws TraceDispatchException {
+        if(getDispatcherState() == DISABLE) { //avoid checking the database if the dispatcher is disabled
+			throw new TraceDispatchException("trace dispatcher is disabled");
+		}
         var now = now();
+		if(attempts > 1 && hasBeenTraced(id, seq)) {
+			throw new TraceDispatchConflictException("trace batch with sequence=%s for instance.id=%s has already been processed".formatted(seq, id));
+		}
     	if(nonNull(end)){
         	serverHub().emitTrace(new InstanceEnvironmentUpdate(id, end));
         }
