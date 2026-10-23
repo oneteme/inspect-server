@@ -5,7 +5,6 @@ import static java.time.Instant.now;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.nonNull;
 import static java.util.function.Function.identity;
-import static org.usf.inspect.server.JsonUtils.defaultMapper;
 import static org.usf.inspect.server.model.TraceBatch.newTraceBatch;
 import static org.usf.inspect.server.service.TraceBatchDispatcherHub.serverHub;
 
@@ -15,7 +14,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
-import org.springframework.context.ApplicationListener;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.usf.inspect.AbstractRequestSignal;
@@ -27,7 +25,6 @@ import org.usf.inspect.SessionEvent;
 import org.usf.inspect.SystemMetrics;
 import org.usf.inspect.core.DispatchException;
 import org.usf.inspect.core.DispatchState;
-import org.usf.inspect.server.event.UnsavedEventTraceEvent;
 import org.usf.inspect.server.exception.DispatchProcessingException;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.TraceBatch;
@@ -39,7 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
-public class TraceService implements ApplicationListener<UnsavedEventTraceEvent> {
+public class TraceService {
 
     private final JdbcTemplate template;
 
@@ -98,9 +95,8 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
 
     public boolean hasInstance(UUID id) {
         return template.queryForObject(
-                "SELECT COUNT(*) FROM e_env_ins WHERE id_ins=?",
-                (rs, idx) -> rs.getInt(1),
-                id) > 0;
+                "SELECT COUNT(id_ins) FROM e_env_ins WHERE id_ins=?",
+                (rs, idx) -> rs.getInt(1), id) > 0;
     }
     
     public boolean hasBeenTraced(UUID id, int seq) {
@@ -118,36 +114,5 @@ public class TraceService implements ApplicationListener<UnsavedEventTraceEvent>
 	    } catch (ExecutionException e) {
 	        throw new IllegalStateException("Failed to inspect trace queue for instance " + id, e.getCause());
 	    }
-    }
-
-    @Override
-    @Deprecated(since = "v1.2")
-    public void onApplicationEvent(UnsavedEventTraceEvent event) {
-        var trace = event.getTrace();
-        if(event.isRetry()) {
-            serverHub().emitTrace(trace);
-        }
-        else {
-            UUID id = null;
-            if(trace instanceof AbstractSessionSignal s) {
-                id = s.getInstanceId();
-            }
-            else if(trace instanceof AbstractRequestSignal r) {
-                id = r.getInstanceId();
-            }
-            if(nonNull(id)) {
-                try {
-                    var report = new ReportEvent(now(), null, "saveTrace", null, defaultMapper.writeValueAsString(trace), null);
-                    report.setInstanceId(id);
-                    serverHub().emitTrace(report);
-                }
-                catch(Exception e) {
-                    log.warn("cannot report unsaved trace of type {} because of serialization error: {}", trace.getClass().getSimpleName(), e.getMessage());
-                }
-            }
-            else {
-                log.warn("cannot report unsaved trace of type {} because instanceId is missing", trace.getClass().getSimpleName());
-            }
-        }
     }
 }

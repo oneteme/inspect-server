@@ -1,14 +1,16 @@
 package org.usf.inspect.server;
 
 import java.time.Duration;
+import java.time.format.DateTimeParseException;
 
 import org.usf.inspect.Retention;
 
 import tools.jackson.core.JsonParser;
 import tools.jackson.databind.DeserializationContext;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.deser.std.StdDeserializer;
 
-public final class RetentionConfigDeserializer extends tools.jackson.databind.deser.std.StdDeserializer<Retention>  {
+public final class RetentionConfigDeserializer extends StdDeserializer<Retention>  {
 
     RetentionConfigDeserializer() {
         super(Retention.class);
@@ -17,9 +19,8 @@ public final class RetentionConfigDeserializer extends tools.jackson.databind.de
     @Override
     public Retention deserialize(JsonParser jp, DeserializationContext ctxt) {
         JsonNode node = ctxt.readTree(jp);
-
         if (node != null && !node.isNull()) {
-            if (node.isNumber() || node.isTextual()) {
+            if (node.isNumber() || node.isString()) {
                 Duration retentionMaxAge = toDuration(node);
                 return new Retention(retentionMaxAge, retentionMaxAge);
             } else if (node.isObject()) {
@@ -38,24 +39,21 @@ public final class RetentionConfigDeserializer extends tools.jackson.databind.de
         if (node == null || node.isNull()) {
             return null;
         }
-
         if (node.isNumber()) {
             return Duration.ofSeconds(node.longValue());
         }
-
-        if (node.isTextual()) {
-            String value = node.asText();
+        if (node.isString()) {
+            String value = node.asString();
             if (value == null || value.isBlank()) {
                 return null;
             }
 
             try {
                 return Duration.parse(value);
-            } catch (java.time.format.DateTimeParseException e) {
+            } catch (DateTimeParseException e) {
                 throw new IllegalArgumentException("Invalid duration value: " + value, e);
             }
         }
-
         return null;
     }
 }

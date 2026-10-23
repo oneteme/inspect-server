@@ -9,8 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.usf.inspect.core.DispatchState.COLLECT;
 import static org.usf.inspect.core.DispatchState.DISABLE;
-import static org.usf.inspect.server.JsonUtils.defaultMapper;
-import static org.usf.inspect.server.service.TraceBatchDispatcherHub.INSPECT_ID;
 import static org.usf.inspect.server.service.TraceBatchDispatcherHub.serverHub;
 
 import java.time.Instant;
@@ -35,7 +33,6 @@ import org.usf.inspect.MainSessionSignal;
 import org.usf.inspect.ReportEvent;
 import org.usf.inspect.SystemMetrics;
 import org.usf.inspect.core.ProcessingQueue;
-import org.usf.inspect.server.event.UnsavedEventTraceEvent;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.TraceBatch;
 import org.usf.inspect.test.InspectTest;
@@ -183,43 +180,44 @@ class TraceServiceH2Test {
         assertFalse(traceService.hasBeenTraced(UUID.randomUUID(), 15));
     }
 
-    @Test
-    void onApplicationEvent_ShouldRequeueOriginalTrace_WhenRetryIsRequested() {
-        var request = new HttpRequestSignal(UUID.randomUUID(), UUID.randomUUID(), START, "http-worker");
-
-        traceService.onApplicationEvent(new UnsavedEventTraceEvent(this, request, true));
-
-        var queued = List.copyOf(traceService.peekQueue());
-        assertEquals(1, queued.size());
-        assertSame(request, queued.get(0));
-    }
-
-    @Test
-    void onApplicationEvent_ShouldQueueReport_WhenRequestCannotBeSaved() throws Exception {
-        var instanceId = UUID.randomUUID();
-        var request = new HttpRequestSignal(UUID.randomUUID(), UUID.randomUUID(), START, "http-worker");
-        request.setInstanceId(instanceId);
-        var expectedJson = defaultMapper.writeValueAsString(request);
-
-        traceService.onApplicationEvent(new UnsavedEventTraceEvent(this, request, false));
-
-        var queued = List.copyOf(traceService.peekQueue());
-        assertEquals(1, queued.size());
-        var report = assertInstanceOf(ReportEvent.class, queued.get(0));
-        assertEquals(instanceId, report.getInstanceId());
-        assertEquals("saveTrace", report.getAction());
-        assertEquals(expectedJson, report.getException());
-        assertNotNull(report.getInstant());
-    }
-
-    @Test
-    void onApplicationEvent_ShouldNotQueueReport_WhenInstanceIdIsMissing() {
-        var request = new HttpRequestSignal(UUID.randomUUID(), UUID.randomUUID(), START, "http-worker");
-
-        traceService.onApplicationEvent(new UnsavedEventTraceEvent(this, request, false));
-        assertTrue(traceService.peekQueue().stream()
-                .allMatch(t -> t instanceof ReportEvent report && INSPECT_ID.equals(report.getInstanceId())));
-    }
+    //FIXME(@tasnim)  traceService.onApplicationEvent was deprecated !!
+//    @Test
+//    void onApplicationEvent_ShouldRequeueOriginalTrace_WhenRetryIsRequested() {
+//        var request = new HttpRequestSignal(UUID.randomUUID(), UUID.randomUUID(), START, "http-worker");
+//
+//        traceService.onApplicationEvent(new UnsavedEventTraceEvent(this, request, true));
+//
+//        var queued = List.copyOf(traceService.peekQueue());
+//        assertEquals(1, queued.size());
+//        assertSame(request, queued.get(0));
+//    }
+//
+//    @Test
+//    void onApplicationEvent_ShouldQueueReport_WhenRequestCannotBeSaved() throws Exception {
+//        var instanceId = UUID.randomUUID();
+//        var request = new HttpRequestSignal(UUID.randomUUID(), UUID.randomUUID(), START, "http-worker");
+//        request.setInstanceId(instanceId);
+//        var expectedJson = defaultMapper.writeValueAsString(request);
+//
+//        traceService.onApplicationEvent(new UnsavedEventTraceEvent(this, request, false));
+//
+//        var queued = List.copyOf(traceService.peekQueue());
+//        assertEquals(1, queued.size());
+//        var report = assertInstanceOf(ReportEvent.class, queued.get(0));
+//        assertEquals(instanceId, report.getInstanceId());
+//        assertEquals("saveTrace", report.getAction());
+//        assertEquals(expectedJson, report.getException());
+//        assertNotNull(report.getInstant());
+//    }
+//
+//    @Test
+//    void onApplicationEvent_ShouldNotQueueReport_WhenInstanceIdIsMissing() {
+//        var request = new HttpRequestSignal(UUID.randomUUID(), UUID.randomUUID(), START, "http-worker");
+//
+//        traceService.onApplicationEvent(new UnsavedEventTraceEvent(this, request, false));
+//        assertTrue(traceService.peekQueue().stream()
+//                .allMatch(t -> t instanceof ReportEvent report && INSPECT_ID.equals(report.getInstanceId())));
+//    }
 
     @SuppressWarnings("unchecked")
     private ProcessingQueue<EventTrace> queue() {

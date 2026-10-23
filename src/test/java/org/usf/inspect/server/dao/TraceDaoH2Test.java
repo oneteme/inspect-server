@@ -945,7 +945,7 @@ class TraceDaoH2Test {
     class SaveExceptionTraces {
         @Test
         void withMinimumRequiredFields() throws IOException {
-            var exception = new ExceptionTrace("java.lang.IllegalStateException", "Request failed",
+            var exception = new ExceptionTrace("java.lang.IllegalStateException", "Request failed", //FIXME minimum fields !!!???
                     new StackTraceRow[] { new StackTraceRow("example.Service", "run", 42) }, null);
             exception.setTraceId(TRACE_ID);
             exception.setTraceType((byte) 120);
@@ -969,7 +969,7 @@ class TraceDaoH2Test {
     class SaveSessionEvents {
         @Test
         void withMinimumRequiredFields() throws IOException {
-            var event = new SessionEvent(START, "click", "submit", "#order-form", ">anywhere<", SESSION_ID);
+            var event = new SessionEvent(START, "click", "submit", "#order-form", ">anywhere<", SESSION_ID); //FIXME minimum fields !!!???
 
             traceDao.saveSessionEvents(List.of(event));
 
@@ -1043,9 +1043,9 @@ class TraceDaoH2Test {
             if (expectedValue.isNull()) {
                 assertNull(stored, column);
             } else if (stored instanceof Timestamp timestamp) {
-                assertEquals(Instant.parse(expectedValue.asText()), timestamp.toInstant(), column);
+                assertEquals(Instant.parse(expectedValue.asString()), timestamp.toInstant(), column);
             } else if (stored instanceof UUID uuid) {
-                assertEquals(UUID.fromString(expectedValue.asText()), uuid, column);
+                assertEquals(UUID.fromString(expectedValue.asString()), uuid, column);
             } else if (stored instanceof Number number) {
                 assertEquals(0, expectedValue.decimalValue().compareTo(new BigDecimal(number.toString())), column);
             } else if (expectedValue.isContainer()) {
@@ -1053,7 +1053,7 @@ class TraceDaoH2Test {
             } else if (expectedValue.isBoolean()) {
                 assertEquals(expectedValue.booleanValue(), stored, column);
             } else {
-                assertEquals(expectedValue.asText(), stored, column);
+                assertEquals(expectedValue.asString(), stored, column);
             }
         }
     }

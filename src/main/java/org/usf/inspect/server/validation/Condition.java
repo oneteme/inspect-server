@@ -1,15 +1,12 @@
 package org.usf.inspect.server.validation;
 
-import static org.usf.inspect.server.Utils.isUUID;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Collection;
 import java.util.function.Predicate;
 
-
 public enum Condition {
 
-	@Deprecated UUID(o -> isUUID(o.toString())), 
 	INSTANT(o -> isInstant(o.toString())), 
 	NOT_EMPTY(Condition::isNotEmpty);
 
