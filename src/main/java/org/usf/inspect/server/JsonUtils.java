@@ -9,8 +9,6 @@ import org.usf.inspect.server.model.TraceBatch;
 import org.usf.inspect.server.model.wrapper.MainSessionWrapper;
 import org.usf.inspect.server.model.wrapper.RestSessionWrapper;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.MapperFeature;
@@ -42,7 +40,7 @@ public final class JsonUtils {
 						new NamedType(InstanceEnvironmentUpdate.class, "inst-updt"), //TODO: unnecessary, we don't serialize InstanceEnvironmentUpdate
 						new NamedType(BrowserConfigDto.class, "400"));
 
-		var mapper = jsonMapperBuilder()
+		var mapper = jsonMapperBuilder() //use same builder as core
 				.addModules(serverModule)
 				.enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
 		defaultMapper = mapper.build();

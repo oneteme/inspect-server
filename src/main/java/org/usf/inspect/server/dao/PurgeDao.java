@@ -357,6 +357,7 @@ public class PurgeDao {
                 "NOT EXISTS (SELECT 1 FROM e_main_ses WHERE id_ses = cd_prn_ses);");
     }
 
+    //FIXME: never call
     private int purgeRequestStage(String tableSuffix, String stageTableSuffix, List<UUID> ids, Timestamp before) {
         var subQuery = "SELECT rqt.id_" + tableSuffix +
                 " FROM e_" + tableSuffix + " rqt " +
