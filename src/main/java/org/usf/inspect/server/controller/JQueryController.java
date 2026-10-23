@@ -96,4 +96,15 @@ public class JQueryController {
         return mvc.execute(res);
     }
 
+    @GetMapping("session/event/count")
+    @QueryTemplate(dataset = "session_event",
+            select = "count,type",
+            join = "instance",
+            ignore = "namespace")
+    public Object fetchSessionEventTypeByInstanceNamespace(
+            MvcRequest mvc,
+            HttpServletResponse res) {
+        return mvc.execute(res);
+    }
+
 }
