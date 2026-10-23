@@ -945,7 +945,7 @@ class TraceDaoH2Test {
     class SaveExceptionTraces {
         @Test
         void withMinimumRequiredFields() throws IOException {
-            var exception = new ExceptionTrace("java.lang.IllegalStateException", "Request failed",
+            var exception = new ExceptionTrace("java.lang.IllegalStateException", "Request failed", //FIXME minimum fields !!!???
                     new StackTraceRow[] { new StackTraceRow("example.Service", "run", 42) }, null);
             exception.setTraceId(TRACE_ID);
             exception.setTraceType((byte) 120);
@@ -969,7 +969,7 @@ class TraceDaoH2Test {
     class SaveSessionEvents {
         @Test
         void withMinimumRequiredFields() throws IOException {
-            var event = new SessionEvent(START, "click", "submit", "#order-form", ">anywhere<", SESSION_ID);
+            var event = new SessionEvent(START, "click", "submit", "#order-form", ">anywhere<", SESSION_ID); //FIXME minimum fields !!!???
 
             traceDao.saveSessionEvents(List.of(event));
 
