@@ -5,8 +5,9 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE) //hide constructor better than throwing exception
 public final class FieldConstant {
-   
-	public static final String ID_SES = "id_ses";
+
+    public static final String ID_SES = "id_ses";
+    public static final String ID_EVT = "id_evt";
     public static final String CD_PRN_SES = "cd_prn_ses";
     public static final String CD_DTB_RQT = "cd_dtb_rqt";
     public static final String ID_DTB_RQT = "id_dtb_rqt";
@@ -21,6 +22,7 @@ public final class FieldConstant {
     public static final String CD_RST_RQT = "cd_rst_rqt";
     public static final String ID_INS = "id_ins";
     public static final String CD_INS = "cd_ins";
+    public static final String CD_NSP = "cd_nsp";
     public static final String CD_RQT = "cd_rqt";
 
     public static final String VA_MTH = "va_mth";
@@ -49,6 +51,7 @@ public final class FieldConstant {
     public static final String VA_TYP = "va_typ";
     public static final String VA_LCT = "va_lct";
     public static final String VA_THR = "va_thr";
+    public static final String VA_ACT = "va_act";
     public static final String VA_LNK = "va_lnk";
     public static final String VA_APP = "va_app";
     public static final String VA_VRS = "va_vrs";
@@ -62,12 +65,13 @@ public final class FieldConstant {
     public static final String VA_CNT = "va_cnt";
     public static final String VA_ERR_TYP = "va_err_typ";
     public static final String VA_ERR_MSG = "va_err_msg";
-
+    public static final String VA_SCP = "va_scp";
     public static final String VA_CCH_CTR = "va_cch_ctr";
     public static final String VA_SRV_VRS = "va_srv_vrs";
     public static final String VA_CLT_VRS = "va_clt_vrs";
     public static final String VA_ARG = "va_arg";
     public static final String VA_MSK = "va_msk";
+    public static final String VA_ASY_DRT = "va_asy_drt";
     public static final String CD_ORD = "cd_ord";
     public static final String VA_SBJ = "va_sbj";
     public static final String VA_FRM = "va_frm";
@@ -82,6 +86,7 @@ public final class FieldConstant {
     public static final String VA_PND = "va_pnd";
     public static final String VA_ATP = "va_atp";
     public static final String VA_TRC_CNT = "va_trc_cnt";
+    public static final String VA_SEQ = "va_seq";
     public static final String VA_LVL = "va_lvl";
     public static final String VA_MSG = "va_msg";
     public static final String VA_STK = "va_stk";
@@ -90,6 +95,9 @@ public final class FieldConstant {
     public static final String VA_USED_MET = "va_usd_met";
     public static final String VA_COMMITED_MET = "va_cmt_met";
     public static final String VA_USED_DISK_SPACE = "va_usd_dsk";
+    public static final String NB_ACTIVE_THREAD = "nb_act_thr";
+    public static final String NB_START_THREAD = "nb_str_thr";
+    public static final String VA_CPU_USAGE= "va_cpu_usg";
     public static final String VA_FAIL= "va_fail";
     public static final String VA_FILENAME= "va_fln";
     public static final String VA_BODY_CONTENT = "va_bdy_cnt";

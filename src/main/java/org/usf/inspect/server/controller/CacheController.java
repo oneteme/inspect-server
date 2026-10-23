@@ -1,15 +1,16 @@
 package org.usf.inspect.server.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.json.JsonMapper;
+
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.boot.restclient.RestTemplateBuilder;
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
-import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.server.service.TracePersistenceService;
+import org.usf.inspect.EventTrace;
+import org.usf.inspect.server.service.TracePersister;
 
 import java.io.IOException;
 
@@ -25,9 +26,9 @@ import static org.usf.inspect.core.DispatchState.DISABLE;
 @RequestMapping(value = "cache", produces = APPLICATION_JSON_VALUE)
 public class CacheController {
 
-    private final TracePersistenceService service;
+    private final TracePersister service;
     private final RestTemplate template;
-    private final ObjectMapper mapper;
+    private final JsonMapper mapper;
 
     @Value("${spring.profiles.active:}")
     private String activeProfile;
@@ -35,11 +36,11 @@ public class CacheController {
     @Value("${inspect.server.cache.import.host:}")
 	private String host;
 
-	public CacheController(ObjectMapper mapper, TracePersistenceService service, RestTemplateBuilder builder) {
+	public CacheController(JsonMapper mapper, TracePersister service, RestTemplateBuilder builder) {
 		this.service = service;
 		this.mapper = mapper;
 		this.template = builder //load interceptors
-				.messageConverters(new MappingJackson2HttpMessageConverter(mapper))
+				.messageConverters(new JacksonJsonHttpMessageConverter(mapper))
                 .defaultHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
                 .build();
 	}
@@ -47,8 +48,8 @@ public class CacheController {
     @PostMapping(value = "{env}/import", produces = APPLICATION_JSON_VALUE)
     public int importTraceable(@PathVariable String env) {
     	if(activeProfile.equals(env) && host != null) {
-	    	template.postForLocation(host + "/v5/trace/state/"+ DISABLE, null); //stop adding session first on remote server
-	        var arr = template.getForObject(host + "/v5/trace/queue", EventTrace[].class); //import sessions from remote server cache
+	    	template.postForLocation(host + "/v4/trace/state/"+ DISABLE, null); //stop adding session first on remote server
+	        var arr = template.getForObject(host + "/v4/trace/queue", EventTrace[].class); //import sessions from remote server cache
 	        if(nonNull(arr) && arr.length > 0) {
 	            var cnt = service.addTraces(asList(arr)); //save sessions on database (local.env == remote.env)
 	            if(!cnt.isEmpty()) {
@@ -68,7 +69,7 @@ public class CacheController {
         }
 
         if(file.isEmpty()) {
-            throw new IllegalArgumentException("Le fichier ne peut pas être vide"); //TODO i18n
+            throw new IllegalArgumentException("File cannot be empty");
         }
 
         try {
@@ -82,8 +83,8 @@ public class CacheController {
             }
             return 0;
         } catch (IOException e) {
-            log.error("Erreur lors de la lecture du fichier", e); //TODO i18n
-            throw new RuntimeException("Erreur lors de la lecture du fichier: " + e.getMessage(), e); //TODO i18n
+            log.error("Error while reading file", e);
+            throw new RuntimeException("Error while reading file: " + e.getMessage(), e);
         }
     }
 }

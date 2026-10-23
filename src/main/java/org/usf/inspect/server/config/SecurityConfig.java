@@ -36,7 +36,7 @@ public class SecurityConfig {
 		return http
 				.csrf(AbstractHttpConfigurer::disable)
 				.headers(headers -> headers.frameOptions(FrameOptionsConfig::sameOrigin)) //H2 frames
-				.oauth2ResourceServer(oauth2 -> oauth2.jwt())
+				.oauth2ResourceServer(oauth2 -> oauth2.jwt(v->{}))
 				.authorizeHttpRequests(auth-> auth
 						.requestMatchers("/public/**", "/h2/**", "/actuator/**", "/v4/trace/**").permitAll()
 						.anyRequest().authenticated())

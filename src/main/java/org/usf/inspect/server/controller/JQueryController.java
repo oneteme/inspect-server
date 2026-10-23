@@ -65,13 +65,7 @@ public class JQueryController {
     public Object getException(MvcRequest mvc, HttpServletResponse res) {
     	return mvc.execute(res);
     }
-    
-    @GetMapping("user/action")
-    @QueryTemplate(dataset = "user_action", select= "count") 
-    public Object getUserAction(MvcRequest mvc, HttpServletResponse res) {
-    	return mvc.execute(res);
-    }
-    
+
     @GetMapping("instance")
     @QueryTemplate(dataset = "instance", select= "count") 
     public Object getInstance(MvcRequest mvc, HttpServletResponse res) {
@@ -95,4 +89,22 @@ public class JQueryController {
     public Object getLogEntry(MvcRequest mvc, HttpServletResponse res) {
     	return mvc.execute(res);
     }
+
+    @GetMapping("session/event")
+    @QueryTemplate(dataset = "session_event", select= "count")
+    public Object fetchSessionEvent(MvcRequest mvc, HttpServletResponse res) {
+        return mvc.execute(res);
+    }
+
+    @GetMapping("session/event/count")
+    @QueryTemplate(dataset = "session_event",
+            select = "count,type",
+            join = "instance",
+            ignore = "namespace")
+    public Object fetchSessionEventTypeByInstanceNamespace(
+            MvcRequest mvc,
+            HttpServletResponse res) {
+        return mvc.execute(res);
+    }
+
 }

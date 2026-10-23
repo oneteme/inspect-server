@@ -1,8 +1,9 @@
 package org.usf.inspect.server.model;
 
+import org.usf.inspect.EventTrace;
+
 import lombok.Getter;
 import lombok.Setter;
-import org.usf.inspect.core.EventTrace;
 
 /**
  * 
