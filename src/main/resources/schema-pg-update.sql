@@ -126,7 +126,7 @@ ALTER TABLE e_ins_trc DROP COLUMN IF EXISTS va_fln;
 
 -- Migration de la table e_rsc_usg : ajout des nouvelles colonnes de monitoring
 ALTER TABLE e_rsc_usg ADD COLUMN IF NOT EXISTS nb_act_thr int;
-ALTER TABLE e_rsc_usg ADD COLUMN IF NOT EXISTS nb_str_thr int;
+ALTER TABLE e_rsc_usg ADD COLUMN IF NOT EXISTS nb_dmn_thr int;
 ALTER TABLE e_rsc_usg ADD COLUMN IF NOT EXISTS va_cpu_usg SMALLINT;
 
 ALTER TABLE e_rpt_evt DROP COLUMN IF EXISTS va_lvl;

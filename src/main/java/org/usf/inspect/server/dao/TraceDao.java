@@ -146,14 +146,14 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveMachineResourceUsages(List<SystemMetrics> usages) {
-        batchUpdateWithRetry("INSERT INTO e_rsc_usg(dh_str,va_usd_hep,va_cmt_hep,va_usd_dsk,nb_act_thr,nb_str_thr,va_cpu_usg,cd_ins) VALUES(?,?,?,?,?,?,?,?)", usages, (ps, usg)-> {
+        batchUpdateWithRetry("INSERT INTO e_rsc_usg(dh_str,va_usd_hep,va_cmt_hep,va_usd_dsk,nb_act_thr,nb_dmn_thr,va_cpu_usg,cd_ins) VALUES(?,?,?,?,?,?,?,?)", usages, (ps, usg)-> {
         	var idx=0;
             ps.setTimestamp(++idx, fromNullableInstant(usg.getInstant()));
             ps.setInt(++idx, usg.getUsedHeap());
             ps.setInt(++idx, usg.getCommitedHeap());
             ps.setInt(++idx, usg.getUsedDiskSpace());
             ps.setInt(++idx, usg.getActiveThreadCount());
-            ps.setInt(++idx, usg.getStartedThreadCount());
+            ps.setInt(++idx, usg.getDaemonThreadCount());
             ps.setShort(++idx, usg.getCpuUsage());
             ps.setObject(++idx, usg.getInstanceId());
         });

@@ -96,7 +96,7 @@ public final class FieldConstant {
     public static final String VA_COMMITED_MET = "va_cmt_met";
     public static final String VA_USED_DISK_SPACE = "va_usd_dsk";
     public static final String NB_ACTIVE_THREAD = "nb_act_thr";
-    public static final String NB_START_THREAD = "nb_str_thr";
+    public static final String NB_DAEMON_THREAD = "nb_dmn_thr";
     public static final String VA_CPU_USAGE= "va_cpu_usg";
     public static final String VA_FAIL= "va_fail";
     public static final String VA_FILENAME= "va_fln";

@@ -3,14 +3,16 @@ package org.usf.inspect.server.dao;
 import static java.util.stream.Collectors.toSet;
 import static org.usf.inspect.server.Utils.fromNullableInstant;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Repository

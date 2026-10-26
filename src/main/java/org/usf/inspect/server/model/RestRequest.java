@@ -1,13 +1,11 @@
 package org.usf.inspect.server.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.util.List;
 
-import org.usf.inspect.HttpRequestSignal;
-import org.usf.inspect.HttpRequestUpdate;
+import com.fasterxml.jackson.annotation.JsonCreator;
+
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * 

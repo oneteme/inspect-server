@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.MapperFeature;
-import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.cfg.DateTimeFeature;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.jsontype.NamedType;
@@ -45,7 +44,7 @@ public final class JsonUtils {
 
 		var mapper = jsonMapperBuilder() //use same builder as core
 				.addModules(serverModule)
-				.enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL)
+				.enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL) //use base type as default implementation for abstract types (default: false)
 				.enable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS) //Write dates as timestamps (default: false)
 				.disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES); // skip null for primitive types, e.g. int, long, boolean, etc. (default: true)
 		defaultMapper = mapper.build();

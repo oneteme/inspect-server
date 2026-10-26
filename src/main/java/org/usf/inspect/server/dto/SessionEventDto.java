@@ -1,14 +1,14 @@
 package org.usf.inspect.server.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
 
 import org.usf.inspect.SessionEvent;
 import org.usf.inspect.server.model.MainSession;
 
-import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter

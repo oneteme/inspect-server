@@ -1,15 +1,13 @@
 package org.usf.inspect.server.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
+import java.time.Instant;
+import java.util.UUID;
+
+import org.usf.inspect.EventTrace;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import org.usf.inspect.EventTrace;
-import org.usf.inspect.core.*;
-
-import java.time.Instant;
-import java.util.UUID;
 
 /**
  * 

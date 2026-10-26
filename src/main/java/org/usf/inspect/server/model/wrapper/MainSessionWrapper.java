@@ -1,7 +1,8 @@
 package org.usf.inspect.server.model.wrapper;
 
-import lombok.Getter;
-import lombok.Setter;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
 
 import org.usf.inspect.ExceptionTrace;
 import org.usf.inspect.server.model.CompletableMetric;
@@ -9,9 +10,8 @@ import org.usf.inspect.server.model.MainSession;
 import org.usf.inspect.server.model.Session;
 import org.usf.inspect.server.model.UserAction;
 
-import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter

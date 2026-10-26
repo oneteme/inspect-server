@@ -341,7 +341,7 @@ create table if not exists e_rsc_usg (
     va_cmt_hep int,
     va_usd_dsk int,
     nb_act_thr int,
-    nb_str_thr int,
+    nb_dmn_thr int,
     va_cpu_usg SMALLINT,
     cd_ins uuid
 )

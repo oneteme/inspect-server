@@ -1,9 +1,7 @@
 package org.usf.inspect.server.model;
 
-import org.usf.inspect.FtpRequestSignal;
-import org.usf.inspect.FtpRequestUpdate;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
+
 import lombok.Getter;
 import lombok.Setter;
 

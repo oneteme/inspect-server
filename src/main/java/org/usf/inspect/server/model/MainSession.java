@@ -1,9 +1,7 @@
 package org.usf.inspect.server.model;
 
-import org.usf.inspect.MainSessionSignal;
-import org.usf.inspect.MainSessionUpdate;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;

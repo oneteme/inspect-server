@@ -48,7 +48,6 @@ import org.usf.inspect.server.model.TraceBatch;
 import org.usf.jquery.core.ResultSetMapper;
 import org.usf.jquery.core.RowMapper;
 
-
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 

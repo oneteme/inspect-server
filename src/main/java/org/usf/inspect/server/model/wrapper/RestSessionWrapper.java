@@ -1,17 +1,17 @@
 package org.usf.inspect.server.model.wrapper;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Getter;
-import lombok.Setter;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
 
-import org.usf.inspect.ExceptionTrace;
 import org.usf.inspect.server.model.CompletableMetric;
 import org.usf.inspect.server.model.RestSession;
 import org.usf.inspect.server.model.Session;
 
-import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter
