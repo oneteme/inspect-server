@@ -27,7 +27,7 @@ public interface ResourceUsageCatalog extends DatasetCatalog<InspectStore> {
 	@Expose(identity ="nb_active_thread")
 	ViewColumn nbActiveThread();
 
-	@Bind(NB_START_THREAD)
+	@Bind(NB_DAEMON_THREAD)
 	@Expose(identity = "nb_start_thread")
 	ViewColumn nbStartThread();
 
