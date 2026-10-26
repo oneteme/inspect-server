@@ -26,7 +26,7 @@ import org.usf.inspect.SessionEvent;
 import org.usf.inspect.SystemMetrics;
 import org.usf.inspect.core.DispatchState;
 import org.usf.inspect.core.TraceDispatchException;
-import org.usf.inspect.server.controller.TraceDispatchConflictException;
+import org.usf.inspect.server.exception.TraceDispatchConflictException;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.TraceBatch;
 

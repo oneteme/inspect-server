@@ -4,7 +4,6 @@ import lombok.Setter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.usf.inspect.core.TraceableStage;
 import org.usf.inspect.server.model.Partition;
 import org.usf.inspect.server.model.PartitionedTable;
 import org.usf.inspect.server.service.ScriptService;
@@ -29,7 +28,6 @@ public class PartitionScheduler {
         this.properties = conf.getPartition();
     }
 
-    @TraceableStage
     @Scheduled(cron= "${inspect.server.partition.schedule:0 0 0 L * ?}")
     public void createPartition(){
         var now = YearMonth.now().plusMonths(1);

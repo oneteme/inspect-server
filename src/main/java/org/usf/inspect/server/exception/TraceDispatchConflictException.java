@@ -1,4 +1,4 @@
-package org.usf.inspect.server.controller;
+package org.usf.inspect.server.exception;
 
 import org.usf.inspect.core.TraceDispatchException;
 

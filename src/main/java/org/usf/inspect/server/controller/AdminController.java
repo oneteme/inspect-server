@@ -19,6 +19,6 @@ public class AdminController {
 
     @PostMapping("namespace/{namespace}")
     public ResponseEntity<Boolean> addNamespace(@PathVariable String namespace, @RequestBody NamespaceDto nsp) {
-        return ResponseEntity.ok(adminService.addNamespace(namespace, nsp.password()));
+        return ResponseEntity.ok(adminService.addNamespace(namespace, nsp.password())); //FIXME manage status 400, 409, 500 in exception handler
     }
 }

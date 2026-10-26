@@ -37,6 +37,7 @@ import org.usf.inspect.EventTrace;
 import org.usf.inspect.InstanceEnvironment;
 import org.usf.inspect.core.DispatchState;
 import org.usf.inspect.core.TraceDispatchException;
+import org.usf.inspect.server.exception.TraceDispatchConflictException;
 import org.usf.inspect.server.exception.TraceDispatchProcessingException;
 import org.usf.inspect.server.service.TraceService;
 

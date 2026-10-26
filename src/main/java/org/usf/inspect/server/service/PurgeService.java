@@ -7,7 +7,6 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.allOf;
 import static java.util.concurrent.CompletableFuture.runAsync;
-import static org.usf.inspect.core.InspectLogger.emitInfo;
 import static org.usf.inspect.server.Utils.virtualThreadExecutor;
 //import static org.usf.inspect.server.Utils.*;
 import static org.usf.inspect.util.ExecutorServiceWrapper.wrap;
@@ -45,10 +44,9 @@ public class PurgeService {
             var now = now().atStartOfDay().atZone(systemDefault()).toInstant();
             var scopes = purgeDao.selectInstances();
             log.info("------ Purge ------ method=selected, label=Instance, rows={}", scopes.size());
-            emitInfo("method=select, label=Instance, rows=" + scopes.size());
 
             var tasks = new ArrayList<CompletableFuture<Void>>(scopes.size());
-            for (PurgeScope scope : scopes) {
+            for (var scope : scopes) {
                 var beforeTechnical = from(now.minus(scope.retention().getDiagnostic()));
                 var beforeFunctional = from(now.minus(scope.retention().getAudit()));
 
@@ -56,10 +54,6 @@ public class PurgeService {
                 var ids = purgeDao.selectInstanceIds(idsBefore, scope.namespace(), scope.app(), scope.type());
                 log.info("------ Purge ------ method=selected, label=InstanceId, rows={}, app={}, namespace={}, date={}",
                         ids.size(), scope.app(), scope.namespace(), beforeFunctional);
-                emitInfo("method=select, label=InstanceId, rows=" + ids.size()
-                        + ", app=" + scope.app()
-                        + ", namespace=" + scope.namespace()
-                        + ", date=" + beforeFunctional);
 
                 tasks.add(runAsync(
                         runnablePurge(() -> purgeDao.purgeInstance(scope.namespace(), scope.app(), beforeFunctional),
@@ -163,11 +157,9 @@ public class PurgeService {
             var sum = action.getAsInt();
             if (dateLimit != null) {
                 log.info("------ Purge ------ method=delete, label={}, rows={}, app={}, env={}, date={}", label, sum, app, env, dateLimit);
-                emitInfo("method=delete, label=" + label + ", rows=" + sum + ", app=" + app + ", env=" + env + ", date=" + dateLimit);
             }
             else {
                 log.info("------ Purge ------ method=delete, label={}, rows={}", label, sum);
-                emitInfo("method=delete, label=" + label + ", rows=" + sum);
             }
         };
     }

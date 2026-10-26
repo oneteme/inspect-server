@@ -15,12 +15,13 @@ import static java.util.Objects.nonNull;
 @RequiredArgsConstructor
 @Service
 public class AdminService {
+	
     private final AdminDao adminDao;
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public boolean addNamespace(String namespace, String token) {
         if (isNull(namespace) || namespace.isBlank() || !namespace.matches("[a-zA-Z0-9_\\-]+")) {
-            throw new InvalidNamespaceException("Namespace invalide: " + namespace);
+            throw new InvalidNamespaceException("Namespace invalide: " + namespace); //TODO IllegalArgumentException => 400
         }
         var encryptedToken = nonNull(token) ? passwordEncoder.encode(token) : null;
         try {
@@ -28,7 +29,7 @@ public class AdminService {
         } catch (DataIntegrityViolationException e) {
             throw new NamespaceAlreadyExistsException("Namespace déjà existant: " + namespace);
         }
-        return true;
+        return true; //TODO always true if no exception
     }
 
 }

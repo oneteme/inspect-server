@@ -20,9 +20,9 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
  */
 @Configuration
 @ConditionalOnProperty(name = "inspect.server.reporting.enabled", havingValue = "true", matchIfMissing = true)
-public class InspectServerDiagnosticsConfiguration {
+class InspectServerReportingConfiguration {
 
-    public InspectServerDiagnosticsConfiguration(InspectServerConfiguration config) {
+    public InspectServerReportingConfiguration(InspectServerConfiguration config) {
 		configureLogger("org.usf.inspect.server", true, ()-> new InspectServerLogReporter(config.getReporting()));
     }
 

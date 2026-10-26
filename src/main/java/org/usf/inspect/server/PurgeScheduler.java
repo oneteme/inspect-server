@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-@ConditionalOnProperty(prefix="inspect.server.purge", name="enabled", havingValue="true")
+@ConditionalOnProperty(name="inspect.server.purge.enabled", havingValue="true")
 public class PurgeScheduler {
 	
     private final PurgeService purgeService;
