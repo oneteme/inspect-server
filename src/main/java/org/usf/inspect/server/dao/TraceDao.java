@@ -101,9 +101,9 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             ps.setString(++idx, instance.getCollector());
             ps.setString(++idx, instance.getBranch());
             ps.setString(++idx, instance.getHash());
-            ps.setObject(++idx, toJson(instance.getConfiguration()), OTHER);
-            ps.setObject(++idx, toJson(instance.getResource()), OTHER);
-            ps.setObject(++idx, toJson(instance.getAdditionalProperties()), OTHER);
+            ps.setObject(++idx, nonNull(instance.getConfiguration()) ? toJson(instance.getConfiguration()) : null);
+            ps.setObject(++idx, nonNull(instance.getResource()) ? toJson(instance.getResource()) : null);
+            ps.setObject(++idx, nonNull(instance.getAdditionalProperties()) ? toJson(instance.getAdditionalProperties()) : null);
             ps.setString(++idx, instance.getNamespace());
         });
     }
@@ -595,9 +595,9 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
         ps.setObject(++idx, sgn.getInstanceId());
         ps.setString(++idx, sgn.getHost());
         ps.setInt(++idx, sgn.getPort());
-        ps.setString(++idx, sgn.getSchema());
-        ps.setString(++idx, sgn.getName());
         ps.setString(++idx, sgn.getProtocol());
+        ps.setString(++idx, sgn.getName());
+        ps.setString(++idx, sgn.getSchema());
         ps.setString(++idx, sgn.getUser());
         ps.setString(++idx, sgn.getThreadName());
         ps.setString(++idx, sgn.getDriverVersion());
@@ -652,7 +652,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             ps.setString(++idx, stg.getCommand());
             ps.setInt(++idx, stg.getOrder());
             ps.setObject(++idx, stg.getRequestId());
-            ps.setObject(++idx, toJson(stg.getPayload()), OTHER);
+            ps.setObject(++idx, nonNull(stg.getPayload()) ? toJson(stg.getPayload()) : null, OTHER);
         });
     }
 
@@ -666,7 +666,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             ps.setString(++idx, stg.getCommand());
             ps.setInt(++idx, stg.getOrder());
             ps.setObject(++idx, stg.getRequestId());
-            ps.setObject(++idx, toJson(stg.getPayload()), OTHER);
+            ps.setObject(++idx, nonNull(stg.getPayload()) ? toJson(stg.getPayload()) : null, OTHER);
         });
     }
 
@@ -709,7 +709,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             ps.setString(++idx, stg.getCommand());
             ps.setInt(++idx, stg.getOrder());
             ps.setObject(++idx, stg.getRequestId());
-            ps.setObject(++idx, toJson(stg.getPayload()), OTHER);
+            ps.setObject(++idx, nonNull(stg.getPayload()) ? toJson(stg.getPayload()) : null, OTHER);
         });
     }
 
@@ -720,7 +720,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             ps.setString(++idx, exp.getType());
             ps.setString(++idx, exp.getMessage());
             ps.setObject(++idx, toJson(exp.getStackTraceRows()), OTHER);
-            ps.setObject(++idx, toJson(exp.getCause()), OTHER);
+            ps.setObject(++idx, nonNull(exp.getCause()) ? toJson(exp.getCause()) : null, OTHER);
             ps.setLong(++idx, exp.getOffset());
             ps.setObject(++idx, exp.getTraceId());
             ps.setByte(++idx, exp.getTraceType());

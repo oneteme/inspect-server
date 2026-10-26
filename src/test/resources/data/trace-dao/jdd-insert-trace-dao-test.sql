@@ -75,7 +75,7 @@ INSERT INTO e_dtb_rqt
 VALUES
     ('10000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001',
      '20000000-0000-0000-0000-000000000001', TIMESTAMP WITH TIME ZONE '2026-01-15 10:00:00+00',
-     'jdbc-worker', 'alice', 'db.example.test', 5432, 'public', 'inspect', 'public', '42.7', 'PostgreSQL', '16'),
+     'jdbc-worker', 'alice', 'db.example.test', 5432, 'postgresql', 'inspect', 'public', '42.7', 'PostgreSQL', '16'),
     ('10000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000002',
      '20000000-0000-0000-0000-000000000002', TIMESTAMP WITH TIME ZONE '2026-01-15 09:00:00+00',
      'other-worker', 'charlie', 'other.example.test', 5432, 'other', 'other', 'other', NULL, NULL, NULL);

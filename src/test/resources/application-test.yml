@@ -25,7 +25,7 @@ logging:
 
 inspect:
   collector:
-    enabled: true
+    enabled: false
     scheduling:
       interval: 10s
   server:

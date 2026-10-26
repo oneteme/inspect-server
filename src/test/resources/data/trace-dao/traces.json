@@ -338,7 +338,7 @@
       "va_o_sze": 0,
       "va_o_cnt_enc": null,
       "va_cnt_typ": null,
-      "cd_stt": -1,
+      "cd_stt": 0,
       "va_i_sze": 0,
       "va_i_cnt_enc": null,
       "va_bdy_cnt": null,
@@ -347,7 +347,7 @@
     "updateRowMin": {
       "dh_end": null,
       "va_cnt_typ": null,
-      "cd_stt": -1,
+      "cd_stt": 0,
       "va_i_sze": 0,
       "va_i_cnt_enc": null,
       "va_bdy_cnt": null,
@@ -416,11 +416,11 @@
       "va_typ": null,
       "va_nam": null,
       "va_lct": null,
-      "cd_stt": -1
+      "cd_stt": 0
     },
     "updateRowMin": {
       "dh_end": null,
-      "cd_stt": -1
+      "cd_stt": 0
     }
   },
   "mail": {
@@ -488,12 +488,12 @@
       "cd_prt": 0,
       "va_pcl": null,
       "va_cmd": null,
-      "cd_stt": -1
+      "cd_stt": 0
     },
     "updateRowMin": {
       "dh_end": null,
       "va_cmd": null,
-      "cd_stt": -1
+      "cd_stt": 0
     }
   },
   "ftp": {
@@ -569,12 +569,12 @@
       "va_srv_vrs": null,
       "va_clt_vrs": null,
       "va_cmd": null,
-      "cd_stt": -1
+      "cd_stt": 0
     },
     "updateRowMin": {
       "dh_end": null,
       "va_cmd": null,
-      "cd_stt": -1
+      "cd_stt": 0
     }
   },
   "ldap": {
@@ -642,12 +642,12 @@
       "cd_prt": 0,
       "va_pcl": null,
       "va_cmd": null,
-      "cd_stt": -1
+      "cd_stt": 0
     },
     "updateRowMin": {
       "dh_end": null,
       "va_cmd": null,
-      "cd_stt": -1
+      "cd_stt": 0
     }
   },
   "database": {
@@ -684,7 +684,7 @@
       "va_usr": "alice",
       "va_hst": "db.example.test",
       "cd_prt": 5432,
-      "va_she": "public",
+      "va_she": "postgresql",
       "va_nam": "inspect",
       "va_sha": "public",
       "va_drv": "42.7",
@@ -735,12 +735,12 @@
       "va_prd_nam": null,
       "va_prd_vrs": null,
       "va_cmd": null,
-      "cd_stt": -1
+      "cd_stt": 0
     },
     "updateRowMin": {
       "dh_end": null,
       "va_cmd": null,
-      "cd_stt": -1
+      "cd_stt": 0
     }
   },
   "packet": {
@@ -826,7 +826,7 @@
       "commitedHeap": 512,
       "usedDiskSpace": 1024,
       "activeThreadCount": 8,
-      "startedThreadCount": 24,
+      "daemonThreadCount": 24,
       "cpuUsage": 1250,
       "instanceId": "20000000-0000-0000-0000-000000000001"
     },
@@ -836,7 +836,7 @@
       "va_cmt_hep": 512,
       "va_usd_dsk": 1024,
       "nb_act_thr": 8,
-      "nb_str_thr": 24,
+      "nb_dmn_thr": 24,
       "va_cpu_usg": 1250,
       "cd_ins": "20000000-0000-0000-0000-000000000001"
     },
@@ -846,7 +846,7 @@
       "va_cmt_hep": 512,
       "va_usd_dsk": 1024,
       "nb_act_thr": 8,
-      "nb_str_thr": 24,
+      "nb_dmn_thr": 24,
       "va_cpu_usg": 1250,
       "cd_ins": "20000000-0000-0000-0000-000000000001"
     }

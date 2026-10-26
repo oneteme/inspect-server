@@ -101,4 +101,5 @@ public final class FieldConstant {
     public static final String VA_FAIL= "va_fail";
     public static final String VA_FILENAME= "va_fln";
     public static final String VA_BODY_CONTENT = "va_bdy_cnt";
+    public static final String NB_START_THREAD = "nb_start_thr";
 }
