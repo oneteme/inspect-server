@@ -163,9 +163,10 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
     @Transactional(rollbackFor = Throwable.class)
     public void saveRestSessionSignals(List<HttpSessionSignal> signals) {
         batchUpdateWithRetry("""
-INSERT INTO e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,va_usr_agt,va_fwd_add,va_nam,va_usr)
-VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", signals, (ps, sgn) -> {
+INSERT INTO e_rst_ses(id_ses,cd_ins,va_mth,va_pcl,va_hst,cd_prt,va_pth,va_qry,va_ath_sch,va_i_sze,va_i_cnt_enc,va_thr,va_lnk,dh_str,va_usr_agt,va_fwd_add,va_msk,va_nam,va_usr)
+VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", signals, (ps, sgn) -> {
             var idx = restSessionSignalSetter(ps, sgn);
+            ps.setInt(++idx, sgn.getEventMask());
             ps.setString(++idx, sgn.getName());
             ps.setString(++idx, sgn.getUser());
         });
@@ -243,8 +244,9 @@ WHERE id_ses=? AND dh_end IS NULL""", updates, (ps, upd) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveMainSessionSignals(List<MainSessionSignal> signals) {
-        batchUpdateWithRetry("INSERT INTO e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_lct,va_nam,va_usr,dh_str) VALUES(?,?,?,?,?,?,?,?)", signals, (ps, sgn) -> {
+        batchUpdateWithRetry("INSERT INTO e_main_ses(id_ses,cd_ins,va_typ,va_thr,va_msk,va_lct,va_nam,va_usr,dh_str) VALUES(?,?,?,?,?,?,?,?,?)", signals, (ps, sgn) -> {
             var idx = mainSessionSignalSetter(ps, sgn);
+            ps.setInt(++idx, sgn.getEventMask());
             ps.setString(++idx, sgn.getLocation());
             ps.setString(++idx, sgn.getName());
             ps.setString(++idx, sgn.getUser());
