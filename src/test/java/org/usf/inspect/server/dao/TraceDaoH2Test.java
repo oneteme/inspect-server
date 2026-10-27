@@ -442,7 +442,7 @@ class TraceDaoH2Test {
     class SaveLocalRequestSignals {
         @Test
         void withMinimumRequiredFields() throws IOException {
-            var signal = new LocalRequestSignal(TRACE_ID, SESSION_ID, START, "local-worker");
+            var signal = new LocalRequestSignal(TRACE_ID, SESSION_ID, START, "local-worker", null);
             signal.setInstanceId(INSTANCE_ID);
 
             traceDao.saveLocalRequestSignals(List.of(signal));
@@ -464,7 +464,7 @@ class TraceDaoH2Test {
     class SaveLocalRequests {
         @Test
         void withMinimumRequiredFields() throws IOException {
-            var signal = new LocalRequestSignal(TRACE_ID, SESSION_ID, START, "local-worker");
+            var signal = new LocalRequestSignal(TRACE_ID, SESSION_ID, START, "local-worker", null);
             signal.setInstanceId(INSTANCE_ID);
             var update = new LocalRequestUpdate(TRACE_ID);
 
