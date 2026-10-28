@@ -2,7 +2,9 @@ package org.usf.inspect.server.erm;
 
 import static org.usf.inspect.server.config.constant.FieldConstant.*;
 import static org.usf.jquery.core.JDBCType.UUID;
+import static org.usf.jquery.core.Predicate.eq;
 
+import org.usf.jquery.core.Column;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
@@ -42,4 +44,11 @@ public interface ResourceUsageCatalog extends DatasetCatalog<InspectStore> {
 	@Expose(identity = "instance_env")
 	@Typed(UUID)
 	ViewColumn instanceEnv();
+
+	@Expose(identity = "cpu_usage_dec")
+	default Column cpuPct()
+	{
+		return cpuUsage().divide(100.);
+	}
+
 }
