@@ -333,6 +333,7 @@ public class Mappers {
             out.setUser(rs.getString("user"));
             out.setThreadName(rs.getString("thread"));
             out.setType(rs.getString("type"));
+            out.setStatus(rs.getShort("status"));
             return out;
         };
     }
