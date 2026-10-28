@@ -24,6 +24,9 @@ public interface StageCatalog extends DatasetCatalog<InspectStore> {
     @Bind(CD_ORD)
     ViewColumn order();
 
+    @Bind(VA_PLD)
+    ViewColumn payload();
+
     ViewColumn parent();
 
     default JoinGroup exception() {

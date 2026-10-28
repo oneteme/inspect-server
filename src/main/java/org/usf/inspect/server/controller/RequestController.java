@@ -562,7 +562,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "database_stage",
             view = DATABASE_REQUEST_STAGE_ROW_MAPPER,
-            select = "name,order,start,end,command,exception.err_type,exception.err_msg,exception.stacktrace,parent",
+            select = "name,order,start,end,command,payload,exception.err_type,exception.err_msg,exception.stacktrace,parent",
             join = "exception",
             order = "order")
     public Collection<DatabaseRequestStage> fetchDatabaseRequestStages(

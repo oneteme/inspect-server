@@ -12,22 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.usf.inspect.DatabaseRequestStage;
-import org.usf.inspect.DirectoryRequestStage;
-import org.usf.inspect.ExceptionTrace;
-import org.usf.inspect.FtpRequestStage;
-import org.usf.inspect.HttpRequestStage;
-import org.usf.inspect.HttpSessionStage;
-import org.usf.inspect.InspectCollectorProperties;
-import org.usf.inspect.InstanceEnvironment;
-import org.usf.inspect.InstanceType;
-import org.usf.inspect.MachineResource;
-import org.usf.inspect.Mail;
-import org.usf.inspect.MailRequestStage;
-import org.usf.inspect.ReportEvent;
-import org.usf.inspect.SessionEvent;
-import org.usf.inspect.StackTraceRow;
-import org.usf.inspect.SystemMetrics;
+import org.usf.inspect.*;
 import org.usf.inspect.server.dto.DatabaseRequestDto;
 import org.usf.inspect.server.dto.DirectoryRequestDto;
 import org.usf.inspect.server.dto.FtpRequestDto;
@@ -382,6 +367,10 @@ public class Mappers {
             out.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
             out.setCommand(rs.getString("command"));
+            var payload = rs.getString("payload");
+            if (payload != null) {
+                out.setPayload(fromJson(payload, StagePayload.class));
+            }
                 out.setException(getExceptionInfoIfNotNull(
                         rs.getString("errType"),
                         rs.getString("errMsg"),
