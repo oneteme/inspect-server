@@ -50,7 +50,7 @@ public class InspectApplication {
 	
 	@Bean
 	ApplicationListener<ApplicationReadyEvent> configureTraceHubOnReady(InspectServerConfiguration conf, TracePublisher agent) {
-		return e-> serverHub().configure(conf.getScheduling(), agent, emptyList()); //wait for server startup before start dispatcher
+		return e-> serverHub().configure(conf.getScheduling(), agent, emptyList(), conf.isDebugMode()); //wait for server startup before start dispatcher
 	}
 
     @Bean //used by inspect-core to get application properties and git info

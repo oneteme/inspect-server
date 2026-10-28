@@ -71,9 +71,6 @@ inspect:
     scheduling:
       interval: 30s #default=60s, interval between trace dispatches
       queue-capacity: 500000 #default=10000, queue capacity for trace dispatching !v1.2
-      thread-name: inspect-srv-publisher #!v1.2
-    reporting:
-      enabled: true
     partition:
       enabled: true
       schedule: "0 0 0 L * ?"

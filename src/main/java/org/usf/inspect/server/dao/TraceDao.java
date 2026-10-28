@@ -759,7 +759,6 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
         });
     }
 
-
     private <T> void batchUpdateWithRetry(String sql, List<T> records, ParameterizedPreparedStatementSetter<T> pss) {
     	if(nonNull(records) && !records.isEmpty()) {
 	       var result = updateAll(sql, records, pss);
