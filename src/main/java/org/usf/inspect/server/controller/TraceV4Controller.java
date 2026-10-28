@@ -163,14 +163,4 @@ public class TraceV4Controller {
     		acc.accept(evt);
     	}
     }
-
-    @GetMapping(value = "queue", produces = APPLICATION_JSON_VALUE)
-    public Collection<EventTrace> peekQueue(){
-        return service.peekQueue();
-    }
-
-    @PostMapping("state/{state}")
-    public void updateState(@PathVariable DispatchState state){
-        service.updateState(state);
-    }
 }

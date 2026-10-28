@@ -101,9 +101,9 @@ values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", ps -> {
             ps.setString(++idx, instance.getCollector());
             ps.setString(++idx, instance.getBranch());
             ps.setString(++idx, instance.getHash());
-            ps.setObject(++idx, nonNull(instance.getConfiguration()) ? toJson(instance.getConfiguration()) : null);
-            ps.setObject(++idx, nonNull(instance.getResource()) ? toJson(instance.getResource()) : null);
-            ps.setObject(++idx, nonNull(instance.getAdditionalProperties()) ? toJson(instance.getAdditionalProperties()) : null);
+            ps.setObject(++idx, nonNull(instance.getConfiguration()) ? toJson(instance.getConfiguration()) : null, OTHER);
+            ps.setObject(++idx, nonNull(instance.getResource()) ? toJson(instance.getResource()) : null, OTHER);
+            ps.setObject(++idx, nonNull(instance.getAdditionalProperties()) ? toJson(instance.getAdditionalProperties()) : null, OTHER);
             ps.setString(++idx, instance.getNamespace());
         });
     }
@@ -758,7 +758,6 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             ps.setObject(++idx, cfg.getSessionId());
         });
     }
-
 
     private <T> void batchUpdateWithRetry(String sql, List<T> records, ParameterizedPreparedStatementSetter<T> pss) {
     	if(nonNull(records) && !records.isEmpty()) {

@@ -26,6 +26,7 @@ import org.usf.inspect.SessionEvent;
 import org.usf.inspect.SystemMetrics;
 import org.usf.inspect.core.DispatchState;
 import org.usf.inspect.core.TraceDispatchException;
+import org.usf.inspect.core.TraceableStage;
 import org.usf.inspect.server.exception.TraceDispatchConflictException;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.TraceBatch;
@@ -57,6 +58,7 @@ public class TraceService {
         serverHub().emitTrace(newTraceBatch(now(), 0, attempts, instance.getId(), emptyList())); //ensure that the trace batch is emitted after the instance has been dispatched
     }
 
+    @TraceableStage
     public void addTraces(UUID id, int seq, int attempts, Instant end, List<EventTrace> traces) throws TraceDispatchException {
         if(getDispatcherState() == DISABLE) { //avoid checking the database if the dispatcher is disabled
 			throw new TraceDispatchException("trace dispatcher is disabled");

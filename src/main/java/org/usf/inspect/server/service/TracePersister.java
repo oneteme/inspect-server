@@ -12,6 +12,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.springframework.stereotype.Service;
 import org.usf.inspect.DatabaseRequestSignal;
@@ -77,8 +79,12 @@ public class TracePersister implements TracePublisher {
 	@TraceableStage
 	public void flush(boolean complete, ProcessingQueue<EventTrace> queue) {
 		queue.pollAll(snp->{
-			mergeTraceParts(snp); //safe !?
-			return addTraces(unmodifiableList(snp));
+			mergeTraceParts(snp);
+			var back = addTraces(unmodifiableList(snp));
+			if(!back.isEmpty()) {
+				log.warn("{} traces have not been persisted, they will be re-queued for the next dispatch", back.size());
+			}
+			return back;
 		});
 	}
 
@@ -112,29 +118,30 @@ public class TracePersister implements TracePublisher {
         cf.add(supplyAsync(() -> filterAndConsume(traces, BrowserConfigDto.class, dao::saveBrowserConfigs), executor));
         //updates
         cf.add(supplyAsync(()-> filterAndConsume(traces, InstanceEnvironmentUpdate.class, dao::updateInstanceEnvironments), executor));        
-        cf.add(supplyAsync(()-> filterAndConsume(traces, (e, cons) -> {
-            if(e instanceof SessionMaskUpdate upd && upd.isMain()) {
-                cons.accept(upd);
-            }
-        }, dao::updateMaskMainSessions), executor));
-        cf.add(supplyAsync(()-> filterAndConsume(traces, (e, cons) -> {
-            if(e instanceof SessionMaskUpdate upd && !upd.isMain()) {
-                cons.accept(upd);
-            }
-        }, dao::updateMaskRestSessions), executor));
-        cf.add(supplyAsync(()-> filterAndConsume(traces, (e, cons) -> {
-            if(e instanceof SessionAsyncDurationUpdate upd && upd.isMain()) {
-                cons.accept(upd);
-            }
-        }, dao::updateMainSessionAsyncDuration), executor));
-        cf.add(supplyAsync(()-> filterAndConsume(traces, (e, cons) -> {
-            if(e instanceof SessionAsyncDurationUpdate upd && !upd.isMain()) {
-                cons.accept(upd);
-            }
-        }, dao::updateRestSessionAsyncDuration), executor));
+        cf.add(supplyAsync(()-> filterAndConsume(traces, maskUpdateFilter(true), dao::updateMaskMainSessions), executor));
+        cf.add(supplyAsync(()-> filterAndConsume(traces, maskUpdateFilter(false), dao::updateMaskRestSessions), executor));
+        cf.add(supplyAsync(()-> filterAndConsume(traces, asyncDurationUpdateFilter(true), dao::updateMainSessionAsyncDuration), executor));
+        cf.add(supplyAsync(()-> filterAndConsume(traces, asyncDurationUpdateFilter(false), dao::updateRestSessionAsyncDuration), executor));
+        
         return allOf(cf.toArray(CompletableFuture[]::new)).thenApply(v-> cf.stream()
         		.map(CompletableFuture::join)
                 .flatMap(Collection::stream)
                 .toList()).join();
     }
+	
+	static BiConsumer<EventTrace, Consumer<SessionMaskUpdate>> maskUpdateFilter(boolean isMain) {
+		return (t,acc)-> {
+            if(t instanceof SessionMaskUpdate upd && upd.isMain() == isMain) {
+            	acc.accept(upd);
+            }
+        };
+	}
+	
+	static BiConsumer<EventTrace, Consumer<SessionAsyncDurationUpdate>> asyncDurationUpdateFilter(boolean isMain) {
+		return (t,acc)-> {
+            if(t instanceof SessionAsyncDurationUpdate upd && upd.isMain() == isMain) {
+            	acc.accept(upd);
+            }
+        };
+	}
 }
