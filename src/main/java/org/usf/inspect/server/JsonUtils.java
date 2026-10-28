@@ -1,5 +1,6 @@
 package org.usf.inspect.server;
 
+import static java.util.Objects.*;
 import static org.usf.inspect.InspectCoreModule.jsonMapperBuilder;
 
 import org.usf.inspect.Retention;
@@ -18,6 +19,8 @@ import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.jsontype.NamedType;
 import tools.jackson.databind.module.SimpleModule;
 
+import java.util.Objects;
+
 @Slf4j
 @NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public final class JsonUtils {
@@ -25,11 +28,11 @@ public final class JsonUtils {
 	public static final JsonMapper defaultMapper;
     
 	public static <T> T fromJson(String json, Class<T> valueType) {
-        return defaultMapper.readValue(json, valueType);
+        return isNull(json) ? null : defaultMapper.readValue(json, valueType);
     }
 
     public static String toJson(Object object) {
-        return defaultMapper.writeValueAsString(object);
+        return isNull(object) ? null : defaultMapper.writeValueAsString(object);
     }
     
 	static {

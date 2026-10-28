@@ -296,13 +296,13 @@ public class Mappers {
             out.setName(rs.getString("name"));
             out.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
-                out.setException(getExceptionInfoIfNotNull(
-                        rs.getString("errType"),
-                        rs.getString("errMsg"),
-                        rs.getString("stacktrace") != null
-                                ? defaultMapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {})
-                                : null
-                ));
+            out.setException(getExceptionInfoIfNotNull(
+                    rs.getString("errType"),
+                    rs.getString("errMsg"),
+                    rs.getString("stacktrace") != null
+                            ? defaultMapper.readValue(rs.getString("stacktrace"), new TypeReference<StackTraceRow[]>() {})
+                            : null
+            ));
             return out;
         };
     }
