@@ -3,6 +3,7 @@ package org.usf.inspect.server.erm;
 import static org.usf.inspect.server.config.constant.FieldConstant.*;
 import static org.usf.jquery.core.JDBCType.UUID;
 import static org.usf.jquery.core.Join.innerJoin;
+import static org.usf.jquery.core.Join.leftJoin;
 import static org.usf.jquery.core.JoinGroup.joins;
 
 import org.usf.jquery.core.JoinGroup;
@@ -43,4 +44,11 @@ public interface LogEntryCatalog extends DatasetCatalog<InspectStore> {
 		var instance = getStore().instance();
 		return joins(innerJoin(instance.getView(), instanceEnv().eq(instance.id())));
 	}
+
+	default JoinGroup left_instance() {
+		var instance = getStore().instance();
+		return joins(leftJoin(instance.getView(), instanceEnv().eq(instance.id())));
+	}
+
+
 }
