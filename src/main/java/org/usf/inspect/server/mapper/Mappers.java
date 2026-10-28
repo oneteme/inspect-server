@@ -368,10 +368,7 @@ public class Mappers {
             out.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
             out.setCommand(rs.getString("command"));
-            var payload = rs.getString("payload");
-            if (payload != null) {
-                out.setPayload(fromJson(payload, StagePayload.class));
-            }
+            out.setPayload(fromJson(rs.getString("payload"), StagePayload.class));
                 out.setException(getExceptionInfoIfNotNull(
                         rs.getString("errType"),
                         rs.getString("errMsg"),
@@ -426,6 +423,7 @@ public class Mappers {
             out.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
             out.setCommand(rs.getString("command"));
+            out.setPayload(fromJson(rs.getString("payload"), StagePayload.class));
                 out.setException(getExceptionInfoIfNotNull(
                         rs.getString("errType"),
                         rs.getString("errMsg"),
@@ -543,7 +541,8 @@ public class Mappers {
             out.setCommand(rs.getString("command"));
             out.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
             out.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
-                out.setException(getExceptionInfoIfNotNull(
+            out.setPayload(fromJson(rs.getString("payload"), StagePayload.class));
+            out.setException(getExceptionInfoIfNotNull(
                         rs.getString("errType"),
                         rs.getString("errMsg"),
                         rs.getString("stacktrace") != null

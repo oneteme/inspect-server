@@ -617,7 +617,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ftp_stage",
             view = FTP_REQUEST_STAGE_ROW_MAPPER,
-            select = "name,order,start,end,command,exception.err_type,exception.err_msg,exception.stacktrace,parent",
+            select = "name,order,start,end,command,payload,exception.err_type,exception.err_msg,exception.stacktrace,parent",
             join = "exception",
             order = "order")
     public Collection<FtpRequestStage> fetchFtpRequestStages(
@@ -742,7 +742,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "ldap_stage",
             view = LDAP_REQUEST_STAGE_ROW_MAPPER,
-            select = "name,order,start,end,command,exception.err_type,exception.err_msg,exception.stacktrace,parent",
+            select = "name,order,start,end,command,payload,exception.err_type,exception.err_msg,exception.stacktrace,parent",
             join = "exception",
             order = "order")
     public Collection<DirectoryRequestStage> fetchLdapRequestStages(
