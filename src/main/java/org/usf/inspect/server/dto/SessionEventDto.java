@@ -1,0 +1,23 @@
+package org.usf.inspect.server.dto;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
+import org.usf.inspect.SessionEvent;
+import org.usf.inspect.server.model.MainSession;
+
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class SessionEventDto extends MainSession {
+    private Instant instant;
+    private String type;
+    private String value;
+    private UUID sessionId;
+    private String namespace;
+    private String appName;
+    private List<SessionEvent> sessionEvents;
+}

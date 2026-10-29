@@ -4,7 +4,6 @@ import lombok.Setter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.usf.inspect.core.TraceableStage;
 import org.usf.inspect.server.model.Partition;
 import org.usf.inspect.server.model.PartitionedTable;
 import org.usf.inspect.server.service.ScriptService;
@@ -18,7 +17,7 @@ import static org.usf.inspect.server.model.PartitionedTable.*;
 
 @Service
 @Setter
-@ConditionalOnProperty(prefix = "inspect.server.partition", name="enabled", havingValue = "true")
+@ConditionalOnProperty(name = "inspect.server.partition.enabled", havingValue = "true")
 public class PartitionScheduler {
 
     private final ScriptService scriptService;
@@ -29,7 +28,6 @@ public class PartitionScheduler {
         this.properties = conf.getPartition();
     }
 
-    @TraceableStage
     @Scheduled(cron= "${inspect.server.partition.schedule:0 0 0 L * ?}")
     public void createPartition(){
         var now = YearMonth.now().plusMonths(1);
@@ -48,6 +46,7 @@ public class PartitionScheduler {
         ofNullable(properties.getLocalRequest()).ifPresent(o-> map.put(REQ_LOCAL, o));
         ofNullable(properties.getInstanceTrace()).ifPresent(o-> map.put(INSTANCE_TRACE, o));
         ofNullable(properties.getResourceUsage()).ifPresent(o-> map.put(RESOURCE_USAGE, o));
+        ofNullable(properties.getSessionEvent()).ifPresent(o-> map.put(SESSION_EVENT, o));
         return map;
     }
 }

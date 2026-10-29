@@ -7,13 +7,15 @@ CREATE TABLE IF NOT EXISTS e_main_ses (
     dh_end timestamp(6),
     va_lct varchar,
     va_thr varchar,
-    va_err_typ varchar,
-    va_err_msg varchar,
-    va_stk json,
     va_msk int,
-    cd_ins UUID
+    cd_ins UUID,
+    cd_stt SMALLINT,
+    va_asy_drt BIGINT
 )
 PARTITION BY RANGE (dh_str);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_main_ses_id_ses_dh_str ON e_main_ses(id_ses, dh_str DESC);
+CREATE INDEX IF NOT EXISTS idx_main_ses_cd_ins ON e_main_ses(cd_ins);
 
 CREATE TABLE IF NOT EXISTS e_rst_ses (
     id_ses UUID,
@@ -25,7 +27,7 @@ CREATE TABLE IF NOT EXISTS e_rst_ses (
     va_qry varchar,
     va_cnt_typ varchar,
     va_ath_sch varchar, 
-    cd_stt int,
+    cd_stt SMALLINT,
     va_i_sze bigint,
     va_o_sze bigint,
     va_i_cnt_enc varchar,
@@ -33,27 +35,31 @@ CREATE TABLE IF NOT EXISTS e_rst_ses (
     dh_str timestamp(6), 
     dh_end timestamp(6),
     va_thr varchar,
-    va_err_typ varchar,
-    va_err_msg varchar,
-    va_stk json,
     va_nam varchar,
     va_usr varchar,
     va_usr_agt varchar,
     va_cch_ctr varchar,
     va_msk int,
     va_lnk boolean,
-    cd_ins UUID
+    cd_ins UUID,
+    va_fwd_add varchar,
+    va_asy_drt BIGINT
 )
 PARTITION BY RANGE (dh_str);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_rst_ses_id_ses_dh_str ON e_rst_ses(id_ses, dh_str DESC);
+CREATE INDEX IF NOT EXISTS idx_rst_ses_cd_ins ON e_rst_ses(cd_ins);
 
 CREATE TABLE IF NOT EXISTS e_rst_ses_stg (
     va_nam varchar,
     dh_str timestamp(6),
     dh_end timestamp(6),
-    cd_ord bigint,
+    cd_ord int,
     cd_prn_ses UUID
 )
 PARTITION BY RANGE (dh_str);
+
+CREATE INDEX IF NOT EXISTS idx_rst_ses_stg_cd_prn_ses ON e_rst_ses_stg(cd_prn_ses);
 
 CREATE TABLE IF NOT EXISTS e_rst_rqt (
     id_rst_rqt UUID,
@@ -65,7 +71,7 @@ CREATE TABLE IF NOT EXISTS e_rst_rqt (
     va_qry varchar,
     va_cnt_typ varchar,
     va_ath_sch varchar,
-    cd_stt int,
+    cd_stt SMALLINT,
     va_i_sze bigint,
     va_o_sze bigint,
     va_i_cnt_enc varchar,
@@ -81,14 +87,21 @@ CREATE TABLE IF NOT EXISTS e_rst_rqt (
 )
 PARTITION BY RANGE (dh_str);
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_rst_rqt_id_rst_rqt_dh_str ON e_rst_rqt(id_rst_rqt, dh_str DESC);
+CREATE INDEX IF NOT EXISTS idx_rst_rqt_cd_prn_ses ON e_rst_rqt(cd_prn_ses);
+CREATE INDEX IF NOT EXISTS idx_rst_rqt_va_hst ON e_rst_rqt(va_hst);
+CREATE INDEX IF NOT EXISTS idx_rst_rqt_cd_ins ON e_rst_rqt(cd_ins);
+
 CREATE TABLE IF NOT EXISTS e_rst_rqt_stg (
     va_nam varchar,
     dh_str timestamp(6),
     dh_end timestamp(6),
-    cd_ord bigint,
+    cd_ord int,
     cd_rst_rqt UUID
 )
 PARTITION BY RANGE (dh_str);
+
+CREATE INDEX IF NOT EXISTS idx_rst_rqt_stg_cd_rst_rqt ON e_rst_rqt_stg(cd_rst_rqt);
 
 CREATE TABLE IF NOT EXISTS e_smtp_rqt (
     id_smtp_rqt UUID,
@@ -100,21 +113,28 @@ CREATE TABLE IF NOT EXISTS e_smtp_rqt (
     dh_end timestamp(6),
     va_thr varchar,
     va_cmd varchar,
-    va_fail boolean,
+    cd_stt SMALLINT,
     cd_prn_ses UUID,
     cd_ins UUID
 )
 PARTITION BY RANGE (dh_str);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_smtp_rqt_id_smtp_rqt_dh_str ON e_smtp_rqt(id_smtp_rqt, dh_str DESC);
+CREATE INDEX IF NOT EXISTS idx_smtp_rqt_cd_prn_ses ON e_smtp_rqt(cd_prn_ses);
+CREATE INDEX IF NOT EXISTS idx_smtp_rqt_va_hst ON e_smtp_rqt(va_hst);
+CREATE INDEX IF NOT EXISTS idx_smtp_rqt_cd_ins ON e_smtp_rqt(cd_ins);
 
 CREATE TABLE IF NOT EXISTS e_smtp_stg (
     va_nam varchar,
     dh_str timestamp(6),
     dh_end timestamp(6),
     va_cmd varchar,
-    cd_ord bigint,
+    cd_ord int,
     cd_smtp_rqt UUID
 )
 PARTITION BY RANGE (dh_str);
+
+CREATE INDEX IF NOT EXISTS idx_smtp_stg_cd_smtp_rqt ON e_smtp_stg(cd_smtp_rqt);
 
 CREATE TABLE IF NOT EXISTS e_smtp_mail (
     va_sbj varchar,
@@ -125,6 +145,8 @@ CREATE TABLE IF NOT EXISTS e_smtp_mail (
     va_sze bigint,
     cd_smtp_rqt UUID
 );
+
+CREATE INDEX IF NOT EXISTS idx_smtp_mail_cd_smtp_rqt ON e_smtp_mail(cd_smtp_rqt);
 
 CREATE TABLE IF NOT EXISTS e_ftp_rqt (
     id_ftp_rqt UUID,
@@ -138,22 +160,29 @@ CREATE TABLE IF NOT EXISTS e_ftp_rqt (
     dh_end timestamp(6),
     va_thr varchar,
     va_cmd varchar,
-    va_fail boolean,
+    cd_stt SMALLINT,
     cd_prn_ses UUID, -- index
     cd_ins UUID
 )
 PARTITION BY RANGE (dh_str);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ftp_rqt_id_ftp_rqt_dh_str ON e_ftp_rqt(id_ftp_rqt, dh_str DESC);
+CREATE INDEX IF NOT EXISTS idx_ftp_rqt_cd_prn_ses ON e_ftp_rqt(cd_prn_ses);
+CREATE INDEX IF NOT EXISTS idx_ftp_rqt_va_hst ON e_ftp_rqt(va_hst);
+CREATE INDEX IF NOT EXISTS idx_ftp_rqt_cd_ins ON e_ftp_rqt(cd_ins);
 
 CREATE TABLE IF NOT EXISTS e_ftp_stg (
     va_nam varchar,
     dh_str timestamp(6),
     dh_end timestamp(6),
     va_cmd varchar,
-    va_arg varchar,
-    cd_ord bigint,
-    cd_ftp_rqt UUID -- index
+    cd_ord int,
+    cd_ftp_rqt UUID, -- index,
+    va_pld json
 )
 PARTITION BY RANGE (dh_str);
+
+CREATE INDEX IF NOT EXISTS idx_ftp_stg_cd_ftp_rqt ON e_ftp_stg(cd_ftp_rqt);
 
 CREATE TABLE IF NOT EXISTS e_ldap_rqt (
     id_ldap_rqt UUID,
@@ -165,22 +194,29 @@ CREATE TABLE IF NOT EXISTS e_ldap_rqt (
     dh_end timestamp(6),
     va_thr varchar,
     va_cmd varchar,
-    va_fail boolean,
+    cd_stt SMALLINT,
     cd_prn_ses UUID, -- index
     cd_ins UUID
 )
 PARTITION BY RANGE (dh_str);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ldap_rqt_id_ldap_rqt_dh_str ON e_ldap_rqt(id_ldap_rqt, dh_str DESC);
+CREATE INDEX IF NOT EXISTS idx_ldap_rqt_cd_prn_ses ON e_ldap_rqt(cd_prn_ses);
+CREATE INDEX IF NOT EXISTS idx_ldap_rqt_va_hst ON e_ldap_rqt(va_hst);
+CREATE INDEX IF NOT EXISTS idx_ldap_rqt_cd_ins ON e_ldap_rqt(cd_ins);
 
 CREATE TABLE IF NOT EXISTS e_ldap_stg (
     va_nam varchar,
     dh_str timestamp(6),
     dh_end timestamp(6),
     va_cmd varchar,
-    va_arg varchar,
-    cd_ord bigint,
-    cd_ldap_rqt UUID
+    cd_ord int,
+    cd_ldap_rqt UUID,
+    va_pld json
 )
 PARTITION BY RANGE (dh_str);
+
+CREATE INDEX IF NOT EXISTS idx_ldap_stg_cd_ldap_rqt ON e_ldap_stg(cd_ldap_rqt);
 
 CREATE TABLE IF NOT EXISTS e_dtb_rqt (
     id_dtb_rqt UUID,
@@ -197,23 +233,29 @@ CREATE TABLE IF NOT EXISTS e_dtb_rqt (
     va_prd_nam varchar, 
     va_prd_vrs varchar, 
     va_cmd varchar,
-    va_fail boolean,
+    cd_stt SMALLINT,
     cd_prn_ses UUID,
     cd_ins UUID
 )
 PARTITION BY RANGE (dh_str);
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_dtb_rqt_id_dtb_rqt_dh_str ON e_dtb_rqt(id_dtb_rqt, dh_str DESC);
+CREATE INDEX IF NOT EXISTS idx_dtb_rqt_cd_prn_ses ON e_dtb_rqt(cd_prn_ses);
+CREATE INDEX IF NOT EXISTS idx_dtb_rqt_va_hst ON e_dtb_rqt(va_hst);
+CREATE INDEX IF NOT EXISTS idx_dtb_rqt_cd_ins ON e_dtb_rqt(cd_ins);
+
 CREATE TABLE IF NOT EXISTS e_dtb_stg (
     va_nam varchar,
     dh_str timestamp(6),   
-    dh_end timestamp(6),   
-    va_cnt varchar,
+    dh_end timestamp(6),
     va_cmd varchar,
-    va_arg varchar,
-    cd_ord bigint,
-    cd_dtb_rqt UUID
+    cd_ord int,
+    cd_dtb_rqt UUID,
+    va_pld json
 )
 PARTITION BY RANGE (dh_str);
+
+CREATE INDEX IF NOT EXISTS idx_dtb_stg_cd_dtb_rqt ON e_dtb_stg(cd_dtb_rqt);
 
 CREATE TABLE IF NOT EXISTS e_lcl_rqt (
     id_lcl_rqt UUID,
@@ -224,20 +266,26 @@ CREATE TABLE IF NOT EXISTS e_lcl_rqt (
     dh_end timestamp(6), 
     va_usr varchar,
     va_thr varchar,
-    va_fail boolean,
     cd_prn_ses UUID,
-    cd_ins UUID
+    cd_ins UUID,
+    cd_stt SMALLINT
 )
 PARTITION BY RANGE (dh_str);
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_lcl_rqt_id_lcl_rqt_dh_str ON e_lcl_rqt(id_lcl_rqt, dh_str DESC);
+CREATE INDEX IF NOT EXISTS idx_lcl_rqt_cd_prn_ses ON e_lcl_rqt(cd_prn_ses);
+
 CREATE TABLE IF NOT EXISTS e_exc_inf (
-    va_typ varchar, 
     va_err_typ varchar,
     va_err_msg varchar,
     va_stk json,
+    va_cas json,
     cd_ord bigint,
-    cd_rqt UUID
+    cd_trc UUID,
+    va_trc_typ SMALLINT
 );
+
+CREATE INDEX IF NOT EXISTS idx_exc_inf_cd_trc ON e_exc_inf(cd_trc);
 
 CREATE TABLE IF NOT EXISTS e_env_ins (
     id_ins UUID,
@@ -260,87 +308,77 @@ CREATE TABLE IF NOT EXISTS e_env_ins (
     cd_nsp varchar
 );
 
-CREATE TABLE IF NOT EXISTS e_usr_acn (
-    va_typ varchar,
-    dh_str timestamp(6),
-    va_nam varchar,
-    va_nde_nam varchar,
-    cd_prn_ses uuid
-);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_env_ins_id_ins ON e_env_ins(id_ins);
+CREATE INDEX IF NOT EXISTS idx_env_ins_cd_nsp ON e_env_ins(cd_nsp);
 
 create table if not exists e_ins_trc (
     va_pnd int,
     va_atp int,
+    va_seq int,
     va_trc_cnt int,
     dh_str timestamp(6),
-    va_fln varchar,
     cd_ins uuid
 )
 PARTITION BY RANGE (dh_str);
 
-create table if not exists e_log_ent (
+CREATE INDEX IF NOT EXISTS idx_ins_trc_cd_ins ON e_ins_trc(cd_ins);
+
+create table if not exists e_rpt_evt (
     dh_str timestamp(6),
-    va_lvl varchar,
     va_msg varchar,
+    va_err_typ varchar,
     va_stk json,
-    cd_prn_ses uuid,
+    va_thr varchar,
+    va_act varchar,
     cd_ins uuid
 );
+
+CREATE INDEX IF NOT EXISTS idx_rpt_evt_cd_ins ON e_rpt_evt(cd_ins);
 
 create table if not exists e_rsc_usg (
     dh_str timestamp(6),
     va_usd_hep int,
     va_cmt_hep int,
     va_usd_dsk int,
+    nb_act_thr int,
+    nb_dmn_thr int,
+    va_cpu_usg SMALLINT,
     cd_ins uuid
 )
 PARTITION BY RANGE (dh_str);
 
+CREATE INDEX IF NOT EXISTS idx_rsc_usg_cd_ins ON e_rsc_usg(cd_ins);
+
 CREATE TABLE IF NOT EXISTS e_nsp_ins (
-		va_nam varchar NOT NULL UNIQUE,
-		va_enc_tkn varchar NOT NULL
+	va_nam varchar NOT NULL UNIQUE,
+	va_enc_tkn varchar NOT NULL
 );
 
--- Ajouter les index du cd instance dans les requests
-CREATE UNIQUE INDEX IF NOT EXISTS idx_main_ses_id_ses_dh_str ON e_main_ses(id_ses, dh_str DESC);
-CREATE INDEX IF NOT EXISTS idx_main_ses_cd_ins ON e_main_ses(cd_ins);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_rst_ses_id_ses_dh_str ON e_rst_ses(id_ses, dh_str DESC);
-CREATE INDEX IF NOT EXISTS idx_rst_ses_cd_ins ON e_rst_ses(cd_ins);
-CREATE INDEX IF NOT EXISTS idx_rst_ses_stg_cd_prn_ses ON e_rst_ses_stg(cd_prn_ses);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_rst_rqt_id_rst_rqt_dh_str ON e_rst_rqt(id_rst_rqt, dh_str DESC);
-CREATE INDEX IF NOT EXISTS idx_rst_rqt_cd_prn_ses ON e_rst_rqt(cd_prn_ses);
-CREATE INDEX IF NOT EXISTS idx_rst_rqt_va_hst ON e_rst_rqt(va_hst);
-CREATE INDEX IF NOT EXISTS idx_rst_rqt_cd_ins ON e_rst_rqt(cd_ins);
-CREATE INDEX IF NOT EXISTS idx_rst_rqt_stg_cd_rst_rqt ON e_rst_rqt_stg(cd_rst_rqt);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_smtp_rqt_id_smtp_rqt_dh_str ON e_smtp_rqt(id_smtp_rqt, dh_str DESC);
-CREATE INDEX IF NOT EXISTS idx_smtp_rqt_cd_prn_ses ON e_smtp_rqt(cd_prn_ses);
-CREATE INDEX IF NOT EXISTS idx_smtp_rqt_va_hst ON e_smtp_rqt(va_hst);
-CREATE INDEX IF NOT EXISTS idx_smtp_rqt_cd_ins ON e_smtp_rqt(cd_ins);
-CREATE INDEX IF NOT EXISTS idx_smtp_stg_cd_smtp_rqt ON e_smtp_stg(cd_smtp_rqt);
-CREATE INDEX IF NOT EXISTS idx_smtp_mail_cd_smtp_rqt ON e_smtp_mail(cd_smtp_rqt);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_ftp_rqt_id_ftp_rqt_dh_str ON e_ftp_rqt(id_ftp_rqt, dh_str DESC);
-CREATE INDEX IF NOT EXISTS idx_ftp_rqt_cd_prn_ses ON e_ftp_rqt(cd_prn_ses);
-CREATE INDEX IF NOT EXISTS idx_ftp_rqt_va_hst ON e_ftp_rqt(va_hst);
-CREATE INDEX IF NOT EXISTS idx_ftp_rqt_cd_ins ON e_ftp_rqt(cd_ins);
-CREATE INDEX IF NOT EXISTS idx_ftp_stg_cd_ftp_rqt ON e_ftp_stg(cd_ftp_rqt);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_ldap_rqt_id_ldap_rqt_dh_str ON e_ldap_rqt(id_ldap_rqt, dh_str DESC);
-CREATE INDEX IF NOT EXISTS idx_ldap_rqt_cd_prn_ses ON e_ldap_rqt(cd_prn_ses);
-CREATE INDEX IF NOT EXISTS idx_ldap_rqt_va_hst ON e_ldap_rqt(va_hst);
-CREATE INDEX IF NOT EXISTS idx_ldap_rqt_cd_ins ON e_ldap_rqt(cd_ins);
-CREATE INDEX IF NOT EXISTS idx_ldap_stg_cd_ldap_rqt ON e_ldap_stg(cd_ldap_rqt);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_dtb_rqt_id_dtb_rqt_dh_str ON e_dtb_rqt(id_dtb_rqt, dh_str DESC);
-CREATE INDEX IF NOT EXISTS idx_dtb_rqt_cd_prn_ses ON e_dtb_rqt(cd_prn_ses);
-CREATE INDEX IF NOT EXISTS idx_dtb_rqt_va_hst ON e_dtb_rqt(va_hst);
-CREATE INDEX IF NOT EXISTS idx_dtb_rqt_cd_ins ON e_dtb_rqt(cd_ins);
-CREATE INDEX IF NOT EXISTS idx_dtb_stg_cd_dtb_rqt ON e_dtb_stg(cd_dtb_rqt);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_lcl_rqt_id_lcl_rqt_dh_str ON e_lcl_rqt(id_lcl_rqt, dh_str DESC);
-CREATE INDEX IF NOT EXISTS idx_lcl_rqt_cd_prn_ses ON e_lcl_rqt(cd_prn_ses);
-CREATE INDEX IF NOT EXISTS idx_exc_inf_cd_rqt ON e_exc_inf(cd_rqt);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_env_ins_id_ins ON e_env_ins(id_ins);
-CREATE INDEX IF NOT EXISTS idx_env_ins_va_app_va_env ON e_env_ins(va_app, va_env);  --TODO facto
-CREATE INDEX IF NOT EXISTS idx_usr_acn_cd_prn_ses ON e_usr_acn(cd_prn_ses);
-CREATE INDEX IF NOT EXISTS idx_ins_trc_cd_ins ON e_ins_trc(cd_ins);
-CREATE INDEX IF NOT EXISTS idx_log_ent_cd_ins ON e_log_ent(cd_ins);
-CREATE INDEX IF NOT EXISTS idx_log_ent_cd_prn_ses ON e_log_ent(cd_prn_ses);
 CREATE INDEX IF NOT EXISTS idx_nsp_ins_va_nam ON e_nsp_ins(va_nam);
-CREATE INDEX IF NOT EXISTS idx_env_ins_cd_nsp ON e_env_ins(cd_nsp); --TODO facto
+
+CREATE TABLE IF NOT EXISTS e_ses_evt (
+	dh_str timestamp(6),
+    va_typ varchar,
+    va_cnt varchar,
+    va_scp varchar,
+    va_lct varchar,
+    cd_prn_ses uuid,
+    cd_ins uuid
+)
+PARTITION BY RANGE (dh_str);
+
+CREATE INDEX IF NOT EXISTS idx_ses_evt_cd_ins ON e_ses_evt(cd_ins);
+CREATE INDEX IF NOT EXISTS idx_ses_evt_cd_prn_ses ON e_ses_evt(cd_prn_ses);
+
+--Ajout de la table BrowserConfig
+CREATE TABLE IF NOT EXISTS o_brw_cfg (
+     va_dvc_dsp_rsl varchar,
+     va_dvc_orn varchar,
+     va_dvc_cnt varchar,
+     va_sav_dta boolean,
+     va_wdw_vpt_bds varchar,
+     va_wdw_zom_lvl varchar,
+     va_usr_lng varchar,
+     va_usr_thm varchar,
+     cd_prn_ses uuid
+);

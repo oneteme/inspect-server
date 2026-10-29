@@ -9,6 +9,7 @@ import static org.usf.inspect.core.Assertions.assertIdentifier;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -24,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class NamespaceAuthenticationCacheProvider implements AuthenticationProvider {
 
     private final JdbcTemplate template;
@@ -46,11 +48,12 @@ public class NamespaceAuthenticationCacheProvider implements AuthenticationProvi
             		return getEncryptedToken(namespace);
             	}
             	catch (EmptyResultDataAccessException e) {
-                    return saveNamespace(namespace, token);
+                    return saveNamespace(namespace, token); //TODO delete this
             	}
             });
             if ((isNull(token) && nonNull(expected)) || !passwordEncoder.matches(token, expected)) {
-            	throw new BadCredentialsException("Invalid token for namespace: " + namespace);
+            	log.warn("Invalid token for namespace: " + namespace);
+                throw new BadCredentialsException("Invalid token for namespace: " + namespace);
             }
             return authenticated(namespace, null, emptyList());
 		}

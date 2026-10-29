@@ -2,9 +2,9 @@ package org.usf.inspect.server.model;
 
 import static java.util.Objects.nonNull;
 
-import java.util.Objects;
+import java.util.UUID;
 
-import org.usf.inspect.core.Metric;
+import org.usf.inspect.TimedTrace;
 
 /**
  * 
@@ -12,9 +12,9 @@ import org.usf.inspect.core.Metric;
  *
  */
 @Deprecated
-public interface CompletableMetric extends Metric {
+public interface CompletableMetric extends TimedTrace {
 	
-	String getId();
+	UUID getId();
 
 	CompletableMetric copy();
 	

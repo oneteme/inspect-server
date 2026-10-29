@@ -35,48 +35,52 @@ spring:
       enabled: true
       path: /h2
 
-logging:
-  level:
-    org.usf.jquery: DEBUG
-    org.usf.inspect: DEBUG
-    org.springframework.jdbc.core: DEBUG
-    org.springframework.security: DEBUG
-    org.springframework.web: DEBUG
+#logging:
+#  level:
+#    org.usf.jquery: DEBUG
+#    org.usf.inspect: DEBUG
+#    org.springframework.jdbc.core: DEBUG
+#    org.springframework.security: DEBUG
+#    org.springframework.web: DEBUG
 
 inspect:
-  collector: 
+  collector:
     enabled: false #default=false, enables the collector
     scheduling:
       interval: 30s #default=60s, interval between trace dispatches
+      queue-capacity: 5000 #default=10000, queue capacity for trace dispatching !v1.2
     monitoring:
-      http-route:
+      webmvc:
         excludes:
           method: OPTIONS #default=[], exclude OPTIONS requests
           path: /favicon.ico #default=[], exclude matching request paths
       exception:
         max-stack-trace-rows: -1 #default=5, -1 no limit
         max-cause-depth: -1 #default=-1
-        #class-name-pattern: fr.enedis.nova.*
-    resources:
-      enabled: true
+        #class-name-pattern: my.site.app.*
     tracing:
-      queue-capacity: 5000 #default=10000, queue capacity for trace dispatching
+      type: REST #default=null, trace dispatch type (e.g., REST) !v1.2
       remote:
-        mode: REST #default=null, trace dispatch type (e.g., REST)
         host: http://localhost:9001 #default=localhost, target dispatch host
-        retention-max-age: 10d #default=30d, maximum age of traces in days
+        #retention-max-age: 10d #default=30d, maximum age of traces in days
+  application:
+    name: ${spring.application.name} 
+    namespace: jarvis
+    version: 0.0.1
   server:
     scheduling:
       interval: 30s #default=60s, interval between trace dispatches
-    tracing:
-      queue-capacity: 500000 #default=10000, queue capacity for trace dispatching
+      queue-capacity: 500000 #default=10000, queue capacity for trace dispatching !v1.2
     partition:
       enabled: true
       schedule: "0 0 0 L * ?"
       http-session: DAY
       http-request: DAY
       jdbc-request: DAY
+      session-event: DAY
     purge:
       enabled: false
+    migration:
+      namespacePrefix: Jarvis
 
 

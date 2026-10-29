@@ -18,14 +18,15 @@ public enum PartitionedTable {
     REQ_FTP("e_ftp_rqt"),
     REQ_LOCAL("e_lcl_rqt"),
     RESOURCE_USAGE("e_rsc_usg"),
-    INSTANCE_TRACE("e_ins_trc");
+    INSTANCE_TRACE("e_ins_trc"),
+    SESSION_EVENT("e_ses_evt");
 
     static final Set<String> tables = Set.of(
             "e_rst_rqt", "e_main_ses", "e_rst_ses",
             "e_smtp_rqt", "e_smtp_stg", "e_ftp_rqt",
             "e_ftp_stg", "e_ldap_rqt", "e_ldap_stg",
             "e_dtb_rqt", "e_dtb_stg", "e_lcl_rqt",
-            "e_rst_rqt_stg", "e_rst_ses_stg", "e_rsc_usg", "e_ins_trc"
+            "e_rst_rqt_stg", "e_rst_ses_stg", "e_rsc_usg", "e_ins_trc", "e_ses_evt"
     );
 
     private final String table;

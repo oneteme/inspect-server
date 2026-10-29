@@ -1,17 +1,19 @@
 package org.usf.inspect.server.model.wrapper;
 
 
+import java.util.List;
+
+import org.usf.inspect.EventTrace;
+import org.usf.inspect.Mail;
+import org.usf.inspect.MailRequestStage;
+import org.usf.inspect.server.model.MailRequest;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Delegate;
-import org.usf.inspect.core.EventTrace;
-import org.usf.inspect.core.Mail;
-import org.usf.inspect.core.MailRequestStage;
-import org.usf.inspect.server.model.MailRequest;
-
-import java.util.List;
 
 @Setter
 @Getter
