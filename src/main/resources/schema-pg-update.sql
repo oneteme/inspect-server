@@ -129,15 +129,15 @@ ALTER TABLE e_rsc_usg ADD COLUMN IF NOT EXISTS nb_act_thr int;
 ALTER TABLE e_rsc_usg ADD COLUMN IF NOT EXISTS nb_dmn_thr int;
 ALTER TABLE e_rsc_usg ADD COLUMN IF NOT EXISTS va_cpu_usg SMALLINT;
 
-ALTER TABLE e_rpt_evt DROP COLUMN IF EXISTS va_lvl;
-ALTER TABLE e_rpt_evt DROP COLUMN IF EXISTS cd_prn_ses;
-ALTER TABLE e_rpt_evt ADD COLUMN IF NOT EXISTS va_err_typ varchar;
-ALTER TABLE e_rpt_evt ADD COLUMN IF NOT EXISTS va_thr varchar;
-ALTER TABLE e_rpt_evt ADD COLUMN IF NOT EXISTS va_act varchar;
+ALTER TABLE e_log_ent DROP COLUMN IF EXISTS va_lvl;
+ALTER TABLE e_log_ent DROP COLUMN IF EXISTS cd_prn_ses;
+ALTER TABLE e_log_ent ADD COLUMN IF NOT EXISTS va_err_typ varchar;
+ALTER TABLE e_log_ent ADD COLUMN IF NOT EXISTS va_thr varchar;
+ALTER TABLE e_log_ent ADD COLUMN IF NOT EXISTS va_act varchar;
 DROP INDEX IF EXISTS idx_log_ent_cd_prn_ses;
 DROP INDEX IF EXISTS idx_log_ent_cd_ins;
 
-ALTER TABLE e_rpt_evt RENAME TO e_rpt_evt;
+ALTER TABLE e_log_ent RENAME TO e_rpt_evt;
 
 -- Migration de la table e_exc_inf : ajout des champs va_cas et va_trc_typ
 ALTER TABLE e_exc_inf ADD COLUMN IF NOT EXISTS va_cas json;
@@ -150,7 +150,7 @@ ALTER TABLE e_exc_inf ALTER COLUMN cd_ord TYPE bigint;
 ALTER TABLE e_env_ins ADD COLUMN IF NOT EXISTS cd_nsp varchar;
 
 UPDATE e_env_ins
-SET cd_nsp = UPPER(<prefix> || '-' || va_env)
+SET cd_nsp = UPPER('jarvis' || '-' || va_env)
   WHERE va_env IS NOT NULL;
 
 -- Migration de l'identifiant legacy du serveur distant dans la configuration
