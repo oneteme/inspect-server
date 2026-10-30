@@ -464,7 +464,7 @@ public class RequestService {
                 .columns(
                         databaseRequest.id(), databaseRequest.host(), databaseRequest.port(), databaseRequest.db(), databaseRequest.start(), databaseRequest.end(),
                         databaseRequest.user(), databaseRequest.thread(), databaseRequest.driver(), databaseRequest.dbName(), databaseRequest.dbVersion(), databaseRequest.command(),
-                        databaseRequest.schema(), databaseRequest.parent()
+                        databaseRequest.schema(),databaseRequest.status(), databaseRequest.parent()
                 )
                 .criteria(databaseRequest.parent().in(ids.toArray(new UUID[0])));
         if (start != null) {
@@ -487,6 +487,7 @@ public class RequestService {
                 out.setDriverVersion(rs.getString("driver"));
                 out.setProductName(rs.getString("dbName"));
                 out.setProductVersion(rs.getString("dbVersion"));
+                out.setStatus(rs.getShort("status"));
                 out.setActions(new ArrayList<>());
                 out.setCommand(rs.getString("command"));
                 out.setSchema(rs.getString("schema"));
@@ -503,7 +504,7 @@ public class RequestService {
         var v = new QueryComposer()
                 .columns(
                         ftpRequest.id(), ftpRequest.host(), ftpRequest.port(), ftpRequest.protocol(), ftpRequest.serverVersion(), ftpRequest.clientVersion(),
-                        ftpRequest.start(), ftpRequest.end(), ftpRequest.command(), ftpRequest.user(), ftpRequest.thread(), ftpRequest.parent()
+                        ftpRequest.start(), ftpRequest.end(), ftpRequest.command(), ftpRequest.user(), ftpRequest.thread(), ftpRequest.status(), ftpRequest.parent()
                 )
                 .criteria(ftpRequest.parent().in(ids.toArray(new UUID[0])));
         if (start != null) {
@@ -526,6 +527,7 @@ public class RequestService {
                 out.setCommand(rs.getString("command"));
                 out.setUser(rs.getString("user"));
                 out.setThreadName(rs.getString("thread"));
+                out.setStatus(rs.getShort("status"));
                 out.setActions(new ArrayList<>());
                 outs.add(out);
             }
@@ -539,7 +541,7 @@ public class RequestService {
 
         var v = new QueryComposer()
                 .columns(
-                        smtpRequest.id(), smtpRequest.host(), smtpRequest.port(), smtpRequest.start(), smtpRequest.end(), smtpRequest.command(), smtpRequest.user(), smtpRequest.thread(), smtpRequest.parent()
+                        smtpRequest.id(), smtpRequest.host(), smtpRequest.port(), smtpRequest.start(), smtpRequest.end(), smtpRequest.command(), smtpRequest.user(), smtpRequest.thread(), smtpRequest.status(), smtpRequest.parent()
                 )
                 .criteria(smtpRequest.parent().in(ids.toArray(new UUID[0])));
         if (start != null) {
@@ -559,6 +561,7 @@ public class RequestService {
                 out.setCommand(rs.getString("command"));
                 out.setUser(rs.getString("user"));
                 out.setThreadName(rs.getString("thread"));
+                out.setStatus(rs.getShort("status"));
                 out.setActions(new ArrayList<>());
                 outs.add(out);
             }
@@ -572,7 +575,7 @@ public class RequestService {
 
         var v = new QueryComposer()
                 .columns(
-                        ldapRequest.id(), ldapRequest.host(), ldapRequest.port(), ldapRequest.protocol(), ldapRequest.start(), ldapRequest.end(), ldapRequest.command(), ldapRequest.user(), ldapRequest.thread(), ldapRequest.parent()
+                        ldapRequest.id(), ldapRequest.host(), ldapRequest.port(), ldapRequest.protocol(), ldapRequest.start(), ldapRequest.end(), ldapRequest.command(), ldapRequest.user(), ldapRequest.thread(), ldapRequest.status(), ldapRequest.parent()
                 )
                 .criteria(ldapRequest.parent().in(ids.toArray(new UUID[0])));
         if (start != null) {
@@ -593,6 +596,7 @@ public class RequestService {
                 out.setCommand(rs.getString("command"));
                 out.setUser(rs.getString("user"));
                 out.setThreadName(rs.getString("thread"));
+                out.setStatus(rs.getShort("status"));
                 out.setActions(new ArrayList<>());
                 outs.add(out);
             }
