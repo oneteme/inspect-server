@@ -4,6 +4,8 @@ import static java.time.Duration.ofDays;
 import static java.util.Arrays.stream;
 import static java.util.Objects.nonNull;
 import static org.usf.inspect.server.JsonUtils.fromJson;
+import static org.usf.jquery.core.Column.rank;
+import static org.usf.jquery.mvc.StoreManager.getInstance;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -25,11 +27,7 @@ import org.usf.inspect.InstanceType;
 import org.usf.inspect.Retention;
 import org.usf.inspect.TraceType;
 import org.usf.inspect.server.erm.InspectStore;
-import org.usf.inspect.server.erm.InstanceCatalog;
-import org.usf.jquery.core.Column;
-import org.usf.jquery.core.Order;
 import org.usf.jquery.core.QueryComposer;
-import org.usf.jquery.mvc.StoreManager;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,57 +38,29 @@ import lombok.extern.slf4j.Slf4j;
 public class PurgeDao {
 
     private static final Duration DEFAULT_RETENTION = ofDays(30);
-   // InspectApplication app = InspectApplication.defaultInstance;
 
     private static final Retention DEFAULT_RETENTION_CONFIG = new Retention(DEFAULT_RETENTION, DEFAULT_RETENTION);
     private final NamedParameterJdbcTemplate namedTemplate;
 
     private final JdbcTemplate template;
-    public record PurgeScope(
-            InstanceType type,
-            String app,
-            String namespace,
-            Retention retention
-    ) {}
-
-
-
-    public List<PurgeScope> selectInstances() {
-        InspectStore store = StoreManager.getInstance()
-                .getStore(InspectStore.class);
-
-        InstanceCatalog instance = store.instance();
-
+    
+    public List<PurgeScope> selectLastApplicationInstances() {
+        var str = getInstance().getStore(InspectStore.class);
+        var ins = str.instance();
         var query = new QueryComposer()
-                .columns(
-                        instance.type(),
-                        instance.appName(),
-                        instance.namespace(),
-                        instance.configuration()
-                )
-                .criterias(
-                        Column.rank().over(
-                                new Column[]{
-                                        instance.namespace(),
-                                        instance.appName(),
-                                        instance.type()
-                                },
-                                new Order[]{
-                                        instance.start().desc()
-                                }
-                        ).eq(1)
-                );
-
-        return store.execute(
-                query.compose(store),
-                this::mapScopes
-        );
+        		.columns(
+                        ins.type(),
+                        ins.appName(),
+                        ins.namespace(),
+                        ins.configuration())
+                .criterias(rank().over(ins.lastApplicationInstance()).eq(1));
+        return str.execute(query.compose(str), this::mapScopes);
     }
 
     public List<UUID> selectInstanceIds(Timestamp before, String nsp, String app, InstanceType type) {
         var args = new ArrayList<>(3);
         args.add(before);
-        args.add(type.name());
+        args.add(type.name()); //FIXEME (@Tasnim) nsp & app should be not null
         return template.queryForList("SELECT id_ins FROM e_env_ins WHERE dh_str<? AND dh_end IS NULL AND va_typ = ?" +
                 " AND cd_nsp" + (nonNull(nsp) && args.add(nsp) ? "=?" : " IS NULL") +
                 " AND va_app" + (nonNull(app) && args.add(app) ? "=?" : " IS NULL"), UUID.class, args.toArray());
@@ -100,7 +70,7 @@ public class PurgeDao {
     public int purgeAbandonedInstances(String namespace, String app, Timestamp dateLimit) {
         return template.update("""
         DELETE FROM e_env_ins
-        WHERE id_ins IN (
+        WHERE id_ins IN(
             SELECT i.id_ins
             FROM e_env_ins i
             LEFT JOIN e_ins_trc t ON t.cd_ins = i.id_ins
@@ -402,7 +372,10 @@ public class PurgeDao {
         return out;
     }
 
-
-
+    public record PurgeScope(
+            InstanceType type,
+            String app,
+            String namespace,
+            Retention retention) {}
 
 }

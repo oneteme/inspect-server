@@ -108,7 +108,7 @@ class PurgeServiceH2Test {
     private void mockPurgeScope() {
         var retention = new Retention(Duration.ofDays(10), Duration.ofDays(7));
         doReturn(List.of(new PurgeDao.PurgeScope(InstanceType.SERVER, "app-a", "JARVIS_DEV", retention)))
-                .when(purgeDao).selectInstances();
+                .when(purgeDao).selectLastApplicationInstances();
     }
 
     private int countRows(String table) {

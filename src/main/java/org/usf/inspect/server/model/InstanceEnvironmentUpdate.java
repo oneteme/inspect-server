@@ -14,4 +14,9 @@ public final class InstanceEnvironmentUpdate implements EventTrace {
 	
     private final UUID id;
     private final Instant end;
+    
+    @Override
+    public String toString() {
+		return id + "{set end=" + end + "}";
+    }
 }

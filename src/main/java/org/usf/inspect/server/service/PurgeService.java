@@ -22,7 +22,6 @@ import java.util.function.IntSupplier;
 
 import org.springframework.stereotype.Service;
 import org.usf.inspect.server.dao.PurgeDao;
-import org.usf.inspect.server.dao.PurgeDao.PurgeScope;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,7 +41,7 @@ public class PurgeService {
         RuntimeException error = null;
         try {
             var now = now().atStartOfDay().atZone(systemDefault()).toInstant();
-            var scopes = purgeDao.selectInstances();
+            var scopes = purgeDao.selectLastApplicationInstances();
             log.info("------ Purge ------ method=selected, label=Instance, rows={}", scopes.size());
 
             var tasks = new ArrayList<CompletableFuture<Void>>(scopes.size());
@@ -66,7 +65,7 @@ public class PurgeService {
 
                 //purge old instances that have not dh-end
                 log.info("------ Purge ------ method=purgeAbandonedInstances----------namespace={}, app={}, date={}", scope.namespace(), scope.app(), beforeFunctional);
-                tasks.add(runAsync(
+                tasks.add(runAsync( //TODO we can optimize this query : delete * from env_ins where not exist (select * ins_trc where env_ins.id=ins_trc.id)
                         runnablePurge(() -> purgeDao.purgeAbandonedInstances(scope.namespace(), scope.app(), beforeFunctional),
                                 "AbandonedInstance", scope.app(), scope.namespace(), beforeFunctional),
                         functionalExecutor));
@@ -100,7 +99,7 @@ public class PurgeService {
     private CompletableFuture<Void> purge(List<UUID> ids, Timestamp beforeTechnical, Timestamp beforeFunctional, String env, String app) {
         return allOf(
                 //session
-                runAsync(runnablePurge(() -> purgeDao.purgeMainSession(ids, beforeFunctional), "MainSession", app, env, beforeFunctional), functionalExecutor),
+        		runAsync(runnablePurge(() -> purgeDao.purgeMainSession(ids, beforeFunctional), "MainSession", app, env, beforeFunctional), functionalExecutor),
                 runAsync(runnablePurge(() -> purgeDao.purgeRestSession(ids, beforeFunctional), "RestSession", app, env, beforeFunctional), functionalExecutor),
                 //request
                 runAsync(runnablePurge(() -> purgeDao.purgeLocalRequest(ids, beforeFunctional), "LclRequest", app, env, beforeFunctional), functionalExecutor),

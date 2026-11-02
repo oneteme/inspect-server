@@ -1,6 +1,6 @@
 package org.usf.inspect.server.service;
 
-import static org.usf.inspect.core.DispatchState.COLLECT;
+import static org.usf.inspect.DispatchState.COLLECT;
 import static org.usf.inspect.server.model.Partition.buildPartitionScript;
 
 import java.time.YearMonth;
@@ -9,7 +9,7 @@ import java.util.Map;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.usf.inspect.core.DispatchState;
+import org.usf.inspect.DispatchState;
 import org.usf.inspect.server.model.Partition;
 import org.usf.inspect.server.model.PartitionedTable;
 

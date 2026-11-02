@@ -4,7 +4,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static org.springframework.security.authentication.UsernamePasswordAuthenticationToken.authenticated;
-import static org.usf.inspect.core.Assertions.assertIdentifier;
+import static org.usf.inspect.Assertions.assertIdentifier;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
