@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import org.usf.inspect.ExceptionTrace;
 import org.usf.inspect.server.model.CompletableMetric;
 import org.usf.inspect.server.model.RestSession;
 import org.usf.inspect.server.model.Session;
@@ -22,6 +23,7 @@ public class RestSessionWrapper implements Session {
     private final RestSession restSession = new RestSession();
 
     private List<RestRequestWrapper> restRequests;
+    private List<ExceptionTrace> exceptions;
     private List<DatabaseRequestWrapper> databaseRequests;
     private List<LocalRequestWrapper> localRequests;
     private List<FtpRequestWrapper> ftpRequests;
@@ -36,6 +38,10 @@ public class RestSessionWrapper implements Session {
     private String hash;
     private String environment;
     private String version;
+
+    public void setExceptions(List<ExceptionTrace> exceptions) {
+        this.exceptions = exceptions;
+    }
 
     public void setRequestsMask(int requestsMask) {
         restSession.setRequestsMask(requestsMask);
