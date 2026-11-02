@@ -22,6 +22,7 @@ public class SecurityConfig {
     public SecurityFilterChain basicSecurityFilterChain(HttpSecurity http, NamespaceAuthenticationCacheProvider provider) throws Exception {
     	return http
     			.csrf(AbstractHttpConfigurer::disable)
+    			.cors(withDefaults())
     			.securityMatcher("/v5/trace/**")
     			.authenticationProvider(provider)
     			.httpBasic(withDefaults())
@@ -35,6 +36,7 @@ public class SecurityConfig {
 	SecurityFilterChain jwtSecurityFilterChain(HttpSecurity http) throws Exception {
 		return http
 				.csrf(AbstractHttpConfigurer::disable)
+				.cors(withDefaults())
 				.headers(headers -> headers.frameOptions(FrameOptionsConfig::sameOrigin)) //H2 frames
 				.oauth2ResourceServer(oauth2 -> oauth2.jwt(v->{}))
 				.authorizeHttpRequests(auth-> auth
