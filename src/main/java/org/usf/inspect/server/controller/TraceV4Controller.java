@@ -3,6 +3,7 @@ package org.usf.inspect.server.controller;
 import static java.util.Objects.nonNull;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
+import static org.springframework.http.ResponseEntity.accepted;
 import static org.usf.inspect.core.DualEventTracer.APP_ERROR;
 import static org.usf.inspect.core.DualEventTracer.INT_ERROR;
 import static org.usf.inspect.core.DualEventTracer.SUCCESS;
@@ -76,7 +77,11 @@ public class TraceV4Controller {
         if (!addTraces.isEmpty()) {
             traces.addAll(addTraces);
         }
-        return controller.addTraces(id, 1, attempts, end, traces); //TODO check seq value
+        var responseEntity = controller.addTraces(id, 1, attempts, end, traces); //TODO check seq value
+        if(responseEntity.getStatusCode().value() == 409){
+            return accepted().build();
+        }
+        return responseEntity;
     }
     
     static void resolveTraceUpdateStatus(EventTrace trc) {
