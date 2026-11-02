@@ -7,8 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.usf.inspect.core.DispatchState.COLLECT;
-import static org.usf.inspect.core.DispatchState.DISABLE;
+import static org.usf.inspect.DispatchState.COLLECT;
+import static org.usf.inspect.DispatchState.DISABLE;
 import static org.usf.inspect.server.service.TraceBatchDispatcherHub.serverHub;
 
 import java.time.Instant;

@@ -150,8 +150,7 @@ ALTER TABLE e_exc_inf ALTER COLUMN cd_ord TYPE bigint;
 ALTER TABLE e_env_ins ADD COLUMN IF NOT EXISTS cd_nsp varchar;
 
 UPDATE e_env_ins
-SET cd_nsp = UPPER('jarvis' || '-' || va_env)
-  WHERE va_env IS NOT NULL;
+SET cd_nsp = UPPER('jarvis' || '-' || va_env);
 
 -- Migration de l'identifiant legacy du serveur distant dans la configuration
 UPDATE e_env_ins

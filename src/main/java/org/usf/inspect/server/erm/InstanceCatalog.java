@@ -1,5 +1,6 @@
 package org.usf.inspect.server.erm;
 
+import static org.usf.inspect.server.config.constant.FieldConstant.CD_NSP;
 import static org.usf.inspect.server.config.constant.FieldConstant.DH_END;
 import static org.usf.inspect.server.config.constant.FieldConstant.DH_STR;
 import static org.usf.inspect.server.config.constant.FieldConstant.ID_INS;
@@ -17,10 +18,11 @@ import static org.usf.inspect.server.config.constant.FieldConstant.VA_RSR;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_TYP;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_USR;
 import static org.usf.inspect.server.config.constant.FieldConstant.VA_VRS;
-import static org.usf.inspect.server.config.constant.FieldConstant.CD_NSP;
 import static org.usf.jquery.core.JDBCType.UUID;
 
 import org.usf.jquery.core.Column;
+import org.usf.jquery.core.Partition;
+import org.usf.jquery.core.PartitionComposer;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
@@ -88,5 +90,12 @@ public interface InstanceCatalog extends DatasetCatalog<InspectStore> {
 
 	default Column elapsedTime() {
 		return end().minus(start()).epoch();
+	}
+	
+	default Partition lastApplicationInstance() {
+		return new PartitionComposer()
+				.columns(namespace(), appName(), type())
+				.order(start().desc())
+				.compose();
 	}
 }

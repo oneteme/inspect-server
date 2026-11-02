@@ -18,7 +18,7 @@ import static java.util.Arrays.asList;
 import static java.util.Objects.nonNull;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-import static org.usf.inspect.core.DispatchState.DISABLE;
+import static org.usf.inspect.DispatchState.DISABLE;
 
 @Slf4j
 @CrossOrigin
