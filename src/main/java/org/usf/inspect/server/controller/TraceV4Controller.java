@@ -3,10 +3,11 @@ package org.usf.inspect.server.controller;
 import static java.util.Objects.nonNull;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
+import static org.springframework.http.ResponseEntity.accepted;
 import static org.usf.inspect.core.DualEventTracer.APP_ERROR;
 import static org.usf.inspect.core.DualEventTracer.INT_ERROR;
 import static org.usf.inspect.core.DualEventTracer.SUCCESS;
-import static org.usf.inspect.core.InspectLogger.LogLevel.REPORT;
+import static org.usf.inspect.LogLevel.REPORT;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -27,7 +28,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.usf.inspect.*;
-import org.usf.inspect.core.DispatchState;
 import org.usf.inspect.server.model.UserAction;
 import org.usf.inspect.server.service.TraceService;
 
@@ -76,7 +76,11 @@ public class TraceV4Controller {
         if (!addTraces.isEmpty()) {
             traces.addAll(addTraces);
         }
-        return controller.addTraces(id, 1, attempts, end, traces); //TODO check seq value
+        var responseEntity = controller.addTraces(id, 1, attempts, end, traces); //TODO check seq value
+        if(responseEntity.getStatusCode().value() == 409){
+            return accepted().build();
+        }
+        return responseEntity;
     }
     
     static void resolveTraceUpdateStatus(EventTrace trc) {
