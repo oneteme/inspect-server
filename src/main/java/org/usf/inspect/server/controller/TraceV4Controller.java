@@ -11,7 +11,6 @@ import static org.usf.inspect.LogLevel.REPORT;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -19,7 +18,6 @@ import java.util.function.Consumer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -29,7 +27,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.usf.inspect.*;
 import org.usf.inspect.server.model.UserAction;
-import org.usf.inspect.server.service.TraceService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +38,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping(value = "v4/trace", produces = APPLICATION_JSON_VALUE)
 public class TraceV4Controller {
 
-    private final TraceService service;
     private final TraceController controller;
 
     @Value("${inspect.server.migration.namespacePrefix:}")
@@ -72,7 +68,7 @@ public class TraceV4Controller {
             convertToSessionEvent(t, addTraces::add);
         }
         traces.removeIf(t-> t instanceof UserAction 
-        		|| (t instanceof ReportEvent rpr && nonNull(rpr.getSessionId()) && !REPORT.name().equals(rpr.getLevel())));
+        		|| (t instanceof ReportEvent rpr && !REPORT.name().equals(rpr.getLevel())));
         if (!addTraces.isEmpty()) {
             traces.addAll(addTraces);
         }
@@ -157,7 +153,7 @@ public class TraceV4Controller {
 
     static void convertToSessionEvent(EventTrace trc, Consumer<SessionEvent> acc) {
     	if(trc instanceof ReportEvent rpr) {
-    		if(nonNull(rpr.getSessionId()) && !REPORT.name().equals(rpr.getLevel())) {
+    		if(!REPORT.name().equals(rpr.getLevel())) {
     			var evt = new SessionEvent(rpr.getInstant(), rpr.getLevel(), rpr.getMessage(), rpr.getThread(), null, rpr.getSessionId());
     			acc.accept(evt);
     		}

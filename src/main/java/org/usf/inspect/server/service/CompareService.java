@@ -2,6 +2,7 @@ package org.usf.inspect.server.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.usf.inspect.ExceptionTrace;
 import org.usf.inspect.server.erm.*;
 import org.usf.inspect.server.model.wrapper.RestRequestWrapper;
 import org.usf.inspect.server.model.wrapper.RestSessionWrapper;
@@ -12,8 +13,8 @@ import java.util.*;
 
 import static org.usf.inspect.server.Utils.fromNullableTimestamp;
 import static org.usf.inspect.server.Utils.requireSingle;
-import static org.usf.inspect.server.mapper.Mappers.getExceptionInfoIfNotNull;
 import static org.usf.jquery.core.Join.innerJoin;
+import static org.usf.jquery.core.Join.leftJoin;
 
 @Slf4j
 @Service
@@ -21,17 +22,23 @@ public class CompareService {
 
     public Map<String, Object> getComparedSession(UUID id) {
         var request = getRestRequestById(id);
+        var exceptions = getExceptionTraceById(id);
         var result = new HashMap<String, Object>();
         if (request != null) {
             var name = getApiNameById(id);
             if (name != null) {
                 request.setName(name);
             }
+            var requestExceptions = exceptions.get("request");
+            if (!requestExceptions.isEmpty()) {
+                request.setException(requestExceptions.get(0));
+            }
             result.put("request", request);
         }
         var session = getRestSessionById(id);
         if (session != null) {
-            result.put("session", getRestSessionById(id));
+            session.setExceptions(exceptions.get("session"));
+            result.put("session", session);
         }
 
         if(result.isEmpty()) {
@@ -68,6 +75,33 @@ public class CompareService {
                 .joins(mainSession.restRequest().getJoins())
                 .criterias(restRequest.id().eq(id));
         return store.execute(v.compose(store), rs -> rs.next() ? rs.getString("name") : null);
+    }
+
+    private Map<String, List<ExceptionTrace>> getExceptionTraceById(UUID id){
+        InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
+        RestSessionCatalog RestSession = store.restSession();
+        RestRequestCatalog RestRequest = store.restRequest();
+        ExceptionCatalog exception = store.exception();
+        var v = new QueryComposer()
+                .columns(exception.errType(), exception.errMsg(), RestSession.id().as("sessionId"), RestRequest.id().as("requestId"))
+                .join(leftJoin(RestSession.getView(), exception.parent().eq(RestSession.id())))
+                .join(leftJoin(RestRequest.getView(), exception.parent().eq(RestRequest.id())))
+                .criterias(exception.parent().eq(id));
+        return store.execute(v.compose(store), rs -> {
+            var exceptions = new HashMap<String, List<ExceptionTrace>>();
+            exceptions.put("session", new ArrayList<>());
+            exceptions.put("request", new ArrayList<>());
+            while (rs.next()) {
+                var exceptionTrace = new ExceptionTrace(rs.getString("errType"), rs.getString("errMsg"), null, null);
+                if (rs.getObject("sessionId", UUID.class) != null) {
+                    exceptions.get("session").add(exceptionTrace);
+                }
+                if (rs.getObject("requestId", UUID.class) != null) {
+                    exceptions.get("request").add(exceptionTrace);
+                }
+            }
+            return exceptions;
+        });
     }
 
     private RestSessionWrapper getRestSessionById(UUID id) {
@@ -128,7 +162,6 @@ public class CompareService {
         InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
         RestRequestCatalog restRequest = store.restRequest();
         InstanceCatalog instance = store.instance();
-        ExceptionCatalog exception = store.exception();
         var v = new QueryComposer()
                 .columns(restRequest.id(), restRequest.protocol(), restRequest.auth(), restRequest.host(),
                         restRequest.port(), restRequest.path(), restRequest.query(), restRequest.method(), restRequest.status(),
@@ -168,7 +201,6 @@ public class CompareService {
                 request.setEnvironment(rs.getString("environement"));
                 request.setVersion(rs.getString("version"));
                 request.setUser(rs.getString("user"));
-                request.setException(getExceptionInfoIfNotNull(rs.getString("errType"), rs.getString("errMsg"), null));
 
                 if(rs.next()) {
                     log.warn("multiple rest request error found for id: {}", id);
