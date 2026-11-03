@@ -153,6 +153,7 @@ public class Mappers {
                 out.setInstanceId(rs.getObject("instanceEnv", UUID.class));
                 out.setCacheControl(rs.getString("cacheControl"));
                 out.setLinked(rs.getBoolean("linked"));
+                out.setAsyncDuration(rs.getObject("asyncDuration", Long.class));
                 try {
                     String intermediateNodesStr = rs.getString("intermediateNodes");
                     if (intermediateNodesStr != null) {
@@ -224,6 +225,7 @@ public class Mappers {
             if (rs.next()) {
                 MainSession out = defaultMainSession(rs);
                 out.setType(rs.getString("type"));
+                out.setAsyncDuration(rs.getObject("asyncDuration", Long.class));
                 out.setThreadName(rs.getString("thread"));
                 out.setInstanceId(rs.getObject("instanceEnv", UUID.class));
                 out.setRequestsMask(rs.getInt("mask"));

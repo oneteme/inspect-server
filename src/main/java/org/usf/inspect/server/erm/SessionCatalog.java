@@ -43,6 +43,10 @@ public interface SessionCatalog extends DatasetCatalog<InspectStore> {
     @Typed(UUID)
     ViewColumn instanceEnv();
 
+    @Bind(VA_ASY_DRT)
+    @Expose(identity = "async_duration")
+    ViewColumn asyncDuration();
+
     @Expose(identity = "elapsed_time")
     default Column elapsedTime() {
         return end().minus(start()).epoch();

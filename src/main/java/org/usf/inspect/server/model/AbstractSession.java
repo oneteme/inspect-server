@@ -15,6 +15,7 @@ import lombok.Setter;
 public abstract class AbstractSession implements EventTrace {
 
 	private int requestsMask;
+	private Long asyncDuration; //ms
 
 	AbstractSession() {
 	}
