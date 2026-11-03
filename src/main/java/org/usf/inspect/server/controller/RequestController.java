@@ -234,7 +234,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "main_session",
             view = MAIN_SESSION_RESULTSET_MAPPER,
-            select = "id,name,start,end,type,location,thread,status,mask,user,instance_env")
+            select = "id,name,start,end,type,location,thread,status,mask,user,instance_env,async_duration")
     public ResponseEntity<MainSession> fetchMainSession(
             MvcRequest mvc,
             @PathVariable String sessionId
@@ -314,7 +314,7 @@ public class RequestController {
     @QueryExtension(select = REJECT, overrideView = false)
     @QueryTemplate(dataset = "rest_session",
             view = REST_SESSION_RESULTSET_MAPPER,
-            select = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,mask,user,user_agt,cache_control,linked,instance_env,intermediate_nodes")
+            select = "id,api_name,method,protocol,host,port,path,query,media,auth,status,size_in,size_out,content_encoding_in,content_encoding_out,start,end,thread,mask,user,user_agt,cache_control,linked,instance_env,intermediate_nodes,async_duration")
     public ResponseEntity<RestSession> fetchRestSession(
             MvcRequest mvc,
             @PathVariable String sessionId) {
