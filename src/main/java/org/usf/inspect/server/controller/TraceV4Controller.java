@@ -72,12 +72,9 @@ public class TraceV4Controller {
         if (!addTraces.isEmpty()) {
             traces.addAll(addTraces);
         }
-        var responseEntity = controller.addTraces(id, 1, attempts, end, traces); //TODO check seq value
-        if(responseEntity.getStatusCode().value() == 409){
-            return accepted().build();
-        }
-        return responseEntity;
-    }
+      //as we are in v4, we force attempts and sequence to 1, in order to avoid any trace loss due to migration
+        return controller.addTraces(id, 1, 1, end, traces); 
+}
     
     static void resolveTraceUpdateStatus(EventTrace trc) {
     	if (trc instanceof LocalRequestUpdate upd) {
