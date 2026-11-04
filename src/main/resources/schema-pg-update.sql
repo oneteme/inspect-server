@@ -56,7 +56,7 @@ ALTER TABLE e_main_ses ADD COLUMN IF NOT EXISTS cd_stt SMALLINT;
 
 UPDATE e_main_ses
 SET cd_stt = CASE
-                 WHEN va_err_typ IS NOT NULL THEN 500
+                 WHEN va_err_typ IS NOT NULL THEN 400
                  WHEN dh_end is not null then  200
     END;
 
