@@ -66,7 +66,7 @@ public class PurgeService {
                 //purge old instances that have not dh-end
                 log.info("------ Purge ------ method=purgeAbandonedInstances----------namespace={}, app={}, date={}", scope.namespace(), scope.app(), beforeFunctional);
                 tasks.add(runAsync( //TODO we can optimize this query : delete * from env_ins where not exist (select * ins_trc where env_ins.id=ins_trc.id)
-                        runnablePurge(() -> purgeDao.purgeAbandonedInstances(scope.namespace(), scope.app(), beforeFunctional),
+                        runnablePurge(() -> purgeDao.purgeInactiveInstances(scope.namespace(), scope.app(), beforeFunctional),
                                 "AbandonedInstance", scope.app(), scope.namespace(), beforeFunctional),
                         functionalExecutor));
 

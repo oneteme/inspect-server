@@ -67,7 +67,7 @@ public class PurgeDao {
     }
 
 
-    public int purgeAbandonedInstances(String namespace, String app, Timestamp dateLimit) {
+    public int purgeInactiveInstances(String namespace, String app, Timestamp dateLimit) {//inactive
         return template.update("""
         DELETE FROM e_env_ins
         WHERE id_ins IN(

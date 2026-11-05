@@ -103,7 +103,7 @@ class PurgeServiceStepsH2Test {
     void purgeAbandonedInstances_ShouldUseLatestTraceOrInstanceStartDate() {
         executeSql("jdd-insert-purge-service-abandoned-instances-test.sql");
 
-        var deletedRows = purgeDao.purgeAbandonedInstances(
+        var deletedRows = purgeDao.purgeInactiveInstances(
                 NAMESPACE,
                 APP,
                 timestampDaysAgo(7)
