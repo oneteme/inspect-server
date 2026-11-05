@@ -1,6 +1,6 @@
 package org.usf.inspect.server.erm;
 
-import static org.usf.jquery.core.JDBCType.UUID;
+import static org.usf.jquery.core.JDBCType.*;
 import static org.usf.jquery.core.Predicate.isNotNull;
 
 import org.usf.jquery.core.Column;
@@ -29,9 +29,13 @@ public interface ExceptionCatalog extends DatasetCatalog<InspectStore> {
 	
 	@Bind(VA_STK)
 	ViewColumn stacktrace();
-	
+
+	@Bind(VA_CAS)
+	ViewColumn cause();
+
 	@Bind(CD_ORD)
-	ViewColumn order();
+	@Expose(identity = "err_order")
+	ViewColumn offset();
 	
 	@Bind("cd_trc")
 	@Typed(UUID)
@@ -40,5 +44,10 @@ public interface ExceptionCatalog extends DatasetCatalog<InspectStore> {
 	@Expose(identity = "count_exception")
 	default Column countExceptions() {
 		return errType().toCase().when(isNotNull(), 1).orElse(0).sum();
+	}
+
+	@Expose(identity = "has_stack")
+	default Column hasStack() {
+		return stacktrace().toCase().when(isNotNull(), true).orElse(false);
 	}
 }
