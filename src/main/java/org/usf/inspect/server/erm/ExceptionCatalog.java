@@ -13,7 +13,12 @@ import org.usf.jquery.mvc.Typed;
 import static org.usf.inspect.server.config.constant.FieldConstant.*;
 
 public interface ExceptionCatalog extends DatasetCatalog<InspectStore> {
-	
+
+
+	@Bind(VA_TRC_TYP)
+	@Expose(identity = "trace_type")
+	ViewColumn traceType();
+
 	@Bind(VA_ERR_TYP)
 	@Expose(identity = "err_type")
 	ViewColumn errType();
