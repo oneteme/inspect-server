@@ -47,9 +47,9 @@ public class NamespaceAuthenticationCacheProvider implements AuthenticationProvi
             	try {
             		return getEncryptedToken(namespace);
             	}
-            	catch (EmptyResultDataAccessException e) {
-                    return saveNamespace(namespace, token); //TODO delete this
-            	}
+                catch (EmptyResultDataAccessException e) {
+                    throw new BadCredentialsException("Namespace not found: " + namespace);
+                }
             });
             if ((isNull(token) && nonNull(expected)) || !passwordEncoder.matches(token, expected)) {
             	log.warn("Invalid token for namespace: " + namespace);
