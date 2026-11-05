@@ -13,8 +13,8 @@ import java.util.*;
 
 import static org.usf.inspect.server.Utils.fromNullableTimestamp;
 import static org.usf.inspect.server.Utils.requireSingle;
+import static org.usf.inspect.server.mapper.Mappers.getExceptionInfoIfNotNull;
 import static org.usf.jquery.core.Join.innerJoin;
-import static org.usf.jquery.core.Join.leftJoin;
 
 @Slf4j
 @Service
@@ -79,13 +79,9 @@ public class CompareService {
 
     private Map<String, List<ExceptionTrace>> getExceptionTraceById(UUID id){
         InspectStore store = StoreManager.getInstance().getStore(InspectStore.class);
-        RestSessionCatalog RestSession = store.restSession();
-        RestRequestCatalog RestRequest = store.restRequest();
         ExceptionCatalog exception = store.exception();
         var v = new QueryComposer()
-                .columns(exception.errType(), exception.errMsg(), RestSession.id().as("sessionId"), RestRequest.id().as("requestId"))
-                .join(leftJoin(RestSession.getView(), exception.parent().eq(RestSession.id())))
-                .join(leftJoin(RestRequest.getView(), exception.parent().eq(RestRequest.id())))
+                .columns(exception.errType(), exception.errMsg(), exception.traceType())
                 .criterias(exception.parent().eq(id));
         return store.execute(v.compose(store), rs -> {
             var exceptions = new HashMap<String, List<ExceptionTrace>>();
@@ -93,10 +89,10 @@ public class CompareService {
             exceptions.put("request", new ArrayList<>());
             while (rs.next()) {
                 var exceptionTrace = new ExceptionTrace(rs.getString("errType"), rs.getString("errMsg"), null, null);
-                if (rs.getObject("sessionId", UUID.class) != null) {
+                int traceType = rs.getInt("traceType");
+                if (traceType == 2) {
                     exceptions.get("session").add(exceptionTrace);
-                }
-                if (rs.getObject("requestId", UUID.class) != null) {
+                } else if (traceType == 10) {
                     exceptions.get("request").add(exceptionTrace);
                 }
             }
