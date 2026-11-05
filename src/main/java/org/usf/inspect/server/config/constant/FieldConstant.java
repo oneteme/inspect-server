@@ -90,6 +90,7 @@ public final class FieldConstant {
     public static final String VA_LVL = "va_lvl";
     public static final String VA_MSG = "va_msg";
     public static final String VA_STK = "va_stk";
+    public static final String VA_CAS = "va_cas";
     public static final String VA_USED_HEP = "va_usd_hep";
     public static final String VA_COMMITED_HEP = "va_cmt_hep";
     public static final String VA_USED_MET = "va_usd_met";
