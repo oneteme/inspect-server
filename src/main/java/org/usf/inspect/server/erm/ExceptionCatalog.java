@@ -34,7 +34,8 @@ public interface ExceptionCatalog extends DatasetCatalog<InspectStore> {
 	ViewColumn cause();
 
 	@Bind(CD_ORD)
-	ViewColumn order();
+	@Expose(identity = "err_order")
+	ViewColumn offset();
 	
 	@Bind("cd_trc")
 	@Typed(UUID)
