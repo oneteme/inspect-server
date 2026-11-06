@@ -4,6 +4,7 @@ import static java.util.Objects.nonNull;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
 import static org.springframework.http.ResponseEntity.accepted;
+import static org.usf.inspect.TraceType.*;
 import static org.usf.inspect.core.DualEventTracer.APP_ERROR;
 import static org.usf.inspect.core.DualEventTracer.INT_ERROR;
 import static org.usf.inspect.core.DualEventTracer.SUCCESS;
@@ -128,6 +129,7 @@ public class TraceV4Controller {
         	if(nonNull(upd.getException())) {
                 var exp = upd.getException();
                 exp.setTraceId(upd.getId());
+                exp.setTraceType(upd.traceType());
                 exp.setOffset(nonNull(upd.getEnd()) ? upd.getEnd().toEpochMilli() : 1);
                 acc.accept(exp);
         	}
@@ -136,6 +138,7 @@ public class TraceV4Controller {
         	if(nonNull(upd.getException())) {
                 var exp = upd.getException();
                 exp.setTraceId(upd.getId());
+                exp.setTraceType(upd.traceType());
                 exp.setOffset(nonNull(upd.getEnd()) ? upd.getEnd().toEpochMilli() : 1);
                 acc.accept(exp);
         	}
@@ -143,9 +146,22 @@ public class TraceV4Controller {
         else if (trc instanceof AbstractStage stg && nonNull(stg.getException())) {
     		var exp = stg.getException();
     		exp.setTraceId(stg.getRequestId());
+            exp.setTraceType(stageTraceType(stg));
     		exp.setOffset(stg.getOrder());
     		acc.accept(exp);
         }
+    }
+
+    static byte stageTraceType(AbstractStage stg) {
+        return switch (stg) {
+            case HttpSessionStage      s -> HTTP_SES.getValue();
+            case HttpRequestStage      s -> HTTP_REQ.getValue();
+            case DatabaseRequestStage  s -> JDBC_REQ.getValue();
+            case MailRequestStage      s -> SMTP_REQ.getValue();
+            case DirectoryRequestStage s -> LDAP_REQ.getValue();
+            case FtpRequestStage       s -> FTP_REQ.getValue();
+            default -> 0;
+        };
     }
 
     static void convertToSessionEvent(EventTrace trc, Consumer<SessionEvent> acc) {
