@@ -129,7 +129,7 @@ public class TraceV4Controller {
         	if(nonNull(upd.getException())) {
                 var exp = upd.getException();
                 exp.setTraceId(upd.getId());
-                exp.setTraceType(upd.traceType());
+                exp.setTraceType(upd instanceof MainSessionUpdate ? MAIN_SES.getValue() : HTTP_SES.getValue());
                 exp.setOffset(nonNull(upd.getEnd()) ? upd.getEnd().toEpochMilli() : 1);
                 acc.accept(exp);
         	}
@@ -138,7 +138,7 @@ public class TraceV4Controller {
         	if(nonNull(upd.getException())) {
                 var exp = upd.getException();
                 exp.setTraceId(upd.getId());
-                exp.setTraceType(upd.traceType());
+                exp.setTraceType(LCL_REQ.getValue());
                 exp.setOffset(nonNull(upd.getEnd()) ? upd.getEnd().toEpochMilli() : 1);
                 acc.accept(exp);
         	}
