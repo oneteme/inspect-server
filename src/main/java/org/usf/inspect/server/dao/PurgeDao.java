@@ -365,7 +365,9 @@ public class PurgeDao {
             var raw = rs.getString("configuration");
 
             var config = fromJson(raw, InspectCollectorProperties.class);
-            var rtt = config == null ? DEFAULT_RETENTION_CONFIG : config.getTracing().getRemote().getRetentionMaxAge();
+            var rtt = config == null || config.getTracing() == null || config.getTracing().getRemote() == null
+                    ? DEFAULT_RETENTION_CONFIG
+                    : config.getTracing().getRemote().getRetentionMaxAge();
             // Extract retention durations directly from the Retention object
             out.add(new PurgeScope(type, app, namespace, rtt));
         }
