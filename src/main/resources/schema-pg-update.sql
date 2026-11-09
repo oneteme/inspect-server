@@ -145,6 +145,32 @@ ALTER TABLE e_exc_inf RENAME COLUMN va_typ TO va_trc_typ;
 ALTER TABLE e_exc_inf RENAME COLUMN cd_rqt TO cd_trc;
 ALTER TABLE e_exc_inf ALTER COLUMN cd_ord TYPE bigint;
 
+UPDATE e_exc_inf
+SET va_trc_typ = '10'
+where va_trc_typ = 'REST';
+
+UPDATE e_exc_inf
+SET va_trc_typ = '11'
+where va_trc_typ = 'JDBC';
+
+UPDATE e_exc_inf
+SET va_trc_typ = '12'
+where va_trc_typ = 'SMTP';
+
+UPDATE e_exc_inf
+SET va_trc_typ = '13'
+where va_trc_typ = 'LDAP';
+
+UPDATE e_exc_inf
+SET va_trc_typ = '14'
+where va_trc_typ = 'FTP';
+
+UPDATE e_exc_inf
+SET va_trc_typ = '99'
+where va_trc_typ = 'LOCAL';
+
+ALTER TABLE e_exc_inf ALTER COLUMN va_trc_typ TYPE smallint USING va_trc_typ::smallint;
+
 -- Migration du namespace historique
 -- reprise de la valeur de va_env vers cd_nsp
 ALTER TABLE e_env_ins ADD COLUMN IF NOT EXISTS cd_nsp varchar;

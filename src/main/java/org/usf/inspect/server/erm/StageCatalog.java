@@ -31,7 +31,7 @@ public interface StageCatalog extends DatasetCatalog<InspectStore> {
 
     default JoinGroup exception() {
         var exception = getStore().exception();
-        return joins(leftJoin(exception.getView(), parent().eq(exception.parent()), order().eq(exception.order())));
+        return joins(leftJoin(exception.getView(), parent().eq(exception.parent()), order().eq(exception.offset())));
     }
 
     default Column elapsedTime() {
