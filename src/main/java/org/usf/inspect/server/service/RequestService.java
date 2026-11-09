@@ -251,7 +251,7 @@ public class RequestService {
 
 
     private void updateSessionsForTree(Collection<UUID> ids, Session parent)  {
-        var start = parent.getStart();
+        var start = parent.getStart().minusSeconds(1);
         var sessions = Utils.isEmpty(ids) ? new ArrayList<Session>() : getRestSessions(ids, start);
         sessions.add(parent);
         var reqMap = sessions.stream().collect(toMap(Session::getId, identity()));
