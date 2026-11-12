@@ -12,6 +12,7 @@ import static org.usf.inspect.server.service.TraceBatchDispatcherHub.serverHub;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
@@ -36,7 +37,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 
+ *
  * @author u$f
  *
  */
@@ -54,7 +55,7 @@ public class TraceService {
     	if(attempts > 1 && hasInstance(instance.getId())) {
 			throw new TraceDispatchConflictException("instance with id=%s has already been registered".formatted(instance.getId()));
 		}
-    	serverHub().dispatch(instance); //dispatch immediately 
+    	serverHub().dispatch(instance); //dispatch immediately
         serverHub().emitTrace(newTraceBatch(now(), 0, attempts, instance.getId(), emptyList())); //ensure that the trace batch is emitted after the instance has been dispatched
     }
 
@@ -74,13 +75,13 @@ public class TraceService {
             for(var e : traces) {
                 if(e instanceof AbstractRequestSignal sgn) {
                     sgn.setInstanceId(id);
-                } 
+                }
                 else if(e instanceof AbstractSessionSignal sgn) {
                     sgn.setInstanceId(id);
-                } 
+                }
                 else if(e instanceof SystemMetrics sys) {
                     sys.setInstanceId(id);
-                } 
+                }
                 else if(e instanceof ReportEvent evn) {
                     evn.setInstanceId(id);
                 }
@@ -107,7 +108,7 @@ public class TraceService {
     public DispatchState getDispatcherState() {
         return serverHub().getState();
     }
-    
+
     public void updateState(DispatchState state) {
         serverHub().setState(state);
         log.info("Trace dispatcher state updated to {}", state);
@@ -118,15 +119,15 @@ public class TraceService {
                 "SELECT COUNT(id_ins) FROM e_env_ins WHERE id_ins=?",
                 (rs, idx) -> rs.getInt(1), id) > 0;
     }
-    
+
     public boolean hasBeenTraced(UUID id, int seq) {
 		try {
 			//make sure that the trace has been processed by the dispatcher before checking the database
 			return serverHub().peekAsync(q-> q.stream()
-					.anyMatch(t-> t instanceof TraceBatch pck 
-						&& pck.getInstanceId().equals(id) 
-						&& pck.getSequence() == seq)).get() || 
-					template.queryForObject("SELECT COUNT(*) FROM e_ins_trc WHERE cd_ins=? AND va_seq=?", 
+					.anyMatch(t-> t instanceof TraceBatch pck
+						&& pck.getInstanceId().equals(id)
+						&& pck.getSequence() == seq)).get() ||
+					template.queryForObject("SELECT COUNT(*) FROM e_ins_trc WHERE cd_ins=? AND va_seq=?",
 							(rs,idx)-> rs.getInt(1), id, seq) > 0;
 		} catch (InterruptedException e) {
 	        currentThread().interrupt();
@@ -134,5 +135,17 @@ public class TraceService {
 	    } catch (ExecutionException e) {
 	        throw new IllegalStateException("Failed to inspect trace queue for instance " + id, e.getCause());
 	    }
+    }
+
+    public List<Map<String, Object>> getDatabaseSize() {
+        return template.queryForList("SELECT" +
+                " n.nspname AS schema," +
+                " pg_size_pretty(SUM(pg_total_relation_size(c.oid))) AS taille_schema," +
+                " pg_size_pretty(pg_database_size(current_database())) AS taille_base" +
+                " FROM pg_class c" +
+                " JOIN pg_namespace n ON n.oid = c.relnamespace" +
+                " WHERE c.relkind IN ('r', 'm', 'p')" +
+                " AND n.nspname = current_schema()" +
+                " GROUP BY n.nspname;");
     }
 }

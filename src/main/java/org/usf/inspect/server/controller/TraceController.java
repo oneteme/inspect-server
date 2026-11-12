@@ -18,10 +18,7 @@ import static org.usf.jquery.core.Utils.isEmpty;
 
 import java.security.Principal;
 import java.time.Instant;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -138,5 +135,10 @@ public class TraceController {
 	@PostMapping("state/{state}")
 	public void updateState(@PathVariable DispatchState state){
 		service.updateState(state);
+	}
+
+	@GetMapping("database")
+	public List<Map<String, Object>> getDatabaseSize() {
+		return service.getDatabaseSize();
 	}
 }
