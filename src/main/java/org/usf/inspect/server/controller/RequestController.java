@@ -44,6 +44,9 @@ import static org.usf.inspect.server.Utils.fromNullableTimestamp;
 import static org.usf.inspect.server.erm.ViewRegistryConstant.*;
 import static org.usf.jquery.mvc.QueryExtension.Modifier.REJECT;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 @Slf4j
 @CrossOrigin
 @Validated
@@ -806,35 +809,53 @@ public class RequestController {
     ) {
         var store = mvc.getStore().unwrap(InspectStore.class);
         mvc.getComposer().criteria(store.mainSession().user().eq(user).and(store.sessionEvent().start().ge(date)).and(store.mainSession().name().ne("<startup>")));
+        return store.execute(mvc.getComposer().compose(store), RequestController::mapSessionEventRows);
+    }
 
-        return store.execute(mvc.getComposer().compose(store), rs -> {
-            List<SessionEventDto> sessions = new ArrayList<>();
-            while (rs.next()) {
-                var sessionEvent =  new SessionEvent(
-                        fromNullableTimestamp(rs.getTimestamp("session_start")),
-                        rs.getString("type"),
-                        rs.getString("value"),
-                        rs.getString("scope"),
-                        rs.getString("event_location"),
-                        rs.getObject("sessionId", UUID.class)
-                );
-                var cdSession = rs.getObject("sessionId", UUID.class);
-                var session = sessions.stream().filter(s -> s.getId().equals(cdSession)).findFirst().orElse(null);
-                if(session == null) {
-                    session = new SessionEventDto();
-                    session.setId(rs.getObject("id", UUID.class));
-                    session.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
-                    session.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
-                    session.setName(rs.getString("name"));
-                    session.setLocation(rs.getString("location"));
-                    session.setSessionEvents(new ArrayList<>(List.of(sessionEvent)));
-                    sessions.add(session);
-                } else {
-                    session.getSessionEvents().add(sessionEvent);
-                }
+    @GetMapping("session/instance/{instanceId}/action")
+    @QueryExtension(select = REJECT, overrideView = false)
+    @QueryTemplate(dataset = "main_session",
+            view = SESSION_EVENT_ROW_MAPPER,
+            select = "id,name,start,end,location,session_event.type:type,session_event.start:session_start,session_event.value:value,session_event.location:event_location,session_event.scope:scope,session_event.sessionId",
+            join = "session_event",
+            order = "main_session.start,session_event.start", ignore = "date")
+    public Collection<SessionEventDto> getUserActionsByInstance(
+            MvcRequest mvc,
+            @PathVariable(name = "instanceId") UUID instanceId,
+            @RequestParam(name = "date") @Validate(Condition.INSTANT) Instant date
+    ) {
+        var store = mvc.getStore().unwrap(InspectStore.class);
+        mvc.getComposer().criteria(store.mainSession().instanceEnv().eq(instanceId).and(store.sessionEvent().start().ge(date)).and(store.mainSession().name().ne("<startup>")));
+        return store.execute(mvc.getComposer().compose(store), RequestController::mapSessionEventRows);
+    }
+
+    private static List<SessionEventDto> mapSessionEventRows(ResultSet rs) throws SQLException {
+        List<SessionEventDto> sessions = new ArrayList<>();
+        while (rs.next()) {
+            var sessionEvent = new SessionEvent(
+                    fromNullableTimestamp(rs.getTimestamp("session_start")),
+                    rs.getString("type"),
+                    rs.getString("value"),
+                    rs.getString("scope"),
+                    rs.getString("event_location"),
+                    rs.getObject("sessionId", UUID.class)
+            );
+            var cdSession = rs.getObject("sessionId", UUID.class);
+            var session = sessions.stream().filter(s -> s.getId().equals(cdSession)).findFirst().orElse(null);
+            if (session == null) {
+                session = new SessionEventDto();
+                session.setId(rs.getObject("id", UUID.class));
+                session.setStart(fromNullableTimestamp(rs.getTimestamp("start")));
+                session.setEnd(fromNullableTimestamp(rs.getTimestamp("end")));
+                session.setName(rs.getString("name"));
+                session.setLocation(rs.getString("location"));
+                session.setSessionEvents(new ArrayList<>(List.of(sessionEvent)));
+                sessions.add(session);
+            } else {
+                session.getSessionEvents().add(sessionEvent);
             }
-            return sessions;
-        });
+        }
+        return sessions;
     }
 
     @GetMapping("session/event")
