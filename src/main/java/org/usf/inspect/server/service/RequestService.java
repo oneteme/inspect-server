@@ -646,4 +646,8 @@ public class RequestService {
     public List<Map<String, Object>> getDatabaseSize() {
         return dao.getDatabaseSize();
     }
+
+    public List<Map<String, Object>> getTablesSize() {
+        return dao.getTablesSize();
+    }
 }

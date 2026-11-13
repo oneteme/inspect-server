@@ -856,4 +856,9 @@ public class RequestController {
     public List<Map<String, Object>> getDatabaseSize() {
         return requestService.getDatabaseSize();
     }
+
+    @GetMapping("database/table")
+    public List<Map<String, Object>> getTablesSize() {
+        return requestService.getTablesSize();
+    }
 }

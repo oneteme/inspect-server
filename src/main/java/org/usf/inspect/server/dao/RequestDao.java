@@ -48,5 +48,18 @@ public class RequestDao {
                 " GROUP BY n.nspname;");
     }
 
+    public List<Map<String, Object>> getTablesSize() {
+        return template.queryForList("SELECT" +
+                " n.nspname AS schema," +
+                " c.relname AS table_name," +
+                " pg_size_pretty(pg_total_relation_size(c.oid)) AS size," +
+                " pg_total_relation_size(c.oid) AS bytes" +
+                " FROM pg_class c" +
+                " JOIN pg_namespace n ON n.oid = c.relnamespace" +
+                " WHERE c.relkind IN ('r', 'p', 'm')" +
+                " AND n.nspname = current_schema()" +
+                " ORDER BY table_name ASC;");
+    }
+
 }
 
