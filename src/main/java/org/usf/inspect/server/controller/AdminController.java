@@ -7,6 +7,9 @@ import org.springframework.web.bind.annotation.*;
 import org.usf.inspect.server.dto.NamespaceDto;
 import org.usf.inspect.server.service.AdminService;
 
+import java.util.List;
+import java.util.Map;
+
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @Slf4j
@@ -20,5 +23,10 @@ public class AdminController {
     @PostMapping("namespace/{namespace}")
     public ResponseEntity<Boolean> addNamespace(@PathVariable String namespace, @RequestBody NamespaceDto nsp) {
         return ResponseEntity.ok(adminService.addNamespace(namespace, nsp.password())); //FIXME manage status 400, 409, 500 in exception handler
+    }
+
+    @GetMapping("database")
+    public List<Map<String, Object>> getDatabaseSize() {
+        return adminService.getDatabaseSize();
     }
 }

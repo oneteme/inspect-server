@@ -136,16 +136,4 @@ public class TraceService {
 	        throw new IllegalStateException("Failed to inspect trace queue for instance " + id, e.getCause());
 	    }
     }
-
-    public List<Map<String, Object>> getDatabaseSize() {
-        return template.queryForList("SELECT" +
-                " n.nspname AS schema," +
-                " pg_size_pretty(SUM(pg_total_relation_size(c.oid))) AS taille_schema," +
-                " pg_size_pretty(pg_database_size(current_database())) AS taille_base" +
-                " FROM pg_class c" +
-                " JOIN pg_namespace n ON n.oid = c.relnamespace" +
-                " WHERE c.relkind IN ('r', 'm', 'p')" +
-                " AND n.nspname = current_schema()" +
-                " GROUP BY n.nspname;");
-    }
 }

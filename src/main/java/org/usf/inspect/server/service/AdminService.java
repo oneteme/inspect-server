@@ -9,6 +9,9 @@ import org.usf.inspect.server.dao.AdminDao;
 import org.usf.inspect.server.exception.InvalidNamespaceException;
 import org.usf.inspect.server.exception.NamespaceAlreadyExistsException;
 
+import java.util.List;
+import java.util.Map;
+
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
@@ -30,6 +33,10 @@ public class AdminService {
             throw new NamespaceAlreadyExistsException("Namespace déjà existant: " + namespace);
         }
         return true; //TODO always true if no exception
+    }
+
+    public List<Map<String, Object>> getDatabaseSize() {
+        return adminDao.getDatabaseSize();
     }
 
 }
