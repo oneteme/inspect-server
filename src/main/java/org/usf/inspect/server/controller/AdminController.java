@@ -8,7 +8,6 @@ import org.usf.inspect.server.dto.NamespaceDto;
 import org.usf.inspect.server.service.AdminService;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
