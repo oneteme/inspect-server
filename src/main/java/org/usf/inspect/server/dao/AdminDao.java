@@ -5,9 +5,6 @@ import org.springframework.stereotype.Repository;
 
 import lombok.RequiredArgsConstructor;
 
-import java.util.List;
-import java.util.Map;
-
 @Repository
 @RequiredArgsConstructor
 public class AdminDao {
