@@ -4,9 +4,7 @@ import static java.util.stream.Collectors.toSet;
 import static org.usf.inspect.server.Utils.fromNullableInstant;
 
 import java.time.Instant;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -37,5 +35,31 @@ public class RequestDao {
         set.remove(id);
         return set;
     }
+
+    public List<Map<String, Object>> getDatabaseSize() {
+        return template.queryForList("SELECT" +
+                " n.nspname AS schema," +
+                " pg_size_pretty(SUM(pg_total_relation_size(c.oid))) AS size_schema," +
+                " pg_size_pretty(pg_database_size(current_database())) AS size_database" +
+                " FROM pg_class c" +
+                " JOIN pg_namespace n ON n.oid = c.relnamespace" +
+                " WHERE c.relkind IN ('r', 'm', 'p')" +
+                " AND n.nspname = current_schema()" +
+                " GROUP BY n.nspname;");
+    }
+
+    public List<Map<String, Object>> getTablesSize() {
+        return template.queryForList("SELECT" +
+                " n.nspname AS schema," +
+                " c.relname AS table_name," +
+                " pg_size_pretty(pg_total_relation_size(c.oid)) AS size," +
+                " pg_total_relation_size(c.oid) AS bytes" +
+                " FROM pg_class c" +
+                " JOIN pg_namespace n ON n.oid = c.relnamespace" +
+                " WHERE c.relkind IN ('r', 'p', 'm')" +
+                " AND n.nspname = current_schema()" +
+                " ORDER BY table_name ASC;");
+    }
+
 }
 

@@ -137,8 +137,4 @@ public class TraceController {
 		service.updateState(state);
 	}
 
-	@GetMapping("database")
-	public List<Map<String, Object>> getDatabaseSize() {
-		return service.getDatabaseSize();
-	}
 }
