@@ -851,4 +851,9 @@ public class RequestController {
 
         return (Collection<SessionEventDto>) mvc.execute();
     }
+
+    @GetMapping("database")
+    public List<Map<String, Object>> getDatabaseSize() {
+        return requestService.getDatabaseSize();
+    }
 }

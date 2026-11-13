@@ -24,9 +24,4 @@ public class AdminController {
     public ResponseEntity<Boolean> addNamespace(@PathVariable String namespace, @RequestBody NamespaceDto nsp) {
         return ResponseEntity.ok(adminService.addNamespace(namespace, nsp.password())); //FIXME manage status 400, 409, 500 in exception handler
     }
-
-    @GetMapping("database")
-    public List<Map<String, Object>> getDatabaseSize() {
-        return adminService.getDatabaseSize();
-    }
 }

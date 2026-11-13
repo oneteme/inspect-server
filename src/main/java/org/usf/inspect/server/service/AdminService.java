@@ -35,8 +35,4 @@ public class AdminService {
         return true; //TODO always true if no exception
     }
 
-    public List<Map<String, Object>> getDatabaseSize() {
-        return adminDao.getDatabaseSize();
-    }
-
 }
