@@ -9,9 +9,6 @@ import org.usf.inspect.server.dao.AdminDao;
 import org.usf.inspect.server.exception.InvalidNamespaceException;
 import org.usf.inspect.server.exception.NamespaceAlreadyExistsException;
 
-import java.util.List;
-import java.util.Map;
-
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
