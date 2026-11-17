@@ -49,16 +49,41 @@ public class RequestDao {
     }
 
     public List<Map<String, Object>> getTablesSize() {
-        return template.queryForList("SELECT" +
-                " n.nspname AS schema," +
-                " c.relname AS table_name," +
-                " pg_size_pretty(pg_total_relation_size(c.oid)) AS size," +
-                " pg_total_relation_size(c.oid) AS bytes" +
-                " FROM pg_class c" +
-                " JOIN pg_namespace n ON n.oid = c.relnamespace" +
-                " WHERE c.relkind IN ('r', 'p', 'm')" +
-                " AND n.nspname = current_schema()" +
-                " ORDER BY table_name ASC;");
+        return template.queryForList("""
+                WITH RECURSIVE relations AS (
+                    SELECT
+                        c.oid AS root_oid,
+                        c.oid AS rel_oid
+                    FROM pg_class c
+                    JOIN pg_namespace n ON n.oid = c.relnamespace
+                    WHERE n.nspname = current_schema()
+                      AND c.relkind IN ('r', 'p', 'm')
+                      AND c.oid NOT IN (SELECT inhrelid FROM pg_inherits)
+                      AND has_table_privilege(c.oid, 'SELECT')
+
+                    UNION ALL
+
+                    -- Add child tables of partitioned tables
+                    SELECT
+                        r.root_oid,
+                        i.inhrelid AS rel_oid
+                    FROM relations r
+                    JOIN pg_inherits i ON i.inhparent = r.rel_oid
+                    JOIN pg_class c ON c.oid = i.inhrelid
+                    WHERE has_table_privilege(c.oid, 'SELECT')
+                )
+                SELECT
+                    n.nspname AS schema,                    
+                    c.relname AS table_name,
+                    pg_size_pretty(SUM(pg_table_size(r.rel_oid))) AS table_size,
+                    pg_size_pretty(SUM(pg_indexes_size(r.rel_oid))) AS indexes_size,
+                    pg_size_pretty(SUM(pg_total_relation_size(r.rel_oid))) AS total_size
+                FROM relations r
+                    JOIN pg_class c ON c.oid = r.root_oid
+                    JOIN pg_namespace n ON n.oid = c.relnamespace
+                GROUP BY c.oid, c.relname, n.nspname
+                ORDER BY SUM(pg_total_relation_size(r.rel_oid)) DESC;
+                """);
     }
 
 }
