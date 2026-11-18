@@ -371,7 +371,7 @@ CREATE TABLE IF NOT EXISTS o_brw_cfg (
      va_usr_lng varchar,
      va_usr_thm varchar,
  --    va_nav_rfr varchar,
-     cd_prn_ses uuid
+     cd_ins uuid
 );
 
 --CREATE INDEX IF NOT EXISTS idx_usr_acn_cd_prn_ses ON e_usr_acn(cd_prn_ses);

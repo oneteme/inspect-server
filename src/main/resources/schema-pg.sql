@@ -380,5 +380,5 @@ CREATE TABLE IF NOT EXISTS o_brw_cfg (
      va_wdw_zom_lvl varchar,
      va_usr_lng varchar,
      va_usr_thm varchar,
-     cd_prn_ses uuid
+     cd_ins uuid
 );

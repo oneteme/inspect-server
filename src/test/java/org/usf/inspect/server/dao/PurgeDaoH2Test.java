@@ -180,8 +180,8 @@ class PurgeDaoH2Test {
         var deletedRows = purgeDao.purgeBrowserConfig();
 
         assertEquals(1, deletedRows);
-        assertEquals(1, countById("o_brw_cfg", "cd_prn_ses", LINKED_INSTANCE_ID));
-        assertEquals(0, countById("o_brw_cfg", "cd_prn_ses", ORPHAN_BROWSER_CONFIG_ID));
+        assertEquals(1, countById("o_brw_cfg", "cd_ins", LINKED_INSTANCE_ID));
+        assertEquals(0, countById("o_brw_cfg", "cd_ins", ORPHAN_BROWSER_CONFIG_ID));
     }
 
     private int countById(String table, String column, UUID id) {
