@@ -160,7 +160,10 @@ public class TraceV4Controller {
             case MailRequestStage      s -> SMTP_REQ.getValue();
             case DirectoryRequestStage s -> LDAP_REQ.getValue();
             case FtpRequestStage       s -> FTP_REQ.getValue();
-            default -> 0;
+            default -> {
+                log.error("Unknown stage type: {}", stg.getClass().getName());
+                yield 0;
+            }
         };
     }
 
