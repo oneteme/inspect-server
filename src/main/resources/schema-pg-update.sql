@@ -190,6 +190,7 @@ WHERE va_cnf::jsonb #>> '{tracing,remote,@type}' = 'rest-rmt';
 
 --TODO add UPPER(<prefix> || '-' || va_env) + TOKEN => va_enc_tkn
 
+ALTER TABLE o_brw_cfg RENAME COLUMN cd_prn_ses TO cd_ins;
 -- Migration des index environnement
 DROP INDEX IF EXISTS idx_env_ins_va_app_va_env;
 

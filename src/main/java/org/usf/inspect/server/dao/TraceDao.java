@@ -745,7 +745,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
 
     @Transactional(rollbackFor = Throwable.class)
     public void saveBrowserConfigs(List<BrowserConfigDto> configs) {
-        batchUpdateWithRetry("INSERT INTO o_brw_cfg(va_dvc_dsp_rsl,va_dvc_orn,va_dvc_cnt, va_sav_dta, va_wdw_vpt_bds, va_wdw_zom_lvl, va_usr_lng,va_usr_thm,cd_prn_ses) VALUES(?,?,?,?,?,?,?,?,?)", configs, (ps, cfg) -> {
+        batchUpdateWithRetry("INSERT INTO o_brw_cfg(va_dvc_dsp_rsl,va_dvc_orn,va_dvc_cnt, va_sav_dta, va_wdw_vpt_bds, va_wdw_zom_lvl, va_usr_lng,va_usr_thm,cd_ins) VALUES(?,?,?,?,?,?,?,?,?)", configs, (ps, cfg) -> {
             var idx = 0;
             ps.setString(++idx, cfg.getDeviceDisplayResolution());
             ps.setString(++idx, cfg.getDeviceOrientation());
@@ -755,7 +755,7 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
             ps.setString(++idx, cfg.getWindowZoomLevel());
             ps.setString(++idx, cfg.getUserLanguage());
             ps.setString(++idx, cfg.getUserTheme());
-            ps.setObject(++idx, cfg.getSessionId());
+            ps.setObject(++idx, cfg.getInstanceId(), OTHER);
         });
     }
 

@@ -272,7 +272,7 @@ public class PurgeDao {
 
     public  int purgeBrowserConfig() {
         return template.update("DELETE FROM o_brw_cfg" +
-                " WHERE  NOT EXISTS (SELECT 1 FROM e_env_ins WHERE cd_prn_ses = id_ins);");
+                " WHERE  NOT EXISTS (SELECT 1 FROM e_env_ins WHERE cd_ins = id_ins);");
     }
 
     private int purgeRequestStage(String tableSuffix, String stageTableSuffix, Timestamp before) {

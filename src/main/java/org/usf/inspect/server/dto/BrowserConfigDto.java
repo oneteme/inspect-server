@@ -19,5 +19,5 @@ public class BrowserConfigDto implements EventTrace {
     private String userLanguage;
     private String userTheme;
    // private String navigationReferrer;
-    private UUID sessionId;
+    private UUID instanceId;
 }

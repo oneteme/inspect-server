@@ -28,6 +28,7 @@ import org.usf.inspect.SessionEvent;
 import org.usf.inspect.SystemMetrics;
 import org.usf.inspect.core.TraceDispatchException;
 import org.usf.inspect.core.TraceableStage;
+import org.usf.inspect.server.dto.BrowserConfigDto;
 import org.usf.inspect.server.exception.TraceDispatchConflictException;
 import org.usf.inspect.server.model.InstanceEnvironmentUpdate;
 import org.usf.inspect.server.model.TraceBatch;
@@ -87,6 +88,9 @@ public class TraceService {
                 }
                 else if(e instanceof SessionEvent se) {
                 	se.setInstanceId(id);
+                }
+                else if(e instanceof BrowserConfigDto cfg) {
+                    cfg.setInstanceId(id);
                 }
             }
             serverHub().emitTraces(traces);

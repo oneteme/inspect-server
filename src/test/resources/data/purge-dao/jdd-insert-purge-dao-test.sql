@@ -105,6 +105,6 @@ INSERT INTO e_ses_evt (dh_str, va_typ, cd_prn_ses) VALUES
     (DATEADD('DAY', -10, CURRENT_TIMESTAMP), 'main-linked', '30000000-0000-0000-0000-000000000104'),
     (DATEADD('DAY', -10, CURRENT_TIMESTAMP), 'rest-linked', '40000000-0000-0000-0000-000000000104');
 
-INSERT INTO o_brw_cfg (va_sav_dta, cd_prn_ses) VALUES
+INSERT INTO o_brw_cfg (va_sav_dta, cd_ins) VALUES
     (TRUE, '10000000-0000-0000-0000-000000000003'),
     (TRUE, '90000000-0000-0000-0000-000000000001');
