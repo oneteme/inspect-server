@@ -1177,7 +1177,7 @@
       "windowZoomLevel": "100%",
       "userLanguage": "fr-FR",
       "userTheme": "dark",
-      "sessionId": "30000000-0000-0000-0000-000000000001"
+      "instanceId": "30000000-0000-0000-0000-000000000001"
     },
     "row": {
       "va_dvc_dsp_rsl": "1920x1080",
@@ -1188,7 +1188,7 @@
       "va_wdw_zom_lvl": "100%",
       "va_usr_lng": "fr-FR",
       "va_usr_thm": "dark",
-      "cd_prn_ses": "30000000-0000-0000-0000-000000000001"
+      "cd_ins": "30000000-0000-0000-0000-000000000001"
     },
     "rowMin": {
       "va_dvc_dsp_rsl": null,
@@ -1199,7 +1199,7 @@
       "va_wdw_zom_lvl": null,
       "va_usr_lng": null,
       "va_usr_thm": null,
-      "cd_prn_ses": null
+      "cd_ins": null
     }
   },
   "environment": {
