@@ -2,6 +2,7 @@ package org.usf.inspect.server.erm;
 
 import org.usf.jquery.core.Column;
 import org.usf.jquery.core.JoinGroup;
+import org.usf.jquery.core.Predicate;
 import org.usf.jquery.core.ViewColumn;
 import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
@@ -63,6 +64,20 @@ public interface RestSessionCatalog extends SessionCatalog {
 	@Bind(VA_USR_AGT)
 	@Expose(identity = "user_agt")
 	ViewColumn userAgt();
+
+	@Expose(identity = "user_agt_product")
+	default Column userAgtProduct() {
+		return userAgt().toCase()
+				.when(Predicate.like("Chrome%"), "Chrome")
+				.when(Predicate.like("Edge%"), "Edge")
+				.when(Predicate.like("Firefox%"), "Firefox")
+				.when(Predicate.like("Safari%"), "Safari")
+				.when(Predicate.like("Postman%"), "Postman")
+				.when(Predicate.like("Java%"), "Java")
+				.when(Predicate.like("%PowerShell%"), "PowerShell")
+				.when(Predicate.like("curl%"), "curl")
+				.orElse("Autre");
+	}
 	
 	@Bind(VA_CCH_CTR)
 	@Expose(identity = "cache_control")
