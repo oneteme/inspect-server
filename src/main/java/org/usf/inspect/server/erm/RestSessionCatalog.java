@@ -19,48 +19,48 @@ public interface RestSessionCatalog extends SessionCatalog {
 
 	@Bind(VA_MTH)
 	ViewColumn method();
-	
+
 	@Bind(VA_PCL)
 	ViewColumn protocol();
-	
+
 	@Bind(VA_HST)
 	ViewColumn host();
-	
+
 	@Bind(CD_PRT)
 	ViewColumn port();
-	
+
 	@Bind(VA_PTH)
 	ViewColumn path();
-	
+
 	@Bind(VA_QRY)
 	ViewColumn query();
-	
+
 	@Bind(VA_CNT_TYP)
 	ViewColumn media();
-	
+
 	@Bind(VA_ATH_SCH)
 	ViewColumn auth();
-	
+
 	@Bind(VA_I_SZE)
 	@Expose(identity = "size_in")
 	ViewColumn sizeIn();
-	
+
 	@Bind(VA_O_SZE)
 	@Expose(identity = "size_out")
 	ViewColumn sizeOut();
-	
+
 	@Bind(VA_I_CNT_ENC)
 	@Expose(identity = "content_encoding_in")
 	ViewColumn contentEncodingIn();
-	
+
 	@Bind(VA_O_CNT_ENC)
 	@Expose(identity = "content_encoding_out")
 	ViewColumn contentEncodingOut();
-	
+
 	@Bind(VA_NAM)
 	@Expose(identity = "api_name")
 	ViewColumn apiName();
-	
+
 	@Bind(VA_USR_AGT)
 	@Expose(identity = "user_agt")
 	ViewColumn userAgt();
@@ -78,11 +78,11 @@ public interface RestSessionCatalog extends SessionCatalog {
 				.when(Predicate.like("curl%"), "curl")
 				.orElse("Autre");
 	}
-	
+
 	@Bind(VA_CCH_CTR)
 	@Expose(identity = "cache_control")
 	ViewColumn cacheControl();
-	
+
 	@Bind(VA_LNK)
 	ViewColumn linked();
 

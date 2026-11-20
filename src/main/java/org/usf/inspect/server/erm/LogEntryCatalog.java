@@ -12,6 +12,8 @@ import org.usf.jquery.mvc.Bind;
 import org.usf.jquery.mvc.DatasetCatalog;
 import org.usf.jquery.mvc.Expose;
 import org.usf.jquery.mvc.Typed;
+import static org.usf.jquery.core.Predicate.isNotNull;
+import org.usf.jquery.core.Column;
 
 public interface LogEntryCatalog extends DatasetCatalog<InspectStore> {
 
@@ -39,6 +41,12 @@ public interface LogEntryCatalog extends DatasetCatalog<InspectStore> {
 	@Expose(identity = "instance_env")
 	@Typed(UUID)
 	ViewColumn instanceEnv();
+
+
+	@Expose(identity = "has_stack")
+	default Column hasStack() {
+		return stacktrace().toCase().when(isNotNull(), true).orElse(false);
+	}
 
 	default JoinGroup instance() {
 		var instance = getStore().instance();
