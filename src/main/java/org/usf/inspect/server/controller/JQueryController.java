@@ -111,4 +111,12 @@ public class JQueryController {
     public Object fetchSessionEvent(MvcRequest mvc, HttpServletResponse res) {
         return mvc.execute(res);
     }
+
+    @GetMapping("instance/browser")
+    @QueryGuard(maxRows = MAX_ROWS)
+    @QueryTemplate(dataset = "browser_config",
+            select = "deviceDisplayResolution,deviceOrientation,deviceConnectivity,saveData,windowViewportBounds,windowZoomLevel,userLanguage,userTheme,instanceId")
+    public Object getBrowserConfig(MvcRequest mvc, HttpServletResponse res) {
+        return mvc.execute(res);
+    }
 }

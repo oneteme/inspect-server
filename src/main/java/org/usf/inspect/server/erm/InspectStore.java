@@ -106,6 +106,10 @@ public interface InspectStore extends StoreCatalog {
 	@Expose(identity = "session_event")
 	SessionEventCatalog sessionEvent();
 
+	@Bind("o_brw_cfg")
+	@Expose(identity = "browser_config")
+	BrowserConfigCatalog browserConfig();
+
 	default OperatorDefinition lag() {
 		return window(firstArgType(), "LAG", required(), optional(INTEGER), optional(firstArgType()));
 	}
@@ -162,6 +166,5 @@ public interface InspectStore extends StoreCatalog {
 			.register(EXCEPTION_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(exceptionRowMapper())))
 			.register(SESSION_EVENT_ROW_MAPPER, rsp-> defaultExecutor(toListMapper(sessionEventRowMapper())))
 			.register(SESSION_EVENT_MAPPER, rsp -> defaultExecutor(toListMapper(sessionEventMapper())));
-;
 
 }
