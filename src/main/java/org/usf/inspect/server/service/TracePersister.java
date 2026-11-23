@@ -115,7 +115,7 @@ public class TracePersister implements TracePublisher {
         cf.add(supplyAsync(()-> filterAndConsume(traces, SystemMetrics.class, dao::saveMachineResourceUsages), executor));
         cf.add(supplyAsync(()-> filterAndConsume(traces, TraceBatch.class, dao::saveTracePackets), executor));
         //browser
-        cf.add(supplyAsync(() -> filterAndConsume(traces, BrowserConfigDto.class, dao::saveBrowserConfigs), executor));
+        cf.add(supplyAsync(()-> filterAndConsume(traces, BrowserConfigDto.class, dao::saveBrowserConfigs), executor));
         //updates
         cf.add(supplyAsync(()-> filterAndConsume(traces, InstanceEnvironmentUpdate.class, dao::updateInstanceEnvironments), executor));        
         cf.add(supplyAsync(()-> filterAndConsume(traces, maskUpdateFilter(true), dao::updateMaskMainSessions), executor));
@@ -123,10 +123,11 @@ public class TracePersister implements TracePublisher {
         cf.add(supplyAsync(()-> filterAndConsume(traces, asyncDurationUpdateFilter(true), dao::updateMainSessionAsyncDuration), executor));
         cf.add(supplyAsync(()-> filterAndConsume(traces, asyncDurationUpdateFilter(false), dao::updateRestSessionAsyncDuration), executor));
         
-        return allOf(cf.toArray(CompletableFuture[]::new)).thenApply(v-> cf.stream()
+        allOf(cf.toArray(CompletableFuture[]::new)).join(); //wait for all to complete
+        return cf.stream()
         		.map(CompletableFuture::join)
                 .flatMap(Collection::stream)
-                .toList()).join();
+                .toList();
     }
 	
 	static BiConsumer<EventTrace, Consumer<SessionMaskUpdate>> maskUpdateFilter(boolean isMain) {

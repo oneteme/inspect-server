@@ -768,6 +768,9 @@ VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", requests, (ps, pair) -> {
 	                if(updatedRows == 0) {
 	                    log.warn("TraceDao.batchUpdateWithRetry: Record {} was not updated, sql={}", records.get(idx), sql);
 	                }
+	                else if(updatedRows > 1) {
+	                    log.warn("TraceDao.batchUpdateWithRetry: Record {} was updated {} times, sql={}", records.get(idx), updatedRows, sql);
+	                }
 	                idx++;
 	            }
 	        }
