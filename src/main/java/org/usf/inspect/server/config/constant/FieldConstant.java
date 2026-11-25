@@ -105,4 +105,12 @@ public final class FieldConstant {
     public static final String NB_START_THREAD = "nb_start_thr";
     public static final String VA_PLD = "va_pld";
     public static final String VA_TRC_TYP = "va_trc_typ";
+    public static final String VA_DVC_DSP_RSL = "va_dvc_dsp_rsl";
+    public static final String VA_DVC_ORN = "va_dvc_orn";
+    public static final String VA_DVC_CNT = "va_dvc_cnt";
+    public static final String VA_SAV_DTA = "va_sav_dta";
+    public static final String VA_WDW_VPT_BDS = "va_wdw_vpt_bds";
+    public static final String VA_WDW_ZOM_LVL = "va_wdw_zom_lvl";
+    public static final String VA_USR_LNG = "va_usr_lng";
+    public static final String VA_USR_THM = "va_usr_thm";
 }
