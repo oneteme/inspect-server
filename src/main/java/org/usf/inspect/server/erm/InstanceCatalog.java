@@ -94,7 +94,7 @@ public interface InstanceCatalog extends DatasetCatalog<InspectStore> {
 	
 	default Partition lastApplicationInstance() {
 		return new PartitionComposer()
-				.columns(namespace(), appName(), type())
+				.columns(namespace(), appName(), type()) //sometimes back & front app have same name, but different type
 				.order(start().desc())
 				.compose();
 	}

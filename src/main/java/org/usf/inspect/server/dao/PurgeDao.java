@@ -207,7 +207,7 @@ public class PurgeDao {
         return purgeRequest("lcl_rqt",Timestamp.valueOf(before.atStartOfDay()));
     }
 
-    public int purgeLogEntry(List<UUID>  ids, Timestamp before){
+    public int purgeLogEntry(List<UUID> ids, Timestamp before){
         return purgeRequest("rpt_evt", ids, before, false);
     }
 

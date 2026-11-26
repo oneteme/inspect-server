@@ -20,6 +20,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.usf.inspect.core.TraceableStage;
 
 import lombok.RequiredArgsConstructor;
 
@@ -39,6 +40,7 @@ public class NamespaceAuthenticationCacheProvider implements AuthenticationProvi
     }
 
     @Override
+    @TraceableStage
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         var namespace = authentication.getName();
         var token = nonNull(authentication.getCredentials()) ? authentication.getCredentials().toString() : null;
