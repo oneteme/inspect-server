@@ -13,8 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.usf.inspect.server.service.CompareService;
-import org.usf.inspect.server.validation.Condition;
-import org.usf.inspect.server.validation.Validate;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
